@@ -17,7 +17,8 @@ DEPS = $(CPPS:.cpp=.d)
 all:rundb
 
 rundb : $(OBJS)
-	$(CC) -o $@ $^ $(LDFLAGS)
+	$(CC) -no-pie -o $@ $^ $(LDFLAGS)
+	#$(CC) -o $@ $^ $(LDFLAGS)
 
 -include $(OBJS:%.o=%.d)
 
