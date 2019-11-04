@@ -162,7 +162,7 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 		INC_STATS(txn->get_thd_id(), wait_cnt, 1);
 		while (!txn->lock_ready && !txn->lock_abort) 
 		{
-#if CC_ALG == WAIT_DIE 
+#if CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT 
 			continue;
 #elif CC_ALG == DL_DETECT	
 			uint64_t last_detect = starttime;

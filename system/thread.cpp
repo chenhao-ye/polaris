@@ -84,7 +84,7 @@ RC thread_t::run() {
 					}
 					else if (m_query == NULL) {
 						m_query = query_queue->get_next_query( _thd_id );
-					#if CC_ALG == WAIT_DIE
+					#if CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT
 						m_txn->set_ts(get_next_ts());
 					#endif
 					}

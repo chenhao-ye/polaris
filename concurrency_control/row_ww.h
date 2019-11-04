@@ -1,12 +1,17 @@
 #ifndef ROW_WW_H
 #define ROW_WW_H
 
-//struct LockEntry {
-//    lock_t type;
-//    txn_man * txn;
-//	LockEntry * next;
-//	LockEntry * prev;
-//};
+#include "row_lock.h"
+/*
+struct LockEntry {
+	lock_t type;
+	txn_man * txn;
+	LockEntry * next;
+	LockEntry * prev;
+};
+*/
+
+struct LockEntry;
 
 class Row_ww {
 public:

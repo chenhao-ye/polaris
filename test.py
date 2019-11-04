@@ -72,8 +72,8 @@ def run_all_test(jobs) :
 	for (jobname, job) in jobs.iteritems():
 		test_compile(job)
 		if job['WORKLOAD'] == 'TEST':
-			test_run('read_write', job)
-			#test_run('conflict', job)
+			#test_run('read_write', job)
+			test_run('conflict', job)
 		else :
 			test_run('', job)
 	jobs = {}

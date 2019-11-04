@@ -39,7 +39,7 @@
 /***********************************************/
 // WAIT_DIE, NO_WAIT, DL_DETECT, TIMESTAMP, MVCC, HEKATON, HSTORE, OCC, VLL, TICTOC, SILO
 // TODO TIMESTAMP does not work at this moment
-//#define CC_ALG WAIT_DIE
+//#define CC_ALG WOUND_WAIT
 #define CC_ALG WOUND_WAIT
 #define ISOLATION_LEVEL 			SERIALIZABLE
 
