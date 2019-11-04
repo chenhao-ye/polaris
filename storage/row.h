@@ -31,6 +31,7 @@ class Row_occ;
 class Row_tictoc;
 class Row_silo;
 class Row_vll;
+class Row_ww;
 
 class row_t
 {
@@ -99,6 +100,8 @@ public:
   	Row_silo * manager;
   #elif CC_ALG == VLL
   	Row_vll * manager;
+  #elif CC_ALG == WOUND_WAIT
+  	Row_ww * manager;
   #endif
 	char * data;
 	table_t * table;

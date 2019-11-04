@@ -89,7 +89,8 @@ void txn_man::cleanup(RC rc) {
 		if (ROLL_BACK && type == XP &&
 					(CC_ALG == DL_DETECT || 
 					CC_ALG == NO_WAIT || 
-					CC_ALG == WAIT_DIE)) 
+					CC_ALG == WAIT_DIE ||
+					CC_ALG == WOUND_WAIT))
 		{
 			orig_r->return_row(type, this, accesses[rid]->orig_data);
 		} else {
@@ -132,7 +133,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
 		access->data->init(MAX_TUPLE_SIZE);
 		access->orig_data = (row_t *) _mm_malloc(sizeof(row_t), 64);
 		access->orig_data->init(MAX_TUPLE_SIZE);
-#elif (CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE)
+#elif (CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT)
 		access->orig_data = (row_t *) _mm_malloc(sizeof(row_t), 64);
 		access->orig_data->init(MAX_TUPLE_SIZE);
 #endif
@@ -156,7 +157,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
 	accesses[row_cnt]->history_entry = history_entry;
 #endif
 
-#if ROLL_BACK && (CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE)
+#if ROLL_BACK && (CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT)
 	if (type == WR) {
 		accesses[row_cnt]->orig_data->table = row->get_table();
 		accesses[row_cnt]->orig_data->copy(row);

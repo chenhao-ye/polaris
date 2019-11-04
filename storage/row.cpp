@@ -12,6 +12,7 @@
 #include "row_tictoc.h"
 #include "row_silo.h"
 #include "row_vll.h"
+#include "row_ww.h"
 #include "mem_alloc.h"
 #include "manager.h"
 
@@ -54,6 +55,8 @@ void row_t::init_manager(row_t * row) {
 	manager = (Row_silo *) _mm_malloc(sizeof(Row_silo), 64);
 #elif CC_ALG == VLL
     manager = (Row_vll *) mem_allocator.alloc(sizeof(Row_vll), _part_id);
+#elif CC_ALG == WOUND_WAIT
+    manager = (Row_ww *) mem_allocator.alloc(sizeof(Row_ww), _part_id);
 #endif
 
 #if CC_ALG != HSTORE
@@ -134,7 +137,7 @@ void row_t::free_row() {
 
 RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 	RC rc = RCOK;
-#if CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT
+#if CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT
 	uint64_t thd_id = txn->get_thd_id();
 	lock_t lt = (type == RD || type == SCAN)? LOCK_SH : LOCK_EX;
 #if CC_ALG == DL_DETECT
@@ -268,7 +271,7 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 // For TIMESTAMP, the row will be explicity deleted at the end of access().
 // (cf. row_ts.cpp)
 void row_t::return_row(access_t type, txn_man * txn, row_t * row) {	
-#if CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT
+#if CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT
 	assert (row == NULL || row == this || type == XP);
 	if (ROLL_BACK && type == XP) {// recover from previous writes.
 		this->copy(row);

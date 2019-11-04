@@ -39,7 +39,8 @@
 /***********************************************/
 // WAIT_DIE, NO_WAIT, DL_DETECT, TIMESTAMP, MVCC, HEKATON, HSTORE, OCC, VLL, TICTOC, SILO
 // TODO TIMESTAMP does not work at this moment
-#define CC_ALG WAIT_DIE
+//#define CC_ALG WAIT_DIE
+#define CC_ALG WOUND_WAIT
 #define ISOLATION_LEVEL 			SERIALIZABLE
 
 // all transactions acquire tuples according to the primary key order.
@@ -205,6 +206,7 @@ extern TestCases					g_test_case;
 #define SILO						9
 #define VLL							10
 #define HEKATON 					11
+#define WOUND_WAIT                  12
 //Isolation Levels 
 #define SERIALIZABLE				1
 #define SNAPSHOT					2
