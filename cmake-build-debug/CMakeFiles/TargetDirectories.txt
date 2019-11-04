@@ -1,3 +1,0 @@
-/Users/scarlet/Documents/DBx1000/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/Users/scarlet/Documents/DBx1000/cmake-build-debug/CMakeFiles/edit_cache.dir
-/Users/scarlet/Documents/DBx1000/cmake-build-debug/CMakeFiles/rundb.dir

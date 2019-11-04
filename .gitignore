@@ -1,2 +1,3 @@
 *.o
 *.d
+cmake-build-debug
