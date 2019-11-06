@@ -6,7 +6,9 @@
 
 void Row_ww::init(row_t * row) {
 	_row = row;
+	// owners is a single linked list, each entry/node contains info like lock type, prev/next
 	owners = NULL;
+    // waiter is a double linked list. two ptrs to the linked lists
 	waiters_head = NULL;
 	waiters_tail = NULL;
 	owner_cnt = 0;
@@ -17,7 +19,6 @@ void Row_ww::init(row_t * row) {
 	
 	lock_type = LOCK_NONE;
 	blatch = false;
-
 }
 
 RC Row_ww::lock_get(lock_t type, txn_man * txn) {
@@ -27,15 +28,20 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn) {
 }
 
 RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) {
-	assert (CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT);
+	assert (CC_ALG == WOUND_WAIT);
 	RC rc;
+    // get part id
 	int part_id =_row->get_part_id();
 	if (g_central_man)
+	    // if using central manager
 		glob_manager->lock_row(_row);
 	else 
 		pthread_mutex_lock( latch );
+    // each thread has at most one owner of a lock
 	assert(owner_cnt <= g_thread_cnt);
+	// each thread has at most one waiter
 	assert(waiter_cnt < g_thread_cnt);
+
 #if DEBUG_ASSERT
 	if (owners != NULL)
 		assert(lock_type == owners->type); 
@@ -58,68 +64,61 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 	assert(cnt == waiter_cnt);
 #endif
 
+	// check lock type with owner
+	// owner:
+	// - SH then followers are SH
+	// - EX then followers are NONE
 	bool conflict = conflict_lock(lock_type, type);
-	if ((CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT) && !conflict) {
+
+	// added one more condition for conflicts -- check wait dependency
+	if (!conflict) {
+	    // TODO: waiters_head is not null and current txn's ts < waiter_head's ts -- conflict and need to wound them
 		if (waiters_head && txn->get_ts() < waiters_head->txn->get_ts())
 			conflict = true;
 	}
-	// Some txns coming earlier is waiting. Should also wait.
-	if (CC_ALG == DL_DETECT && waiters_head != NULL)
-		conflict = true;
 	
 	if (conflict) { 
 		// Cannot be added to the owner list.
-		if (CC_ALG == NO_WAIT) {
-			rc = Abort;
-			goto final;
-		} else if (CC_ALG == DL_DETECT) {
-			LockEntry * entry = get_entry();
-			entry->txn = txn;
-			entry->type = type;
-			LIST_PUT_TAIL(waiters_head, waiters_tail, entry);
-			waiter_cnt ++;
-            txn->lock_ready = false;
-            rc = WAIT;
-		} else if (CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT) {
-            ///////////////////////////////////////////////////////////
-            //  - T is the txn currently running
-			//	IF T.ts < ts of all owners
-			//		T can wait
-            //  ELSE
-            //      T should abort
-            //////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////
+        //  - T is the txn currently running
+        //  always can wait but need to abort txns has lower priority (larger ts)
+        //////////////////////////////////////////////////////////
 
-			bool canwait = true;
-			LockEntry * en = owners;
-			while (en != NULL) {
-                if (en->txn->get_ts() < txn->get_ts()) {
-					canwait = false;
-					break;
-				}
-				en = en->next;
-			}
-			if (canwait) {
-				// insert txn to the right position
-				// the waiter list is always in timestamp order
-				LockEntry * entry = get_entry();
-				entry->txn = txn;
-				entry->type = type;
-				en = waiters_head;
-				while (en != NULL && txn->get_ts() < en->txn->get_ts()) 
-					en = en->next;
-				if (en) {
-					LIST_INSERT_BEFORE(en, entry);
-					if (en == waiters_head)
-						waiters_head = entry;
-				} else 
-					LIST_PUT_TAIL(waiters_head, waiters_tail, entry);
-				waiter_cnt ++;
-                txn->lock_ready = false;
-                rc = WAIT;
+        // always can wait
+        bool canwait = true;
+        // go through owners
+        LockEntry * en = owners;
+        while (en != NULL) {
+            if (en->txn->get_ts() > txn->get_ts()) {
+                // TODO: abort(wound) en->txn
+                // TODO: step 1 - figure out what need to be done when aborting a txn
+                // TODO: ask thread to abort
+                en->txn->h_thd; // thread
+                continue
             }
-            else 
-                rc = Abort;
+            en = en->next;
         }
+
+        // TODO: add to wait list
+        // insert txn to the right position
+        // the waiter list is always in timestamp order
+        LockEntry * entry = get_entry();
+        entry->txn = txn;
+        entry->type = type;
+        en = waiters_head;
+        while (en != NULL && txn->get_ts() < en->txn->get_ts())
+            en = en->next;
+        if (en) {
+            LIST_INSERT_BEFORE(en, entry);
+            if (en == waiters_head)
+                waiters_head = entry;
+        } else
+            LIST_PUT_TAIL(waiters_head, waiters_tail, entry);
+        waiter_cnt ++;
+        txn->lock_ready = false;
+        rc = WAIT;
+
+
 	} else {
 		LockEntry * entry = get_entry();
 		entry->type = type;
@@ -127,31 +126,11 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 		STACK_PUSH(owners, entry);
 		owner_cnt ++;
 		lock_type = type;
-		if (CC_ALG == DL_DETECT) 
-			ASSERT(waiters_head == NULL);
         rc = RCOK;
 	}
+
+
 final:
-	
-	if (rc == WAIT && CC_ALG == DL_DETECT) {
-		// Update the waits-for graph
-		ASSERT(waiters_tail->txn == txn);
-		txnids = (uint64_t *) mem_allocator.alloc(sizeof(uint64_t) * (owner_cnt + waiter_cnt), part_id);
-		txncnt = 0;
-		LockEntry * en = waiters_tail->prev;
-		while (en != NULL) {
-			if (conflict_lock(type, en->type)) 
-				txnids[txncnt++] = en->txn->get_txn_id();
-			en = en->prev;
-		}
-		en = owners;
-		if (conflict_lock(type, lock_type)) 
-			while (en != NULL) {
-				txnids[txncnt++] = en->txn->get_txn_id();
-				en = en->next;
-			}
-		ASSERT(txncnt > 0);
-	}
 
 	if (g_central_man)
 		glob_manager->release_row(_row);

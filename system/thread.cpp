@@ -48,16 +48,21 @@ RC thread_t::run() {
 	rdm.init(get_thd_id());
 	RC rc = RCOK;
 	txn_man * m_txn;
+	// get txn man from workload
 	rc = _wl->get_txn_man(m_txn, this);
 	assert (rc == RCOK);
 	glob_manager->set_txn_man(m_txn);
 
 	base_query * m_query = NULL;
+	curr_query = NULL;
 	uint64_t thd_txn_id = 0;
 	UInt64 txn_cnt = 0;
 
 	while (true) {
-		ts_t starttime = get_sys_clock();
+        #if DEBUG_WW
+	        std::cout << "thread [" << get_thd_id() << "] start running txn: " << m_txn->get_thd_id() << endl;
+        #endif
+		starttime = get_sys_clock();
 		if (WORKLOAD != TEST) {
 			int trial = 0;
 			if (_abort_buffer_enable) {
@@ -132,8 +137,10 @@ RC thread_t::run() {
 #if CC_ALG != VLL
 			if (WORKLOAD == TEST)
 				rc = runTest(m_txn);
-			else 
-				rc = m_txn->run_txn(m_query);
+			else {
+                rc = m_txn->run_txn(m_query);
+                curr_query = m_query;
+			}
 #endif
 #if CC_ALG == HSTORE
 			if (WORKLOAD == TEST) {
@@ -239,4 +246,40 @@ RC thread_t::runTest(txn_man * txn)
 	}
 	assert(false);
 	return RCOK;
+}
+
+RC thread_t::abort_txn(txn_man * txn)
+{
+    // if current txn is aborted
+    uint64_t penalty = 0;
+    if (ABORT_PENALTY != 0)  {
+        double r;
+        drand48_r(&buffer, &r);
+        penalty = r * ABORT_PENALTY;
+    }
+    if (!_abort_buffer_enable)
+        usleep(penalty / 1000);
+    else {
+        assert(_abort_buffer_empty_slots > 0);
+        for (int i = 0; i < _abort_buffer_size; i ++) {
+            if (_abort_buffer[i].query == NULL) {
+                _abort_buffer[i].query = curr_query;
+                _abort_buffer[i].ready_time = get_sys_clock() + penalty;
+                _abort_buffer_empty_slots --;
+                break;
+            }
+        }
+    }
+
+    ts_t endtime = get_sys_clock();
+    uint64_t timespan = endtime - starttime;
+    INC_STATS(get_thd_id(), run_time, timespan);
+    INC_STATS(get_thd_id(), latency, timespan);
+
+    INC_STATS(get_thd_id(), time_abort, timespan);
+    INC_STATS(get_thd_id(), abort_cnt, 1);
+    stats.abort(get_thd_id());
+    txn->abort_cnt ++;
+
+    return FINISH;
 }

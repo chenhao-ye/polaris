@@ -23,6 +23,11 @@ public:
 	// to run with pthread.
 	// conversion is done within the function.
 	RC 			run();
+
+	// added for wound wait
+    RC          abort_txn(txn_man * txn);
+
+
 private:
 	uint64_t 	_host_cid;
 	uint64_t 	_cur_cid;
@@ -31,6 +36,10 @@ private:
 
 	RC	 		runTest(txn_man * txn);
 	drand48_data buffer;
+
+	// added for wound wait
+	base_query * curr_query;
+    ts_t         starttime;
 
 	// A restart buffer for aborted txns.
 	struct AbortBufferEntry	{

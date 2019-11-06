@@ -4,6 +4,7 @@
 #include "row_lock.h"
 /*
 struct LockEntry {
+    // type of lock: EX or SH
 	lock_t type;
 	txn_man * txn;
 	LockEntry * next;
@@ -29,6 +30,7 @@ private:
 	LockEntry * get_entry();
 	void 		return_entry(LockEntry * entry);
 	row_t * _row;
+	// owner's lock type
     lock_t lock_type;
     UInt32 owner_cnt;
     UInt32 waiter_cnt;
