@@ -13,7 +13,7 @@ def replace(filename, pattern, replacement):
 
 jobs = {}
 dbms_cfg = ["config-std.h", "config.h"]
-algs = ['WAIT_DIE', 'WOUND_WAIT']
+algs = ['WOUND_WAIT']
 def insert_job(alg, workload):
 	jobs[alg + '_' + workload] = {
 		"WORKLOAD"			: workload,
@@ -39,6 +39,14 @@ def test_compile(job):
 	os.system("make -j8")
 	'''
 	print "PASS Compile\t\talg=%s,\tworkload=%s" % (job['CC_ALG'], job['WORKLOAD'])
+
+def compile():
+	os.system("make clean > temp.out 2>&1")
+	ret = os.system("make -j8 > temp.out 2>&1")
+	if ret != 0:
+		print "ERROR in compiling job="
+		print job
+		exit(0)
 
 def test_run(test = '', job=None):
 	app_flags = ""
@@ -83,7 +91,8 @@ def run(test = '', job=None):
 
 def run_all_test(jobs) :
 	for (jobname, job) in jobs.iteritems():
-		test_compile(job)
+		#test_compile(job)
+		compile()
 		if job['WORKLOAD'] == 'TEST':
 			#test_run('read_write', job)
 			#test_run('conflict', job)
