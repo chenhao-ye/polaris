@@ -94,7 +94,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
                 // TODO: step 1 - figure out what need to be done when aborting a txn
                 // TODO: ask thread to abort
                 #if DEBUG_WW
-                    std::cout << "txn " << txn->get_txn_id() << "abort txn: " << en->txn->get_txn_id() << endl;
+                    std::cout << "txn " << txn->get_txn_id() << " abort txn: " << en->txn->get_txn_id() << endl;
                 #endif
                 en->txn->abort_txn();
             }
