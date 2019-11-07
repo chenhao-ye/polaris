@@ -93,7 +93,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
                 // TODO: abort(wound) en->txn
                 // TODO: step 1 - figure out what need to be done when aborting a txn
                 // TODO: ask thread to abort
-                en->txn->h_thd->abort_txn(en->txn); // thread
+                en->txn->abort_txn();
             }
             en = en->next;
         }

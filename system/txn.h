@@ -2,10 +2,9 @@
 
 #include "global.h"
 #include "helper.h"
-#include "thread.h"
 
 class workload;
-//class thread_t;
+class thread_t;
 class row_t;
 class table_t;
 class base_query;
@@ -51,6 +50,9 @@ public:
 	workload * 		get_wl();
 	void 			set_txn_id(txnid_t txn_id);
 	txnid_t 		get_txn_id();
+
+	//zhihan
+	RC              abort_txn();
 
 	void 			set_ts(ts_t timestamp);
 	ts_t 			get_ts();
@@ -118,3 +120,10 @@ private:
 	RC 				validate_hekaton(RC rc);
 #endif
 };
+
+#include "thread.h"
+inline RC txn_man::abort_txn()
+{
+    h_thd->abort_txn(this);
+    return FINISH;
+}
