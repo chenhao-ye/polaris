@@ -59,9 +59,9 @@ RC thread_t::run() {
 	UInt64 txn_cnt = 0;
 
 	while (true) {
-        #if DEBUG_WW
-	        std::cout << "thread [" << get_thd_id() << "] start running txn: " << m_txn->get_txn_id()<< endl;
-        #endif
+//        #if DEBUG_WW
+//	        std::cout << "thread [" << get_thd_id() << "] start running txn: " << m_txn->get_txn_id()<< endl;
+//        #endif
 		starttime = get_sys_clock();
 		if (WORKLOAD != TEST) {
 			int trial = 0;
