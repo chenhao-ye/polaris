@@ -2,9 +2,10 @@
 
 #include "global.h"
 #include "helper.h"
+#include "thread.h"
 
 class workload;
-class thread_t;
+//class thread_t;
 class row_t;
 class table_t;
 class base_query;
