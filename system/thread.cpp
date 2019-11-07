@@ -251,7 +251,7 @@ RC thread_t::runTest(txn_man * txn)
 RC thread_t::abort_txn(txn_man * txn)
 {
     #if DEBUG_WW
-        std::cout << "thread [" << get_thd_id() << "] abort txn: " << txn->get_thd_id() << endl;
+        std::cout << "thread [" << get_thd_id() << "] abort txn: " << txn->get_txn_id() << endl;
     #endif
     // if current txn is aborted
     uint64_t penalty = 0;
