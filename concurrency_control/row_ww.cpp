@@ -31,7 +31,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 	assert (CC_ALG == WOUND_WAIT);
 	RC rc;
     // get part id
-	int part_id =_row->get_part_id();
+	//int part_id =_row->get_part_id();
 	if (g_central_man)
 	    // if using central manager
 		glob_manager->lock_row(_row);
@@ -85,7 +85,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
         //////////////////////////////////////////////////////////
 
         // always can wait
-        bool canwait = true;
+        //bool canwait = true;
         // go through owners
         LockEntry * en = owners;
         while (en != NULL) {
@@ -93,8 +93,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
                 // TODO: abort(wound) en->txn
                 // TODO: step 1 - figure out what need to be done when aborting a txn
                 // TODO: ask thread to abort
-                en->txn->h_thd->abort_txn(en->txn); // thread
-                continue
+                en->txn->h_thd.abort_txn(en->txn); // thread
             }
             en = en->next;
         }
@@ -130,7 +129,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 	}
 
 
-final:
+//final:
 
 	if (g_central_man)
 		glob_manager->release_row(_row);
