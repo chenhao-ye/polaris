@@ -60,7 +60,7 @@ RC thread_t::run() {
 
 	while (true) {
         #if DEBUG_WW
-	        std::cout << "thread [" << get_thd_id() << "] start running txn: " << m_txn->get_thd_id() << endl;
+	        std::cout << "thread [" << get_thd_id() << "] start running txn: " << m_txn->get_txn_id()<< endl;
         #endif
 		starttime = get_sys_clock();
 		if (WORKLOAD != TEST) {
