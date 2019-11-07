@@ -44,8 +44,7 @@ def compile():
 	os.system("make clean > temp.out 2>&1")
 	ret = os.system("make -j8 > temp.out 2>&1")
 	if ret != 0:
-		print "ERROR in compiling job="
-		print job
+		print "ERROR in compiling"
 		exit(0)
 
 def test_run(test = '', job=None):
