@@ -131,7 +131,6 @@ inline RC txn_man::abort_txn()
 {
     bool can_abort = h_thd->abort_txn(this);
     // TODO: check if abort is successfult, if so, release lock by calling finish
-    // TODO: Else, ...
     if (can_abort) {
         finish(Abort);
         return FINISH;

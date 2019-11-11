@@ -67,6 +67,11 @@ ts_t txn_man::get_ts() {
 }
 
 void txn_man::cleanup(RC rc) {
+
+#if CC_ALG == WOUND_WAIT && DEBUG_WW
+    std::cout << "cleanup " << get_txn_id() << std::endl;
+#endif
+
 #if CC_ALG == HEKATON
 	row_cnt = 0;
 	wr_cnt = 0;
@@ -225,6 +230,7 @@ RC txn_man::finish(RC rc) {
 	rc = validate_hekaton(rc);
 	cleanup(rc);
 #elif CC_ALG == WOUND_WAIT
+    std::cout << "finish txn " << get_txn_id() << std::endl;
 	cleanup(rc);
 #else 
 	cleanup(rc);
