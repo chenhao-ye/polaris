@@ -224,6 +224,8 @@ RC txn_man::finish(RC rc) {
 #elif CC_ALG == HEKATON
 	rc = validate_hekaton(rc);
 	cleanup(rc);
+#elif CC_ALG == WOUND_WAIT
+	cleanup(rc);
 #else 
 	cleanup(rc);
 #endif
@@ -238,4 +240,14 @@ txn_man::release() {
 	for (int i = 0; i < num_accesses_alloc; i++)
 		mem_allocator.free(accesses[i], 0);
 	mem_allocator.free(accesses, 0);
+}
+
+bool txn_man::set_status(RC old_s, RC new_s) {
+    // atomic
+    return ATOM_CAS(this->status, old_s, new_s);
+}
+
+
+RC txn_man::get_status() {
+    return this->status;
 }

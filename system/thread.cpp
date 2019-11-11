@@ -138,7 +138,10 @@ RC thread_t::run() {
 			if (WORKLOAD == TEST)
 				rc = runTest(m_txn);
 			else {
-                rc = m_txn->run_txn(m_query);
+			    if (m_txn->get_status() == Abort)
+			        rc = Abort;
+			    else
+			        rc = m_txn->run_txn(m_query);
                 curr_query = m_query;
 			}
 #endif
@@ -248,41 +251,8 @@ RC thread_t::runTest(txn_man * txn)
 	return RCOK;
 }
 
-RC thread_t::abort_txn(txn_man * txn)
+bool thread_t::abort_txn(txn_man * txn)
 {
-    #if DEBUG_WW
-        std::cout << "thread [" << get_thd_id() << "] abort txn: " << txn->get_txn_id() << endl;
-    #endif
-    // if current txn is aborted
-    uint64_t penalty = 0;
-    if (ABORT_PENALTY != 0)  {
-        double r;
-        drand48_r(&buffer, &r);
-        penalty = r * ABORT_PENALTY;
-    }
-    if (!_abort_buffer_enable)
-        usleep(penalty / 1000);
-    else {
-        assert(_abort_buffer_empty_slots > 0);
-        for (int i = 0; i < _abort_buffer_size; i ++) {
-            if (_abort_buffer[i].query == NULL) {
-                _abort_buffer[i].query = curr_query;
-                _abort_buffer[i].ready_time = get_sys_clock() + penalty;
-                _abort_buffer_empty_slots --;
-                break;
-            }
-        }
-    }
-
-    ts_t endtime = get_sys_clock();
-    uint64_t timespan = endtime - starttime;
-    INC_STATS(get_thd_id(), run_time, timespan);
-    INC_STATS(get_thd_id(), latency, timespan);
-
-    INC_STATS(get_thd_id(), time_abort, timespan);
-    INC_STATS(get_thd_id(), abort_cnt, 1);
-    stats.abort(get_thd_id());
-    txn->abort_cnt ++;
-
-    return FINISH;
+    // TODO: check if current status is commited, if so, cannot abort
+    return (txn->set_status(RCOK, Abort) || txn->set_status(WAIT, Abort));
 }

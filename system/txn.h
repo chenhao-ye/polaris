@@ -53,6 +53,8 @@ public:
 
 	//zhihan
 	RC              abort_txn();
+	bool            set_status(RC old_s, RC new_s);
+	RC              get_status();
 
 	void 			set_ts(ts_t timestamp);
 	ts_t 			get_ts();
@@ -103,6 +105,9 @@ private:
 	txnid_t 		txn_id;
 	ts_t 			timestamp;
 
+	//zhihan
+	RC              status;
+
 	bool _write_copy_ptr;
 #if CC_ALG == TICTOC || CC_ALG == SILO
 	bool 			_pre_abort;
@@ -124,6 +129,12 @@ private:
 #include "thread.h"
 inline RC txn_man::abort_txn()
 {
-    h_thd->abort_txn(this);
-    return FINISH;
+    bool can_abort = h_thd->abort_txn(this);
+    // TODO: check if abort is successfult, if so, release lock by calling finish
+    // TODO: Else, ...
+    if (can_abort) {
+        finish(Abort);
+        return FINISH;
+    }
+    return ERROR;
 }

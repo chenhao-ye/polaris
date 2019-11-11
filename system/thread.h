@@ -25,7 +25,7 @@ public:
 	RC 			run();
 
 	// added for wound wait
-    RC          abort_txn(txn_man * txn);
+    bool        abort_txn(txn_man * txn);
 
 
 private:
