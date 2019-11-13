@@ -248,12 +248,12 @@ txn_man::release() {
 	mem_allocator.free(accesses, 0);
 }
 
-bool txn_man::set_status(RC old_s, RC new_s) {
-    // atomic
-    return ATOM_CAS(this->status, old_s, new_s);
-}
+//bool txn_man::set_status(RC old_s, RC new_s) {
+//    // atomic
+//    return ATOM_CAS(this->status, old_s, new_s);
+//}
 
 
-RC txn_man::get_status() {
-    return this->status;
-}
+//RC txn_man::get_status() {
+//    return this->status;
+//}

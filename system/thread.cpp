@@ -138,10 +138,7 @@ RC thread_t::run() {
 			if (WORKLOAD == TEST)
 				rc = runTest(m_txn);
 			else {
-			    if (m_txn->get_status() == Abort)
-			        rc = Abort;
-			    else
-			        rc = m_txn->run_txn(m_query);
+			    rc = m_txn->run_txn(m_query);
                 curr_query = m_query;
 			}
 #endif
@@ -153,6 +150,12 @@ RC thread_t::run() {
 				part_lock_man.unlock(m_txn, m_query->part_to_access, m_query->part_num);
 #endif
 		}
+
+#if CC_ALG == WOUND_WAIT
+        // TODO: set rc to abort if txn's status == abort
+        rc = m_txn->lock_abort ? Abort : rc;
+#endif
+
 		if (rc == Abort) {
 			uint64_t penalty = 0;
 			if (ABORT_PENALTY != 0)  {
@@ -249,10 +252,4 @@ RC thread_t::runTest(txn_man * txn)
 	}
 	assert(false);
 	return RCOK;
-}
-
-bool thread_t::abort_txn(txn_man * txn)
-{
-    // TODO: check if current status is commited, if so, cannot abort
-    return (txn->set_status(RCOK, Abort) || txn->set_status(WAIT, Abort));
 }

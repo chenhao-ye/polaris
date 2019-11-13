@@ -53,8 +53,8 @@ public:
 
 	//zhihan
 	RC              abort_txn();
-	bool            set_status(RC old_s, RC new_s);
-	RC              get_status();
+//	bool            set_status(RC old_s, RC new_s);
+//	RC              get_status();
 
 	void 			set_ts(ts_t timestamp);
 	ts_t 			get_ts();
@@ -129,10 +129,11 @@ private:
 #include "thread.h"
 inline RC txn_man::abort_txn()
 {
-    bool can_abort = h_thd->abort_txn(this);
+    bool can_abort = ATOM_CAS(this->lock_abort, false, true);
     // TODO: check if abort is successfult, if so, release lock by calling finish
     if (can_abort) {
         finish(Abort);
+        std::cout << "aborted txn " << get_txn_id() << std::endl;
         return FINISH;
     }
     return ERROR;
