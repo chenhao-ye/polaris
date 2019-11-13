@@ -145,7 +145,6 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 
 RC Row_ww::lock_release(txn_man * txn) {
 
-    std::cout << "release txn " << txn->get_txn_id() << " 's lock on " << this->_row->get_row_id() << std::endl;
 
 	if (g_central_man)
 		glob_manager->lock_row(_row);

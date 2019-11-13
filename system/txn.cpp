@@ -230,7 +230,9 @@ RC txn_man::finish(RC rc) {
 	rc = validate_hekaton(rc);
 	cleanup(rc);
 #elif CC_ALG == WOUND_WAIT
+#if DEBUG_WW
     std::cout << "finish txn " << get_txn_id() << std::endl;
+#endif
 	cleanup(rc);
 #else 
 	cleanup(rc);
