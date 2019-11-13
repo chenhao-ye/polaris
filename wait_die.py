@@ -14,6 +14,8 @@ def replace(filename, pattern, replacement):
 jobs = {}
 dbms_cfg = ["config-std.h", "config.h"]
 algs = ['WAIT_DIE', 'WOUND_WAIT']
+algs = ['WAIT_DIE', 'WOUND_WAIT', 'NO_WAIT']
+#algs = ['WOUND_WAIT']
 def insert_job(alg, workload):
 	jobs[alg + '_' + workload] = {
 		"WORKLOAD"			: workload,
@@ -103,21 +105,23 @@ def run_all_test(jobs) :
 			run('conflict', job)
 		else :
 			#test_run('', job)
+                        print(job["CC_ALG"])
 			run('', job)
 	jobs = {}
 
-# run YCSB tests
-'''
-jobs = {}
-for alg in algs: 
-	insert_job(alg, 'YCSB')
-run_all_test(jobs)
-'''
-# run TPCC tests
-jobs = {}
-for alg in algs: 
-	insert_job(alg, 'TPCC')
-run_all_test(jobs)
+print(sys.argv[1])
+if sys.argv[1] == "ycsb":
+	# run YCSB tests
+	jobs = {}
+	for alg in algs: 
+		insert_job(alg, 'YCSB')
+	run_all_test(jobs)
+else:
+	# run TPCC tests
+	jobs = {}
+	for alg in algs: 
+		insert_job(alg, 'TPCC')
+	run_all_test(jobs)
 
 #os.system('cp config-std.h config.h')
 #os.system('make clean > temp.out 2>&1')
