@@ -23,7 +23,7 @@ for line in f:
 		tokens = line.strip().split('summary]')[-1].split(',')
 		stat = '{},{},'.format(wl, cc_alg) + ",".join([token.strip().split('=')[1] for token in tokens]) + '\n'
 		if not has_col_name:
-			output.write(','.join([token.strip().split('=')[0] for token in tokens]) + '\n')
+			output.write('workload,cc_alg,' + ','.join([token.strip().split('=')[0] for token in tokens]) + '\n')
 			has_col_name = True
 		output.write(stat)
 f.close()
