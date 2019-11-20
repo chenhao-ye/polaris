@@ -105,7 +105,6 @@ def run_all_test(jobs) :
 			run('conflict', job)
 		else :
 			#test_run('', job)
-                        print(job["CC_ALG"])
 			run('', job)
 	jobs = {}
 

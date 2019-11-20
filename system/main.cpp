@@ -28,6 +28,16 @@ int main(int argc, char* argv[])
 	if (g_cc_alg == DL_DETECT) 
 		dl_detector.init();
 	printf("mem_allocator initialized!\n");
+
+#if CC_ALG == WOUND_WAIT
+	printf("WOUND_WAIT\n");
+#elif CC_ALG == NO_WAIT
+	printf("NO_WAIT\n");
+#elif CC_ALG == WAIT_DIE
+	printf("WAIT_DIE\n");
+#endif
+	
+ 
 	workload * m_wl;
 	switch (WORKLOAD) {
 		case YCSB :

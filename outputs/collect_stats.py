@@ -3,7 +3,7 @@ import sys, os
 
 f = open(sys.argv[1], 'r')
 cc_alg = ''
-wl = f.readline().strip()
+wl = 'YCSB' 
 
 out_path = "stats.csv"
 has_col_name = os.path.exists(out_path)
@@ -16,6 +16,8 @@ for line in f:
 		cc_alg = "WOUND_WAIT"
 	elif "NO_WAIT" in line:
 		cc_alg = "NO_WAIT"
+	elif "TPCC" in line:
+		wl = 'TPCC'
 	else:	
 		if '[summary]' not in line:
 			continue
