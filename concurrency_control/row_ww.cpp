@@ -78,7 +78,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 	//		conflict = true;
 	//}
 	
-	if (owners->next != NULL) { 
+	if (owners != NULL) { 
 		// Cannot be added to the owner list.
         ///////////////////////////////////////////////////////////
         //  - T is the txn currently running
