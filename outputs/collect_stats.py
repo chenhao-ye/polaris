@@ -11,11 +11,11 @@ output = open(out_path, 'a+')
 
 for line in f:
 	if "WAIT_DIE" in line:
-		cc_alg = "WAIT_DIE"
+		cc_alg = "WAIT DIE"
 	elif "WOUND_WAIT" in line:
-		cc_alg = "WOUND_WAIT"
+		cc_alg = "WOUND WAIT"
 	elif "NO_WAIT" in line:
-		cc_alg = "NO_WAIT"
+		cc_alg = "NO WAIT"
 	elif "TPCC" in line:
 		wl = 'TPCC'
 	else:	
