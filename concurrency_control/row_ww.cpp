@@ -68,16 +68,17 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 	// owner:
 	// - SH then followers are SH
 	// - EX then followers are NONE
-	bool conflict = conflict_lock(lock_type, type);
+
+	// bool conflict = conflict_lock(lock_type, type);
 
 	// added one more condition for conflicts -- check wait dependency
-	if (!conflict) {
+	//if (!conflict) {
 	    // TODO: waiters_head is not null and current txn's ts < waiter_head's ts -- conflict and need to wound them
-		if (waiters_head && txn->get_ts() < waiters_head->txn->get_ts())
-			conflict = true;
-	}
+	//	if (waiters_head && txn->get_ts() < waiters_head->txn->get_ts())
+	//		conflict = true;
+	//}
 	
-	if (conflict) { 
+	if (owners->next != NULL) { 
 		// Cannot be added to the owner list.
         ///////////////////////////////////////////////////////////
         //  - T is the txn currently running
@@ -90,9 +91,8 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
         LockEntry * en = owners;
         while (en != NULL) {
             if (en->txn->get_ts() > txn->get_ts()) {
-                // TODO: abort(wound) en->txn
-                // TODO: step 1 - figure out what need to be done when aborting a txn
-                // TODO: ask thread to abort
+                // step 1 - figure out what need to be done when aborting a txn
+                // ask thread to abort
                 #if DEBUG_WW
                     std::cout << "txn " << txn->get_txn_id() << " abort txn: " << en->txn->get_txn_id() << " on row " << this->_row->get_row_id() << endl;
                 #endif
@@ -101,7 +101,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
             en = en->next;
         }
 
-        // TODO: add to wait list
+        // TODO: insert to wait list
         // insert txn to the right position
         // the waiter list is always in timestamp order
         LockEntry * entry = get_entry();
@@ -122,13 +122,14 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 
 
 	} else {
+		// if owner is empty, grab the lock
 		LockEntry * entry = get_entry();
 		entry->type = type;
 		entry->txn = txn;
 		STACK_PUSH(owners, entry);
 		owner_cnt ++;
 		lock_type = type;
-        rc = RCOK;
+        	rc = RCOK;
 	}
 
 
