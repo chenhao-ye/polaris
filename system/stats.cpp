@@ -173,7 +173,7 @@ void Stats::print() {
 			total_debug3, // / BILLION,
 			total_debug4, // / BILLION,
 			total_debug5 / BILLION,
-			total_txn_cnt / total_run_timei * BILLION * THREAD_CNT
+			total_txn_cnt / total_run_time * BILLION * THREAD_CNT
 		);
 		fclose(outf);
 	}
