@@ -133,7 +133,7 @@ inline RC txn_man::abort_txn()
     // TODO: check if abort is successfult, if so, release lock by calling finish
     if (can_abort) {
 #if DEBUG_WW & CC_ALG == WOUND_WAIT
-        std::cout << "set txn " << get_txn_id() << " to abort" << std::endl;
+	printf("set txn %lu to abort.\n", this->get_txn_id());
 #endif
         return FINISH;
     }

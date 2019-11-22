@@ -82,6 +82,10 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 	rc = RCOK;
 final:
 	rc = finish(rc);
+	#if DEBUG_WW
+		if (rc == Abort)
+			printf("txn is aborted in ycsb\n");
+	#endif
 	return rc;
 }
 

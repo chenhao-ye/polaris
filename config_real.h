@@ -16,7 +16,7 @@
 // # of transactions to run for warmup
 #define WARMUP						0
 // YCSB or TPCC
-#define WORKLOAD TPCC
+#define WORKLOAD YCSB
 // print the transaction latency distribution
 #define PRT_LAT_DISTR				false
 #define STATS_ENABLE				true
@@ -183,7 +183,7 @@ extern TestCases					g_test_case;
 #define DEBUG_SYNTH					false
 #define DEBUG_ASSERT				false
 #define DEBUG_CC					false //true
-#define DEBUG_WW                    		false //true
+#define DEBUG_WW                    		true //false
 
 /***********************************************/
 // Constant

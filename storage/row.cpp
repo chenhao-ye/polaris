@@ -147,8 +147,19 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 #else
 	rc = this->manager->lock_get(lt, txn);
 #endif
-
+	/*#if DEBUG_WW
+		printf("test if finally get row for txn %lu\n",  txn->get_txn_id());
+	#endif */
 	if (rc == RCOK) {
+#if CC_ALG == WOUND_WAIT
+		if(txn->lock_abort) {			
+			#if DEBUG_WW
+				printf("txn %lu is aborted while trying to get row\n", txn->get_txn_id());
+			#endif
+			rc = Abort;
+			return_row(type, txn, NULL);
+		}
+#endif
 		row = this;
 	} else if (rc == Abort) {} 
 	else if (rc == WAIT) {
@@ -200,9 +211,14 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 				PAUSE
 #endif
 		}
+	
 		if (txn->lock_ready) 
 			rc = RCOK;
 		else if (txn->lock_abort) { 
+			#if CC_ALG == WOUND_WAIT && DEBUG_WW
+				printf("txn %lu is aborted while trying to get row\n", txn->get_txn_id());
+			#endif
+			// check if txn is aborted
 			rc = Abort;
 			return_row(type, txn, NULL);
 		}

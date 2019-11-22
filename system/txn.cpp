@@ -69,7 +69,6 @@ ts_t txn_man::get_ts() {
 void txn_man::cleanup(RC rc) {
 
 #if CC_ALG == WOUND_WAIT && DEBUG_WW
-    std::cout << "cleanup " << get_txn_id() << std::endl;
 #endif
 
 #if CC_ALG == HEKATON
@@ -149,6 +148,9 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
 
 
 	if (rc == Abort) {
+		#if DEBUG_WW
+			printf("detect abortion in txn %lu\n", get_txn_id());
+		#endif
 		return NULL;
 	}
 	accesses[row_cnt]->type = type;
@@ -231,7 +233,6 @@ RC txn_man::finish(RC rc) {
 	cleanup(rc);
 #elif CC_ALG == WOUND_WAIT
 #if DEBUG_WW
-    std::cout << "finish txn " << get_txn_id() << std::endl;
 #endif
 	cleanup(rc);
 #else 

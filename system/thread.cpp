@@ -59,10 +59,7 @@ RC thread_t::run() {
 	UInt64 txn_cnt = 0;
 
 	while (true) {
-//        #if DEBUG_WW
-//	        std::cout << "thread [" << get_thd_id() << "] start running txn: " << m_txn->get_txn_id()<< endl;
-//        #endif
-		starttime = get_sys_clock();
+    		starttime = get_sys_clock();
 		if (WORKLOAD != TEST) {
 			int trial = 0;
 			if (_abort_buffer_enable) {
@@ -108,6 +105,10 @@ RC thread_t::run() {
 //#endif
 		m_txn->set_txn_id(get_thd_id() + thd_txn_id * g_thread_cnt);
 		thd_txn_id ++;
+		#if DEBUG_WW
+			printf("thread %lu start running txn %lu\n", get_thd_id(), m_txn->get_txn_id());
+		#endif
+
 
 		if ((CC_ALG == HSTORE && !HSTORE_LOCAL_TS)
 				|| CC_ALG == MVCC 
@@ -139,7 +140,7 @@ RC thread_t::run() {
 				rc = runTest(m_txn);
 			else {
 			    rc = m_txn->run_txn(m_query);
-                curr_query = m_query;
+				curr_query = m_query;
 			}
 #endif
 #if CC_ALG == HSTORE
@@ -151,9 +152,12 @@ RC thread_t::run() {
 #endif
 		}
 
-#if CC_ALG == WOUND_WAIT
+#if DEBUG_WW
         // TODO: set rc to abort if txn's status == abort
-        rc = m_txn->lock_abort ? Abort : rc;
+        //rc = m_txn->lock_abort ? Abort : rc;
+	//printf("%d\n", rc);
+	if (rc == Abort)
+		printf("txn %lu is detected as abort in thread\n", m_txn->get_txn_id());
 #endif
 
 		if (rc == Abort) {
