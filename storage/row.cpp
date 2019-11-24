@@ -212,21 +212,22 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 #endif
 		}
 	
-		if (txn->lock_ready) 
+		if (txn->lock_ready) {
+			endtime = get_sys_clock();
+			INC_TMP_STATS(thd_id, time_wait, endtime - starttime);
+			#if DEBUG_WW
+				printf("[row] thread-%lu increment wait time %lu since txn %lu is waiting\n", thd_id, endtime - starttime, txn->get_txn_id());
+			#endif
 			rc = RCOK;
+		} 
 		else if (txn->lock_abort) { 
-			#if CC_ALG == WOUND_WAIT && DEBUG_WW
+			#if   DEBUG_WW
 				printf("[row] txn %lu is aborted while trying to get row (wait)\n", txn->get_txn_id());
 			#endif
 			// check if txn is aborted
 			rc = Abort;
 			return_row(type, txn, NULL);
 		}
-		endtime = get_sys_clock();
-		INC_TMP_STATS(thd_id, time_wait, endtime - starttime);
-		#if DEBUG_WW
-			printf("[row] increment wait time %lu\n", endtime - starttime);
-		#endif
 		row = this;
 	}
 	return rc;
