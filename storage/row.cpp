@@ -171,11 +171,11 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 		uint64_t endtime;
 		txn->lock_abort = false;
 		INC_STATS(txn->get_thd_id(), wait_cnt, 1);
-#if CC_ALG == DL_DETECT	
 		while (!txn->lock_ready && !txn->lock_abort) 
 		{
-//#if CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT 
+#if CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT 
 			continue;
+#elif CC_ALG == DL_DETECT	
 			uint64_t last_detect = starttime;
 			uint64_t last_try = starttime;
 
@@ -209,8 +209,8 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 				}
 			} else 
 				PAUSE
-		}
 #endif
+		}
 	
 		if (txn->lock_ready) 
 			rc = RCOK;
