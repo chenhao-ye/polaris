@@ -153,7 +153,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
 
 	if (rc == Abort) {
 		#if DEBUG_WW
-			printf("detect abortion in txn %lu\n", get_txn_id());
+			printf("[txn] detect abortion in txn %lu\n", get_txn_id());
 		#endif
 		return NULL;
 	}

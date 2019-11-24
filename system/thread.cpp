@@ -185,6 +185,9 @@ RC thread_t::run() {
 		ts_t endtime = get_sys_clock();
 		uint64_t timespan = endtime - starttime;
 		INC_STATS(get_thd_id(), run_time, timespan);
+		#if DEBUG_WW
+			printf("[txn] increment runtime %lu for thread-%lu\n", timespan, get_thd_id());
+		#endif
 		INC_STATS(get_thd_id(), latency, timespan);
 		//stats.add_lat(get_thd_id(), timespan);
 		if (rc == RCOK) {

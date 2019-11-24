@@ -215,9 +215,9 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 		if (txn->lock_ready) {
 			endtime = get_sys_clock();
 			INC_TMP_STATS(thd_id, time_wait, endtime - starttime);
-			#if DEBUG_WW
-				printf("[row] thread-%lu increment wait time %lu since txn %lu is waiting\n", thd_id, endtime - starttime, txn->get_txn_id());
-			#endif
+			//#if DEBUG_WW
+			//	printf("[row] thread-%lu increment wait time %lu since txn %lu is waiting\n", thd_id, endtime - starttime, txn->get_txn_id());
+			//#endif
 			rc = RCOK;
 		} 
 		else if (txn->lock_abort) { 
