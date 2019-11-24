@@ -43,6 +43,10 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 }
 
 void txn_man::set_txn_id(txnid_t txn_id) {
+	#if CC_ALG == WOUND_WAIT
+		// need to reset its params
+		ATOM_CAS(this->lock_abort, true, false);
+	#endif
 	this->txn_id = txn_id;
 }
 
