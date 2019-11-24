@@ -1,28 +1,226 @@
 mem_allocator initialized!
 WOUND_WAIT
+reading schema file: ./benchmarks/TPCC_full_schema.txt
+TPCC schema initialized
+TPCC Data Initialization Complete!
 workload initialized!
-Query Queue Init Time 0.353387
+Query Queue Init Time 0.001111
 query_queue initialized!
-PASS! SimTime = 4763455011
-[tid=0] txn_cnt=6403,abort_cnt=17
-[tid=1] txn_cnt=6980,abort_cnt=0
-[tid=2] txn_cnt=4263,abort_cnt=24
-[tid=3] txn_cnt=4916,abort_cnt=35
-[tid=4] txn_cnt=8313,abort_cnt=0
-[tid=5] txn_cnt=5227,abort_cnt=27
-[tid=6] txn_cnt=8892,abort_cnt=0
-[tid=7] txn_cnt=8926,abort_cnt=0
-[tid=8] txn_cnt=10000,abort_cnt=0
-[tid=9] txn_cnt=5320,abort_cnt=12
-[tid=10] txn_cnt=6595,abort_cnt=1
-[tid=11] txn_cnt=244,abort_cnt=74
-[tid=12] txn_cnt=4845,abort_cnt=11
-[tid=13] txn_cnt=314,abort_cnt=71
-[tid=14] txn_cnt=6347,abort_cnt=0
-[tid=15] txn_cnt=1455,abort_cnt=59
-[tid=16] txn_cnt=1069,abort_cnt=66
-[tid=17] txn_cnt=7757,abort_cnt=0
-[tid=18] txn_cnt=181,abort_cnt=81
-[tid=19] txn_cnt=4594,abort_cnt=0
-[summary] txn_cnt=102641, abort_cnt=478, run_time=93.138712, time_wait=59.901020, time_ts_alloc=0.005813, time_man=1.030185, time_index=0.729947, time_abort=30.742046, time_cleanup=0.103560, latency=0.000907, deadlock_cnt=0, cycle_detect=0, dl_detect_time=0.000000, dl_wait_time=0.000000, time_query=30.676267, debug1=0.000000, debug2=0.000000, debug3=0.000000, debug4=0.000000, debug5=0.000000, throughput=22040.459335
-ycsb
+thread 3 start running txn 3
+thread 0 start running txn 0
+thread 1 start running txn 1
+thread 2 start running txn 2
+thread 3 start running txn 7
+thread 2 start running txn 6
+thread 3 start running txn 11
+thread 2 start running txn 10
+thread 3 start running txn 15
+thread 2 start running txn 14
+thread 3 start running txn 19
+thread 2 start running txn 18
+thread 3 start running txn 23
+thread 2 start running txn 22
+thread 3 start running txn 27
+thread 2 start running txn 26
+thread 3 start running txn 31
+thread 2 start running txn 30
+thread 3 start running txn 35
+thread 2 start running txn 34
+thread 3 start running txn 39
+thread 2 start running txn 38
+thread 3 start running txn 43
+thread 2 start running txn 42
+thread 3 start running txn 47
+thread 2 start running txn 46
+thread 3 start running txn 51
+thread 2 start running txn 50
+thread 3 start running txn 55
+thread 2 start running txn 54
+thread 3 start running txn 59
+thread 2 start running txn 58
+thread 3 start running txn 63
+thread 2 start running txn 62
+thread 3 start running txn 67
+thread 2 start running txn 66
+thread 3 start running txn 71
+thread 2 start running txn 70
+thread 3 start running txn 75
+thread 2 start running txn 74
+thread 3 start running txn 79
+thread 2 start running txn 78
+thread 3 start running txn 83
+thread 2 start running txn 82
+thread 3 start running txn 87
+thread 2 start running txn 86
+thread 3 start running txn 91
+thread 2 start running txn 90
+thread 3 start running txn 95
+thread 2 start running txn 94
+thread 3 start running txn 99
+thread 2 start running txn 98
+thread 3 start running txn 103
+thread 2 start running txn 102
+thread 3 start running txn 107
+thread 2 start running txn 106
+thread 3 start running txn 111
+thread 2 start running txn 110
+thread 3 start running txn 115
+thread 2 start running txn 114
+thread 3 start running txn 119
+thread 2 start running txn 118
+thread 3 start running txn 123
+thread 2 start running txn 122
+thread 3 start running txn 127
+thread 2 start running txn 126
+thread 3 start running txn 131
+thread 2 start running txn 130
+thread 3 start running txn 135
+thread 2 start running txn 134
+thread 3 start running txn 139
+thread 2 start running txn 138
+thread 3 start running txn 143
+thread 2 start running txn 142
+thread 3 start running txn 147
+thread 2 start running txn 146
+thread 3 start running txn 151
+thread 2 start running txn 150
+thread 3 start running txn 155
+thread 2 start running txn 154
+thread 3 start running txn 159
+thread 2 start running txn 158
+thread 3 start running txn 163
+thread 2 start running txn 162
+thread 3 start running txn 167
+thread 2 start running txn 166
+thread 3 start running txn 171
+thread 2 start running txn 170
+thread 3 start running txn 175
+thread 2 start running txn 174
+thread 3 start running txn 179
+thread 2 start running txn 178
+thread 3 start running txn 183
+thread 2 start running txn 182
+thread 3 start running txn 187
+thread 2 start running txn 186
+thread 3 start running txn 191
+thread 2 start running txn 190
+thread 3 start running txn 195
+thread 2 start running txn 194
+thread 3 start running txn 199
+thread 2 start running txn 198
+thread 3 start running txn 203
+thread 2 start running txn 202
+thread 3 start running txn 207
+thread 2 start running txn 206
+thread 3 start running txn 211
+thread 2 start running txn 210
+thread 3 start running txn 215
+thread 2 start running txn 214
+thread 3 start running txn 219
+thread 2 start running txn 218
+thread 3 start running txn 223
+thread 2 start running txn 222
+thread 3 start running txn 227
+thread 2 start running txn 226
+thread 3 start running txn 231
+thread 2 start running txn 230
+thread 3 start running txn 235
+thread 2 start running txn 234
+thread 3 start running txn 239
+thread 2 start running txn 238
+thread 3 start running txn 243
+thread 2 start running txn 242
+thread 3 start running txn 247
+thread 2 start running txn 246
+thread 3 start running txn 251
+thread 2 start running txn 250
+thread 3 start running txn 255
+thread 2 start running txn 254
+thread 3 start running txn 259
+thread 0 start running txn 4
+thread 3 start running txn 263
+thread 0 start running txn 8
+thread 3 start running txn 267
+thread 2 start running txn 258
+thread 1 start running txn 5
+thread 3 start running txn 271
+thread 1 start running txn 9
+thread 3 start running txn 275
+txn 258 abort txn 9
+set txn 9 to abort.
+thread 0 start running txn 12
+txn 12 abort txn 9
+txn 9 is aborted while trying to get row
+detect abortion in txn 9
+txn 9 is detected as abort in thread
+thread 0 start running txn 16
+thread 3 start running txn 279
+thread 0 start running txn 20
+thread 3 start running txn 283
+thread 0 start running txn 24
+thread 3 start running txn 287
+thread 0 start running txn 28
+thread 3 start running txn 291
+thread 0 start running txn 32
+thread 3 start running txn 295
+thread 0 start running txn 36
+thread 3 start running txn 299
+thread 0 start running txn 40
+thread 3 start running txn 303
+thread 0 start running txn 44
+thread 3 start running txn 307
+thread 0 start running txn 48
+thread 3 start running txn 311
+thread 0 start running txn 52
+thread 3 start running txn 315
+thread 0 start running txn 56
+thread 3 start running txn 319
+thread 0 start running txn 60
+thread 3 start running txn 323
+thread 0 start running txn 64
+thread 3 start running txn 327
+thread 0 start running txn 68
+thread 3 start running txn 331
+thread 0 start running txn 72
+thread 3 start running txn 335
+thread 0 start running txn 76
+thread 3 start running txn 339
+thread 0 start running txn 80
+thread 3 start running txn 343
+thread 0 start running txn 84
+thread 3 start running txn 347
+thread 0 start running txn 88
+thread 3 start running txn 351
+thread 0 start running txn 92
+thread 3 start running txn 355
+thread 0 start running txn 96
+thread 3 start running txn 359
+thread 0 start running txn 100
+thread 3 start running txn 363
+thread 0 start running txn 104
+thread 3 start running txn 367
+thread 0 start running txn 108
+thread 3 start running txn 371
+thread 0 start running txn 112
+thread 3 start running txn 375
+thread 0 start running txn 116
+thread 3 start running txn 379
+thread 0 start running txn 120
+thread 3 start running txn 383
+thread 0 start running txn 124
+thread 3 start running txn 387
+thread 0 start running txn 128
+thread 3 start running txn 391
+thread 0 start running txn 132
+thread 3 start running txn 395
+thread 0 start running txn 136
+thread 3 start running txn 399
+thread 0 start running txn 140
+thread 1 start running txn 13
+PASS! SimTime = 31480074
+[tid=0] txn_cnt=36,abort_cnt=0
+[tid=1] txn_cnt=3,abort_cnt=1
+[tid=2] txn_cnt=65,abort_cnt=0
+[tid=3] txn_cnt=100,abort_cnt=0
+[summary] txn_cnt=204, abort_cnt=1, run_time=0.037245, time_wait=0.005110, time_ts_alloc=0.000013, time_man=0.001083, time_index=0.000215, time_abort=0.000014, time_cleanup=0.000166, latency=0.000183, deadlock_cnt=0, cycle_detect=0, dl_detect_time=0.000000, dl_wait_time=0.000000, time_query=0.029650, debug1=0.000000, debug2=0.000000, debug3=0.000000, debug4=0.000000, debug5=0.000000, throughput=21908.851659
+tpcc
