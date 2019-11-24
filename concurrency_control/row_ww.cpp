@@ -94,7 +94,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
                 // step 1 - figure out what need to be done when aborting a txn
                 // ask thread to abort
                 #if DEBUG_WW
-			printf("txn %lu abort txn %lu\n", txn->get_txn_id(), en->txn->get_txn_id());
+			printf("[row_ww]txn %lu abort txn %lu\n", txn->get_txn_id(), en->txn->get_txn_id());
                 #endif
                 en->txn->abort_txn();
             }
@@ -129,6 +129,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 		STACK_PUSH(owners, entry);
 		owner_cnt ++;
 		lock_type = type;
+		txn->lock_ready = true;
         	rc = RCOK;
 	}
 

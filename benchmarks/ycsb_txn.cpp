@@ -84,7 +84,7 @@ final:
 	rc = finish(rc);
 	#if DEBUG_WW
 		if (rc == Abort)
-			printf("txn is aborted in ycsb\n");
+			printf("[YCSB] detected abort\n" );
 	#endif
 	return rc;
 }

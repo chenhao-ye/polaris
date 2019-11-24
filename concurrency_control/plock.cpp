@@ -106,6 +106,9 @@ RC Plock::lock(txn_man * txn, uint64_t * parts, uint64_t part_cnt) {
 		ts_t t = get_sys_clock();
 		while (txn->ready_part > 0) {}
 		INC_TMP_STATS(txn->get_thd_id(), time_wait, get_sys_clock() - t);
+		#if DEBUG_WW
+			printf("[plock] increment time wait %lu\n", get_sys_clock() - t);
+		#endif
 	}
 	assert(txn->ready_part == 0);
 	INC_TMP_STATS(txn->get_thd_id(), time_man, get_sys_clock() - starttime);

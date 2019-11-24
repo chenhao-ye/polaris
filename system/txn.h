@@ -132,8 +132,9 @@ inline RC txn_man::abort_txn()
     bool can_abort = ATOM_CAS(this->lock_abort, false, true);
     // TODO: check if abort is successfult, if so, release lock by calling finish
     if (can_abort) {
+	ATOM_CAS(this->lock_ready, true, false);
 #if DEBUG_WW & CC_ALG == WOUND_WAIT
-	printf("set txn %lu to abort.\n", this->get_txn_id());
+	printf("[txn] set txn %lu to abort.\n", this->get_txn_id());
 #endif
         return FINISH;
     }
