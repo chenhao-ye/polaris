@@ -164,16 +164,19 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 	} else if (rc == Abort) {} 
 	else if (rc == WAIT) {
 		ASSERT(CC_ALG == WAIT_DIE || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT);
+		//txn->lock_abort = false;
 		uint64_t starttime = get_sys_clock();
 #if CC_ALG == DL_DETECT	
 		bool dep_added = false;
 #endif
 		uint64_t endtime;
-		txn->lock_abort = false;
 		INC_STATS(txn->get_thd_id(), wait_cnt, 1);
 		while (!txn->lock_ready && !txn->lock_abort) 
 		{
 #if CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT 
+			#if DEBUG_WW && CC_ALG == WOUND_WAIT
+				//printf("[row] thread-%lu txn %lu is waiting for lock\n",txn->get_thd_id(), txn->get_txn_id() );
+			#endif
 			continue;
 #elif CC_ALG == DL_DETECT	
 			uint64_t last_detect = starttime;

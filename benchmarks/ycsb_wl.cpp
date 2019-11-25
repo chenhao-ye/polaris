@@ -50,7 +50,8 @@ RC ycsb_wl::init_table() {
             if (total_row > g_synth_table_size)
                 goto ins_done;
             row_t * new_row = NULL;
-			uint64_t row_id;
+	    //zhihan
+			uint64_t row_id = get_sys_clock();
             rc = the_table->get_new_row(new_row, part_id, row_id); 
             // TODO insertion of last row may fail after the table_size
             // is updated. So never access the last record in a table
@@ -120,7 +121,8 @@ void * ycsb_wl::init_table_slice() {
 			key ++
 	) {
 		row_t * new_row = NULL;
-		uint64_t row_id;
+		//zhihan uint64_t row_id;
+		uint64_t row_id = get_sys_clock();
 		int part_id = key_to_part(key);
 		rc = the_table->get_new_row(new_row, part_id, row_id); 
 		assert(rc == RCOK);

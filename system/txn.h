@@ -64,7 +64,7 @@ public:
 #if CC_ALG == HEKATON
 	void * volatile history_entry;
 #endif
-	// [DL_DETECT, NO_WAIT, WAIT_DIE]
+	// [DL_DETECT, NO_WAIT, WAIT_DIE, WOUND_WAIT]
 	bool volatile 	lock_ready;
 	bool volatile 	lock_abort; // forces another waiting txn to abort.
 	// [TIMESTAMP, MVCC]
@@ -132,7 +132,7 @@ inline RC txn_man::abort_txn()
     bool can_abort = ATOM_CAS(this->lock_abort, false, true);
     // TODO: check if abort is successfult, if so, release lock by calling finish
     if (can_abort) {
-	ATOM_CAS(this->lock_ready, true, false);
+	//ATOM_CAS(this->lock_ready, true, false);
 #if DEBUG_WW & CC_ALG == WOUND_WAIT
 	printf("[txn] set txn %lu to abort.\n", this->get_txn_id());
 #endif

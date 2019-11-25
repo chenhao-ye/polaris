@@ -78,7 +78,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 	//		conflict = true;
 	//}
 	
-	if (owners != NULL) { 
+	if (owner_cnt != 0) { 
 		// Cannot be added to the owner list.
         ///////////////////////////////////////////////////////////
         //  - T is the txn currently running
@@ -90,6 +90,45 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
         // go through owners
         LockEntry * en = owners;
         while (en != NULL) {
+	    if (en->txn->get_txn_id() == txn->get_txn_id()) {
+		//already in owners
+		// check lock type
+		// same type grab
+		if (!(type == LOCK_EX && lock_type == LOCK_SH)) {
+			txn->lock_ready = true;
+        		rc = RCOK;
+			goto final;	
+		} else {
+			// want to upgrade to write lock
+			// means read is completed
+			// case 1: only owner
+			if (owner_cnt == 1) {
+				// just change type
+				en->type = LOCK_EX;
+				txn->lock_ready = true;
+				rc = RCOK;
+				goto final;
+			}
+			// case 2: multiple owner
+			// need to remove the read lock -- en
+			en->prev->next = en->next;
+			en->next->prev = en->prev;
+			owner_cnt--;
+			// and reacquire write lock -- en. 
+			assert((waiters_head == NULL || waiters_head->txn->get_ts() > txn->get_ts()));
+			en->type = LOCK_EX;
+			if (waiters_head) {
+				LIST_INSERT_BEFORE(waiters_head, en);
+			} else {
+				waiters_tail = en;
+			}
+			waiters_head = en;
+			waiter_cnt++;
+			txn->lock_ready = false;
+			rc = WAIT;
+			goto final;
+		}
+	    }
             if (en->txn->get_ts() > txn->get_ts()) {
                 // step 1 - figure out what need to be done when aborting a txn
                 // ask thread to abort
@@ -108,9 +147,21 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
         entry->txn = txn;
         entry->type = type;
         en = waiters_head;
-        while (en != NULL && txn->get_ts() < en->txn->get_ts())
-            en = en->next;
-        if (en) {
+        while (en != NULL)
+	{
+	    if (en->txn->get_txn_id() == txn->get_txn_id()) {
+		if (en->type == LOCK_SH)
+			en->type = type;
+		txn->lock_ready = false;
+		rc = WAIT;
+		goto final;
+	    }
+	    if (txn->get_ts() < en->txn->get_ts())
+		break;
+	    else 
+            	en = en->next;
+        }
+	if (en) {
             LIST_INSERT_BEFORE(en, entry);
             if (en == waiters_head)
                 waiters_head = entry;
@@ -119,6 +170,9 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
         waiter_cnt ++;
         txn->lock_ready = false;
         rc = WAIT;
+		#if DEBUG_WW
+			printf("[row_ww] add txn %lu to waiters of row %lu\n", txn->get_txn_id(), _row->get_row_id());
+		#endif
 
 
 	} else {
@@ -131,10 +185,13 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 		lock_type = type;
 		txn->lock_ready = true;
         	rc = RCOK;
+		#if DEBUG_WW
+			printf("[row_ww] add txn %lu to owners of row %lu\n", txn->get_txn_id(), _row->get_row_id());
+		#endif
 	}
 
 
-//final:
+final:
 
 	if (g_central_man)
 		glob_manager->release_row(_row);
@@ -168,6 +225,9 @@ RC Row_ww::lock_release(txn_man * txn) {
 		owner_cnt --;
 		if (owner_cnt == 0)
 			lock_type = LOCK_NONE;
+		#if DEBUG_WW
+			printf("[row_ww] rm txn %lu from owners of row %lu\n", txn->get_txn_id(), _row->get_row_id());
+		#endif
 	} else {
 		// Not in owners list, try waiters list.
 		en = waiters_head;
@@ -181,6 +241,9 @@ RC Row_ww::lock_release(txn_man * txn) {
 			waiters_tail = en->prev;
 		return_entry(en);
 		waiter_cnt --;
+		#if DEBUG_WW
+			printf("[row_ww] rm txn %lu from waiters of row %lu\n", txn->get_txn_id(), _row->get_row_id());
+		#endif
 	}
 
 	if (owner_cnt == 0)
@@ -200,6 +263,9 @@ RC Row_ww::lock_release(txn_man * txn) {
 		ASSERT(entry->txn->lock_ready == false);
 		entry->txn->lock_ready = true;
 		lock_type = entry->type;
+		#if DEBUG_WW
+			printf("[row_ww] bring %lu from waiter to owner to row %lu\n", entry->txn->get_txn_id(), _row->get_row_id());
+		#endif
 	} 
 	ASSERT((owners == NULL) == (owner_cnt == 0));
 

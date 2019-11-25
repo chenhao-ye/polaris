@@ -16,6 +16,7 @@ dbms_cfg = ["config-std.h", "config.h"]
 algs = ['WAIT_DIE', 'WOUND_WAIT']
 algs = ['WAIT_DIE', 'WOUND_WAIT', 'NO_WAIT']
 algs = ['WOUND_WAIT']
+#algs = ['NO_WAIT']
 #algs = ['WOUND_WAIT']
 def insert_job(alg, workload):
 	jobs[alg + '_' + workload] = {

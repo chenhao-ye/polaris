@@ -15,6 +15,8 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 	this->h_wl = h_wl;
 	pthread_mutex_init(&txn_lock, NULL);
 	lock_ready = false;
+	//zhihan
+	lock_abort = false;
 	ready_part = 0;
 	row_cnt = 0;
 	wr_cnt = 0;
@@ -45,7 +47,12 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 void txn_man::set_txn_id(txnid_t txn_id) {
 	#if CC_ALG == WOUND_WAIT
 		// need to reset its params
-		ATOM_CAS(this->lock_abort, true, false);
+		//#if DEBUG_WW
+		//	printf("[txn] init txn %lu abort to false\n", txn_id);
+		//#endif
+		//ATOM_CAS(this->lock_abort, true, false);
+		lock_abort = false;
+		lock_ready = false;
 	#endif
 	this->txn_id = txn_id;
 }
@@ -152,9 +159,6 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
 
 
 	if (rc == Abort) {
-		#if DEBUG_WW
-			printf("[txn] detect abortion in txn %lu\n", get_txn_id());
-		#endif
 		return NULL;
 	}
 	accesses[row_cnt]->type = type;
@@ -237,6 +241,7 @@ RC txn_man::finish(RC rc) {
 	cleanup(rc);
 #elif CC_ALG == WOUND_WAIT
 #if DEBUG_WW
+	printf("[txn] finish up txn %lu due to %d\n", get_txn_id(), rc);
 #endif
 	cleanup(rc);
 #else 

@@ -1,4 +1,4 @@
-rm -f out
-cp -r config_test.h config.h
-#python ww.py ycsb > out
-python ww.py tpcc > out
+cp -r config_debug.h config.h
+wl='ycsb'
+#python ww.py ${wl} &> debug.out
+python ww.py ${wl} |& tee debug.out

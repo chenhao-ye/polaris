@@ -1,9 +1,8 @@
 rm outputs/*.out
 cp -r config_real.h config.h
-for i in 1 2 3 4 5
+for i in 1 2 3 
 do
-#	for wl in 'ycsb' 'tpcc'
-	for wl in 'tpcc'
+	for wl in 'ycsb' 'tpcc'
 	do
 		echo $wl
 		python wait_die.py ${wl} &> outputs/${wl}_$i.out

@@ -4,88 +4,88 @@ reading schema file: ./benchmarks/TPCC_full_schema.txt
 TPCC schema initialized
 TPCC Data Initialization Complete!
 workload initialized!
-Query Queue Init Time 0.296140
+Query Queue Init Time 2.148209
 query_queue initialized!
-PASS! SimTime = 306795861
-[tid=0] txn_cnt=1,abort_cnt=4
-[tid=1] txn_cnt=4333,abort_cnt=3
-[tid=2] txn_cnt=10000,abort_cnt=2
-[tid=3] txn_cnt=1,abort_cnt=5
-[tid=4] txn_cnt=5362,abort_cnt=4
-[tid=5] txn_cnt=1,abort_cnt=4
-[tid=6] txn_cnt=2,abort_cnt=3
-[tid=7] txn_cnt=1,abort_cnt=4
-[tid=8] txn_cnt=2,abort_cnt=4
-[tid=9] txn_cnt=1,abort_cnt=5
-[tid=10] txn_cnt=1,abort_cnt=4
-[tid=11] txn_cnt=1632,abort_cnt=5
-[tid=12] txn_cnt=1,abort_cnt=3
-[tid=13] txn_cnt=1,abort_cnt=7
-[tid=14] txn_cnt=1178,abort_cnt=5
-[tid=15] txn_cnt=1191,abort_cnt=5
-[tid=16] txn_cnt=3,abort_cnt=5
-[tid=17] txn_cnt=1685,abort_cnt=5
-[tid=18] txn_cnt=6,abort_cnt=3
-[tid=19] txn_cnt=1,abort_cnt=6
-[summary] txn_cnt=25403, abort_cnt=86, run_time=5.193546, time_wait=0.000000, time_ts_alloc=0.000000, time_man=0.122125, time_index=0.022108, time_abort=2.931296, time_cleanup=0.020168, latency=0.000204, deadlock_cnt=0, cycle_detect=0, dl_detect_time=0.000000, dl_wait_time=0.000000, time_query=4.973362, debug1=0.000000, debug2=0.000000, debug3=0.000000, debug4=0.000000, debug5=0.000000, throughput=97825.269474
+PASS! SimTime = 32565520791
+[tid=0] txn_cnt=98661,abort_cnt=3987356
+[tid=1] txn_cnt=99205,abort_cnt=4006463
+[tid=2] txn_cnt=97963,abort_cnt=3974940
+[tid=3] txn_cnt=97101,abort_cnt=3972592
+[tid=4] txn_cnt=98095,abort_cnt=3973675
+[tid=5] txn_cnt=100000,abort_cnt=3973029
+[tid=6] txn_cnt=99408,abort_cnt=3976741
+[tid=7] txn_cnt=99653,abort_cnt=3982529
+[tid=8] txn_cnt=98956,abort_cnt=3983384
+[tid=9] txn_cnt=99339,abort_cnt=3976171
+[tid=10] txn_cnt=97947,abort_cnt=3983420
+[tid=11] txn_cnt=99515,abort_cnt=3973398
+[tid=12] txn_cnt=98055,abort_cnt=3948255
+[tid=13] txn_cnt=99235,abort_cnt=3965843
+[tid=14] txn_cnt=98023,abort_cnt=3970163
+[tid=15] txn_cnt=97553,abort_cnt=3957693
+[tid=16] txn_cnt=99295,abort_cnt=3982829
+[tid=17] txn_cnt=98689,abort_cnt=3981716
+[tid=18] txn_cnt=98353,abort_cnt=3984215
+[tid=19] txn_cnt=99228,abort_cnt=3952261
+[summary] txn_cnt=1974274, abort_cnt=79506673, run_time=650.040949, time_wait=0.000000, time_ts_alloc=0.000000, time_man=69.134465, time_index=2.309573, time_abort=571.132389, time_cleanup=33.893871, latency=0.000329, deadlock_cnt=0, cycle_detect=0, dl_detect_time=0.000000, dl_wait_time=0.000000, time_query=3.013713, debug1=0.000000, debug2=0.000000, debug3=0.000000, debug4=0.000000, debug5=0.000000, throughput=60743.065549
 mem_allocator initialized!
 WAIT_DIE
 reading schema file: ./benchmarks/TPCC_full_schema.txt
 TPCC schema initialized
 TPCC Data Initialization Complete!
 workload initialized!
-Query Queue Init Time 0.312086
+Query Queue Init Time 2.248833
 query_queue initialized!
-PASS! SimTime = 1646522445
-[tid=0] txn_cnt=7269,abort_cnt=35
-[tid=1] txn_cnt=5168,abort_cnt=26
-[tid=2] txn_cnt=5807,abort_cnt=29
-[tid=3] txn_cnt=6337,abort_cnt=26
-[tid=4] txn_cnt=5127,abort_cnt=26
-[tid=5] txn_cnt=10000,abort_cnt=26
-[tid=6] txn_cnt=7780,abort_cnt=28
-[tid=7] txn_cnt=7344,abort_cnt=27
-[tid=8] txn_cnt=7918,abort_cnt=29
-[tid=9] txn_cnt=6212,abort_cnt=26
-[tid=10] txn_cnt=7499,abort_cnt=26
-[tid=11] txn_cnt=8416,abort_cnt=24
-[tid=12] txn_cnt=7825,abort_cnt=30
-[tid=13] txn_cnt=7683,abort_cnt=28
-[tid=14] txn_cnt=9512,abort_cnt=34
-[tid=15] txn_cnt=5331,abort_cnt=31
-[tid=16] txn_cnt=8148,abort_cnt=30
-[tid=17] txn_cnt=6403,abort_cnt=29
-[tid=18] txn_cnt=6558,abort_cnt=29
-[tid=19] txn_cnt=5403,abort_cnt=26
-[summary] txn_cnt=141740, abort_cnt=565, run_time=32.000832, time_wait=0.003239, time_ts_alloc=0.010169, time_man=0.866079, time_index=0.154571, time_abort=0.001127, time_cleanup=0.166098, latency=0.000226, deadlock_cnt=0, cycle_detect=0, dl_detect_time=0.000000, dl_wait_time=0.000000, time_query=30.449845, debug1=0.000000, debug2=0.000000, debug3=0.000000, debug4=0.000000, debug5=0.000000, throughput=88585.197339
+PASS! SimTime = 16166949018
+[tid=0] txn_cnt=99651,abort_cnt=1425772
+[tid=1] txn_cnt=99510,abort_cnt=1440808
+[tid=2] txn_cnt=99586,abort_cnt=1492293
+[tid=3] txn_cnt=99479,abort_cnt=1409590
+[tid=4] txn_cnt=99191,abort_cnt=1378334
+[tid=5] txn_cnt=99629,abort_cnt=1471053
+[tid=6] txn_cnt=99052,abort_cnt=1465755
+[tid=7] txn_cnt=99087,abort_cnt=1415861
+[tid=8] txn_cnt=99506,abort_cnt=1396834
+[tid=9] txn_cnt=99324,abort_cnt=1349195
+[tid=10] txn_cnt=99624,abort_cnt=1324160
+[tid=11] txn_cnt=100000,abort_cnt=1438390
+[tid=12] txn_cnt=99656,abort_cnt=1333725
+[tid=13] txn_cnt=99511,abort_cnt=1406764
+[tid=14] txn_cnt=98597,abort_cnt=1407095
+[tid=15] txn_cnt=99094,abort_cnt=1412678
+[tid=16] txn_cnt=99372,abort_cnt=1445538
+[tid=17] txn_cnt=99402,abort_cnt=1426558
+[tid=18] txn_cnt=99259,abort_cnt=1482190
+[tid=19] txn_cnt=98630,abort_cnt=1368125
+[summary] txn_cnt=1987160, abort_cnt=28290718, run_time=322.664873, time_wait=139.142992, time_ts_alloc=0.254367, time_man=56.694610, time_index=1.961977, time_abort=116.666322, time_cleanup=19.541123, latency=0.000162, deadlock_cnt=0, cycle_detect=0, dl_detect_time=0.000000, dl_wait_time=0.000000, time_query=1.333643, debug1=0.000000, debug2=0.000000, debug3=0.000000, debug4=0.000000, debug5=0.000000, throughput=123171.759119
 mem_allocator initialized!
 WOUND_WAIT
 reading schema file: ./benchmarks/TPCC_full_schema.txt
 TPCC schema initialized
 TPCC Data Initialization Complete!
 workload initialized!
-Query Queue Init Time 0.224533
+Query Queue Init Time 2.548176
 query_queue initialized!
-PASS! SimTime = 269921943
-[tid=0] txn_cnt=1,abort_cnt=0
-[tid=1] txn_cnt=1,abort_cnt=0
-[tid=2] txn_cnt=2,abort_cnt=0
-[tid=3] txn_cnt=1,abort_cnt=0
-[tid=4] txn_cnt=1,abort_cnt=0
-[tid=5] txn_cnt=1,abort_cnt=0
-[tid=6] txn_cnt=1,abort_cnt=0
-[tid=7] txn_cnt=1,abort_cnt=0
-[tid=8] txn_cnt=1,abort_cnt=0
-[tid=9] txn_cnt=1,abort_cnt=0
-[tid=10] txn_cnt=1,abort_cnt=0
-[tid=11] txn_cnt=1,abort_cnt=0
-[tid=12] txn_cnt=1,abort_cnt=0
-[tid=13] txn_cnt=1,abort_cnt=0
-[tid=14] txn_cnt=10000,abort_cnt=0
-[tid=15] txn_cnt=1,abort_cnt=0
-[tid=16] txn_cnt=1,abort_cnt=0
-[tid=17] txn_cnt=1,abort_cnt=0
-[tid=18] txn_cnt=10000,abort_cnt=0
-[tid=19] txn_cnt=1,abort_cnt=1
-[summary] txn_cnt=20019, abort_cnt=1, run_time=5.363526, time_wait=4.993818, time_ts_alloc=0.004307, time_man=0.208740, time_index=0.023344, time_abort=0.013169, time_cleanup=0.056902, latency=0.000268, deadlock_cnt=0, cycle_detect=0, dl_detect_time=0.000000, dl_wait_time=0.000000, time_query=0.048725, debug1=0.000000, debug2=0.000000, debug3=0.000000, debug4=0.000000, debug5=0.000000, throughput=74648.650418
+PASS! SimTime = 17764398027
+[tid=0] txn_cnt=99902,abort_cnt=2384
+[tid=1] txn_cnt=99955,abort_cnt=2338
+[tid=2] txn_cnt=99872,abort_cnt=2324
+[tid=3] txn_cnt=99987,abort_cnt=2372
+[tid=4] txn_cnt=99947,abort_cnt=2321
+[tid=5] txn_cnt=99904,abort_cnt=2345
+[tid=6] txn_cnt=99873,abort_cnt=2313
+[tid=7] txn_cnt=99771,abort_cnt=2330
+[tid=8] txn_cnt=99900,abort_cnt=2333
+[tid=9] txn_cnt=99885,abort_cnt=2368
+[tid=10] txn_cnt=99936,abort_cnt=2374
+[tid=11] txn_cnt=99941,abort_cnt=2373
+[tid=12] txn_cnt=99925,abort_cnt=2239
+[tid=13] txn_cnt=99950,abort_cnt=2382
+[tid=14] txn_cnt=99871,abort_cnt=2344
+[tid=15] txn_cnt=99975,abort_cnt=2405
+[tid=16] txn_cnt=100000,abort_cnt=2390
+[tid=17] txn_cnt=99957,abort_cnt=2313
+[tid=18] txn_cnt=99960,abort_cnt=2453
+[tid=19] txn_cnt=99916,abort_cnt=2354
+[summary] txn_cnt=1998427, abort_cnt=47055, run_time=355.213457, time_wait=318.378238, time_ts_alloc=0.297232, time_man=20.959924, time_index=2.143565, time_abort=6.410369, time_cleanup=4.871921, latency=0.000178, deadlock_cnt=0, cycle_detect=0, dl_detect_time=0.000000, dl_wait_time=0.000000, time_query=0.395294, debug1=0.000000, debug2=0.000000, debug3=0.000000, debug4=0.000000, debug5=0.000000, throughput=112519.779995
 tpcc
