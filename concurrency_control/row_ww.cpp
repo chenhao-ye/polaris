@@ -94,42 +94,19 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 		//already in owners
 		// check lock type
 		// same type grab
-		if (!(type == LOCK_EX && lock_type == LOCK_SH)) {
-			txn->lock_ready = true;
-        		rc = RCOK;
-			goto final;	
-		} else {
-			// want to upgrade to write lock
-			// means read is completed
-			// case 1: only owner
-			if (owner_cnt == 1) {
-				// just change type
-				en->type = LOCK_EX;
-				txn->lock_ready = true;
-				rc = RCOK;
-				goto final;
-			}
-			// case 2: multiple owner
-			// need to remove the read lock -- en
+		if(type == LOCK_EX && lock_type == LOCK_SH && owner_cnt > 1) {
 			en->prev->next = en->next;
 			en->next->prev = en->prev;
 			owner_cnt--;
-			// and reacquire write lock -- en. 
-			assert((waiters_head == NULL || waiters_head->txn->get_ts() > txn->get_ts()));
-			en->type = LOCK_EX;
-			if (waiters_head) {
-				LIST_INSERT_BEFORE(waiters_head, en);
-			} else {
-				waiters_tail = en;
-			}
-			waiters_head = en;
-			waiter_cnt++;
-			txn->lock_ready = false;
-			rc = WAIT;
+		} else {
+			if (type == LOCK_EX)
+				en->type = LOCK_EX;
+			txn->lock_ready = true;
+			rc = RCOK;
 			goto final;
-		}
+		} 
 	    }
-            if (en->txn->get_ts() > txn->get_ts()) {
+            else if (en->txn->get_ts() > txn->get_ts()) {
                 // step 1 - figure out what need to be done when aborting a txn
                 // ask thread to abort
                 #if DEBUG_WW
