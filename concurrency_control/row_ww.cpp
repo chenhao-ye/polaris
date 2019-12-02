@@ -107,7 +107,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 		} 
 	    }
             //else if (en->txn->get_ts() > txn->get_ts()) {
-            else if ((en->txn->get_ts() > txn->get_ts()) && conflict_lock(en->type, lock_type)) {
+            else if ((en->txn->get_ts() > txn->get_ts()) && conflict_lock(en->type, type)) {
                 // step 1 - figure out what need to be done when aborting a txn
                 // ask thread to abort
                 #if DEBUG_WW
