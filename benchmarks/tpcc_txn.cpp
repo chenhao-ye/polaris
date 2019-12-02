@@ -86,12 +86,13 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	item = index_read(_wl->i_district, key, wh_to_part(w_id));
 	assert(item != NULL);
 	// zhihan
-	if (has_local_row(item, WR, r_wh, r_wh_type)) {
-        row_t * r_dist_local = r_wh_local;
+        row_t * r_dist_local;
+        row_t * r_dist = ((row_t *)item->location);
+	if (has_local_row(r_dist, WR, r_wh, r_wh_type)) {
+        r_dist_local = r_wh_local;
         assert(false);
     } else {
-        row_t * r_dist = ((row_t *)item->location);
-        row_t * r_dist_local = get_row(r_dist, WR);
+        r_dist_local = get_row(r_dist, WR);
         if (r_dist_local == NULL) {
             return finish(Abort);
         }
