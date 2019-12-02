@@ -87,7 +87,7 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	assert(item != NULL);
 	// zhihan
 	if (has_local_row(item, WR, r_wh, r_wh_type)) {
-        row_t *r_dist_local = r_wh_local;
+        row_t * r_dist_local = r_wh_local;
         assert(false);
     } else {
         row_t * r_dist = ((row_t *)item->location);
