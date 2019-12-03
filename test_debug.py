@@ -13,9 +13,7 @@ def replace(filename, pattern, replacement):
 
 jobs = {}
 dbms_cfg = ["config-std.h", "config.h"]
-algs = ['WAIT_DIE', 'WOUND_WAIT']
-algs = ['WAIT_DIE', 'WOUND_WAIT', 'NO_WAIT']
-#algs = ['WOUND_WAIT']
+algs = []
 def insert_job(alg, workload):
 	jobs[alg + '_' + workload] = {
 		"WORKLOAD"			: workload,
@@ -50,8 +48,10 @@ def compile(job):
 	os.system("make clean > temp.out 2>&1")
 	ret = os.system("make -j8 > temp.out 2>&1")
 	if ret != 0:
-		print "ERROR in compiling"
+		print "ERROR in compiling, output saved in temp.out"
 		exit(0)
+	else:
+		os.system("rm -f temp.out")
 
 def test_run(test = '', job=None):
 	app_flags = ""
@@ -109,6 +109,8 @@ def run_all_test(jobs) :
 	jobs = {}
 
 print(sys.argv[1])
+for item in sys.argv[2].split(","):
+	algs.append(item)
 if sys.argv[1] == "ycsb":
 	# run YCSB tests
 	jobs = {}

@@ -1,0 +1,128 @@
+g++ -MM -MT system/query.o -MF system/query.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 system/query.cpp
+g++ -MM -MT system/mem_alloc.o -MF system/mem_alloc.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 system/mem_alloc.cpp
+g++ -MM -MT system/main.o -MF system/main.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 system/main.cpp
+g++ -MM -MT system/parser.o -MF system/parser.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 system/parser.cpp
+g++ -MM -MT system/global.o -MF system/global.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 system/global.cpp
+g++ -MM -MT system/helper.o -MF system/helper.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 system/helper.cpp
+g++ -MM -MT system/wl.o -MF system/wl.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 system/wl.cpp
+g++ -MM -MT system/txn.o -MF system/txn.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 system/txn.cpp
+g++ -MM -MT system/thread.o -MF system/thread.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 system/thread.cpp
+g++ -MM -MT system/manager.o -MF system/manager.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 system/manager.cpp
+g++ -MM -MT system/stats.o -MF system/stats.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 system/stats.cpp
+g++ -MM -MT storage/table.o -MF storage/table.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 storage/table.cpp
+g++ -MM -MT storage/row.o -MF storage/row.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 storage/row.cpp
+g++ -MM -MT storage/index_btree.o -MF storage/index_btree.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 storage/index_btree.cpp
+g++ -MM -MT storage/index_hash.o -MF storage/index_hash.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 storage/index_hash.cpp
+g++ -MM -MT storage/catalog.o -MF storage/catalog.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 storage/catalog.cpp
+g++ -MM -MT concurrency_control/row_clv.o -MF concurrency_control/row_clv.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 concurrency_control/row_clv.cpp
+g++ -MM -MT concurrency_control/row_silo.o -MF concurrency_control/row_silo.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 concurrency_control/row_silo.cpp
+g++ -MM -MT concurrency_control/row_tictoc.o -MF concurrency_control/row_tictoc.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 concurrency_control/row_tictoc.cpp
+g++ -MM -MT concurrency_control/hekaton.o -MF concurrency_control/hekaton.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 concurrency_control/hekaton.cpp
+g++ -MM -MT concurrency_control/silo.o -MF concurrency_control/silo.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 concurrency_control/silo.cpp
+g++ -MM -MT concurrency_control/tictoc.o -MF concurrency_control/tictoc.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 concurrency_control/tictoc.cpp
+g++ -MM -MT concurrency_control/row_lock.o -MF concurrency_control/row_lock.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 concurrency_control/row_lock.cpp
+g++ -MM -MT concurrency_control/plock.o -MF concurrency_control/plock.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 concurrency_control/plock.cpp
+g++ -MM -MT concurrency_control/row_ww.o -MF concurrency_control/row_ww.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 concurrency_control/row_ww.cpp
+g++ -MM -MT concurrency_control/row_mvcc.o -MF concurrency_control/row_mvcc.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 concurrency_control/row_mvcc.cpp
+g++ -MM -MT concurrency_control/occ.o -MF concurrency_control/occ.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 concurrency_control/occ.cpp
+g++ -MM -MT concurrency_control/row_occ.o -MF concurrency_control/row_occ.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 concurrency_control/row_occ.cpp
+g++ -MM -MT concurrency_control/row_ts.o -MF concurrency_control/row_ts.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 concurrency_control/row_ts.cpp
+g++ -MM -MT concurrency_control/dl_detect.o -MF concurrency_control/dl_detect.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 concurrency_control/dl_detect.cpp
+g++ -MM -MT concurrency_control/vll.o -MF concurrency_control/vll.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 concurrency_control/vll.cpp
+g++ -MM -MT concurrency_control/row_vll.o -MF concurrency_control/row_vll.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 concurrency_control/row_vll.cpp
+g++ -MM -MT concurrency_control/row_hekaton.o -MF concurrency_control/row_hekaton.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 concurrency_control/row_hekaton.cpp
+g++ -MM -MT benchmarks/test_wl.o -MF benchmarks/test_wl.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 benchmarks/test_wl.cpp
+g++ -MM -MT benchmarks/tpcc_helper.o -MF benchmarks/tpcc_helper.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 benchmarks/tpcc_helper.cpp
+g++ -MM -MT benchmarks/tpcc_txn.o -MF benchmarks/tpcc_txn.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 benchmarks/tpcc_txn.cpp
+g++ -MM -MT benchmarks/tpcc_wl.o -MF benchmarks/tpcc_wl.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 benchmarks/tpcc_wl.cpp
+g++ -MM -MT benchmarks/ycsb_txn.o -MF benchmarks/ycsb_txn.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 benchmarks/ycsb_txn.cpp
+g++ -MM -MT benchmarks/tpcc_query.o -MF benchmarks/tpcc_query.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 benchmarks/tpcc_query.cpp
+g++ -MM -MT benchmarks/ycsb_wl.o -MF benchmarks/ycsb_wl.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 benchmarks/ycsb_wl.cpp
+g++ -MM -MT benchmarks/ycsb_query.o -MF benchmarks/ycsb_query.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 benchmarks/ycsb_query.cpp
+g++ -MM -MT benchmarks/test_txn.o -MF benchmarks/test_txn.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 benchmarks/test_txn.cpp
+g++ -MM -MT config.o -MF config.d -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 config.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o config.o config.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o benchmarks/test_txn.o benchmarks/test_txn.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o benchmarks/ycsb_query.o benchmarks/ycsb_query.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o benchmarks/ycsb_wl.o benchmarks/ycsb_wl.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o benchmarks/tpcc_query.o benchmarks/tpcc_query.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o benchmarks/ycsb_txn.o benchmarks/ycsb_txn.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o benchmarks/tpcc_wl.o benchmarks/tpcc_wl.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o benchmarks/tpcc_txn.o benchmarks/tpcc_txn.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o benchmarks/tpcc_helper.o benchmarks/tpcc_helper.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o benchmarks/test_wl.o benchmarks/test_wl.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/row_hekaton.o concurrency_control/row_hekaton.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/row_vll.o concurrency_control/row_vll.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/vll.o concurrency_control/vll.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/row_ts.o concurrency_control/row_ts.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/dl_detect.o concurrency_control/dl_detect.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/row_occ.o concurrency_control/row_occ.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/occ.o concurrency_control/occ.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/row_mvcc.o concurrency_control/row_mvcc.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/row_ww.o concurrency_control/row_ww.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/plock.o concurrency_control/plock.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/row_lock.o concurrency_control/row_lock.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/tictoc.o concurrency_control/tictoc.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/silo.o concurrency_control/silo.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/hekaton.o concurrency_control/hekaton.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/row_tictoc.o concurrency_control/row_tictoc.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/row_silo.o concurrency_control/row_silo.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/row_clv.o concurrency_control/row_clv.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o storage/catalog.o storage/catalog.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o storage/index_hash.o storage/index_hash.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o storage/index_btree.o storage/index_btree.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o storage/row.o storage/row.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o storage/table.o storage/table.cpp
+concurrency_control/row_clv.cpp: In member function ‘void Row_clv::init(row_t*)’:
+concurrency_control/row_clv.cpp:19:2: error: ‘retired_cnt’ was not declared in this scope
+  retired_cnt = 0;
+  ^
+concurrency_control/row_clv.cpp: In member function ‘RC Row_clv::lock_get(lock_t, txn_man*, uint64_t*&, int&)’:
+concurrency_control/row_clv.cpp:85:21: error: ‘retired_cnt’ was not declared in this scope
+     if (owner_cnt + retired_cnt == 0) {
+                     ^
+concurrency_control/row_clv.cpp:87:9: error: ‘entry’ was not declared in this scope
+         entry = add_to_owner(type, txn);
+         ^
+concurrency_control/row_clv.cpp:93:91: error: request for member ‘txn’ in ‘((Row_clv*)this)->Row_clv::waiters_head’, which is of pointer type ‘LockEntry*’ (maybe you meant to use ‘->’ ?)
+         bool can_acquire = (!conflict_lock(type, lock_type) && !violate(txn, waiters_head.txn));
+                                                                                           ^
+concurrency_control/row_clv.cpp:96:13: error: ‘entry’ was not declared in this scope
+             entry = add_to_owner(type, txn);
+             ^
+concurrency_control/row_clv.cpp: In member function ‘RC Row_clv::lock_retire(txn_man*)’:
+concurrency_control/row_clv.cpp:140:16: error: ‘bring_next’ was not declared in this scope
+     bring_next();
+                ^
+concurrency_control/row_clv.cpp: In member function ‘RC Row_clv::lock_release(txn_man*)’:
+concurrency_control/row_clv.cpp:192:16: error: ‘bring_next’ was not declared in this scope
+     bring_next();
+                ^
+concurrency_control/row_clv.cpp: At global scope:
+concurrency_control/row_clv.cpp:203:21: error: no ‘void Row_clv::bring_next()’ member function declared in class ‘Row_clv’
+ Row_clv::bring_next() {
+                     ^
+concurrency_control/row_clv.cpp: In member function ‘bool Row_clv::violate(txn_man*, txn_man*)’:
+concurrency_control/row_clv.cpp:251:9: error: expected ‘;’ before ‘}’ token
+         }
+         ^
+concurrency_control/row_clv.cpp:253:5: error: expected ‘;’ before ‘}’ token
+     } else {
+     ^
+concurrency_control/row_clv.cpp: In member function ‘void Row_clv::add_dependency(txn_man*, txn_man*)’:
+concurrency_control/row_clv.cpp:279:15: error: ‘class txn_man’ has no member named ‘add_descendents’
+     if (high->add_descendents(low))
+               ^
+concurrency_control/row_clv.cpp: In member function ‘LockEntry* Row_clv::insert_to_waiter(lock_t, txn_man*)’:
+concurrency_control/row_clv.cpp:300:5: error: ‘en’ was not declared in this scope
+     en = waiters_head;
+     ^
+Makefile:29: recipe for target 'concurrency_control/row_clv.o' failed
+make: *** [concurrency_control/row_clv.o] Error 1
+make: *** Waiting for unfinished jobs....
+storage/row.cpp: In member function ‘void row_t::init_manager(row_t*)’:
+storage/row.cpp:62:13: error: cannot convert ‘Row_ww*’ to ‘Row_clv*’ in assignment
+     manager = (Row_ww *) mem_allocator.alloc(sizeof(Row_clv), _part_id);
+             ^
+Makefile:29: recipe for target 'storage/row.o' failed
+make: *** [storage/row.o] Error 1
