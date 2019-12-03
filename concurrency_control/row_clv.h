@@ -35,6 +35,7 @@ private:
     lock_t lock_type;
     UInt32 owner_cnt;
     UInt32 waiter_cnt;
+    UInt32 retired_cnt;
 	
 	// owners is a single linked list
 	// waiters is a double linked list 
@@ -43,8 +44,7 @@ private:
 	LockEntry * owners;	
 	LockEntry * waiters_head;
 	LockEntry * waiters_tail;
-	LockEntry * retired_head;
-	LockEntry * retired_tail;
+	LockEntry * retired;
 
     void abort_or_dependent(LockEntry * list, txn_man * txn, bool high_first = true);
     void add_dependency(txn_man * high, txn_man * low);
@@ -52,6 +52,8 @@ private:
     LockEntry * add_to_owner(lock_t type, txn_man * txn);
     LockEntry * insert_to_waiter(lock_t type, txn_man * txn);
     void add_dependencies(txn_man * high, LockEntry * head);
+    bool remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner);
+    void bring_next();
 };
 
 #endif
