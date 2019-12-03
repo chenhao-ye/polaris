@@ -83,7 +83,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 
     if (owner_cnt + retired_cnt == 0) {
         // append txn to owners
-        LockEntry * entry = add_to_owner(type, txn);
+        add_to_owner(type, txn);
         rc = RCOK;
 #if DEBUG_CLV
         printf("[row_clv] add txn %lu to owners of row %lu\n", txn->get_txn_id(), _row->get_row_id());
@@ -92,7 +92,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
         bool can_acquire = (!conflict_lock(type, lock_type) && !violate(txn, waiters_head->txn));
         abort_or_dependent(retired, txn, true);
         if (can_acquire) {
-            entry = add_to_owner(type, txn);
+            add_to_owner(type, txn);
             add_dependencies(txn, waiters_head);
             rc = RCOK;
         } else {
@@ -118,25 +118,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
         pthread_mutex_lock( latch );
 
     // Try to find the entry in the owners and remove
-    LockEntry * en = owners;
-    LockEntry * prev = NULL;
-
-    while (en != NULL && en->txn != txn) {
-        prev = en;
-        en = en->next;
-    }
-    if (en) { // find the entry in the owner list
-        if (prev) prev->next = en->next;
-        else owners = en->next;
-        return_entry(en);
-        owner_cnt --;
-        if (owner_cnt == 0)
-            lock_type = LOCK_NONE;
-#if DEBUG_CLV
-        printf("[row_clv] rm txn %lu from owners of row %lu\n", txn->get_txn_id(), _row->get_row_id());
-#endif
-    }
-
+    assert(remove_if_exists(owners, txn, true))
     // append entry to retired
     STACK_PUSH(retired, en);
     retired_cnt ++;
@@ -159,17 +141,17 @@ RC Row_clv::lock_release(txn_man * txn) {
 		pthread_mutex_lock( latch );
 
 	// Try to find the entry in the retired
-	if (remove_if_exists(retired)) {
+	if (remove_if_exists(retired, txn, false)) {
 #if DEBUG_CLV
         printf("[row_clv] rm txn %lu from retired of row %lu\n", txn->get_txn_id(), _row->get_row_id());
 #endif
-    } else if (remove_if_exists(owners)) {
+    } else if (remove_if_exists(owners, txn, true)) {
 #if DEBUG_CLV
         printf("[row_clv] rm txn %lu from owner of row %lu\n", txn->get_txn_id(), _row->get_row_id());
 #endif
 	} else {
 		// Not in owners list, try waiters list.
-		en = waiters_head;
+		LockEntry * en = waiters_head;
 		while (en != NULL && en->txn != txn)
 			en = en->next;
 		ASSERT(en);
@@ -275,7 +257,7 @@ void Row_clv::add_dependency(txn_man * high, txn_man * low) {
         low->increment_ancestors();
 }
 
-LockEntry *
+void
 Row_clv::add_to_owner(lock_t type, txn_man * txn) {
     LockEntry * entry = get_entry();
     entry->type = type;
@@ -284,7 +266,6 @@ Row_clv::add_to_owner(lock_t type, txn_man * txn) {
     owner_cnt ++;
     lock_type = type;
     txn->lock_ready = true;
-    return entry;
 }
 
 LockEntry *
@@ -333,7 +314,7 @@ Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
         if (prev)
             prev->next = en->next;
         else {
-            if (is_owner) owner = en->next;
+            if (is_owner) owners = en->next;
             else retired = en->next;
         }
         return_entry(en);

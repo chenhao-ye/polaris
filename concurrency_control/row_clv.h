@@ -49,7 +49,7 @@ private:
     void abort_or_dependent(LockEntry * list, txn_man * txn, bool high_first = true);
     void add_dependency(txn_man * high, txn_man * low);
     bool violate(txn_man * high, txn_man * low);
-    LockEntry * add_to_owner(lock_t type, txn_man * txn);
+    void add_to_owner(lock_t type, txn_man * txn);
     LockEntry * insert_to_waiter(lock_t type, txn_man * txn);
     void add_dependencies(txn_man * high, LockEntry * head);
     bool remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner);
