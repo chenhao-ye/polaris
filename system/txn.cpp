@@ -25,6 +25,13 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 	for (int i = 0; i < MAX_ROW_PER_TXN; i++)
 		accesses[i] = NULL;
 	num_accesses_alloc = 0;
+#if CC_ALG == CLV
+	timestamp = 0;
+	// descendants: double linked list, sorted by txn_id
+	descendants_head = NULL;
+	descendants_tail = NULL;
+	ancestors = 0;
+#endif
 #if CC_ALG == TICTOC || CC_ALG == SILO
 	_pre_abort = (g_params["pre_abort"] == "true");
 	if (g_params["validation_lock"] == "no-wait")
@@ -45,7 +52,7 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 }
 
 void txn_man::set_txn_id(txnid_t txn_id) {
-	#if CC_ALG == WOUND_WAIT
+	#if CC_ALG == WOUND_WAIT || CC_ALG == CLV
 		// need to reset its params
 		//#if DEBUG_WW
 		//	printf("[txn] init txn %lu abort to false\n", txn_id);
@@ -53,6 +60,7 @@ void txn_man::set_txn_id(txnid_t txn_id) {
 		//ATOM_CAS(this->lock_abort, true, false);
 		lock_abort = false;
 		lock_ready = false;
+		ancestors = 0;
 	#endif
 	this->txn_id = txn_id;
 }
@@ -79,9 +87,6 @@ ts_t txn_man::get_ts() {
 
 void txn_man::cleanup(RC rc) {
 
-#if CC_ALG == WOUND_WAIT && DEBUG_WW
-#endif
-
 #if CC_ALG == HEKATON
 	row_cnt = 0;
 	wr_cnt = 0;
@@ -105,7 +110,8 @@ void txn_man::cleanup(RC rc) {
 					(CC_ALG == DL_DETECT || 
 					CC_ALG == NO_WAIT || 
 					CC_ALG == WAIT_DIE ||
-					CC_ALG == WOUND_WAIT))
+					CC_ALG == WOUND_WAIT ||
+					CC_ALG == CLV))
 		{
 			orig_r->return_row(type, this, accesses[rid]->orig_data);
 		} else {
@@ -148,7 +154,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
 		access->data->init(MAX_TUPLE_SIZE);
 		access->orig_data = (row_t *) _mm_malloc(sizeof(row_t), 64);
 		access->orig_data->init(MAX_TUPLE_SIZE);
-#elif (CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT)
+#elif (CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT || CC_ALG == CLV)
 		access->orig_data = (row_t *) _mm_malloc(sizeof(row_t), 64);
 		access->orig_data->init(MAX_TUPLE_SIZE);
 #endif
@@ -260,12 +266,46 @@ txn_man::release() {
 	mem_allocator.free(accesses, 0);
 }
 
-//bool txn_man::set_status(RC old_s, RC new_s) {
-//    // atomic
-//    return ATOM_CAS(this->status, old_s, new_s);
-//}
+TxnEntry *
+txn_man::get_entry(){
+    TxnEntry * entry = (TxnEntry *)
+            _mm_malloc(sizeof(TxnEntry), 64);
+    entry->next = NULL;
+    return entry;
+}
 
+bool
+txn_man::add_descendants(txn_man *txn) {
+    assert(txn->get_ts() > this->timestamp);
+    TxnEntry * en = descendants_head;
+    while (en != NULL)
+    {
+        if (txn->get_txn_id() == en->txn->get_txn_id()) {
+            return false;
+        } else if (txn->get_txn_id() < en->txn->get_txn_id()) {
+            break;
+        }
+        en = en->next;
+    }
+    TxnEntry * entry = get_entry();
+    entry->txn = txn;
+    if (en) {
+        LIST_INSERT_BEFORE(en, entry);
+        if (en == descendants_head)
+            descendants_head = entry;
+    } else
+        LIST_PUT_TAIL(descendants_head, descendants_tail, entry);
+    return true;
+}
 
-//RC txn_man::get_status() {
-//    return this->status;
-//}
+void
+txn_man::increment_ancestors() {
+    // not necessarily atomic, called in critical section only
+    ATOM_ADD(this->ancestors, 1);
+}
+
+void
+txn_man::decrement_ancestors() {
+    // TODO: may have to be atomic since is not called in critical section
+    ATOM_SUB(this->ancestors, 1);
+}

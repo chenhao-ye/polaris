@@ -35,6 +35,8 @@ int main(int argc, char* argv[])
 	printf("NO_WAIT\n");
 #elif CC_ALG == WAIT_DIE
 	printf("WAIT_DIE\n");
+#elif CC_ALG == CLV
+	printf("CLV\n");
 #endif
 	
  

@@ -21,6 +21,7 @@ public:
     RC lock_get(lock_t type, txn_man * txn);
     RC lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt);
     RC lock_release(txn_man * txn);
+    RC lock_retire(txn_man * txn);
 	
 private:
     pthread_mutex_t * latch;
@@ -44,6 +45,13 @@ private:
 	LockEntry * waiters_tail;
 	LockEntry * retired_head;
 	LockEntry * retired_tail;
+
+    void abort_or_dependent(LockEntry * list, txn_man * txn, bool high_first = true);
+    void add_dependency(txn_man * high, txn_man * low);
+    bool violate(txn_man * high, txn_man * low);
+    LockEntry * add_to_owner(lock_t type, txn_man * txn);
+    LockEntry * insert_to_waiter(lock_t type, txn_man * txn);
+    void add_dependencies(txn_man * high, LockEntry * head);
 };
 
 #endif
