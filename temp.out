@@ -73,56 +73,13 @@ g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storag
 g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o storage/index_btree.o storage/index_btree.cpp
 g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o storage/row.o storage/row.cpp
 g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o storage/table.o storage/table.cpp
-concurrency_control/row_clv.cpp: In member function ‘void Row_clv::init(row_t*)’:
-concurrency_control/row_clv.cpp:19:2: error: ‘retired_cnt’ was not declared in this scope
-  retired_cnt = 0;
-  ^
-concurrency_control/row_clv.cpp: In member function ‘RC Row_clv::lock_get(lock_t, txn_man*, uint64_t*&, int&)’:
-concurrency_control/row_clv.cpp:85:21: error: ‘retired_cnt’ was not declared in this scope
-     if (owner_cnt + retired_cnt == 0) {
-                     ^
-concurrency_control/row_clv.cpp:87:9: error: ‘entry’ was not declared in this scope
-         entry = add_to_owner(type, txn);
-         ^
-concurrency_control/row_clv.cpp:93:91: error: request for member ‘txn’ in ‘((Row_clv*)this)->Row_clv::waiters_head’, which is of pointer type ‘LockEntry*’ (maybe you meant to use ‘->’ ?)
-         bool can_acquire = (!conflict_lock(type, lock_type) && !violate(txn, waiters_head.txn));
-                                                                                           ^
-concurrency_control/row_clv.cpp:96:13: error: ‘entry’ was not declared in this scope
-             entry = add_to_owner(type, txn);
-             ^
-concurrency_control/row_clv.cpp: In member function ‘RC Row_clv::lock_retire(txn_man*)’:
-concurrency_control/row_clv.cpp:140:16: error: ‘bring_next’ was not declared in this scope
-     bring_next();
-                ^
-concurrency_control/row_clv.cpp: In member function ‘RC Row_clv::lock_release(txn_man*)’:
-concurrency_control/row_clv.cpp:192:16: error: ‘bring_next’ was not declared in this scope
-     bring_next();
-                ^
-concurrency_control/row_clv.cpp: At global scope:
-concurrency_control/row_clv.cpp:203:21: error: no ‘void Row_clv::bring_next()’ member function declared in class ‘Row_clv’
- Row_clv::bring_next() {
-                     ^
-concurrency_control/row_clv.cpp: In member function ‘bool Row_clv::violate(txn_man*, txn_man*)’:
-concurrency_control/row_clv.cpp:251:9: error: expected ‘;’ before ‘}’ token
-         }
-         ^
-concurrency_control/row_clv.cpp:253:5: error: expected ‘;’ before ‘}’ token
-     } else {
-     ^
-concurrency_control/row_clv.cpp: In member function ‘void Row_clv::add_dependency(txn_man*, txn_man*)’:
-concurrency_control/row_clv.cpp:279:15: error: ‘class txn_man’ has no member named ‘add_descendents’
-     if (high->add_descendents(low))
-               ^
-concurrency_control/row_clv.cpp: In member function ‘LockEntry* Row_clv::insert_to_waiter(lock_t, txn_man*)’:
-concurrency_control/row_clv.cpp:300:5: error: ‘en’ was not declared in this scope
-     en = waiters_head;
-     ^
-Makefile:29: recipe for target 'concurrency_control/row_clv.o' failed
-make: *** [concurrency_control/row_clv.o] Error 1
-make: *** Waiting for unfinished jobs....
-storage/row.cpp: In member function ‘void row_t::init_manager(row_t*)’:
-storage/row.cpp:62:13: error: cannot convert ‘Row_ww*’ to ‘Row_clv*’ in assignment
-     manager = (Row_ww *) mem_allocator.alloc(sizeof(Row_clv), _part_id);
-             ^
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o system/stats.o system/stats.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o system/manager.o system/manager.cpp
+g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o system/thread.o system/thread.cpp
+storage/row.cpp: In member function ‘RC row_t::retire_row(txn_man*)’:
+storage/row.cpp:142:27: error: ‘class Row_ww’ has no member named ‘lock_retire’
+     return this->manager->lock_retire(txn);
+                           ^
 Makefile:29: recipe for target 'storage/row.o' failed
 make: *** [storage/row.o] Error 1
+make: *** Waiting for unfinished jobs....

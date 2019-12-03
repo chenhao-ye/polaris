@@ -31,7 +31,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn) {
 }
 
 RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) {
-	assert (CC_ALG == WOUND_WAIT);
+	assert (CC_ALG == CLV);
 	RC rc;
     // get part id
 	//int part_id =_row->get_part_id();
@@ -118,7 +118,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
         pthread_mutex_lock( latch );
 
     // Try to find the entry in the owners and remove
-    LockEntry * en = remove_if_exists(owners, txn, true)
+    LockEntry * en = remove_if_exists(owners, txn, true);
     assert(en != NULL);
     // append entry to retired
     STACK_PUSH(retired, en);
@@ -243,7 +243,10 @@ void Row_clv::abort_or_dependent(LockEntry * list, txn_man * txn, bool high_firs
         if (high_first) {
             high = en->txn;
             low = txn;
-        }
+        } else {
+		high = txn;
+		low = en->txn;
+	}
         if (violate(high, low)) {
             high->abort_txn();
         } else {
