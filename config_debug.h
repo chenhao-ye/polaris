@@ -179,12 +179,13 @@ extern TestCases					g_test_case;
 #define VERB_ALLOC					true
 
 #define DEBUG_LOCK					false
-#define DEBUG_TIMESTAMP				false
+#define DEBUG_TIMESTAMP					false
 #define DEBUG_SYNTH					false
-#define DEBUG_ASSERT				false
+#define DEBUG_ASSERT					false
 #define DEBUG_CC					false //true
-#define DEBUG_WW                    		true
-#define DEBUG_BENCHMARK             true
+#define DEBUG_WW                    			false //true
+#define DEBUG_BENCHMARK             			false //true
+#define DEBUG_CLV                    			true //true
 
 /***********************************************/
 // Constant
