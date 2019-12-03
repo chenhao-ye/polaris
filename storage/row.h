@@ -32,6 +32,7 @@ class Row_tictoc;
 class Row_silo;
 class Row_vll;
 class Row_ww;
+class Row_clv;
 
 class row_t
 {
@@ -83,6 +84,7 @@ public:
 	// for concurrency control. can be lock, timestamp etc.
 	RC get_row(access_t type, txn_man * txn, row_t *& row);
 	void return_row(access_t type, txn_man * txn, row_t * row);
+	RC retire_row(txn_man * txn);
 	
   #if CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE
     Row_lock * manager;

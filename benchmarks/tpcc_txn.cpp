@@ -78,6 +78,9 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	char * tmp_str = r_wh_local->get_value(W_NAME);
 	memcpy(w_name, tmp_str, 10);
 	w_name[10] = '\0';
+#if CC_ALG == CLV
+    retire_row(r_wh);
+#endif
 	/*=====================================================+
 		EXEC SQL UPDATE district SET d_ytd = d_ytd + :h_amount
 		WHERE d_w_id=:w_id AND d_id=:d_id;
@@ -85,7 +88,6 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	key = distKey(query->d_id, query->d_w_id);
 	item = index_read(_wl->i_district, key, wh_to_part(w_id));
 	assert(item != NULL);
-	// zhihan
 	row_t * r_dist_local;
 	row_t * r_dist = ((row_t *)item->location);
 #if DEBUG_BENCHMARK
@@ -103,6 +105,10 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	tmp_str = r_dist_local->get_value(D_NAME);
 	memcpy(d_name, tmp_str, 10);
 	d_name[10] = '\0';
+
+#if CC_ALG == CLV
+    retire_row(r_dist);
+#endif
 
 	/*====================================================================+
 		EXEC SQL SELECT d_street_1, d_street_2, d_city, d_state, d_zip, d_name
@@ -224,6 +230,10 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	strcpy(&h_data[length], "    ");
 	strncpy(&h_data[length + 4], d_name, 10);
 	h_data[length+14] = '\0';
+
+#if CC_ALG == CLV
+    retire_row(r_cust);
+#endif
 	/*=============================================================================+
 	  EXEC SQL INSERT INTO
 	  history (h_c_d_id, h_c_w_id, h_c_id, h_d_id, h_w_id, h_date, h_amount, h_data)
@@ -278,7 +288,12 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 
 
 	double w_tax;
-	r_wh_local->get_value(W_TAX, w_tax); 
+	r_wh_local->get_value(W_TAX, w_tax);
+
+#if CC_ALG == CLV
+    retire_row(r_wh);
+#endif
+
 	key = custKey(c_id, d_id, w_id);
 	index = _wl->i_customer_id;
 	item = index_read(index, key, wh_to_part(w_id));
@@ -297,6 +312,10 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 	r_cust_local->get_value(C_DISCOUNT, c_discount);
 	//c_last = r_cust_local->get_value(C_LAST);
 	//c_credit = r_cust_local->get_value(C_CREDIT);
+
+#if CC_ALG == CLV
+    retire_row(r_cust);
+#endif
  	
 	/*==================================================+
 	EXEC SQL SELECT d_next_o_id, d_tax
@@ -323,6 +342,10 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 	o_id = *(int64_t *) r_dist_local->get_value(D_NEXT_O_ID);
 	o_id ++;
 	r_dist_local->set_value(D_NEXT_O_ID, o_id);
+
+#if CC_ALG == CLV
+    retire_row(r_dist);
+#endif
 
 	/*========================================================================================+
 	EXEC SQL INSERT INTO ORDERS (o_id, o_d_id, o_w_id, o_c_id, o_entry_d, o_ol_cnt, o_all_local)
@@ -376,6 +399,10 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 		r_item_local->get_value(I_PRICE, i_price);
 		//i_name = r_item_local->get_value(I_NAME);
 		//i_data = r_item_local->get_value(I_DATA);
+
+#if CC_ALG == CLV
+        retire_row(r_item);
+#endif
 
 		/*===================================================================+
 		EXEC SQL SELECT s_quantity, s_data,
@@ -433,6 +460,10 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 			quantity = s_quantity - ol_quantity + 91;
 		}
 		r_stock_local->set_value(S_QUANTITY, &quantity);
+
+#if CC_ALG == CLV
+        retire_row(r_stock);
+#endif
 
 		/*====================================================+
 		EXEC SQL INSERT

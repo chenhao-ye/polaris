@@ -15,8 +15,14 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 	this->h_wl = h_wl;
 	pthread_mutex_init(&txn_lock, NULL);
 	lock_ready = false;
-	//zhihan
 	lock_abort = false;
+#if CC_ALG == CLV
+    timestamp = 0;
+    // descendants: double linked list, sorted by txn_id
+    descendants_head = NULL;
+    descendants_tail = NULL;
+    ancestors = 0;
+#endif
 	ready_part = 0;
 	row_cnt = 0;
 	wr_cnt = 0;
@@ -25,13 +31,7 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 	for (int i = 0; i < MAX_ROW_PER_TXN; i++)
 		accesses[i] = NULL;
 	num_accesses_alloc = 0;
-#if CC_ALG == CLV
-	timestamp = 0;
-	// descendants: double linked list, sorted by txn_id
-	descendants_head = NULL;
-	descendants_tail = NULL;
-	ancestors = 0;
-#endif
+
 #if CC_ALG == TICTOC || CC_ALG == SILO
 	_pre_abort = (g_params["pre_abort"] == "true");
 	if (g_params["validation_lock"] == "no-wait")
@@ -250,6 +250,22 @@ RC txn_man::finish(RC rc) {
 	printf("[txn] finish up txn %lu due to %d\n", get_txn_id(), rc);
 #endif
 	cleanup(rc);
+#elif CC_ALG == CLV
+	if (rc == RCOK) {
+        while(ancestors > 0)
+            continue;
+	}
+    // decrement descendants' ancestors
+    TxnEntry * en = descendants_head;
+    while(en != NULL) {
+        en->txn->decrement_ancestors();
+        mem_allocator.free(en, 0);
+        en = en->next;
+    }
+    descendants_head = NULL;
+    descendants_tail = NULL;
+    assert(ancestors == 0);
+	cleanup(rc);
 #else 
 	cleanup(rc);
 #endif
@@ -275,7 +291,9 @@ txn_man::get_entry(){
 }
 
 bool
-txn_man::add_descendants(txn_man *txn) {
+txn_man::add_descendants(txn_man * txn) {
+    if (txn->lock_abort || lock_abort)
+        return false;
     assert(txn->get_ts() > this->timestamp);
     TxnEntry * en = descendants_head;
     while (en != NULL)
@@ -308,4 +326,9 @@ void
 txn_man::decrement_ancestors() {
     // TODO: may have to be atomic since is not called in critical section
     ATOM_SUB(this->ancestors, 1);
+}
+
+RC
+txn_man::retire_row(row_t * row){
+    return row->retire_row(this);
 }

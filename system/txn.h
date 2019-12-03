@@ -104,6 +104,7 @@ public:
 	bool            add_descendants(txn_man * txn);
 	void            increment_ancestors();
     void            decrement_ancestors();
+    RC              retire_row(row_t * row);
 protected:	
 	void 			insert_row(row_t * row, table_t * table);
 private:
@@ -112,7 +113,7 @@ private:
 	row_t * 		insert_rows[MAX_ROW_PER_TXN];
 	txnid_t 		txn_id;
 	ts_t 			timestamp;
-	int             ancestors;
+	int volatile    ancestors;
 	TxnEntry *      descendants_head;
     TxnEntry *      descendants_tail;
     static TxnEntry *      get_entry();
@@ -145,6 +146,7 @@ public:
 #include "thread.h"
 inline RC txn_man::abort_txn()
 {
+    assert(CC_ALG == WOUND_WAIT);
     bool can_abort = ATOM_CAS(this->lock_abort, false, true);
     // TODO: check if abort is successfult, if so, release lock by calling finish
     if (can_abort) {
@@ -153,8 +155,6 @@ inline RC txn_man::abort_txn()
 #endif
         return FINISH;
 	}
-
-
     return ERROR;
 }
 
@@ -167,8 +167,8 @@ inline RC txn_man::abort_txn(txn_man * txn)
         // abort descendants
         TxnEntry * en = descendants_head;
         while(en != NULL) {
-            // no need to decrement ancestors as it is no longer useful... only used in commiting
-            en->txn->abort_txn();
+            // no need to decrement ancestors as it is decrement at aborting time
+            en->txn->abort_txn(txn);
             en = en->next;
         }
         return FINISH;

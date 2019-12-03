@@ -138,6 +138,10 @@ void row_t::free_row() {
 	free(data);
 }
 
+RC row_t::retire_row(txn_man * txn) {
+    return this->manager->lock_retire(txn);
+}
+
 RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 	RC rc = RCOK;
 #if CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT || CC_ALG == CLV
