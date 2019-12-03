@@ -78,8 +78,21 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 	//		conflict = true;
 	//}
 	
-	if (owner_cnt != 0) { 
-		// Cannot be added to the owner list.
+	if ((owner_cnt == 0) || ( (!conflict_lock(type, lock_type)) && (waiters_head == NULL || txn->get_ts() < waiters_head->txn->get_ts()) )) { 
+			// if owner is empty, grab the lock
+		LockEntry * entry = get_entry();
+		entry->type = type;
+		entry->txn = txn;
+		STACK_PUSH(owners, entry);
+		owner_cnt ++;
+		lock_type = type;
+		txn->lock_ready = true;
+        	rc = RCOK;
+		#if DEBUG_WW
+			printf("[row_ww] add txn %lu to owners of row %lu\n", txn->get_txn_id(), _row->get_row_id());
+		#endif
+	} else {
+	// Cannot be added to the owner list.
         ///////////////////////////////////////////////////////////
         //  - T is the txn currently running
         //  always can wait but need to abort txns has lower priority (larger ts)
@@ -106,8 +119,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 			goto final;
 		} 
 	    }
-            //else if (en->txn->get_ts() > txn->get_ts()) {
-            else if ((en->txn->get_ts() > txn->get_ts()) && conflict_lock(en->type, type)) {
+            else if (en->txn->get_ts() > txn->get_ts()) { 
                 // step 1 - figure out what need to be done when aborting a txn
                 // ask thread to abort
                 #if DEBUG_WW
@@ -151,23 +163,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 		#if DEBUG_WW
 			printf("[row_ww] add txn %lu to waiters of row %lu\n", txn->get_txn_id(), _row->get_row_id());
 		#endif
-
-
-	} else {
-		// if owner is empty, grab the lock
-		LockEntry * entry = get_entry();
-		entry->type = type;
-		entry->txn = txn;
-		STACK_PUSH(owners, entry);
-		owner_cnt ++;
-		lock_type = type;
-		txn->lock_ready = true;
-        	rc = RCOK;
-		#if DEBUG_WW
-			printf("[row_ww] add txn %lu to owners of row %lu\n", txn->get_txn_id(), _row->get_row_id());
-		#endif
 	}
-
 
 final:
 
