@@ -52,7 +52,7 @@ private:
     void add_to_owner(lock_t type, txn_man * txn);
     LockEntry * insert_to_waiter(lock_t type, txn_man * txn);
     void add_dependencies(txn_man * high, LockEntry * head);
-    bool remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner);
+    LockEntry * remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner);
     void bring_next();
 };
 

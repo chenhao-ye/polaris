@@ -118,7 +118,8 @@ RC Row_clv::lock_retire(txn_man * txn) {
         pthread_mutex_lock( latch );
 
     // Try to find the entry in the owners and remove
-    assert(remove_if_exists(owners, txn, true));
+    LockEntry * en = remove_if_exists(owners, txn, true)
+    assert(en != NULL);
     // append entry to retired
     STACK_PUSH(retired, en);
     retired_cnt ++;
@@ -141,11 +142,11 @@ RC Row_clv::lock_release(txn_man * txn) {
 		pthread_mutex_lock( latch );
 
 	// Try to find the entry in the retired
-	if (remove_if_exists(retired, txn, false)) {
+	if (remove_if_exists(retired, txn, false) != NULL) {
 #if DEBUG_CLV
         printf("[row_clv] rm txn %lu from retired of row %lu\n", txn->get_txn_id(), _row->get_row_id());
 #endif
-    } else if (remove_if_exists(owners, txn, true)) {
+    } else if (remove_if_exists(owners, txn, true) != NULL) {
 #if DEBUG_CLV
         printf("[row_clv] rm txn %lu from owner of row %lu\n", txn->get_txn_id(), _row->get_row_id());
 #endif
@@ -301,7 +302,7 @@ Row_clv::add_dependencies(txn_man * high, LockEntry * head) {
     }
 }
 
-bool
+LockEntry *
 Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
     LockEntry * en = list;
     LockEntry * prev = NULL;
@@ -328,9 +329,9 @@ Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
 #if DEBUG_CLV
         printf("[row_clv] rm txn %lu from owners of row %lu\n", txn->get_txn_id(), _row->get_row_id());
 #endif
-        return true;
+        return en;
     }
-    return false;
+    return NULL;
 }
 
 
