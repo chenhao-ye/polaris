@@ -1,5 +1,5 @@
-#ifndef ROW_WW_H
-#define ROW_WW_H
+#ifndef ROW_CLV_H
+#define ROW_CLV_H
 
 #include "row_lock.h"
 /*
@@ -42,6 +42,8 @@ private:
 	LockEntry * owners;	
 	LockEntry * waiters_head;
 	LockEntry * waiters_tail;
+	LockEntry * retired_head;
+	LockEntry * retired_tail;
 };
 
 #endif

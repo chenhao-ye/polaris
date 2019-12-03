@@ -11,8 +11,12 @@ void Row_clv::init(row_t * row) {
     // waiter is a double linked list. two ptrs to the linked lists
 	waiters_head = NULL;
 	waiters_tail = NULL;
+	// retired is a double linked list, the next of tail is the head of owners
+	retired_head = NULL;
+	retired_tail = NULL;
 	owner_cnt = 0;
 	waiter_cnt = 0;
+	retired_cnt = 0;
 
 	latch = new pthread_mutex_t;
 	pthread_mutex_init(latch, NULL);
@@ -21,13 +25,13 @@ void Row_clv::init(row_t * row) {
 	blatch = false;
 }
 
-RC Row_ww::lock_get(lock_t type, txn_man * txn) {
+RC Row_clv::lock_get(lock_t type, txn_man * txn) {
 	uint64_t *txnids = NULL;
 	int txncnt = 0;
 	return lock_get(type, txn, txnids, txncnt);
 }
 
-RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) {
+RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) {
 	assert (CC_ALG == WOUND_WAIT);
 	RC rc;
     // get part id
@@ -77,8 +81,9 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 	//	if (waiters_head && txn->get_ts() < waiters_head->txn->get_ts())
 	//		conflict = true;
 	//}
-	
-	if (owner_cnt != 0) { 
+
+
+	if (owner_cnt + retired_cnt != 0) {
 		// Cannot be added to the owner list.
         ///////////////////////////////////////////////////////////
         //  - T is the txn currently running
@@ -91,20 +96,20 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
         LockEntry * en = owners;
         while (en != NULL) {
 	    if (en->txn->get_txn_id() == txn->get_txn_id()) {
-		//already in owners
-		// check lock type
-		// same type grab
-		if(type == LOCK_EX && lock_type == LOCK_SH && owner_cnt > 1) {
-			en->prev->next = en->next;
-			en->next->prev = en->prev;
-			owner_cnt--;
-		} else {
-			if (type == LOCK_EX)
-				en->type = LOCK_EX;
-			txn->lock_ready = true;
-			rc = RCOK;
-			goto final;
-		} 
+            //already in owners
+            // check lock type
+            // same type grab
+            if(type == LOCK_EX && lock_type == LOCK_SH && owner_cnt > 1) {
+                en->prev->next = en->next;
+                en->next->prev = en->prev;
+                owner_cnt--;
+            } else {
+                if (type == LOCK_EX)
+                    en->type = LOCK_EX;
+                txn->lock_ready = true;
+                rc = RCOK;
+                goto final;
+            }
 	    }
             //else if (en->txn->get_ts() > txn->get_ts()) {
             else if ((en->txn->get_ts() > txn->get_ts()) && conflict_lock(en->type, type)) {
@@ -180,7 +185,7 @@ final:
 }
 
 
-RC Row_ww::lock_release(txn_man * txn) {
+RC Row_clv::lock_release(txn_man * txn) {
 
 
 	if (g_central_man)
@@ -255,7 +260,7 @@ RC Row_ww::lock_release(txn_man * txn) {
 	return RCOK;
 }
 
-bool Row_ww::conflict_lock(lock_t l1, lock_t l2) {
+bool Row_clv::conflict_lock(lock_t l1, lock_t l2) {
 	if (l1 == LOCK_NONE || l2 == LOCK_NONE)
 		return false;
     else if (l1 == LOCK_EX || l2 == LOCK_EX)
@@ -264,12 +269,12 @@ bool Row_ww::conflict_lock(lock_t l1, lock_t l2) {
 		return false;
 }
 
-LockEntry * Row_ww::get_entry() {
+LockEntry * Row_clv::get_entry() {
 	LockEntry * entry = (LockEntry *) 
 		mem_allocator.alloc(sizeof(LockEntry), _row->get_part_id());
 	return entry;
 }
-void Row_ww::return_entry(LockEntry * entry) {
+void Row_clv::return_entry(LockEntry * entry) {
 	mem_allocator.free(entry, sizeof(LockEntry));
 }
 
