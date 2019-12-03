@@ -118,7 +118,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
         pthread_mutex_lock( latch );
 
     // Try to find the entry in the owners and remove
-    assert(remove_if_exists(owners, txn, true))
+    assert(remove_if_exists(owners, txn, true));
     // append entry to retired
     STACK_PUSH(retired, en);
     retired_cnt ++;
