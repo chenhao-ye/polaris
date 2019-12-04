@@ -19,8 +19,7 @@ void Row_clv::init(row_t * row) {
 
 	latch = new pthread_mutex_t;
 	pthread_mutex_init(latch, NULL);
-	
-	lock_type = LOCK_NONE;
+
 	blatch = false;
 }
 
@@ -32,24 +31,19 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn) {
 
 RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) {
 	assert (CC_ALG == CLV);
-	RC rc;
-    // get part id
-	//int part_id =_row->get_part_id();
+	RC rc = WAIT;
+
 	if (g_central_man)
-	    // if using central manager
 		glob_manager->lock_row(_row);
 	else 
 		pthread_mutex_lock( latch );
+
     // each thread has at most one owner of a lock
 	assert(owner_cnt <= g_thread_cnt);
 	// each thread has at most one waiter
 	assert(waiter_cnt < g_thread_cnt);
 
 #if DEBUG_ASSERT
-	if (owners != NULL)
-		assert(lock_type == owners->type); 
-	else 
-		assert(lock_type == LOCK_NONE);
 	LockEntry * en = owners;
 	UInt32 cnt = 0;
 	while (en) {
@@ -67,48 +61,64 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	assert(cnt == waiter_cnt);
 #endif
 
-	// check lock type with owner
-	// owner:
-	// - SH then followers are SH
-	// - EX then followers are NONE
+    check_abort(type, txn, retired, false);
+    check_abort(type, txn, owners, true);
 
-	// bool conflict = conflict_lock(lock_type, type);
+	bring_next();
 
-	// added one more condition for conflicts -- check wait dependency
-	//if (!conflict) {
-	    // TODO: waiters_head is not null and current txn's ts < waiter_head's ts -- conflict and need to wound them
-	//	if (waiters_head && txn->get_ts() < waiters_head->txn->get_ts())
-	//		conflict = true;
-	//}
-
-    if (owner_cnt + retired_cnt == 0) {
-        // append txn to owners
-        add_to_owner(type, txn);
-        rc = RCOK;
-#if DEBUG_CLV
-        printf("[row_clv] add txn %lu to owners of row %lu\n", txn->get_txn_id(), _row->get_row_id());
-#endif
-    } else {
-        bool can_acquire = (!conflict_lock(type, lock_type) && !violate(txn, waiters_head->txn));
-        abort_or_dependent(retired, txn, true);
-        if (can_acquire) {
-            add_to_owner(type, txn);
-            add_dependencies(txn, waiters_head);
+    // if brought in owner return acquired lock
+    en = owners;
+    while(en){
+        if (en->txn == txn) {
             rc = RCOK;
-        } else {
-            abort_or_dependent(owners, txn, true);
-            LockEntry * next = insert_to_waiter(type, txn);
-            add_dependencies(txn, next);
-            rc = WAIT;
+            break
         }
     }
 
-	if (g_central_man)
-		glob_manager->release_row(_row);
-	else
-		pthread_mutex_unlock( latch );
+    if (g_central_man)
+        glob_manager->release_row(_row);
+    else
+        pthread_mutex_unlock( latch );
 
-	return rc;
+    return rc;
+}
+
+void
+Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner) {
+    LockEntry * en = list;
+    LockEntry * prev = NULL;
+    bool has_conflict = false;
+    while (en != NULL) {
+        if (conflict_lock(en->type, type) && (en->txn->get_ts() > txn->get_ts() || txn->get_ts() == 0))
+            has_conflict = true;
+        if (has_conflict) {
+            if (txn->get_ts() != 0) {
+                // abort txn
+                en->txn->abort_txn();
+                // remove from retired/owner
+                if (prev)
+                    prev->next = en->next;
+                else {
+                    if (is_owner)
+                        owners = en->next;
+                    else
+                        retired = en->next;
+                }
+                // update count
+                if (is_owner)
+                    owner_cnt--;
+                else
+                    retired_cnt--;
+            }
+            if (en->txn->get_ts() == 0)
+                en->txn->set_next_ts();
+        }
+        if (has_conflict)
+            txn->set_next_ts();
+        insert_to_waiters(txn);
+        prev = en;
+        en = en->next;
+    }
 }
 
 RC Row_clv::lock_retire(txn_man * txn) {
@@ -118,13 +128,17 @@ RC Row_clv::lock_retire(txn_man * txn) {
         pthread_mutex_lock( latch );
 
     // Try to find the entry in the owners and remove
-    LockEntry * en = remove_if_exists(owners, txn, true);
-    assert(en != NULL);
+    LockEntry * entry = remove_if_exists(owners, txn, true);
+    assert(entry != NULL);
     // append entry to retired
-    STACK_PUSH(retired, en);
-    retired_cnt ++;
-
+    STACK_PUSH(retired, entry);
+    retired_cnt++;
+    // increment barriers
+    if (retired_cnt > 1)
+        txn->increment_commit_barriers();
+    // bring next owners from waiters
     bring_next();
+
     if (g_central_man)
         glob_manager->release_row(_row);
     else
@@ -134,38 +148,42 @@ RC Row_clv::lock_retire(txn_man * txn) {
 }
 
 RC Row_clv::lock_release(txn_man * txn) {
-
-
 	if (g_central_man)
 		glob_manager->lock_row(_row);
 	else 
 		pthread_mutex_lock( latch );
 
 	// Try to find the entry in the retired
-	if (remove_if_exists(retired, txn, false) != NULL) {
-#if DEBUG_CLV
-        printf("[row_clv] rm txn %lu from retired of row %lu\n", txn->get_txn_id(), _row->get_row_id());
-#endif
-    } else if (remove_if_exists(owners, txn, true) != NULL) {
-#if DEBUG_CLV
-        printf("[row_clv] rm txn %lu from owner of row %lu\n", txn->get_txn_id(), _row->get_row_id());
-#endif
-	} else {
-		// Not in owners list, try waiters list.
-		LockEntry * en = waiters_head;
-		while (en != NULL && en->txn != txn)
-			en = en->next;
-		ASSERT(en);
-		LIST_REMOVE(en);
-		if (en == waiters_head)
-			waiters_head = en->next;
-		if (en == waiters_tail)
-			waiters_tail = en->prev;
-		return_entry(en);
-		waiter_cnt --;
-		#if DEBUG_CLV
-			printf("[row_clv] rm txn %lu from waiters of row %lu\n", txn->get_txn_id(), _row->get_row_id());
-		#endif
+	LockEntry * prev_head = retired;
+	LockEntry * en = remove_if_exists(retired, txn, false);
+	if (en != NULL) {
+        if ((retired != prev_head) && (retired_cnt > 0)) {
+            // becoming head always remove one barrier
+            retired->txn->decrement_commit_barriers();
+        }
+        return_entry(en);
+    } else {
+	    en = remove_if_exists(owners, txn, true);
+	    if (en != NULL) {
+	        return_entry(en);
+	    } else {
+            // Not in owners list, try waiters list.
+            LockEntry *en = waiters_head;
+            while (en != NULL && en->txn != txn)
+                en = en->next;
+            if (en) {
+                LIST_REMOVE(en);
+                if (en == waiters_head)
+                    waiters_head = en->next;
+                if (en == waiters_tail)
+                    waiters_tail = en->prev;
+                return_entry(en);
+                waiter_cnt--;
+                #if DEBUG_CLV
+                    printf("[row_clv] rm txn %lu from waiters of row %lu\n", txn->get_txn_id(), _row->get_row_id());
+                #endif
+            }
+        }
 	}
     bring_next();
 
@@ -179,23 +197,16 @@ RC Row_clv::lock_release(txn_man * txn) {
 
 void
 Row_clv::bring_next() {
-    if (owner_cnt == 0)
-        ASSERT(lock_type == LOCK_NONE);
-#if DEBUG_ASSERT && (CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT)
-    for (en = waiters_head; en != NULL && en->next != NULL; en = en->next)
-			assert(en->next->txn->get_ts() < en->txn->get_ts());
-#endif
 
     LockEntry * entry;
     // If any waiter can join the owners, just do it!
-    while (waiters_head && !conflict_lock(lock_type, waiters_head->type)) {
+    while (waiters_head && (owners == NULL || !conflict_lock(owners->type, waiters_head->type) )) {
         LIST_GET_HEAD(waiters_head, waiters_tail, entry);
         STACK_PUSH(owners, entry);
         owner_cnt ++;
         waiter_cnt --;
         ASSERT(entry->txn->lock_ready == 0);
         entry->txn->lock_ready = true;
-        lock_type = entry->type;
 #if DEBUG_CLV
         printf("[row_clv] bring %lu from waiter to owner to row %lu\n", entry->txn->get_txn_id(), _row->get_row_id());
 #endif
@@ -222,58 +233,8 @@ void Row_clv::return_entry(LockEntry * entry) {
 	mem_allocator.free(entry, sizeof(LockEntry));
 }
 
-bool Row_clv::violate(txn_man * high, txn_man * low) {
-    if (low->get_ts() == 0) {
-        if (high->get_ts() == 0) {
-            high->set_ts(get_sys_clock());
-        }
-        low->set_ts(get_sys_clock());
-    } else {
-        if ((low->get_ts() == 0) || high->get_ts() > low->get_ts())
-            return true;
-    }
-    return false;
-}
-
-void Row_clv::abort_or_dependent(LockEntry * list, txn_man * txn, bool high_first) {
-    LockEntry * en = list;
-    txn_man * high;
-    txn_man * low;
-    while(en != NULL) {
-        if (high_first) {
-            high = en->txn;
-            low = txn;
-        } else {
-		high = txn;
-		low = en->txn;
-	}
-        if (violate(high, low)) {
-            high->abort_txn();
-        } else {
-            add_dependency(high, low);
-        }
-        en = en->next;
-    }
-}
-
-void Row_clv::add_dependency(txn_man * high, txn_man * low) {
-    if (high->add_descendants(low))
-        low->increment_ancestors();
-}
-
 void
-Row_clv::add_to_owner(lock_t type, txn_man * txn) {
-    LockEntry * entry = get_entry();
-    entry->type = type;
-    entry->txn = txn;
-    STACK_PUSH(owners, entry);
-    owner_cnt ++;
-    lock_type = type;
-    txn->lock_ready = true;
-}
-
-LockEntry *
-Row_clv::insert_to_waiter(lock_t type, txn_man * txn) {
+Row_clv::insert_to_waiters(lock_t type, txn_man * txn) {
     LockEntry * entry = get_entry();
     entry->txn = txn;
     entry->type = type;
@@ -293,16 +254,6 @@ Row_clv::insert_to_waiter(lock_t type, txn_man * txn) {
     LIST_PUT_TAIL(waiters_head, waiters_tail, entry);
     waiter_cnt ++;
     txn->lock_ready = false;
-    return en;
-}
-
-void
-Row_clv::add_dependencies(txn_man * high, LockEntry * head) {
-    LockEntry * en = head;
-    while (en != NULL) {
-        add_dependency(high, en->txn);
-        en = en->next;
-    }
 }
 
 LockEntry *
@@ -321,11 +272,8 @@ Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
             if (is_owner) owners = en->next;
             else retired = en->next;
         }
-        return_entry(en);
         if (is_owner) {
             owner_cnt--;
-            if (owner_cnt == 0)
-                lock_type = LOCK_NONE;
         } else {
             retired_cnt--;
         }
@@ -336,5 +284,7 @@ Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
     }
     return NULL;
 }
+
+
 
 

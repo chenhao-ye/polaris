@@ -77,6 +77,10 @@ uint64_t txn_man::get_thd_id() {
 	return h_thd->get_thd_id();
 }
 
+void txn_man::set_next_ts() {
+    this->timestamp = h_thd->get_next_ts();
+}
+
 void txn_man::set_ts(ts_t timestamp) {
 	this->timestamp = timestamp;
 }
@@ -282,50 +286,52 @@ txn_man::release() {
 	mem_allocator.free(accesses, 0);
 }
 
-TxnEntry *
-txn_man::get_entry(){
-    TxnEntry * entry = (TxnEntry *)
-            _mm_malloc(sizeof(TxnEntry), 64);
-    entry->next = NULL;
-    return entry;
-}
+//TxnEntry *
+//txn_man::get_entry(){
+//    TxnEntry * entry = (TxnEntry *)
+//            _mm_malloc(sizeof(TxnEntry), 64);
+//    entry->next = NULL;
+//    return entry;
+//}
+//
+//bool
+//txn_man::add_descendants(txn_man * txn) {
+//    if (txn->lock_abort || lock_abort)
+//        return false;
+//    assert(txn->get_ts() > this->timestamp);
+//    TxnEntry * en = descendants_head;
+//    while (en != NULL)
+//    {
+//        if (txn->get_txn_id() == en->txn->get_txn_id()) {
+//            return false;
+//        } else if (txn->get_txn_id() < en->txn->get_txn_id()) {
+//            break;
+//        }
+//        en = en->next;
+//    }
+//    TxnEntry * entry = get_entry();
+//    entry->txn = txn;
+//    if (en) {
+//        LIST_INSERT_BEFORE(en, entry);
+//        if (en == descendants_head)
+//            descendants_head = entry;
+//    } else
+//        LIST_PUT_TAIL(descendants_head, descendants_tail, entry);
+//    return true;
+//}
+//
 
-bool
-txn_man::add_descendants(txn_man * txn) {
-    if (txn->lock_abort || lock_abort)
-        return false;
-    assert(txn->get_ts() > this->timestamp);
-    TxnEntry * en = descendants_head;
-    while (en != NULL)
-    {
-        if (txn->get_txn_id() == en->txn->get_txn_id()) {
-            return false;
-        } else if (txn->get_txn_id() < en->txn->get_txn_id()) {
-            break;
-        }
-        en = en->next;
-    }
-    TxnEntry * entry = get_entry();
-    entry->txn = txn;
-    if (en) {
-        LIST_INSERT_BEFORE(en, entry);
-        if (en == descendants_head)
-            descendants_head = entry;
-    } else
-        LIST_PUT_TAIL(descendants_head, descendants_tail, entry);
-    return true;
-}
-
-void
-txn_man::increment_ancestors() {
-    // not necessarily atomic, called in critical section only
-    ATOM_ADD(this->ancestors, 1);
-}
 
 void
-txn_man::decrement_ancestors() {
+txn_man::decrement_commit_barriers() {
     // TODO: may have to be atomic since is not called in critical section
-    ATOM_SUB(this->ancestors, 1);
+    ATOM_SUB(this->commit_barriers, 1);
+}
+
+void
+txn_man::increment_commit_barriers() {
+    // not necessarily atomic, called in critical section only
+    ATOM_ADD(this->commit_barriers, 1);
 }
 
 RC

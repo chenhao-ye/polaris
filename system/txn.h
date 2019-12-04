@@ -9,7 +9,6 @@ class row_t;
 class table_t;
 class base_query;
 class INDEX;
-struct TxnEntry;
 
 // each thread has a txn_man. 
 // a txn_man corresponds to a single transaction.
@@ -55,11 +54,11 @@ public:
 	//WW
 	RC              abort_txn();
 	// CLV
-    RC              abort_txn(txn_man * txn);
-//	bool            set_status(RC old_s, RC new_s);
-//	RC              get_status();
+    void            increment_commit_barriers();
+    void            decrement_commit_barriers();
 
 	void 			set_ts(ts_t timestamp);
+    void            set_next_ts();
 	ts_t 			get_ts();
 
 	pthread_mutex_t txn_lock;
@@ -101,9 +100,6 @@ public:
 	row_t * 		get_row(row_t * row, access_t type);
 
 	// For CLV
-	bool            add_descendants(txn_man * txn);
-	void            increment_ancestors();
-    void            decrement_ancestors();
     RC              retire_row(row_t * row);
 protected:	
 	void 			insert_row(row_t * row, table_t * table);
@@ -113,10 +109,7 @@ private:
 	row_t * 		insert_rows[MAX_ROW_PER_TXN];
 	txnid_t 		txn_id;
 	ts_t 			timestamp;
-	int volatile    ancestors;
-	TxnEntry *      descendants_head;
-    TxnEntry *      descendants_tail;
-    static TxnEntry *      get_entry();
+	int volatile    commit_barriers;
 
 	bool _write_copy_ptr;
 #if CC_ALG == TICTOC || CC_ALG == SILO
@@ -136,12 +129,6 @@ private:
 #endif
 };
 
-struct TxnEntry {
-public:
-    txn_man * txn;
-    TxnEntry * next;
-    TxnEntry * prev;
-};
 
 #include "thread.h"
 inline RC txn_man::abort_txn()
@@ -158,20 +145,20 @@ inline RC txn_man::abort_txn()
     return ERROR;
 }
 
-inline RC txn_man::abort_txn(txn_man * txn)
-{
-    assert(CC_ALG == CLV);
-    bool can_abort = ATOM_CAS(this->lock_abort, false, true);
-    // TODO: check if abort is successfult, if so, release lock by calling finish
-    if (can_abort) {
-        // abort descendants
-        TxnEntry * en = descendants_head;
-        while(en != NULL) {
-            // no need to decrement ancestors as it is decrement at aborting time
-            en->txn->abort_txn(txn);
-            en = en->next;
-        }
-        return FINISH;
-    }
-    return ERROR;
-}
+//inline RC txn_man::abort_txn(txn_man * txn)
+//{
+//    assert(CC_ALG == CLV);
+//    bool can_abort = ATOM_CAS(this->lock_abort, false, true);
+//    // TODO: check if abort is successfult, if so, release lock by calling finish
+//    if (can_abort) {
+//        // abort descendants
+//        TxnEntry * en = descendants_head;
+//        while(en != NULL) {
+//            // no need to decrement ancestors as it is decrement at aborting time
+//            en->txn->abort_txn(txn);
+//            en = en->next;
+//        }
+//        return FINISH;
+//    }
+//    return ERROR;
+//}

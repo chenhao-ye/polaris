@@ -24,15 +24,14 @@ public:
 	// conversion is done within the function.
 	RC 			run();
 
-	// added for wound wait
-    bool        abort_txn(txn_man * txn);
+    // moved from private to global for clv
+    ts_t 		get_next_ts();
 
 
 private:
 	uint64_t 	_host_cid;
 	uint64_t 	_cur_cid;
 	ts_t 		_curr_ts;
-	ts_t 		get_next_ts();
 
 	RC	 		runTest(txn_man * txn);
 	drand48_data buffer;

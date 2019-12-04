@@ -31,8 +31,6 @@ private:
 	LockEntry * get_entry();
 	void 		return_entry(LockEntry * entry);
 	row_t * _row;
-	// owner's lock type
-    lock_t lock_type;
     UInt32 owner_cnt;
     UInt32 waiter_cnt;
     UInt32 retired_cnt;
@@ -41,19 +39,16 @@ private:
 	// waiters is a double linked list 
 	// [waiters] head is the oldest txn, tail is the youngest txn. 
 	//   So new txns are inserted into the tail.
-	LockEntry * owners;	
+	LockEntry * owners;
+    LockEntry * retired;
 	LockEntry * waiters_head;
 	LockEntry * waiters_tail;
-	LockEntry * retired;
 
-    void abort_or_dependent(LockEntry * list, txn_man * txn, bool high_first = true);
-    void add_dependency(txn_man * high, txn_man * low);
-    bool violate(txn_man * high, txn_man * low);
-    void add_to_owner(lock_t type, txn_man * txn);
-    LockEntry * insert_to_waiter(lock_t type, txn_man * txn);
-    void add_dependencies(txn_man * high, LockEntry * head);
-    LockEntry * remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner);
     void bring_next();
+	void check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner);
+    void insert_to_waiters(lock_t type, txn_man * txn);
+    LockEntry * remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner);
+
 };
 
 #endif

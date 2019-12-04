@@ -111,6 +111,7 @@ def run_all_test(jobs) :
 print(sys.argv[1])
 for item in sys.argv[2].split(","):
 	algs.append(item)
+print(algs)
 if sys.argv[1] == "ycsb":
 	# run YCSB tests
 	jobs = {}
