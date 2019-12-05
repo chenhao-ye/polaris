@@ -138,9 +138,11 @@ void row_t::free_row() {
 	free(data);
 }
 
+#if CC_ALG == CLV
 RC row_t::retire_row(txn_man * txn) {
     return this->manager->lock_retire(txn);
 }
+#endif
 
 RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 	RC rc = RCOK;
@@ -152,7 +154,10 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 	int txncnt; 
 	rc = this->manager->lock_get(lt, txn, txnids, txncnt);	
 #else
-	rc = this->manager->lock_get(lt, txn);
+	if (txn->lock_abort)
+		rc = Abort;
+	else
+		rc = this->manager->lock_get(lt, txn);
 #endif
 	/*#if DEBUG_WW
 		printf("test if finally get row for txn %lu\n",  txn->get_txn_id());

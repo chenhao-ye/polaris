@@ -1,4 +1,4 @@
 mem_allocator initialized!
-CLV
+WOUND_WAIT
 reading schema file: ./benchmarks/TPCC_full_schema.txt
 TPCC schema initialized

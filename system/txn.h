@@ -101,7 +101,10 @@ public:
 	row_t * 		get_row(row_t * row, access_t type);
 
 	// For CLV
+#if CC_ALG == CLV
     RC              retire_row(row_t * row);
+#endif
+
 protected:	
 	void 			insert_row(row_t * row, table_t * table);
 private:

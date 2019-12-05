@@ -293,7 +293,9 @@ txn_man::increment_commit_barriers() {
     ATOM_ADD(this->commit_barriers, 1);
 }
 
+#if CC_ALG == CLV
 RC
 txn_man::retire_row(row_t * row){
     return row->retire_row(this);
 }
+#endif

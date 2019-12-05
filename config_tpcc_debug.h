@@ -4,7 +4,7 @@
 /***********************************************/
 // Simulation + Hardware
 /***********************************************/
-#define THREAD_CNT					10
+#define THREAD_CNT					5
 #define PART_CNT					1 
 // each transaction only accesses 1 virtual partition. But the lock/ts manager and index are not aware of such partitioning. VIRTUAL_PART_CNT describes the request distribution and is only used to generate queries. For HSTORE, VIRTUAL_PART_CNT should be the same as PART_CNT.
 #define VIRTUAL_PART_CNT			1
@@ -40,7 +40,7 @@
 // WAIT_DIE, NO_WAIT, DL_DETECT, TIMESTAMP, MVCC, HEKATON, HSTORE, OCC, VLL, TICTOC, SILO
 // TODO TIMESTAMP does not work at this moment
 //#define CC_ALG WOUND_WAIT
-#define CC_ALG WOUND_WAIT
+#define CC_ALG CLV
 #define ISOLATION_LEVEL 			SERIALIZABLE
 
 // all transactions acquire tuples according to the primary key order.
@@ -184,7 +184,7 @@ extern TestCases					g_test_case;
 #define DEBUG_ASSERT					false
 #define DEBUG_CC					false //true
 #define DEBUG_WW                    			true //true
-#define DEBUG_BENCHMARK             			true //true
+#define DEBUG_BENCHMARK             			false //true
 #define DEBUG_CLV                    			true //true
 
 /***********************************************/
@@ -210,6 +210,7 @@ extern TestCases					g_test_case;
 #define VLL							10
 #define HEKATON 					11
 #define WOUND_WAIT                  12
+#define CLV                         13
 //Isolation Levels 
 #define SERIALIZABLE				1
 #define SNAPSHOT					2

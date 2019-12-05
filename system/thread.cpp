@@ -105,7 +105,7 @@ RC thread_t::run() {
 //#endif
 		m_txn->set_txn_id(get_thd_id() + thd_txn_id * g_thread_cnt);
 		thd_txn_id ++;
-		#if DEBUG_WW && CC_ALG == WOUND_WAIT
+		#if DEBUG_WW && (CC_ALG == WOUND_WAIT || CC_ALG == CLV)
 			printf("thread %lu start running txn %lu\n", get_thd_id(), m_txn->get_txn_id());
 		#endif
 
@@ -152,7 +152,7 @@ RC thread_t::run() {
 #endif
 		}
 
-#if DEBUG_WW
+#if DEBUG_WW || DEBUG_CLV
         // TODO: set rc to abort if txn's status == abort
         //rc = m_txn->lock_abort ? Abort : rc;
 	//printf("%d\n", rc);

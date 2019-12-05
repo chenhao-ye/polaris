@@ -84,7 +84,9 @@ public:
 	// for concurrency control. can be lock, timestamp etc.
 	RC get_row(access_t type, txn_man * txn, row_t *& row);
 	void return_row(access_t type, txn_man * txn, row_t * row);
+#if CC_ALG == CLV
 	RC retire_row(txn_man * txn);
+#endif
 	
   #if CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE
     Row_lock * manager;
