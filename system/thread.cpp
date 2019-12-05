@@ -58,6 +58,10 @@ RC thread_t::run() {
 	uint64_t thd_txn_id = 0;
 	UInt64 txn_cnt = 0;
 
+#if DEBUG_WW || DEBUG_CLV
+    printf("[thread] thread starts! %lu \n", get_thd_id());
+#endif
+
 	while (true) {
     		starttime = get_sys_clock();
 		if (WORKLOAD != TEST) {
@@ -98,6 +102,11 @@ RC thread_t::run() {
 					m_query = query_queue->get_next_query( _thd_id );
 			}
 		}
+
+#if DEBUG_WW || DEBUG_CLV
+        printf("[thread] query set up in thread %lu for txn %lu\n", get_thd_id(), m_txn->get_txn_id());
+#endif
+
 		INC_STATS(_thd_id, time_query, get_sys_clock() - starttime);
 		m_txn->abort_cnt = 0;
 //#if CC_ALG == VLL
@@ -105,10 +114,9 @@ RC thread_t::run() {
 //#endif
 		m_txn->set_txn_id(get_thd_id() + thd_txn_id * g_thread_cnt);
 		thd_txn_id ++;
-		#if DEBUG_WW && (CC_ALG == WOUND_WAIT || CC_ALG == CLV)
-			printf("thread %lu start running txn %lu\n", get_thd_id(), m_txn->get_txn_id());
+		#if DEBUG_WW || DEBUG_CLV
+			printf("[thread] thread %lu start running txn %lu\n", get_thd_id(), m_txn->get_txn_id());
 		#endif
-
 
 		if ((CC_ALG == HSTORE && !HSTORE_LOCAL_TS)
 				|| CC_ALG == MVCC 
@@ -158,6 +166,8 @@ RC thread_t::run() {
 	//printf("%d\n", rc);
 	if (rc == Abort)
 		printf("[thread-%lu] txn %lu is aborted\n", get_thd_id(), m_txn->get_txn_id());
+	else if (rc == RCOK)
+        printf("[thread-%lu] txn %lu is commited\n", get_thd_id(), m_txn->get_txn_id());
 #endif
 
 		if (rc == Abort) {

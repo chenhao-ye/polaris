@@ -1,3 +1,5 @@
 *.o
 *.d
+temp.out
+rundb
 cmake-build-debug

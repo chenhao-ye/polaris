@@ -107,7 +107,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
                 // step 1 - figure out what need to be done when aborting a txn
                 // ask thread to abort
                 #if DEBUG_WW
-			printf("[row_ww]txn %lu abort txn %lu\n", txn->get_txn_id(), en->txn->get_txn_id());
+			        printf("[row_ww]txn %lu abort txn %lu\n", txn->get_txn_id(), en->txn->get_txn_id());
                 #endif
                 txn->wound_txn(en->txn);
             }
@@ -134,6 +134,9 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
         rc = WAIT;
 
         bring_next();
+#if DEBUG_WW
+        printf("[row_ww] add txn %lu to waiters of row %lu\n", txn->get_txn_id(), _row->get_row_id());
+#endif
         // if brought in owner return acquired lock
         en = owners;
         while(en){
@@ -142,9 +145,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
                 break;
             }
         }
-		#if DEBUG_WW
-			printf("[row_ww] add txn %lu to waiters of row %lu\n", txn->get_txn_id(), _row->get_row_id());
-		#endif
+
 	}
 
 
