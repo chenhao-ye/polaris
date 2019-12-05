@@ -18,10 +18,7 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 	lock_abort = false;
 #if CC_ALG == CLV
     timestamp = 0;
-    // descendants: double linked list, sorted by txn_id
-    descendants_head = NULL;
-    descendants_tail = NULL;
-    ancestors = 0;
+    commit_barriers = 0;
 #endif
 	ready_part = 0;
 	row_cnt = 0;
@@ -53,14 +50,12 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 
 void txn_man::set_txn_id(txnid_t txn_id) {
 	#if CC_ALG == WOUND_WAIT || CC_ALG == CLV
-		// need to reset its params
-		//#if DEBUG_WW
-		//	printf("[txn] init txn %lu abort to false\n", txn_id);
-		//#endif
-		//ATOM_CAS(this->lock_abort, true, false);
 		lock_abort = false;
 		lock_ready = false;
-		ancestors = 0;
+		status = RUNNING;
+    #if CC_ALG == CLV
+		commit_barriers = 0;
+    #endif
 	#endif
 	this->txn_id = txn_id;
 }
@@ -114,13 +109,14 @@ void txn_man::cleanup(RC rc) {
 					(CC_ALG == DL_DETECT || 
 					CC_ALG == NO_WAIT || 
 					CC_ALG == WAIT_DIE ||
-					CC_ALG == WOUND_WAIT ||
-					CC_ALG == CLV))
+					CC_ALG == WOUND_WAIT) ||
+					CC_ALG == CLV)
 		{
 			orig_r->return_row(type, this, accesses[rid]->orig_data);
 		} else {
 			orig_r->return_row(type, this, accesses[rid]->data);
 		}
+
 #if CC_ALG != TICTOC && CC_ALG != SILO
 		accesses[rid]->data = NULL;
 #endif
@@ -182,7 +178,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
 	accesses[row_cnt]->history_entry = history_entry;
 #endif
 
-#if ROLL_BACK && (CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT)
+#if ROLL_BACK && (CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT || CC_ALG == CLV)
 	if (type == WR) {
 		accesses[row_cnt]->orig_data->table = row->get_table();
 		accesses[row_cnt]->orig_data->copy(row);
@@ -253,22 +249,21 @@ RC txn_man::finish(RC rc) {
 #if DEBUG_WW
 	printf("[txn] finish up txn %lu due to %d\n", get_txn_id(), rc);
 #endif
+	if (rc == RCOK) {
+        if (!ATOM_CAS(status, RUNNING, COMMITED))
+            rc = Abort;
+	}
 	cleanup(rc);
 #elif CC_ALG == CLV
 	if (rc == RCOK) {
-        while(ancestors > 0)
+        while(commit_barriers > 0 || status == RUNNING)
             continue;
+        if (!ATOM_CAS(status, RUNNING, COMMITED))
+            rc = Abort;
 	}
-    // decrement descendants' ancestors
-    TxnEntry * en = descendants_head;
-    while(en != NULL) {
-        en->txn->decrement_ancestors();
-        mem_allocator.free(en, 0);
-        en = en->next;
-    }
-    descendants_head = NULL;
-    descendants_tail = NULL;
-    assert(ancestors == 0);
+	if (rc == Abort) {
+	    set_next_ts();
+	}
 	cleanup(rc);
 #else 
 	cleanup(rc);
@@ -285,42 +280,6 @@ txn_man::release() {
 		mem_allocator.free(accesses[i], 0);
 	mem_allocator.free(accesses, 0);
 }
-
-//TxnEntry *
-//txn_man::get_entry(){
-//    TxnEntry * entry = (TxnEntry *)
-//            _mm_malloc(sizeof(TxnEntry), 64);
-//    entry->next = NULL;
-//    return entry;
-//}
-//
-//bool
-//txn_man::add_descendants(txn_man * txn) {
-//    if (txn->lock_abort || lock_abort)
-//        return false;
-//    assert(txn->get_ts() > this->timestamp);
-//    TxnEntry * en = descendants_head;
-//    while (en != NULL)
-//    {
-//        if (txn->get_txn_id() == en->txn->get_txn_id()) {
-//            return false;
-//        } else if (txn->get_txn_id() < en->txn->get_txn_id()) {
-//            break;
-//        }
-//        en = en->next;
-//    }
-//    TxnEntry * entry = get_entry();
-//    entry->txn = txn;
-//    if (en) {
-//        LIST_INSERT_BEFORE(en, entry);
-//        if (en == descendants_head)
-//            descendants_head = entry;
-//    } else
-//        LIST_PUT_TAIL(descendants_head, descendants_tail, entry);
-//    return true;
-//}
-//
-
 
 void
 txn_man::decrement_commit_barriers() {

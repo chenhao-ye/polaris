@@ -307,6 +307,7 @@ void row_t::return_row(access_t type, txn_man * txn, row_t * row) {
 		this->copy(row);
 	}
 	this->manager->lock_release(txn);
+	// TODO: if aborted, also release descendants
 #elif CC_ALG == TIMESTAMP || CC_ALG == MVCC 
 	// for RD or SCAN or XP, the row should be deleted.
 	// because all WR should be companied by a RD
@@ -341,4 +342,5 @@ void row_t::return_row(access_t type, txn_man * txn, row_t * row) {
 	assert(false);
 #endif
 }
+
 

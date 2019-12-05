@@ -29,6 +29,8 @@ private:
 	bool 		conflict_lock(lock_t l1, lock_t l2);
 	LockEntry * get_entry();
 	void 		return_entry(LockEntry * entry);
+	void        bring_next();
+
 	row_t * _row;
 	// owner's lock type
     lock_t lock_type;

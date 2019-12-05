@@ -51,9 +51,8 @@ public:
 	void 			set_txn_id(txnid_t txn_id);
 	txnid_t 		get_txn_id();
 
-	//WW
-	RC              abort_txn();
-	// CLV
+	// [WW, CLV]
+    RC              wound_txn(txn_man * txn);
     void            increment_commit_barriers();
     void            decrement_commit_barriers();
 
@@ -69,6 +68,8 @@ public:
 	// [DL_DETECT, NO_WAIT, WAIT_DIE, WOUND_WAIT, CLV]
 	bool volatile 	lock_ready;
 	bool volatile 	lock_abort; // forces another waiting txn to abort.
+    // [CLV]
+    status_t        status; // RUNNING, COMMITED, ABORTED
 	// [TIMESTAMP, MVCC]
 	bool volatile 	ts_ready; 
 	// [HSTORE]
@@ -131,34 +132,16 @@ private:
 
 
 #include "thread.h"
-inline RC txn_man::abort_txn()
-{
-    assert(CC_ALG == WOUND_WAIT);
-    bool can_abort = ATOM_CAS(this->lock_abort, false, true);
-    // TODO: check if abort is successfult, if so, release lock by calling finish
-    if (can_abort) {
-#if DEBUG_WW & CC_ALG == WOUND_WAIT
-	printf("[txn] set txn %lu to abort.\n", this->get_txn_id());
-#endif
-        return FINISH;
-	}
-    return ERROR;
-}
 
-//inline RC txn_man::abort_txn(txn_man * txn)
-//{
-//    assert(CC_ALG == CLV);
-//    bool can_abort = ATOM_CAS(this->lock_abort, false, true);
-//    // TODO: check if abort is successfult, if so, release lock by calling finish
-//    if (can_abort) {
-//        // abort descendants
-//        TxnEntry * en = descendants_head;
-//        while(en != NULL) {
-//            // no need to decrement ancestors as it is decrement at aborting time
-//            en->txn->abort_txn(txn);
-//            en = en->next;
-//        }
-//        return FINISH;
-//    }
-//    return ERROR;
-//}
+inline RC txn_man::wound_txn(txn_man * txn)
+{
+    assert(status == RUNNING);
+
+    if ( ATOM_CAS(txn->status, RUNNING, ABORTED)) {
+        txn->lock_abort = true;
+        // no need to abort descendants as lock manager will abort descendants
+    } //else {
+        // two cases: 1) commited 2) aborted
+        // either case no need to worry about }
+    return FINISH;
+}

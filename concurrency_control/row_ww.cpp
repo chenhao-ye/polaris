@@ -78,7 +78,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 	//		conflict = true;
 	//}
 	
-	if ((owner_cnt == 0) || ( (!conflict_lock(type, lock_type)) && (waiters_head == NULL || txn->get_ts() < waiters_head->txn->get_ts()) )) { 
+	if (owner_cnt == 0) {
 			// if owner is empty, grab the lock
 		LockEntry * entry = get_entry();
 		entry->type = type;
@@ -92,7 +92,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 			printf("[row_ww] add txn %lu to owners of row %lu\n", txn->get_txn_id(), _row->get_row_id());
 		#endif
 	} else {
-	// Cannot be added to the owner list.
+	    // Cannot be added to the owner list.
         ///////////////////////////////////////////////////////////
         //  - T is the txn currently running
         //  always can wait but need to abort txns has lower priority (larger ts)
@@ -103,29 +103,13 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
         // go through owners
         LockEntry * en = owners;
         while (en != NULL) {
-	    if (en->txn->get_txn_id() == txn->get_txn_id()) {
-		//already in owners
-		// check lock type
-		// same type grab
-		if(type == LOCK_EX && lock_type == LOCK_SH && owner_cnt > 1) {
-			en->prev->next = en->next;
-			en->next->prev = en->prev;
-			owner_cnt--;
-		} else {
-			if (type == LOCK_EX)
-				en->type = LOCK_EX;
-			txn->lock_ready = true;
-			rc = RCOK;
-			goto final;
-		} 
-	    }
-            else if (en->txn->get_ts() > txn->get_ts()) { 
+	        if (en->txn->get_ts() > txn->get_ts() && conflict_lock(lock_type, type)) {
                 // step 1 - figure out what need to be done when aborting a txn
                 // ask thread to abort
                 #if DEBUG_WW
 			printf("[row_ww]txn %lu abort txn %lu\n", txn->get_txn_id(), en->txn->get_txn_id());
                 #endif
-                en->txn->abort_txn();
+                txn->wound_txn(en->txn);
             }
             en = en->next;
         }
@@ -137,21 +121,9 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
         entry->txn = txn;
         entry->type = type;
         en = waiters_head;
-        while (en != NULL)
-	{
-	    if (en->txn->get_txn_id() == txn->get_txn_id()) {
-		if (en->type == LOCK_SH)
-			en->type = type;
-		txn->lock_ready = false;
-		rc = WAIT;
-		goto final;
-	    }
-	    if (txn->get_ts() < en->txn->get_ts())
-		break;
-	    else 
-            	en = en->next;
-        }
-	if (en) {
+        while ((en != NULL) && (txn->get_ts() > en->txn->get_ts()))
+            en = en->next;
+        if (en) {
             LIST_INSERT_BEFORE(en, entry);
             if (en == waiters_head)
                 waiters_head = entry;
@@ -160,12 +132,21 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
         waiter_cnt ++;
         txn->lock_ready = false;
         rc = WAIT;
+
+        bring_next();
+        // if brought in owner return acquired lock
+        en = owners;
+        while(en){
+            if (en->txn == txn) {
+                rc = RCOK;
+                break;
+            }
+        }
 		#if DEBUG_WW
 			printf("[row_ww] add txn %lu to waiters of row %lu\n", txn->get_txn_id(), _row->get_row_id());
 		#endif
 	}
 
-final:
 
 	if (g_central_man)
 		glob_manager->release_row(_row);
@@ -207,7 +188,6 @@ RC Row_ww::lock_release(txn_man * txn) {
 		en = waiters_head;
 		while (en != NULL && en->txn != txn)
 			en = en->next;
-		ASSERT(en);
 		LIST_REMOVE(en);
 		if (en == waiters_head)
 			waiters_head = en->next;
@@ -220,27 +200,7 @@ RC Row_ww::lock_release(txn_man * txn) {
 		#endif
 	}
 
-	if (owner_cnt == 0)
-		ASSERT(lock_type == LOCK_NONE);
-#if DEBUG_ASSERT && (CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT)
-		for (en = waiters_head; en != NULL && en->next != NULL; en = en->next)
-			assert(en->next->txn->get_ts() < en->txn->get_ts());
-#endif
-
-	LockEntry * entry;
-	// If any waiter can join the owners, just do it!
-	while (waiters_head && !conflict_lock(lock_type, waiters_head->type)) {
-		LIST_GET_HEAD(waiters_head, waiters_tail, entry);
-		STACK_PUSH(owners, entry);
-		owner_cnt ++;
-		waiter_cnt --;
-		ASSERT(entry->txn->lock_ready == false);
-		entry->txn->lock_ready = true;
-		lock_type = entry->type;
-		#if DEBUG_WW
-			printf("[row_ww] bring %lu from waiter to owner to row %lu\n", entry->txn->get_txn_id(), _row->get_row_id());
-		#endif
-	} 
+	bring_next();
 	ASSERT((owners == NULL) == (owner_cnt == 0));
 
 	if (g_central_man)
@@ -269,3 +229,20 @@ void Row_ww::return_entry(LockEntry * entry) {
 	mem_allocator.free(entry, sizeof(LockEntry));
 }
 
+void
+Row_ww::bring_next() {
+    LockEntry * entry;
+    // If any waiter can join the owners, just do it!
+    while (waiters_head && (owners == NULL || !conflict_lock(owners->type, waiters_head->type) )) {
+        LIST_GET_HEAD(waiters_head, waiters_tail, entry);
+        STACK_PUSH(owners, entry);
+        owner_cnt ++;
+        waiter_cnt --;
+        ASSERT(entry->txn->lock_ready == 0);
+        entry->txn->lock_ready = true;
+#if DEBUG_CLV
+        printf("[row_clv] bring %lu from waiter to owner to row %lu\n", entry->txn->get_txn_id(), _row->get_row_id());
+#endif
+    }
+    ASSERT((owners == NULL) == (owner_cnt == 0));
+}

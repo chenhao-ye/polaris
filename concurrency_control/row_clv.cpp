@@ -71,7 +71,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
     while(en){
         if (en->txn == txn) {
             rc = RCOK;
-            break
+            break;
         }
     }
 
@@ -94,7 +94,7 @@ Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner
         if (has_conflict) {
             if (txn->get_ts() != 0) {
                 // abort txn
-                en->txn->abort_txn();
+                txn->wound_txn(en->txn);
                 // remove from retired/owner
                 if (prev)
                     prev->next = en->next;
