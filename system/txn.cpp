@@ -109,8 +109,8 @@ void txn_man::cleanup(RC rc) {
 					(CC_ALG == DL_DETECT || 
 					CC_ALG == NO_WAIT || 
 					CC_ALG == WAIT_DIE ||
-					CC_ALG == WOUND_WAIT) ||
-					CC_ALG == CLV)
+					CC_ALG == WOUND_WAIT ||
+					CC_ALG == CLV))
 		{
 			orig_r->return_row(type, this, accesses[rid]->orig_data);
 		} else {

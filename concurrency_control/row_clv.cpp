@@ -67,7 +67,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	bring_next();
 
     // if brought in owner return acquired lock
-    en = owners;
+    LockEntry * en = owners;
     while(en){
         if (en->txn == txn) {
             rc = RCOK;
@@ -115,7 +115,7 @@ Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner
         }
         if (has_conflict)
             txn->set_next_ts();
-        insert_to_waiters(txn);
+        insert_to_waiters(type, txn);
         prev = en;
         en = en->next;
     }
@@ -243,7 +243,6 @@ Row_clv::insert_to_waiters(lock_t type, txn_man * txn) {
     {
         if (txn->get_ts() < en->txn->get_ts())
             break;
-        add_dependency(en->txn, txn);
         en = en->next;
     }
     if (en) {

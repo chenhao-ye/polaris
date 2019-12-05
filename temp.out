@@ -57,29 +57,20 @@ g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storag
 g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/row_ts.o concurrency_control/row_ts.cpp
 g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/dl_detect.o concurrency_control/dl_detect.cpp
 g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/row_occ.o concurrency_control/row_occ.cpp
-g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/occ.o concurrency_control/occ.cpp
-g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/row_mvcc.o concurrency_control/row_mvcc.cpp
-g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/row_ww.o concurrency_control/row_ww.cpp
-g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/plock.o concurrency_control/plock.cpp
-g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/row_lock.o concurrency_control/row_lock.cpp
-g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/tictoc.o concurrency_control/tictoc.cpp
-g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/silo.o concurrency_control/silo.cpp
-g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/hekaton.o concurrency_control/hekaton.cpp
-g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/row_tictoc.o concurrency_control/row_tictoc.cpp
-g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/row_silo.o concurrency_control/row_silo.cpp
-g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o concurrency_control/row_clv.o concurrency_control/row_clv.cpp
-g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o storage/catalog.o storage/catalog.cpp
-g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o storage/index_hash.o storage/index_hash.cpp
-g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o storage/index_btree.o storage/index_btree.cpp
-g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o storage/row.o storage/row.cpp
-g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o storage/table.o storage/table.cpp
-g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o system/stats.o system/stats.cpp
-g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o system/manager.o system/manager.cpp
-g++ -c -Wall -g -std=c++0x -I. -I./benchmarks -I./concurrency_control -I./storage -I./system -D NOGRAPHITE=1 -Werror -O3 -o system/thread.o system/thread.cpp
-storage/row.cpp: In member function ‘RC row_t::retire_row(txn_man*)’:
-storage/row.cpp:142:27: error: ‘class Row_ww’ has no member named ‘lock_retire’
-     return this->manager->lock_retire(txn);
-                           ^
-Makefile:29: recipe for target 'storage/row.o' failed
-make: *** [storage/row.o] Error 1
-make: *** Waiting for unfinished jobs....
+make: *** Deleting file 'benchmarks/ycsb_wl.o'
+Makefile:29: recipe for target 'benchmarks/tpcc_wl.o' failed
+make: *** [benchmarks/tpcc_wl.o] Interrupt
+Makefile:29: recipe for target 'benchmarks/test_wl.o' failed
+make: *** [benchmarks/test_wl.o] Interrupt
+Makefile:29: recipe for target 'concurrency_control/row_vll.o' failed
+make: *** [concurrency_control/row_vll.o] Interrupt
+Makefile:29: recipe for target 'concurrency_control/vll.o' failed
+make: *** [concurrency_control/vll.o] Interrupt
+Makefile:29: recipe for target 'concurrency_control/row_ts.o' failed
+make: *** [concurrency_control/row_ts.o] Interrupt
+Makefile:29: recipe for target 'concurrency_control/dl_detect.o' failed
+make: *** [concurrency_control/dl_detect.o] Interrupt
+Makefile:29: recipe for target 'concurrency_control/row_occ.o' failed
+make: *** [concurrency_control/row_occ.o] Interrupt
+Makefile:29: recipe for target 'benchmarks/ycsb_wl.o' failed
+make: *** [benchmarks/ycsb_wl.o] Interrupt
