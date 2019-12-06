@@ -299,6 +299,7 @@ txn_man::decrement_commit_barriers() {
     // TODO: may have to be atomic since is not called in critical section
 #if DEBUG_CLV
 printf("[txn] decrement barrier for txn %lu\n", get_txn_id());
+assert(commit_barriers >= 0);
 #endif
     ATOM_SUB(this->commit_barriers, 1);
 }
