@@ -154,44 +154,49 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 	int txncnt; 
 	rc = this->manager->lock_get(lt, txn, txnids, txncnt);	
 #else
-	if (txn->lock_abort)
-		rc = Abort;
-	else
+	if (txn->lock_abort) {
+		#if DEBUG_CLV
+		printf("[row] detected abort in txn %lu before lock_get row %lu\n",
+				   txn->get_txn_id(), this->get_row_id());
+		#endif
+		return Abort;
+	} else
 		rc = this->manager->lock_get(lt, txn);
 #endif
 
 	if (rc == RCOK) {
-#if CC_ALG == WOUND_WAIT || CC_ALG == CLV
+		#if CC_ALG == WOUND_WAIT || CC_ALG == CLV
 		if(txn->lock_abort) {
 			rc = Abort;
 			return_row(type, txn, NULL);
-#if DEBUG_CLV
+			#if DEBUG_CLV
 			printf("[row] detected abort in txn %lu when acquired row %lu\n",
 				   txn->get_txn_id(), this->get_row_id());
-#endif
+			#endif
+			return rc;
 		}
-#endif
-		row = this;
+		#endif		
 	} else if (rc == Abort) {
-#if DEBUG_CLV
+		#if DEBUG_CLV
 		printf("[row] return abort in txn %lu when trying to get row %lu\n",
 			   txn->get_txn_id(), this->get_row_id());
-#endif
+		#endif
+		return rc;
 	}
 	else if (rc == WAIT) {
 		ASSERT(CC_ALG == WAIT_DIE || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT || CC_ALG == CLV);
 
 		uint64_t starttime = get_sys_clock();
-#if CC_ALG == DL_DETECT	
+		#if CC_ALG == DL_DETECT	
 		bool dep_added = false;
-#endif
+		#endif
 		uint64_t endtime;
 		INC_STATS(txn->get_thd_id(), wait_cnt, 1);
 		while (!txn->lock_ready && !txn->lock_abort) 
 		{
-#if CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT || CC_ALG == CLV
+			#if CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT || CC_ALG == CLV
 			continue;
-#elif CC_ALG == DL_DETECT	
+			#elif CC_ALG == DL_DETECT	
 			uint64_t last_detect = starttime;
 			uint64_t last_try = starttime;
 
@@ -225,7 +230,7 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 				}
 			} else 
 				PAUSE
-#endif
+			#endif
 		}
 	
 		if (txn->lock_ready) {
@@ -237,14 +242,16 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 			// check if txn is aborted
 			rc = Abort;
 			return_row(type, txn, NULL);
-#if DEBUG_CLV
+			#if DEBUG_CLV
 			printf("[row] detected abort in txn %lu when waiting row %lu\n",
 					txn->get_txn_id(), this->get_row_id());
-#endif
+			#endif
+			return rc;
 		}
-		row = this;
 	}
+	row = this;
 	return rc;
+
 #elif CC_ALG == TIMESTAMP || CC_ALG == MVCC || CC_ALG == HEKATON 
 	uint64_t thd_id = txn->get_thd_id();
 	// For TIMESTAMP RD, a new copy of the row will be returned.
