@@ -198,7 +198,9 @@ RC Row_ww::lock_release(txn_man * txn) {
 			printf("[row_ww] rm txn %lu from owners of row %lu\n", txn->get_txn_id(), _row->get_row_id());
 		#endif
 	} else {
+		#if DEBUG_TMP
 		printf("[row_ww] not found txn %lu to release in owners, try waiters of row %lu\n", txn->get_txn_id(), _row->get_row_id());
+		#endif
 		// Not in owners list, try waiters list.
 		en = waiters_head;
 		while (en != NULL && en->txn != txn)

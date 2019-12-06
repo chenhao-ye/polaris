@@ -184,7 +184,9 @@ extern TestCases					g_test_case;
 #define DEBUG_ASSERT				false
 #define DEBUG_CC					false //true
 #define DEBUG_WW                    		false //true
-#define DEBUG_BENCHMARK                    		true
+#define DEBUG_BENCHMARK                    		false
+#define DEBUG_TMP					false
+#define DEBUG_CLV					false
 
 /***********************************************/
 // Constant
@@ -203,12 +205,13 @@ extern TestCases					g_test_case;
 #define TIMESTAMP					4
 #define MVCC						5
 #define HSTORE						6
-#define OCC							7
+#define OCC						7
 #define TICTOC						8
 #define SILO						9
-#define VLL							10
+#define VLL						10
 #define HEKATON 					11
-#define WOUND_WAIT                  12
+#define WOUND_WAIT                  			12
+#define CLV						13
 //Isolation Levels 
 #define SERIALIZABLE				1
 #define SNAPSHOT					2
