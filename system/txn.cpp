@@ -292,11 +292,17 @@ txn_man::release() {
 void
 txn_man::decrement_commit_barriers() {
     // TODO: may have to be atomic since is not called in critical section
+#if DEBUG_CLV
+printf("[txn] decrement barrier for txn %lu\n", get_txn_id());
+#endif
     ATOM_SUB(this->commit_barriers, 1);
 }
 
 void
 txn_man::increment_commit_barriers() {
+#if DEBUG_CLV
+	printf("[txn] increment barrier for txn %lu\n", get_txn_id());
+#endif
     // not necessarily atomic, called in critical section only
     ATOM_ADD(this->commit_barriers, 1);
 }

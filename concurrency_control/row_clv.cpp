@@ -95,6 +95,10 @@ RC Row_clv::lock_retire(txn_man * txn) {
     // append entry to retired
     STACK_PUSH(retired, entry);
     retired_cnt++;
+#if DEBUG_CLV
+	printf("[row_clv] move txn %lu from retired to owners of row %lu\n",
+			txn->get_txn_id(), _row->get_row_id());
+#endif
     // increment barriers
     if (retired_cnt > 1)
         txn->increment_commit_barriers();
@@ -170,7 +174,8 @@ Row_clv::bring_next() {
         ASSERT(entry->txn->lock_ready == 0);
         entry->txn->lock_ready = true;
 #if DEBUG_CLV
-        printf("[row_clv] bring %lu from waiter to owner to row %lu\n", entry->txn->get_txn_id(), _row->get_row_id());
+        printf("[row_clv] bring %lu from waiters to owners of row %lu\n",
+        		entry->txn->get_txn_id(), _row->get_row_id());
 #endif
     }
     ASSERT((owners == NULL) == (owner_cnt == 0));
@@ -215,6 +220,10 @@ Row_clv::insert_to_waiters(lock_t type, txn_man * txn) {
     LIST_PUT_TAIL(waiters_head, waiters_tail, entry);
     waiter_cnt ++;
     txn->lock_ready = false;
+#if DEBUG_WW
+	printf("[row_clv] add txn %lu type %d to waiters of row %lu\n",
+			txn->get_txn_id(), type, _row->get_row_id());
+#endif
 }
 
 void
@@ -229,6 +238,10 @@ Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner
             if (txn->get_ts() != 0) {
                 // abort txn
                 txn->wound_txn(en->txn);
+#if DEBUG_CLV
+				printf("[row_clv] txn %lu abort txn %lu\n",
+			        		txn->get_txn_id(), en->txn->get_txn_id());
+#endif
                 // remove from retired/owner
                 if (prev)
                     prev->next = en->next;
@@ -239,10 +252,20 @@ Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner
                         retired = en->next;
                 }
                 // update count
-                if (is_owner)
-                    owner_cnt--;
-                else
-                    retired_cnt--;
+                if (is_owner) {
+#if DEBUG_CLV
+					printf("[row_clv] rm txn %lu from owners of row %lu\n",
+			        		txn->get_txn_id(), _row->get_row_id());
+#endif
+					owner_cnt--;
+				} else {
+#if DEBUG_CLV
+					printf("[row_clv] rm txn %lu from retired of row %lu\n",
+			        		txn->get_txn_id(), _row->get_row_id());
+#endif
+					retired_cnt--;
+				}
+
             }
             if (en->txn->get_ts() == 0)
                 en->txn->set_next_ts();

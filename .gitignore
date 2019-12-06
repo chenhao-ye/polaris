@@ -1,5 +1,6 @@
 *.o
 *.d
 *.out
+config.h
 rundb
 cmake-build-debug

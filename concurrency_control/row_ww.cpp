@@ -37,10 +37,6 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 		glob_manager->lock_row(_row);
 	else 
 		pthread_mutex_lock( latch );
-	
-	#if DEBUG_TMP
-		printf("[row_ww] %lu got mutex in lock_get %lu\n", txn->get_txn_id(), _row->get_row_id());
-	#endif
 
     // each thread has at most one owner of a lock
 	assert(owner_cnt <= g_thread_cnt);
@@ -91,7 +87,8 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
                 		// step 1 - figure out what need to be done when aborting a txn
                 		// ask thread to abort
                 	#if DEBUG_WW
-			        printf("[row_ww]txn %lu abort txn %lu\n", txn->get_txn_id(), en->txn->get_txn_id());
+			        printf("[row_ww] txn %lu abort txn %lu\n",
+			        		txn->get_txn_id(), en->txn->get_txn_id());
                 	#endif
                 		txn->wound_txn(en->txn);
                 		// remove from owner
@@ -129,36 +126,23 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 #if DEBUG_WW
         printf("[row_ww] add txn %lu type %d to waiters of row %lu\n", txn->get_txn_id(), type, _row->get_row_id());
 #endif
-
         bring_next();
-#if DEBUG_TMP
-        printf("[row_ww] txn %lu tried to take waiters to owners of row %lu\n", txn->get_txn_id(), _row->get_row_id());
-#endif
 
         // if brought in owner return acquired lock
         en = owners;
         while(en){
             if (en->txn == txn) {
                 rc = RCOK;
-#if DEBUG_TMP
-        	printf("[row_ww] txn %lu is brought to owners of row %lu\n", txn->get_txn_id(),  _row->get_row_id());
-#endif
                 break;
             }
 		en = en->next;
         }
 	}
 
-	#if DEBUG_TMP
-		printf("[row_ww] %lu try to release mutex in lock_get %lu\n", txn->get_txn_id(), _row->get_row_id());
-	#endif
 	if (g_central_man)
 		glob_manager->release_row(_row);
 	else
 		pthread_mutex_unlock( latch );
-	#if DEBUG_TMP
-		printf("[row_ww] %lu release mutex in lock_get %lu\n", txn->get_txn_id(), _row->get_row_id());
-	#endif
 
 	return rc;
 }
