@@ -1,5 +1,5 @@
 *.o
 *.d
-temp.out
+*.out
 rundb
 cmake-build-debug

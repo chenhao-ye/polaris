@@ -2,3 +2,12 @@ mem_allocator initialized!
 WOUND_WAIT
 reading schema file: ./benchmarks/TPCC_full_schema.txt
 TPCC schema initialized
+debug pt 1
+debug pt 2
+debug pt 3
+debug pt 4
+debug pt 5
+debug pt 6
+debug pt 7
+debug pt 8
+debug pt 9
