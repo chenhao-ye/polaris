@@ -283,14 +283,14 @@ Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner
 				// update count
 				if (is_owner) {
 					#if DEBUG_CLV
-					printf("[row_clv] rm txn %lu from owners of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
+					printf("[row_clv] txn %lu rm another txn %lu from owners of row %lu\n", txn->get_txn_id(), en->txn->get_txn_id(), _row->get_row_id());
 					#endif
 					if (owners_tail == en)
 						owners_tail = prev;
 					owner_cnt--;
 				} else {
 					#if DEBUG_CLV
-					printf("[row_clv] rm txn %lu from retired of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
+					printf("[row_clv] txn %lu rm another txn %lu from retired of row %lu\n", txn->get_txn_id(), en->txn->get_txn_id(), _row->get_row_id());
 					#endif
 					if (retired_tail == en)
 						retired_tail = prev;
