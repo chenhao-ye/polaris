@@ -252,7 +252,7 @@ Row_clv::insert_to_waiters(lock_t type, txn_man * txn) {
 RC
 Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner, bool has_conflict) {
 	LockEntry * en = list;
-	LockEntry * prev = NULL;
+	volatile LockEntry * prev = NULL;
 	while (en != NULL) {
 		if (conflict_lock(en->type, type) && (en->txn->get_ts() > txn->get_ts() || txn->get_ts() == 0))
 			has_conflict = true;
@@ -270,7 +270,7 @@ Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner
 				printf("[row_clv] txn %lu abort txn %lu on row %lu\n", txn->get_txn_id(), en->txn->get_txn_id(), _row->get_row_id());
 				#endif
 				// remove aborted txn (en->txn) from retired/owner
-				if (prev)
+				if (prev != NULL)
 					prev->next = en->next;
 				else {
 					if (is_owner && (owners == en))
@@ -316,14 +316,14 @@ Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner
 LockEntry *
 Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
 	LockEntry * en = list;
-	LockEntry * prev = NULL;
+	volatile LockEntry * prev = NULL;
 
 	while (en != NULL && en->txn->get_txn_id() != txn->get_txn_id()) {
 		prev = en;
 		en = en->next;
 	}
 	if (en) { // find the entry in the retired list
-		if (prev)
+		if (prev != NULL)
 			prev->next = en->next;
 		else {
 			if (is_owner && (owners == en)) {
