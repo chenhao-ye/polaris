@@ -52,7 +52,7 @@ private:
 	RC check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner, bool has_conflict);
     
     // debugging method
-    void print_list(LockEntry * list, int cnt);
+    void print_list(LockEntry * list, LockEntry * tail, int cnt);
 
 };
 
