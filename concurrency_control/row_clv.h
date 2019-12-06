@@ -47,9 +47,12 @@ private:
 	LockEntry * waiters_tail;
 
 	void bring_next();
-	RC check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner, bool has_conflict);
 	void insert_to_waiters(lock_t type, txn_man * txn);
-    LockEntry * remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner);
+	LockEntry * remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner);
+	RC check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner, bool has_conflict);
+    
+    // debugging method
+    void print_list(LockEntry * list, int cnt);
 
 };
 

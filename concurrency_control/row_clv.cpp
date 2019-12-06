@@ -355,6 +355,19 @@ Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
 	return NULL;
 }
 
+void
+Row_clv::print_list(LockEntry * list, int cnt) {
+	LockEntry * en = list;
+	int count = 0;
+	while(en){
+		printf("(%lu, %d) -> ", en->txn->get_txn_id(), en->type);
+		en = en->next;
+		count += 1;
+	}
+	printf("\n");
+	assert(count == cnt);
+}
+
 
 
 
