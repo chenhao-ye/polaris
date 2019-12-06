@@ -40,7 +40,9 @@ private:
 	// [waiters] head is the oldest txn, tail is the youngest txn. 
 	//   So new txns are inserted into the tail.
 	LockEntry * owners;
-    LockEntry * retired;
+	LockEntry * owners_tail;
+	LockEntry * retired;
+	LockEntry * retired_tail;
 	LockEntry * waiters_head;
 	LockEntry * waiters_tail;
 

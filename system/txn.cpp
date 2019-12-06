@@ -268,6 +268,8 @@ RC txn_man::finish(RC rc) {
 	}
 	if (rc == Abort) {
 	    set_next_ts();
+	} else {
+	    set_ts(0);
 	}
 	#if DEBUG_CLV
 	if (rc == Abort)

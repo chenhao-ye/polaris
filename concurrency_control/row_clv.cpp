@@ -8,11 +8,13 @@ void Row_clv::init(row_t * row) {
 	_row = row;
 	// owners is a single linked list, each entry/node contains info like lock type, prev/next
 	owners = NULL;
+	owners_tail = NULL;
     // waiter is a double linked list. two ptrs to the linked lists
 	waiters_head = NULL;
 	waiters_tail = NULL;
 	// retired is a linked list, the next of tail is the head of owners
 	retired = NULL;
+	retired_tail = NULL;
 	owner_cnt = 0;
 	waiter_cnt = 0;
 	retired_cnt = 0;
@@ -98,7 +100,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
     LockEntry * entry = remove_if_exists(owners, txn, true);
     assert(entry != NULL);
     // append entry to retired
-    STACK_PUSH(retired, entry);
+    QUEUE_PUSH(retired, entry);
     retired_cnt++;
 #if DEBUG_CLV
 	printf("[row_clv] move txn %lu from owners to retired type %d of row %lu\n",
@@ -125,10 +127,10 @@ RC Row_clv::lock_release(txn_man * txn) {
 		pthread_mutex_lock( latch );
 
 	// Try to find the entry in the retired
-	LockEntry * prev_head = retired;
+	txn_man * prev_retired = retired->txn;
 	LockEntry * en = remove_if_exists(retired, txn, false);
 	if (en != NULL) {
-        if ((retired != prev_head) && (retired_cnt > 0)) {
+        if ((retired != NULL) && (retired->txn != prev_retired)) {
             // becoming head always remove one barrier
             retired->txn->decrement_commit_barriers();
         }
@@ -173,7 +175,7 @@ Row_clv::bring_next() {
     // If any waiter can join the owners, just do it!
     while (waiters_head && (owners == NULL || !conflict_lock(owners->type, waiters_head->type) )) {
         LIST_GET_HEAD(waiters_head, waiters_tail, entry);
-        STACK_PUSH(owners, entry);
+        QUEUE_PUSH(owners_tail, entry);
         owner_cnt ++;
         waiter_cnt --;
         ASSERT(entry->txn->lock_ready == 0);

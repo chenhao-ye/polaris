@@ -4,1019 +4,138 @@ reading schema file: ./benchmarks/TPCC_full_schema.txt
 TPCC schema initialized
 TPCC Data Initialization Complete!
 workload initialized!
-Query Queue Init Time 0.000542
+Query Queue Init Time 0.000570
 query_queue initialized!
 [thread] thread starts! 1 
 [thread] query set up in thread 1 for txn 0
-[thread] thread 1 start running txn 1
 [thread] thread starts! 0 
 [thread] query set up in thread 0 for txn 0
 [thread] thread 0 start running txn 0
-[row_clv] add txn 1 type 0 to waiters of row 1460255043801305
-[row_clv] bring 1 from waiters to owners of row 1460255043801305
-[row_clv] add txn 0 type 0 to waiters of row 1460255043801305
-[row_clv] rm txn 1 from owners of row 1460255043801305
-[row_clv] move txn 1 from owners to retired type 0 of row 1460255043801305
-[row_clv] bring 0 from waiters to owners of row 1460255043801305
-[row_clv] rm txn 0 from owners of row 1460255043801305
-[row_clv] move txn 0 from owners to retired type 0 of row 1460255043801305
-[row_clv] add txn 1 type 0 to waiters of row 1460255043817937
-[txn] increment barrier for txn 0
-[row_clv] bring 1 from waiters to owners of row 1460255043817937
-[row_clv] rm txn 1 from owners of row 1460255043817937
-[row_clv] add txn 0 type 0 to waiters of row 1460255043810764
-[row_clv] move txn 1 from owners to retired type 0 of row 1460255043817937
-[row_clv] bring 0 from waiters to owners of row 1460255043810764
-[row_clv] add txn 1 type 0 to waiters of row 1460255905441544
-[row_clv] rm txn 0 from owners of row 1460255043810764
-[row_clv] bring 1 from waiters to owners of row 1460255905441544
-[row_clv] move txn 0 from owners to retired type 0 of row 1460255043810764
-[row_clv] add txn 0 type 0 to waiters of row 1460255660992559
-[row_clv] bring 0 from waiters to owners of row 1460255660992559
-[row_clv] rm txn 0 from owners of row 1460255660992559
-[row_clv] rm txn 1 from owners of row 1460255905441544
-[row_clv] move txn 0 from owners to retired type 0 of row 1460255660992559
-[row_clv] move txn 1 from owners to retired type 0 of row 1460255905441544
-[txn] # bariers of txn 0 = 1
-[txn] # bariers of txn 1 = 0
-[txn] txn 1 is set to commited
-[row_clv] rm txn 1 from retired of row 1460255905441544
-[row_clv] rm txn 1 from retired of row 1460255043817937
-[row_clv] rm txn 1 from retired of row 1460255043801305
-[thread-1] finish txn 1 (commited)
-[thread] query set up in thread 1 for txn 1
-[thread] thread 1 start running txn 3
-[txn] 3 set txn 0 to abort
-[txn] txn 0 is set to aborted
-[row_clv] txn 3 abort txn 0
-[row_clv] rm txn 0 from retired of row 1460255660992559
-[row_clv] rm txn 3 from retired of row 1460255043801305
-[row_clv] rm txn 0 from retired of row 1460255043810764
-[row_clv] add txn 3 type 0 to waiters of row 1460255043801305
-[row_clv] bring 3 from waiters to owners of row 1460255043801305
-[row_clv] rm txn 3 from owners of row 1460255043801305
-[row_clv] move txn 3 from owners to retired type 0 of row 1460255043801305
-[row_clv] add txn 3 type 0 to waiters of row 1460255043815143
-[row_clv] bring 3 from waiters to owners of row 1460255043815143
-[row_clv] rm txn 3 from owners of row 1460255043815143
-[row_clv] move txn 3 from owners to retired type 0 of row 1460255043815143
-[thread-0] finish txn 0 (aborted)
-[row_clv] add txn 3 type 0 to waiters of row 1460255939377626
-[row_clv] bring 3 from waiters to owners of row 1460255939377626
-[row_clv] rm txn 3 from owners of row 1460255939377626
-[row_clv] move txn 3 from owners to retired type 0 of row 1460255939377626
-[txn] # bariers of txn 3 = 0
-[txn] txn 3 is set to commited
-[row_clv] rm txn 3 from retired of row 1460255939377626
-[row_clv] rm txn 3 from retired of row 1460255043815143
-[row_clv] rm txn 3 from retired of row 1460255043801305
-[thread-1] finish txn 3 (commited)
-[thread] query set up in thread 1 for txn 3
-[thread] thread 1 start running txn 5
-[row_clv] add txn 5 type 1 to waiters of row 1460255043801305
-[row_clv] bring 5 from waiters to owners of row 1460255043801305
-[row_clv] rm txn 5 from owners of row 1460255043801305
-[row_clv] move txn 5 from owners to retired type 1 of row 1460255043801305
-[row_clv] add txn 5 type 1 to waiters of row 1460255995120607
-[row_clv] bring 5 from waiters to owners of row 1460255995120607
-[row_clv] rm txn 5 from owners of row 1460255995120607
-[row_clv] move txn 5 from owners to retired type 1 of row 1460255995120607
-[row_clv] add txn 5 type 0 to waiters of row 1460255043820371
-[row_clv] bring 5 from waiters to owners of row 1460255043820371
-[row_clv] rm txn 5 from owners of row 1460255043820371
-[row_clv] move txn 5 from owners to retired type 0 of row 1460255043820371
-[row_clv] add txn 5 type 1 to waiters of row 1460254917486996
-[row_clv] bring 5 from waiters to owners of row 1460254917486996
-[row_clv] rm txn 5 from owners of row 1460254917486996
-[row_clv] move txn 5 from owners to retired type 1 of row 1460254917486996
-[row_clv] add txn 5 type 0 to waiters of row 1460255068705620
-[row_clv] bring 5 from waiters to owners of row 1460255068705620
-[row_clv] rm txn 5 from owners of row 1460255068705620
-[row_clv] move txn 5 from owners to retired type 0 of row 1460255068705620
-[row_clv] add txn 5 type 1 to waiters of row 1460255006578533
-[row_clv] bring 5 from waiters to owners of row 1460255006578533
-[row_clv] rm txn 5 from owners of row 1460255006578533
-[row_clv] move txn 5 from owners to retired type 1 of row 1460255006578533
-[row_clv] add txn 5 type 0 to waiters of row 1460255404261901
-[row_clv] bring 5 from waiters to owners of row 1460255404261901
-[row_clv] rm txn 5 from owners of row 1460255404261901
-[row_clv] move txn 5 from owners to retired type 0 of row 1460255404261901
-[row_clv] add txn 5 type 1 to waiters of row 1460254952520242
-[row_clv] bring 5 from waiters to owners of row 1460254952520242
-[row_clv] rm txn 5 from owners of row 1460254952520242
-[row_clv] move txn 5 from owners to retired type 1 of row 1460254952520242
-[row_clv] add txn 5 type 0 to waiters of row 1460255200354560
-[row_clv] bring 5 from waiters to owners of row 1460255200354560
-[row_clv] rm txn 5 from owners of row 1460255200354560
-[row_clv] move txn 5 from owners to retired type 0 of row 1460255200354560
-[row_clv] add txn 5 type 1 to waiters of row 1460254992543221
-[row_clv] bring 5 from waiters to owners of row 1460254992543221
-[row_clv] rm txn 5 from owners of row 1460254992543221
-[row_clv] move txn 5 from owners to retired type 1 of row 1460254992543221
-[row_clv] add txn 5 type 0 to waiters of row 1460255351358958
-[row_clv] bring 5 from waiters to owners of row 1460255351358958
-[row_clv] rm txn 5 from owners of row 1460255351358958
-[row_clv] move txn 5 from owners to retired type 0 of row 1460255351358958
-[row_clv] add txn 5 type 1 to waiters of row 1460254917411317
-[row_clv] bring 5 from waiters to owners of row 1460254917411317
-[row_clv] rm txn 5 from owners of row 1460254917411317
-[row_clv] move txn 5 from owners to retired type 1 of row 1460254917411317
-[row_clv] add txn 5 type 0 to waiters of row 1460255068427712
-[row_clv] bring 5 from waiters to owners of row 1460255068427712
-[row_clv] rm txn 5 from owners of row 1460255068427712
-[row_clv] move txn 5 from owners to retired type 0 of row 1460255068427712
-[row_clv] add txn 5 type 1 to waiters of row 1460255036476596
-[row_clv] bring 5 from waiters to owners of row 1460255036476596
-[row_clv] rm txn 5 from owners of row 1460255036476596
-[row_clv] move txn 5 from owners to retired type 1 of row 1460255036476596
-[row_clv] add txn 5 type 0 to waiters of row 1460255517085338
-[row_clv] bring 5 from waiters to owners of row 1460255517085338
-[row_clv] rm txn 5 from owners of row 1460255517085338
-[row_clv] move txn 5 from owners to retired type 0 of row 1460255517085338
-[row_clv] add txn 5 type 1 to waiters of row 1460254984986913
-[row_clv] bring 5 from waiters to owners of row 1460254984986913
-[row_clv] rm txn 5 from owners of row 1460254984986913
-[row_clv] move txn 5 from owners to retired type 1 of row 1460254984986913
-[row_clv] add txn 5 type 0 to waiters of row 1460255322776915
-[row_clv] bring 5 from waiters to owners of row 1460255322776915
-[row_clv] rm txn 5 from owners of row 1460255322776915
-[row_clv] move txn 5 from owners to retired type 0 of row 1460255322776915
-[row_clv] add txn 5 type 1 to waiters of row 1460254949639297
-[row_clv] bring 5 from waiters to owners of row 1460254949639297
-[row_clv] rm txn 5 from owners of row 1460254949639297
-[row_clv] move txn 5 from owners to retired type 1 of row 1460254949639297
-[row_clv] add txn 5 type 0 to waiters of row 1460255189485496
-[row_clv] bring 5 from waiters to owners of row 1460255189485496
-[row_clv] rm txn 5 from owners of row 1460255189485496
-[row_clv] move txn 5 from owners to retired type 0 of row 1460255189485496
-[row_clv] add txn 5 type 1 to waiters of row 1460254963405861
-[row_clv] bring 5 from waiters to owners of row 1460254963405861
-[row_clv] rm txn 5 from owners of row 1460254963405861
-[row_clv] move txn 5 from owners to retired type 1 of row 1460254963405861
-[row_clv] add txn 5 type 0 to waiters of row 1460255241399000
-[row_clv] bring 5 from waiters to owners of row 1460255241399000
-[row_clv] rm txn 5 from owners of row 1460255241399000
-[row_clv] move txn 5 from owners to retired type 0 of row 1460255241399000
-[row_clv] add txn 5 type 1 to waiters of row 1460254955205396
-[row_clv] bring 5 from waiters to owners of row 1460254955205396
-[row_clv] rm txn 5 from owners of row 1460254955205396
-[row_clv] move txn 5 from owners to retired type 1 of row 1460254955205396
-[row_clv] add txn 5 type 0 to waiters of row 1460255210518202
-[row_clv] bring 5 from waiters to owners of row 1460255210518202
-[row_clv] rm txn 5 from owners of row 1460255210518202
-[row_clv] move txn 5 from owners to retired type 0 of row 1460255210518202
-[row_clv] add txn 5 type 1 to waiters of row 1460254941530778
-[row_clv] bring 5 from waiters to owners of row 1460254941530778
-[row_clv] rm txn 5 from owners of row 1460254941530778
-[row_clv] move txn 5 from owners to retired type 1 of row 1460254941530778
-[row_clv] add txn 5 type 0 to waiters of row 1460255158960555
-[row_clv] bring 5 from waiters to owners of row 1460255158960555
-[row_clv] rm txn 5 from owners of row 1460255158960555
-[row_clv] move txn 5 from owners to retired type 0 of row 1460255158960555
-[row_clv] add txn 5 type 1 to waiters of row 1460254972423909
-[row_clv] bring 5 from waiters to owners of row 1460254972423909
-[row_clv] rm txn 5 from owners of row 1460254972423909
-[row_clv] move txn 5 from owners to retired type 1 of row 1460254972423909
-[row_clv] add txn 5 type 0 to waiters of row 1460255275296183
-[row_clv] bring 5 from waiters to owners of row 1460255275296183
-[row_clv] rm txn 5 from owners of row 1460255275296183
-[row_clv] move txn 5 from owners to retired type 0 of row 1460255275296183
-[row_clv] add txn 5 type 1 to waiters of row 1460254974274165
-[row_clv] bring 5 from waiters to owners of row 1460254974274165
-[row_clv] rm txn 5 from owners of row 1460254974274165
-[row_clv] move txn 5 from owners to retired type 1 of row 1460254974274165
-[row_clv] add txn 5 type 0 to waiters of row 1460255282244954
-[row_clv] bring 5 from waiters to owners of row 1460255282244954
-[row_clv] rm txn 5 from owners of row 1460255282244954
-[row_clv] move txn 5 from owners to retired type 0 of row 1460255282244954
-[txn] # bariers of txn 5 = 0
-[txn] txn 5 is set to commited
-[row_clv] rm txn 5 from retired of row 1460255282244954
-[row_clv] rm txn 5 from retired of row 1460254974274165
-[row_clv] rm txn 5 from retired of row 1460255275296183
-[row_clv] rm txn 5 from retired of row 1460254972423909
-[row_clv] rm txn 5 from retired of row 1460255158960555
-[row_clv] rm txn 5 from retired of row 1460254941530778
-[row_clv] rm txn 5 from retired of row 1460255210518202
-[row_clv] rm txn 5 from retired of row 1460254955205396
-[row_clv] rm txn 5 from retired of row 1460255241399000
-[row_clv] rm txn 5 from retired of row 1460254963405861
-[row_clv] rm txn 5 from retired of row 1460255189485496
-[row_clv] rm txn 5 from retired of row 1460254949639297
-[row_clv] rm txn 5 from retired of row 1460255322776915
-[row_clv] rm txn 5 from retired of row 1460254984986913
-[row_clv] rm txn 5 from retired of row 1460255517085338
-[row_clv] rm txn 5 from retired of row 1460255036476596
-[row_clv] rm txn 5 from retired of row 1460255068427712
-[row_clv] rm txn 5 from retired of row 1460254917411317
-[row_clv] rm txn 5 from retired of row 1460255351358958
-[row_clv] rm txn 5 from retired of row 1460254992543221
-[row_clv] rm txn 5 from retired of row 1460255200354560
-[row_clv] rm txn 5 from retired of row 1460254952520242
-[row_clv] rm txn 5 from retired of row 1460255404261901
-[row_clv] rm txn 5 from retired of row 1460255006578533
-[row_clv] rm txn 5 from retired of row 1460255068705620
-[row_clv] rm txn 5 from retired of row 1460254917486996
-[row_clv] rm txn 5 from retired of row 1460255043820371
-[row_clv] rm txn 5 from retired of row 1460255995120607
-[row_clv] rm txn 5 from retired of row 1460255043801305
-[thread-1] finish txn 5 (commited)
-[thread] query set up in thread 1 for txn 5
-[thread] thread 1 start running txn 7
-[row_clv] add txn 7 type 0 to waiters of row 1460255043801305
-[row_clv] bring 7 from waiters to owners of row 1460255043801305
-[row_clv] rm txn 7 from owners of row 1460255043801305
-[row_clv] move txn 7 from owners to retired type 0 of row 1460255043801305
-[row_clv] add txn 7 type 0 to waiters of row 1460255043813738
-[row_clv] bring 7 from waiters to owners of row 1460255043813738
-[row_clv] rm txn 7 from owners of row 1460255043813738
-[row_clv] move txn 7 from owners to retired type 0 of row 1460255043813738
-[row_clv] add txn 7 type 0 to waiters of row 1460255758384293
-[row_clv] bring 7 from waiters to owners of row 1460255758384293
-[row_clv] rm txn 7 from owners of row 1460255758384293
-[row_clv] move txn 7 from owners to retired type 0 of row 1460255758384293
-[txn] # bariers of txn 7 = 0
-[txn] txn 7 is set to commited
-[row_clv] rm txn 7 from retired of row 1460255758384293
-[row_clv] rm txn 7 from retired of row 1460255043813738
-[row_clv] rm txn 7 from retired of row 1460255043801305
-[thread-1] finish txn 7 (commited)
-[thread] query set up in thread 1 for txn 7
-[thread] thread 1 start running txn 9
-[row_clv] add txn 9 type 0 to waiters of row 1460255043801305
-[row_clv] bring 9 from waiters to owners of row 1460255043801305
-[row_clv] rm txn 9 from owners of row 1460255043801305
-[row_clv] move txn 9 from owners to retired type 0 of row 1460255043801305
-[row_clv] add txn 9 type 0 to waiters of row 1460255043819194
-[row_clv] bring 9 from waiters to owners of row 1460255043819194
-[row_clv] rm txn 9 from owners of row 1460255043819194
-[row_clv] move txn 9 from owners to retired type 0 of row 1460255043819194
-[row_clv] add txn 9 type 0 to waiters of row 1460255949784183
-[row_clv] bring 9 from waiters to owners of row 1460255949784183
-[row_clv] rm txn 9 from owners of row 1460255949784183
-[row_clv] move txn 9 from owners to retired type 0 of row 1460255949784183
-[txn] # bariers of txn 9 = 0
-[txn] txn 9 is set to commited
-[row_clv] rm txn 9 from retired of row 1460255949784183
-[row_clv] rm txn 9 from retired of row 1460255043819194
-[row_clv] rm txn 9 from retired of row 1460255043801305
-[thread-1] finish txn 9 (commited)
-[thread] query set up in thread 1 for txn 9
-[thread] thread 1 start running txn 11
-[row_clv] add txn 11 type 1 to waiters of row 1460255043801305
-[row_clv] bring 11 from waiters to owners of row 1460255043801305
-[row_clv] rm txn 11 from owners of row 1460255043801305
-[row_clv] move txn 11 from owners to retired type 1 of row 1460255043801305
-[row_clv] add txn 11 type 1 to waiters of row 1460255707518939
-[row_clv] bring 11 from waiters to owners of row 1460255707518939
-[row_clv] rm txn 11 from owners of row 1460255707518939
-[row_clv] move txn 11 from owners to retired type 1 of row 1460255707518939
-[row_clv] add txn 11 type 0 to waiters of row 1460255043812398
-[row_clv] bring 11 from waiters to owners of row 1460255043812398
-[row_clv] rm txn 11 from owners of row 1460255043812398
-[row_clv] move txn 11 from owners to retired type 0 of row 1460255043812398
-[row_clv] add txn 11 type 1 to waiters of row 1460254949360508
-[row_clv] bring 11 from waiters to owners of row 1460254949360508
-[row_clv] rm txn 11 from owners of row 1460254949360508
-[row_clv] move txn 11 from owners to retired type 1 of row 1460254949360508
-[row_clv] add txn 11 type 0 to waiters of row 1460255188438748
-[row_clv] bring 11 from waiters to owners of row 1460255188438748
-[row_clv] rm txn 11 from owners of row 1460255188438748
-[row_clv] move txn 11 from owners to retired type 0 of row 1460255188438748
-[row_clv] add txn 11 type 1 to waiters of row 1460255015890521
-[row_clv] bring 11 from waiters to owners of row 1460255015890521
-[row_clv] rm txn 11 from owners of row 1460255015890521
-[row_clv] move txn 11 from owners to retired type 1 of row 1460255015890521
-[row_clv] add txn 11 type 0 to waiters of row 1460255439440087
-[row_clv] bring 11 from waiters to owners of row 1460255439440087
-[row_clv] rm txn 11 from owners of row 1460255439440087
-[row_clv] move txn 11 from owners to retired type 0 of row 1460255439440087
-[row_clv] add txn 11 type 1 to waiters of row 1460255002678928
-[row_clv] bring 11 from waiters to owners of row 1460255002678928
-[row_clv] rm txn 11 from owners of row 1460255002678928
-[row_clv] move txn 11 from owners to retired type 1 of row 1460255002678928
-[row_clv] add txn 11 type 0 to waiters of row 1460255389532702
-[row_clv] bring 11 from waiters to owners of row 1460255389532702
-[row_clv] rm txn 11 from owners of row 1460255389532702
-[row_clv] move txn 11 from owners to retired type 0 of row 1460255389532702
-[row_clv] add txn 11 type 1 to waiters of row 1460254995102265
-[row_clv] bring 11 from waiters to owners of row 1460254995102265
-[row_clv] rm txn 11 from owners of row 1460254995102265
-[row_clv] move txn 11 from owners to retired type 1 of row 1460254995102265
-[row_clv] add txn 11 type 0 to waiters of row 1460255361008616
-[row_clv] bring 11 from waiters to owners of row 1460255361008616
-[row_clv] rm txn 11 from owners of row 1460255361008616
-[row_clv] move txn 11 from owners to retired type 0 of row 1460255361008616
-[row_clv] add txn 11 type 1 to waiters of row 1460254994630709
-[row_clv] bring 11 from waiters to owners of row 1460254994630709
-[row_clv] rm txn 11 from owners of row 1460254994630709
-[row_clv] move txn 11 from owners to retired type 1 of row 1460254994630709
-[row_clv] add txn 11 type 0 to waiters of row 1460255359272070
-[row_clv] bring 11 from waiters to owners of row 1460255359272070
-[row_clv] rm txn 11 from owners of row 1460255359272070
-[row_clv] move txn 11 from owners to retired type 0 of row 1460255359272070
-[row_clv] add txn 11 type 1 to waiters of row 1460254940933608
-[row_clv] bring 11 from waiters to owners of row 1460254940933608
-[row_clv] rm txn 11 from owners of row 1460254940933608
-[row_clv] move txn 11 from owners to retired type 1 of row 1460254940933608
-[row_clv] add txn 11 type 0 to waiters of row 1460255156741837
-[row_clv] bring 11 from waiters to owners of row 1460255156741837
-[row_clv] rm txn 11 from owners of row 1460255156741837
-[row_clv] move txn 11 from owners to retired type 0 of row 1460255156741837
-[row_clv] add txn 11 type 1 to waiters of row 1460254963345008
-[row_clv] bring 11 from waiters to owners of row 1460254963345008
-[row_clv] rm txn 11 from owners of row 1460254963345008
-[row_clv] move txn 11 from owners to retired type 1 of row 1460254963345008
-[row_clv] add txn 11 type 0 to waiters of row 1460255241166692
-[row_clv] bring 11 from waiters to owners of row 1460255241166692
-[row_clv] rm txn 11 from owners of row 1460255241166692
-[row_clv] move txn 11 from owners to retired type 0 of row 1460255241166692
-[row_clv] add txn 11 type 1 to waiters of row 1460255006815607
-[row_clv] bring 11 from waiters to owners of row 1460255006815607
-[row_clv] rm txn 11 from owners of row 1460255006815607
-[row_clv] move txn 11 from owners to retired type 1 of row 1460255006815607
-[row_clv] add txn 11 type 0 to waiters of row 1460255405148333
-[row_clv] bring 11 from waiters to owners of row 1460255405148333
-[row_clv] rm txn 11 from owners of row 1460255405148333
-[row_clv] move txn 11 from owners to retired type 0 of row 1460255405148333
-[row_clv] add txn 11 type 1 to waiters of row 1460254968437731
-[row_clv] bring 11 from waiters to owners of row 1460254968437731
-[row_clv] rm txn 11 from owners of row 1460254968437731
-[row_clv] move txn 11 from owners to retired type 1 of row 1460254968437731
-[row_clv] add txn 11 type 0 to waiters of row 1460255260292322
-[row_clv] bring 11 from waiters to owners of row 1460255260292322
-[row_clv] rm txn 11 from owners of row 1460255260292322
-[row_clv] move txn 11 from owners to retired type 0 of row 1460255260292322
-[row_clv] add txn 11 type 1 to waiters of row 1460254930666414
-[row_clv] bring 11 from waiters to owners of row 1460254930666414
-[row_clv] rm txn 11 from owners of row 1460254930666414
-[row_clv] move txn 11 from owners to retired type 1 of row 1460254930666414
-[row_clv] add txn 11 type 0 to waiters of row 1460255118154949
-[row_clv] bring 11 from waiters to owners of row 1460255118154949
-[row_clv] rm txn 11 from owners of row 1460255118154949
-[row_clv] move txn 11 from owners to retired type 0 of row 1460255118154949
-[row_clv] add txn 11 type 1 to waiters of row 1460255007566111
-[row_clv] bring 11 from waiters to owners of row 1460255007566111
-[row_clv] rm txn 11 from owners of row 1460255007566111
-[row_clv] move txn 11 from owners to retired type 1 of row 1460255007566111
-[row_clv] add txn 11 type 0 to waiters of row 1460255407994814
-[row_clv] bring 11 from waiters to owners of row 1460255407994814
-[row_clv] rm txn 11 from owners of row 1460255407994814
-[row_clv] move txn 11 from owners to retired type 0 of row 1460255407994814
-[row_clv] add txn 11 type 1 to waiters of row 1460254978385104
-[row_clv] bring 11 from waiters to owners of row 1460254978385104
-[row_clv] rm txn 11 from owners of row 1460254978385104
-[row_clv] move txn 11 from owners to retired type 1 of row 1460254978385104
-[row_clv] add txn 11 type 0 to waiters of row 1460255297800997
-[row_clv] bring 11 from waiters to owners of row 1460255297800997
-[row_clv] rm txn 11 from owners of row 1460255297800997
-[row_clv] move txn 11 from owners to retired type 0 of row 1460255297800997
-[row_clv] add txn 11 type 1 to waiters of row 1460255014821650
-[row_clv] bring 11 from waiters to owners of row 1460255014821650
-[row_clv] rm txn 11 from owners of row 1460255014821650
-[row_clv] move txn 11 from owners to retired type 1 of row 1460255014821650
-[row_clv] add txn 11 type 0 to waiters of row 1460255435372343
-[row_clv] bring 11 from waiters to owners of row 1460255435372343
-[row_clv] rm txn 11 from owners of row 1460255435372343
-[row_clv] move txn 11 from owners to retired type 0 of row 1460255435372343
-[txn] # bariers of txn 11 = 0
-[txn] txn 11 is set to commited
-[row_clv] rm txn 11 from retired of row 1460255435372343
-[row_clv] rm txn 11 from retired of row 1460255014821650
-[row_clv] rm txn 11 from retired of row 1460255297800997
-[row_clv] rm txn 11 from retired of row 1460254978385104
-[row_clv] rm txn 11 from retired of row 1460255407994814
-[row_clv] rm txn 11 from retired of row 1460255007566111
-[row_clv] rm txn 11 from retired of row 1460255118154949
-[row_clv] rm txn 11 from retired of row 1460254930666414
-[row_clv] rm txn 11 from retired of row 1460255260292322
-[row_clv] rm txn 11 from retired of row 1460254968437731
-[row_clv] rm txn 11 from retired of row 1460255405148333
-[row_clv] rm txn 11 from retired of row 1460255006815607
-[row_clv] rm txn 11 from retired of row 1460255241166692
-[row_clv] rm txn 11 from retired of row 1460254963345008
-[row_clv] rm txn 11 from retired of row 1460255156741837
-[row_clv] rm txn 11 from retired of row 1460254940933608
-[row_clv] rm txn 11 from retired of row 1460255359272070
-[row_clv] rm txn 11 from retired of row 1460254994630709
-[row_clv] rm txn 11 from retired of row 1460255361008616
-[row_clv] rm txn 11 from retired of row 1460254995102265
-[row_clv] rm txn 11 from retired of row 1460255389532702
-[row_clv] rm txn 11 from retired of row 1460255002678928
-[row_clv] rm txn 11 from retired of row 1460255439440087
-[row_clv] rm txn 11 from retired of row 1460255015890521
-[row_clv] rm txn 11 from retired of row 1460255188438748
-[row_clv] rm txn 11 from retired of row 1460254949360508
-[row_clv] rm txn 11 from retired of row 1460255043812398
-[row_clv] rm txn 11 from retired of row 1460255707518939
-[row_clv] rm txn 11 from retired of row 1460255043801305
-[thread-1] finish txn 11 (commited)
-[thread] query set up in thread 1 for txn 11
-[thread] thread 1 start running txn 13
-[row_clv] add txn 13 type 0 to waiters of row 1460255043801305
-[row_clv] bring 13 from waiters to owners of row 1460255043801305
-[row_clv] rm txn 13 from owners of row 1460255043801305
-[row_clv] move txn 13 from owners to retired type 0 of row 1460255043801305
-[row_clv] add txn 13 type 0 to waiters of row 1460255043820371
-[row_clv] bring 13 from waiters to owners of row 1460255043820371
-[row_clv] rm txn 13 from owners of row 1460255043820371
-[row_clv] move txn 13 from owners to retired type 0 of row 1460255043820371
-[row_clv] add txn 13 type 0 to waiters of row 1460255995137374
-[row_clv] bring 13 from waiters to owners of row 1460255995137374
-[row_clv] rm txn 13 from owners of row 1460255995137374
-[row_clv] move txn 13 from owners to retired type 0 of row 1460255995137374
-[txn] # bariers of txn 13 = 0
-[txn] txn 13 is set to commited
-[row_clv] rm txn 13 from retired of row 1460255995137374
-[row_clv] rm txn 13 from retired of row 1460255043820371
-[row_clv] rm txn 13 from retired of row 1460255043801305
-[thread-1] finish txn 13 (commited)
-[thread] query set up in thread 1 for txn 13
-[thread] thread 1 start running txn 15
-[row_clv] add txn 15 type 1 to waiters of row 1460255043801305
-[row_clv] bring 15 from waiters to owners of row 1460255043801305
-[row_clv] rm txn 15 from owners of row 1460255043801305
-[row_clv] move txn 15 from owners to retired type 1 of row 1460255043801305
-[row_clv] add txn 15 type 1 to waiters of row 1460255900873025
-[row_clv] bring 15 from waiters to owners of row 1460255900873025
-[row_clv] rm txn 15 from owners of row 1460255900873025
-[row_clv] move txn 15 from owners to retired type 1 of row 1460255900873025
-[row_clv] add txn 15 type 0 to waiters of row 1460255043817937
-[row_clv] bring 15 from waiters to owners of row 1460255043817937
-[row_clv] rm txn 15 from owners of row 1460255043817937
-[row_clv] move txn 15 from owners to retired type 0 of row 1460255043817937
-[row_clv] add txn 15 type 1 to waiters of row 1460254930361350
-[row_clv] bring 15 from waiters to owners of row 1460254930361350
-[row_clv] rm txn 15 from owners of row 1460254930361350
-[row_clv] move txn 15 from owners to retired type 1 of row 1460254930361350
-[row_clv] add txn 15 type 0 to waiters of row 1460255116980364
-[row_clv] bring 15 from waiters to owners of row 1460255116980364
-[row_clv] rm txn 15 from owners of row 1460255116980364
-[row_clv] move txn 15 from owners to retired type 0 of row 1460255116980364
-[row_clv] add txn 15 type 1 to waiters of row 1460254930461765
-[row_clv] bring 15 from waiters to owners of row 1460254930461765
-[row_clv] rm txn 15 from owners of row 1460254930461765
-[row_clv] move txn 15 from owners to retired type 1 of row 1460254930461765
-[row_clv] add txn 15 type 0 to waiters of row 1460255117358321
-[row_clv] bring 15 from waiters to owners of row 1460255117358321
-[row_clv] rm txn 15 from owners of row 1460255117358321
-[row_clv] move txn 15 from owners to retired type 0 of row 1460255117358321
-[row_clv] add txn 15 type 1 to waiters of row 1460255030666957
-[row_clv] bring 15 from waiters to owners of row 1460255030666957
-[row_clv] rm txn 15 from owners of row 1460255030666957
-[row_clv] move txn 15 from owners to retired type 1 of row 1460255030666957
-[row_clv] add txn 15 type 0 to waiters of row 1460255495186102
-[row_clv] bring 15 from waiters to owners of row 1460255495186102
-[row_clv] rm txn 15 from owners of row 1460255495186102
-[row_clv] move txn 15 from owners to retired type 0 of row 1460255495186102
-[row_clv] add txn 15 type 1 to waiters of row 1460254929321877
-[row_clv] bring 15 from waiters to owners of row 1460254929321877
-[row_clv] rm txn 15 from owners of row 1460254929321877
-[row_clv] move txn 15 from owners to retired type 1 of row 1460254929321877
-[row_clv] add txn 15 type 0 to waiters of row 1460255113150683
-[row_clv] bring 15 from waiters to owners of row 1460255113150683
-[row_clv] rm txn 15 from owners of row 1460255113150683
-[row_clv] move txn 15 from owners to retired type 0 of row 1460255113150683
-[row_clv] add txn 15 type 1 to waiters of row 1460254946994291
-[row_clv] bring 15 from waiters to owners of row 1460254946994291
-[row_clv] rm txn 15 from owners of row 1460254946994291
-[row_clv] move txn 15 from owners to retired type 1 of row 1460254946994291
-[row_clv] add txn 15 type 0 to waiters of row 1460255179460890
-[row_clv] bring 15 from waiters to owners of row 1460255179460890
-[row_clv] rm txn 15 from owners of row 1460255179460890
-[row_clv] move txn 15 from owners to retired type 0 of row 1460255179460890
-[row_clv] add txn 15 type 1 to waiters of row 1460254965751989
-[row_clv] bring 15 from waiters to owners of row 1460254965751989
-[row_clv] rm txn 15 from owners of row 1460254965751989
-[row_clv] move txn 15 from owners to retired type 1 of row 1460254965751989
-[row_clv] add txn 15 type 0 to waiters of row 1460255250194340
-[row_clv] bring 15 from waiters to owners of row 1460255250194340
-[row_clv] rm txn 15 from owners of row 1460255250194340
-[row_clv] move txn 15 from owners to retired type 0 of row 1460255250194340
-[txn] # bariers of txn 15 = 0
-[txn] txn 15 is set to commited
-[row_clv] rm txn 15 from retired of row 1460255250194340
-[row_clv] rm txn 15 from retired of row 1460254965751989
-[row_clv] rm txn 15 from retired of row 1460255179460890
-[row_clv] rm txn 15 from retired of row 1460254946994291
-[row_clv] rm txn 15 from retired of row 1460255113150683
-[row_clv] rm txn 15 from retired of row 1460254929321877
-[row_clv] rm txn 15 from retired of row 1460255495186102
-[row_clv] rm txn 15 from retired of row 1460255030666957
-[row_clv] rm txn 15 from retired of row 1460255117358321
-[row_clv] rm txn 15 from retired of row 1460254930461765
-[row_clv] rm txn 15 from retired of row 1460255116980364
-[row_clv] rm txn 15 from retired of row 1460254930361350
-[row_clv] rm txn 15 from retired of row 1460255043817937
-[row_clv] rm txn 15 from retired of row 1460255900873025
-[row_clv] rm txn 15 from retired of row 1460255043801305
-[thread-1] finish txn 15 (commited)
-[thread] query set up in thread 1 for txn 15
-[thread] thread 1 start running txn 17
-[row_clv] add txn 17 type 1 to waiters of row 1460255043801305
-[row_clv] bring 17 from waiters to owners of row 1460255043801305
-[row_clv] rm txn 17 from owners of row 1460255043801305
-[row_clv] move txn 17 from owners to retired type 1 of row 1460255043801305
-[row_clv] add txn 17 type 1 to waiters of row 1460255606315004
-[row_clv] bring 17 from waiters to owners of row 1460255606315004
-[row_clv] rm txn 17 from owners of row 1460255606315004
-[row_clv] move txn 17 from owners to retired type 1 of row 1460255606315004
-[row_clv] add txn 17 type 0 to waiters of row 1460255043809142
-[row_clv] bring 17 from waiters to owners of row 1460255043809142
-[row_clv] rm txn 17 from owners of row 1460255043809142
-[row_clv] move txn 17 from owners to retired type 0 of row 1460255043809142
-[row_clv] add txn 17 type 1 to waiters of row 1460254979361218
-[row_clv] bring 17 from waiters to owners of row 1460254979361218
-[row_clv] rm txn 17 from owners of row 1460254979361218
-[row_clv] move txn 17 from owners to retired type 1 of row 1460254979361218
-[row_clv] add txn 17 type 0 to waiters of row 1460255301470274
-[row_clv] bring 17 from waiters to owners of row 1460255301470274
-[row_clv] rm txn 17 from owners of row 1460255301470274
-[row_clv] move txn 17 from owners to retired type 0 of row 1460255301470274
-[row_clv] add txn 17 type 1 to waiters of row 1460254928348593
-[row_clv] bring 17 from waiters to owners of row 1460254928348593
-[row_clv] rm txn 17 from owners of row 1460254928348593
-[row_clv] move txn 17 from owners to retired type 1 of row 1460254928348593
-[row_clv] add txn 17 type 0 to waiters of row 1460255109501457
-[row_clv] bring 17 from waiters to owners of row 1460255109501457
-[row_clv] rm txn 17 from owners of row 1460255109501457
-[row_clv] move txn 17 from owners to retired type 0 of row 1460255109501457
-[row_clv] add txn 17 type 1 to waiters of row 1460254916042593
-[row_clv] bring 17 from waiters to owners of row 1460254916042593
-[row_clv] rm txn 17 from owners of row 1460254916042593
-[row_clv] move txn 17 from owners to retired type 1 of row 1460254916042593
-[row_clv] add txn 17 type 0 to waiters of row 1460255063332583
-[row_clv] bring 17 from waiters to owners of row 1460255063332583
-[row_clv] rm txn 17 from owners of row 1460255063332583
-[row_clv] move txn 17 from owners to retired type 0 of row 1460255063332583
-[row_clv] add txn 17 type 1 to waiters of row 1460254952520242
-[row_clv] bring 17 from waiters to owners of row 1460254952520242
-[row_clv] rm txn 17 from owners of row 1460254952520242
-[row_clv] move txn 17 from owners to retired type 1 of row 1460254952520242
-[row_clv] add txn 17 type 0 to waiters of row 1460255200354560
-[row_clv] bring 17 from waiters to owners of row 1460255200354560
-[row_clv] rm txn 17 from owners of row 1460255200354560
-[row_clv] move txn 17 from owners to retired type 0 of row 1460255200354560
-[row_clv] add txn 17 type 1 to waiters of row 1460254930664185
-[row_clv] bring 17 from waiters to owners of row 1460254930664185
-[row_clv] rm txn 17 from owners of row 1460254930664185
-[row_clv] move txn 17 from owners to retired type 1 of row 1460254930664185
-[row_clv] add txn 17 type 0 to waiters of row 1460255118145774
-[row_clv] bring 17 from waiters to owners of row 1460255118145774
-[row_clv] rm txn 17 from owners of row 1460255118145774
-[row_clv] move txn 17 from owners to retired type 0 of row 1460255118145774
-[row_clv] add txn 17 type 1 to waiters of row 1460254941367197
-[row_clv] bring 17 from waiters to owners of row 1460254941367197
-[row_clv] rm txn 17 from owners of row 1460254941367197
-[row_clv] move txn 17 from owners to retired type 1 of row 1460254941367197
-[row_clv] add txn 17 type 0 to waiters of row 1460255158341739
-[row_clv] bring 17 from waiters to owners of row 1460255158341739
-[row_clv] rm txn 17 from owners of row 1460255158341739
-[row_clv] move txn 17 from owners to retired type 0 of row 1460255158341739
-[row_clv] add txn 17 type 1 to waiters of row 1460254981052231
-[row_clv] bring 17 from waiters to owners of row 1460254981052231
-[row_clv] rm txn 17 from owners of row 1460254981052231
-[row_clv] move txn 17 from owners to retired type 1 of row 1460254981052231
-[row_clv] add txn 17 type 0 to waiters of row 1460255307897817
-[row_clv] bring 17 from waiters to owners of row 1460255307897817
-[row_clv] rm txn 17 from owners of row 1460255307897817
-[row_clv] move txn 17 from owners to retired type 0 of row 1460255307897817
-[row_clv] add txn 17 type 1 to waiters of row 1460254958251718
-[row_clv] bring 17 from waiters to owners of row 1460254958251718
-[row_clv] rm txn 17 from owners of row 1460254958251718
-[row_clv] move txn 17 from owners to retired type 1 of row 1460254958251718
-[row_clv] add txn 17 type 0 to waiters of row 1460255222009992
-[row_clv] bring 17 from waiters to owners of row 1460255222009992
-[row_clv] rm txn 17 from owners of row 1460255222009992
-[row_clv] move txn 17 from owners to retired type 0 of row 1460255222009992
-[txn] # bariers of txn 17 = 0
-[txn] txn 17 is set to commited
-[row_clv] rm txn 17 from retired of row 1460255222009992
-[row_clv] rm txn 17 from retired of row 1460254958251718
-[row_clv] rm txn 17 from retired of row 1460255307897817
-[row_clv] rm txn 17 from retired of row 1460254981052231
-[row_clv] rm txn 17 from retired of row 1460255158341739
-[row_clv] rm txn 17 from retired of row 1460254941367197
-[row_clv] rm txn 17 from retired of row 1460255118145774
-[row_clv] rm txn 17 from retired of row 1460254930664185
-[row_clv] rm txn 17 from retired of row 1460255200354560
-[row_clv] rm txn 17 from retired of row 1460254952520242
-[row_clv] rm txn 17 from retired of row 1460255063332583
-[row_clv] rm txn 17 from retired of row 1460254916042593
-[row_clv] rm txn 17 from retired of row 1460255109501457
-[row_clv] rm txn 17 from retired of row 1460254928348593
-[row_clv] rm txn 17 from retired of row 1460255301470274
-[row_clv] rm txn 17 from retired of row 1460254979361218
-[row_clv] rm txn 17 from retired of row 1460255043809142
-[row_clv] rm txn 17 from retired of row 1460255606315004
-[row_clv] rm txn 17 from retired of row 1460255043801305
-[thread-1] finish txn 17 (commited)
-[thread] query set up in thread 1 for txn 17
-[thread] thread 1 start running txn 19
-[row_clv] add txn 19 type 0 to waiters of row 1460255043801305
-[row_clv] bring 19 from waiters to owners of row 1460255043801305
-[row_clv] rm txn 19 from owners of row 1460255043801305
-[row_clv] move txn 19 from owners to retired type 0 of row 1460255043801305
-[row_clv] add txn 19 type 0 to waiters of row 1460255043817937
-[row_clv] bring 19 from waiters to owners of row 1460255043817937
-[row_clv] rm txn 19 from owners of row 1460255043817937
-[row_clv] move txn 19 from owners to retired type 0 of row 1460255043817937
-[row_clv] add txn 19 type 0 to waiters of row 1460255890854192
-[row_clv] bring 19 from waiters to owners of row 1460255890854192
-[row_clv] rm txn 19 from owners of row 1460255890854192
-[row_clv] move txn 19 from owners to retired type 0 of row 1460255890854192
-[txn] # bariers of txn 19 = 0
-[txn] txn 19 is set to commited
-[row_clv] rm txn 19 from retired of row 1460255890854192
-[row_clv] rm txn 19 from retired of row 1460255043817937
-[row_clv] rm txn 19 from retired of row 1460255043801305
-[thread-1] finish txn 19 (commited)
-[thread] query set up in thread 1 for txn 19
-[thread] thread 1 start running txn 21
-[row_clv] add txn 21 type 1 to waiters of row 1460255043801305
-[row_clv] bring 21 from waiters to owners of row 1460255043801305
-[row_clv] rm txn 21 from owners of row 1460255043801305
-[row_clv] move txn 21 from owners to retired type 1 of row 1460255043801305
-[row_clv] add txn 21 type 1 to waiters of row 1460255556611337
-[row_clv] bring 21 from waiters to owners of row 1460255556611337
-[row_clv] rm txn 21 from owners of row 1460255556611337
-[row_clv] move txn 21 from owners to retired type 1 of row 1460255556611337
-[row_clv] add txn 21 type 0 to waiters of row 1460255043803909
-[row_clv] bring 21 from waiters to owners of row 1460255043803909
-[row_clv] rm txn 21 from owners of row 1460255043803909
-[row_clv] move txn 21 from owners to retired type 0 of row 1460255043803909
-[row_clv] add txn 21 type 1 to waiters of row 1460254927948397
-[row_clv] bring 21 from waiters to owners of row 1460254927948397
-[row_clv] rm txn 21 from owners of row 1460254927948397
-[row_clv] move txn 21 from owners to retired type 1 of row 1460254927948397
-[row_clv] add txn 21 type 0 to waiters of row 1460255108015462
-[row_clv] bring 21 from waiters to owners of row 1460255108015462
-[row_clv] rm txn 21 from owners of row 1460255108015462
-[row_clv] move txn 21 from owners to retired type 0 of row 1460255108015462
-[row_clv] add txn 21 type 1 to waiters of row 1460255017759871
-[row_clv] bring 21 from waiters to owners of row 1460255017759871
-[row_clv] rm txn 21 from owners of row 1460255017759871
-[row_clv] move txn 21 from owners to retired type 1 of row 1460255017759871
-[row_clv] add txn 21 type 0 to waiters of row 1460255446447926
-[row_clv] bring 21 from waiters to owners of row 1460255446447926
-[row_clv] rm txn 21 from owners of row 1460255446447926
-[row_clv] move txn 21 from owners to retired type 0 of row 1460255446447926
-[row_clv] add txn 21 type 1 to waiters of row 1460254972937973
-[row_clv] bring 21 from waiters to owners of row 1460254972937973
-[row_clv] rm txn 21 from owners of row 1460254972937973
-[row_clv] move txn 21 from owners to retired type 1 of row 1460254972937973
-[row_clv] add txn 21 type 0 to waiters of row 1460255277234923
-[row_clv] bring 21 from waiters to owners of row 1460255277234923
-[row_clv] rm txn 21 from owners of row 1460255277234923
-[row_clv] move txn 21 from owners to retired type 0 of row 1460255277234923
-[row_clv] add txn 21 type 1 to waiters of row 1460254941640027
-[row_clv] bring 21 from waiters to owners of row 1460254941640027
-[row_clv] rm txn 21 from owners of row 1460254941640027
-[row_clv] move txn 21 from owners to retired type 1 of row 1460254941640027
-[row_clv] add txn 21 type 0 to waiters of row 1460255159361021
-[row_clv] bring 21 from waiters to owners of row 1460255159361021
-[row_clv] rm txn 21 from owners of row 1460255159361021
-[row_clv] move txn 21 from owners to retired type 0 of row 1460255159361021
-[row_clv] add txn 21 type 1 to waiters of row 1460254994330011
-[row_clv] bring 21 from waiters to owners of row 1460254994330011
-[row_clv] rm txn 21 from owners of row 1460254994330011
-[row_clv] move txn 21 from owners to retired type 1 of row 1460254994330011
-[row_clv] add txn 21 type 0 to waiters of row 1460255358116956
+[thread] thread 1 start running txn 1
+[row_clv] add txn 0 type 0 to waiters of row 1461932999172269
+[row_clv] bring 0 from waiters to owners of row 1461932999172269
+[row_clv] rm txn 0 from owners of row 1461932999172269
+[row_clv] move txn 0 from owners to retired type 0 of row 1461932999172269
+[row_clv] add txn 0 type 0 to waiters of row 1461932999181705
+[row_clv] bring 0 from waiters to owners of row 1461932999181705
+[row_clv] add txn 1 type 1 to waiters of row 1461932999172269
+[row_clv] bring 1 from waiters to owners of row 1461932999172269
+[row_clv] rm txn 0 from owners of row 1461932999181705
+[row_clv] rm txn 1 from owners of row 1461932999172269
+[row_clv] move txn 0 from owners to retired type 0 of row 1461932999181705
+[row_clv] move txn 1 from owners to retired type 1 of row 1461932999172269
+[row_clv] add txn 0 type 0 to waiters of row 1461933606885662
+[txn] increment barrier for txn 1
+[row_clv] bring 0 from waiters to owners of row 1461933606885662
+[row_clv] add txn 1 type 1 to waiters of row 1461933646840867
+[row_clv] bring 1 from waiters to owners of row 1461933646840867
+[row_clv] rm txn 1 from owners of row 1461933646840867
+[row_clv] move txn 1 from owners to retired type 1 of row 1461933646840867
+[row_clv] add txn 1 type 0 to waiters of row 1461932999183308
+[row_clv] bring 1 from waiters to owners of row 1461932999183308
+[row_clv] rm txn 0 from owners of row 1461933606885662
+[row_clv] move txn 0 from owners to retired type 0 of row 1461933606885662
+[txn] # bariers of txn 0 = 0
+[txn] txn 0 is set to commited
+[row_clv] rm txn 0 from retired of row 1461933606885662
+[row_clv] rm txn 0 from retired of row 1461932999181705
+[row_clv] rm txn 1 from owners of row 1461932999183308
+[row_clv] rm txn 0 from retired of row 1461932999172269
+[row_clv] move txn 1 from owners to retired type 0 of row 1461932999183308
+[thread-0] finish txn 0 (commited)
+[row_clv] add txn 1 type 1 to waiters of row 1461932883716991
+[row_clv] bring 1 from waiters to owners of row 1461932883716991
+[row_clv] rm txn 1 from owners of row 1461932883716991
+[row_clv] move txn 1 from owners to retired type 1 of row 1461932883716991
 [thread] query set up in thread 0 for txn 0
-[row_clv] bring 21 from waiters to owners of row 1460255358116956
 [thread] thread 0 start running txn 2
-[row_clv] rm txn 21 from owners of row 1460255358116956
-[row_clv] move txn 21 from owners to retired type 0 of row 1460255358116956
-[txn] 2 set txn 21 to abort
-[row_clv] add txn 21 type 1 to waiters of row 1460254970188083
-[row_clv] bring 21 from waiters to owners of row 1460254970188083
-[row_clv] txn 2 abort txn 21
-[row_clv] rm txn 2 from retired of row 1460255043801305
-[row_clv] add txn 2 type 0 to waiters of row 1460255043801305
-[row_clv] bring 2 from waiters to owners of row 1460255043801305
-[row_clv] rm txn 21 from owners of row 1460254970188083
-[row_clv] rm txn 2 from owners of row 1460255043801305
-[txn] txn 21 is set to aborted
-[row_clv] rm txn 21 from retired of row 1460255358116956
-[row_clv] move txn 2 from owners to retired type 0 of row 1460255043801305
-[row_clv] add txn 2 type 0 to waiters of row 1460255043810764
-[row_clv] bring 2 from waiters to owners of row 1460255043810764
-[row_clv] rm txn 2 from owners of row 1460255043810764
-[row_clv] move txn 2 from owners to retired type 0 of row 1460255043810764
-[row_clv] add txn 2 type 0 to waiters of row 1460255660992559
-[row_clv] rm txn 21 from retired of row 1460254994330011
-[row_clv] bring 2 from waiters to owners of row 1460255660992559
-[row_clv] rm txn 21 from retired of row 1460255159361021
-[row_clv] rm txn 2 from owners of row 1460255660992559
-[row_clv] rm txn 21 from retired of row 1460254941640027
-[row_clv] move txn 2 from owners to retired type 0 of row 1460255660992559
-[row_clv] rm txn 21 from retired of row 1460255277234923
-[row_clv] rm txn 21 from retired of row 1460254972937973
-[txn] # bariers of txn 2 = 0
-[row_clv] rm txn 21 from retired of row 1460255446447926
-[txn] txn 2 is set to commited
-[row_clv] rm txn 21 from retired of row 1460255017759871
-[row_clv] rm txn 21 from retired of row 1460255108015462
-[row_clv] rm txn 2 from retired of row 1460255660992559
-[row_clv] rm txn 21 from retired of row 1460254927948397
-[row_clv] rm txn 2 from retired of row 1460255043810764
-[row_clv] rm txn 21 from retired of row 1460255043803909
-[row_clv] rm txn 2 from retired of row 1460255043801305
-[row_clv] rm txn 21 from retired of row 1460255556611337
-[thread-0] finish txn 2 (commited)
-[thread-1] finish txn 21 (aborted)
-[thread] query set up in thread 0 for txn 2
-[thread] thread 0 start running txn 4
-[row_clv] add txn 4 type 0 to waiters of row 1460255043801305
-[row_clv] bring 4 from waiters to owners of row 1460255043801305
-[row_clv] rm txn 4 from owners of row 1460255043801305
-[row_clv] move txn 4 from owners to retired type 0 of row 1460255043801305
-[row_clv] add txn 4 type 0 to waiters of row 1460255043809142
-[row_clv] bring 4 from waiters to owners of row 1460255043809142
-[row_clv] rm txn 4 from owners of row 1460255043809142
-[row_clv] move txn 4 from owners to retired type 0 of row 1460255043809142
-[row_clv] add txn 4 type 0 to waiters of row 1460255607614146
-[row_clv] bring 4 from waiters to owners of row 1460255607614146
-[row_clv] rm txn 4 from owners of row 1460255607614146
-[row_clv] move txn 4 from owners to retired type 0 of row 1460255607614146
-[txn] # bariers of txn 4 = 0
-[txn] txn 4 is set to commited
-[row_clv] rm txn 4 from retired of row 1460255607614146
-[row_clv] rm txn 4 from retired of row 1460255043809142
-[row_clv] rm txn 4 from retired of row 1460255043801305
-[thread-0] finish txn 4 (commited)
-[thread] query set up in thread 0 for txn 4
-[thread] thread 0 start running txn 6
-[row_clv] add txn 6 type 0 to waiters of row 1460255043801305
-[row_clv] bring 6 from waiters to owners of row 1460255043801305
-[row_clv] rm txn 6 from owners of row 1460255043801305
-[row_clv] move txn 6 from owners to retired type 0 of row 1460255043801305
-[row_clv] add txn 6 type 0 to waiters of row 1460255043813738
-[row_clv] bring 6 from waiters to owners of row 1460255043813738
-[row_clv] rm txn 6 from owners of row 1460255043813738
-[row_clv] move txn 6 from owners to retired type 0 of row 1460255043813738
-[row_clv] add txn 6 type 0 to waiters of row 1460255754032696
-[row_clv] bring 6 from waiters to owners of row 1460255754032696
-[row_clv] rm txn 6 from owners of row 1460255754032696
-[row_clv] move txn 6 from owners to retired type 0 of row 1460255754032696
-[txn] # bariers of txn 6 = 0
-[txn] txn 6 is set to commited
-[row_clv] rm txn 6 from retired of row 1460255754032696
-[row_clv] rm txn 6 from retired of row 1460255043813738
-[row_clv] rm txn 6 from retired of row 1460255043801305
-[thread-0] finish txn 6 (commited)
-[thread] query set up in thread 0 for txn 6
-[thread] thread 0 start running txn 8
-[row_clv] add txn 8 type 0 to waiters of row 1460255043801305
-[row_clv] bring 8 from waiters to owners of row 1460255043801305
-[row_clv] rm txn 8 from owners of row 1460255043801305
-[row_clv] move txn 8 from owners to retired type 0 of row 1460255043801305
-[row_clv] add txn 8 type 0 to waiters of row 1460255043810764
-[row_clv] bring 8 from waiters to owners of row 1460255043810764
-[row_clv] rm txn 8 from owners of row 1460255043810764
-[row_clv] move txn 8 from owners to retired type 0 of row 1460255043810764
-[row_clv] add txn 8 type 0 to waiters of row 1460255649759785
-[row_clv] bring 8 from waiters to owners of row 1460255649759785
-[row_clv] rm txn 8 from owners of row 1460255649759785
-[row_clv] move txn 8 from owners to retired type 0 of row 1460255649759785
-[txn] # bariers of txn 8 = 0
-[txn] txn 8 is set to commited
-[row_clv] rm txn 8 from retired of row 1460255649759785
-[row_clv] rm txn 8 from retired of row 1460255043810764
-[row_clv] rm txn 8 from retired of row 1460255043801305
-[thread-0] finish txn 8 (commited)
-[thread] query set up in thread 0 for txn 8
-[thread] thread 0 start running txn 10
-[row_clv] add txn 10 type 1 to waiters of row 1460255043801305
-[row_clv] bring 10 from waiters to owners of row 1460255043801305
-[row_clv] rm txn 10 from owners of row 1460255043801305
-[row_clv] move txn 10 from owners to retired type 1 of row 1460255043801305
-[row_clv] add txn 10 type 1 to waiters of row 1460255853657810
-[row_clv] bring 10 from waiters to owners of row 1460255853657810
-[row_clv] rm txn 10 from owners of row 1460255853657810
-[row_clv] move txn 10 from owners to retired type 1 of row 1460255853657810
-[row_clv] add txn 10 type 0 to waiters of row 1460255043816543
-[row_clv] bring 10 from waiters to owners of row 1460255043816543
-[row_clv] rm txn 10 from owners of row 1460255043816543
-[row_clv] move txn 10 from owners to retired type 0 of row 1460255043816543
-[row_clv] add txn 10 type 1 to waiters of row 1460254938053565
-[row_clv] bring 10 from waiters to owners of row 1460254938053565
-[row_clv] rm txn 10 from owners of row 1460254938053565
-[row_clv] move txn 10 from owners to retired type 1 of row 1460254938053565
-[row_clv] add txn 10 type 0 to waiters of row 1460255145895853
-[row_clv] bring 10 from waiters to owners of row 1460255145895853
-[row_clv] rm txn 10 from owners of row 1460255145895853
-[row_clv] move txn 10 from owners to retired type 0 of row 1460255145895853
-[row_clv] add txn 10 type 1 to waiters of row 1460255006931172
-[row_clv] bring 10 from waiters to owners of row 1460255006931172
-[row_clv] rm txn 10 from owners of row 1460255006931172
-[row_clv] move txn 10 from owners to retired type 1 of row 1460255006931172
-[row_clv] add txn 10 type 0 to waiters of row 1460255405591039
-[row_clv] bring 10 from waiters to owners of row 1460255405591039
-[row_clv] rm txn 10 from owners of row 1460255405591039
-[row_clv] move txn 10 from owners to retired type 0 of row 1460255405591039
-[row_clv] add txn 10 type 1 to waiters of row 1460255017800401
-[row_clv] bring 10 from waiters to owners of row 1460255017800401
-[row_clv] rm txn 10 from owners of row 1460255017800401
-[row_clv] move txn 10 from owners to retired type 1 of row 1460255017800401
-[row_clv] add txn 10 type 0 to waiters of row 1460255446601800
-[row_clv] bring 10 from waiters to owners of row 1460255446601800
-[row_clv] rm txn 10 from owners of row 1460255446601800
-[row_clv] move txn 10 from owners to retired type 0 of row 1460255446601800
-[row_clv] add txn 10 type 1 to waiters of row 1460254995843316
-[row_clv] bring 10 from waiters to owners of row 1460254995843316
-[row_clv] rm txn 10 from owners of row 1460254995843316
-[row_clv] move txn 10 from owners to retired type 1 of row 1460254995843316
-[row_clv] add txn 10 type 0 to waiters of row 1460255363750998
-[row_clv] bring 10 from waiters to owners of row 1460255363750998
-[row_clv] rm txn 10 from owners of row 1460255363750998
-[row_clv] move txn 10 from owners to retired type 0 of row 1460255363750998
-[thread] query set up in thread 1 for txn 21
-[thread] thread 1 start running txn 23
-[row_clv] add txn 10 type 1 to waiters of row 1460254938863783
-[row_clv] add txn 23 type 1 to waiters of row 1460255043801305
-[row_clv] bring 23 from waiters to owners of row 1460255043801305
-[row_clv] bring 10 from waiters to owners of row 1460254938863783
-[row_clv] rm txn 23 from owners of row 1460255043801305
-[row_clv] rm txn 10 from owners of row 1460254938863783
-[row_clv] move txn 23 from owners to retired type 1 of row 1460255043801305
-[txn] increment barrier for txn 23
-[row_clv] move txn 10 from owners to retired type 1 of row 1460254938863783
-[row_clv] add txn 23 type 1 to waiters of row 1460255556611337
-[row_clv] bring 23 from waiters to owners of row 1460255556611337
-[row_clv] add txn 10 type 0 to waiters of row 1460255148943603
-[row_clv] rm txn 23 from owners of row 1460255556611337
-[row_clv] bring 10 from waiters to owners of row 1460255148943603
-[row_clv] move txn 23 from owners to retired type 1 of row 1460255556611337
-[row_clv] add txn 23 type 0 to waiters of row 1460255043803909
-[row_clv] bring 23 from waiters to owners of row 1460255043803909
-[row_clv] rm txn 23 from owners of row 1460255043803909
-[row_clv] move txn 23 from owners to retired type 0 of row 1460255043803909
-[row_clv] rm txn 10 from owners of row 1460255148943603
-[row_clv] add txn 23 type 1 to waiters of row 1460254927948397
-[row_clv] move txn 10 from owners to retired type 0 of row 1460255148943603
-[row_clv] bring 23 from waiters to owners of row 1460254927948397
-[txn] # bariers of txn 10 = 0
-[txn] txn 10 is set to commited
-[row_clv] rm txn 23 from owners of row 1460254927948397
-[row_clv] rm txn 10 from retired of row 1460255148943603
-[row_clv] move txn 23 from owners to retired type 1 of row 1460254927948397
-[row_clv] rm txn 10 from retired of row 1460254938863783
-[row_clv] rm txn 10 from retired of row 1460255363750998
-[row_clv] rm txn 10 from retired of row 1460254995843316
-[row_clv] rm txn 10 from retired of row 1460255446601800
-[row_clv] rm txn 10 from retired of row 1460255017800401
-[row_clv] add txn 23 type 0 to waiters of row 1460255108015462
-[row_clv] rm txn 10 from retired of row 1460255405591039
-[row_clv] bring 23 from waiters to owners of row 1460255108015462
-[row_clv] rm txn 10 from retired of row 1460255006931172
-[row_clv] rm txn 23 from owners of row 1460255108015462
-[row_clv] rm txn 10 from retired of row 1460255145895853
-[row_clv] move txn 23 from owners to retired type 0 of row 1460255108015462
-[row_clv] rm txn 10 from retired of row 1460254938053565
-[row_clv] add txn 23 type 1 to waiters of row 1460255017759871
-[row_clv] rm txn 10 from retired of row 1460255043816543
-[row_clv] bring 23 from waiters to owners of row 1460255017759871
-[row_clv] rm txn 23 from owners of row 1460255017759871
-[row_clv] move txn 23 from owners to retired type 1 of row 1460255017759871
-[row_clv] rm txn 10 from retired of row 1460255853657810
-[row_clv] add txn 23 type 0 to waiters of row 1460255446447926
-[row_clv] bring 23 from waiters to owners of row 1460255446447926
-[row_clv] rm txn 10 from retired of row 1460255043801305
-[row_clv] rm txn 23 from owners of row 1460255446447926
-[thread-0] finish txn 10 (commited)
-[row_clv] move txn 23 from owners to retired type 0 of row 1460255446447926
-[thread] query set up in thread 0 for txn 10
-[thread] thread 0 start running txn 12
-[txn] 12 set txn 23 to abort
-[row_clv] txn 12 abort txn 23
-[row_clv] rm txn 12 from retired of row 1460255043801305
-[row_clv] add txn 12 type 0 to waiters of row 1460255043801305
-[row_clv] bring 12 from waiters to owners of row 1460255043801305
-[row_clv] rm txn 12 from owners of row 1460255043801305
-[row_clv] move txn 12 from owners to retired type 0 of row 1460255043801305
-[row_clv] add txn 23 type 1 to waiters of row 1460254972937973
-[row_clv] add txn 12 type 0 to waiters of row 1460255043803909
-[row_clv] bring 23 from waiters to owners of row 1460254972937973
-[row_clv] bring 12 from waiters to owners of row 1460255043803909
-[row_clv] rm txn 23 from owners of row 1460254972937973
-[row_clv] rm txn 12 from owners of row 1460255043803909
-[txn] txn 23 is set to aborted
-[row_clv] rm txn 23 from retired of row 1460255446447926
-[row_clv] move txn 12 from owners to retired type 0 of row 1460255043803909
-[txn] increment barrier for txn 12
-[row_clv] add txn 12 type 0 to waiters of row 1460255546045016
-[row_clv] bring 12 from waiters to owners of row 1460255546045016
-[row_clv] rm txn 12 from owners of row 1460255546045016
-[row_clv] move txn 12 from owners to retired type 0 of row 1460255546045016
-[row_clv] rm txn 23 from retired of row 1460255017759871
-[txn] # bariers of txn 12 = 1
-[row_clv] rm txn 23 from retired of row 1460255108015462
-[row_clv] rm txn 23 from retired of row 1460254927948397
-[row_clv] rm txn 23 from retired of row 1460255043803909
-[row_clv] rm txn 23 from retired of row 1460255556611337
-[thread-1] finish txn 23 (aborted)
-[thread] query set up in thread 1 for txn 23
-[thread] thread 1 start running txn 25
-[row_clv] add txn 25 type 1 to waiters of row 1460255043801305
-[row_clv] bring 25 from waiters to owners of row 1460255043801305
-[row_clv] rm txn 25 from owners of row 1460255043801305
-[row_clv] move txn 25 from owners to retired type 1 of row 1460255043801305
-[txn] increment barrier for txn 25
-[row_clv] add txn 25 type 1 to waiters of row 1460255556611337
-[row_clv] bring 25 from waiters to owners of row 1460255556611337
-[row_clv] rm txn 25 from owners of row 1460255556611337
-[row_clv] move txn 25 from owners to retired type 1 of row 1460255556611337
-[row_clv] add txn 25 type 0 to waiters of row 1460255043803909
-[row_clv] bring 25 from waiters to owners of row 1460255043803909
-[row_clv] rm txn 25 from owners of row 1460255043803909
-[row_clv] move txn 25 from owners to retired type 0 of row 1460255043803909
-[txn] increment barrier for txn 25
-[row_clv] add txn 25 type 1 to waiters of row 1460254927948397
-[row_clv] bring 25 from waiters to owners of row 1460254927948397
-[row_clv] rm txn 25 from owners of row 1460254927948397
-[row_clv] move txn 25 from owners to retired type 1 of row 1460254927948397
-[row_clv] add txn 25 type 0 to waiters of row 1460255108015462
-[row_clv] bring 25 from waiters to owners of row 1460255108015462
-[row_clv] rm txn 25 from owners of row 1460255108015462
-[row_clv] move txn 25 from owners to retired type 0 of row 1460255108015462
-[row_clv] add txn 25 type 1 to waiters of row 1460255017759871
-[row_clv] bring 25 from waiters to owners of row 1460255017759871
-[row_clv] rm txn 25 from owners of row 1460255017759871
-[row_clv] move txn 25 from owners to retired type 1 of row 1460255017759871
-[row_clv] add txn 25 type 0 to waiters of row 1460255446447926
-[row_clv] bring 25 from waiters to owners of row 1460255446447926
-[row_clv] rm txn 25 from owners of row 1460255446447926
-[row_clv] move txn 25 from owners to retired type 0 of row 1460255446447926
-[row_clv] add txn 25 type 1 to waiters of row 1460254972937973
-[row_clv] bring 25 from waiters to owners of row 1460254972937973
-[row_clv] rm txn 25 from owners of row 1460254972937973
-[row_clv] move txn 25 from owners to retired type 1 of row 1460254972937973
-[row_clv] add txn 25 type 0 to waiters of row 1460255277234923
-[row_clv] bring 25 from waiters to owners of row 1460255277234923
-[row_clv] rm txn 25 from owners of row 1460255277234923
-[row_clv] move txn 25 from owners to retired type 0 of row 1460255277234923
-[row_clv] add txn 25 type 1 to waiters of row 1460254941640027
-[row_clv] bring 25 from waiters to owners of row 1460254941640027
-[row_clv] rm txn 25 from owners of row 1460254941640027
-[row_clv] move txn 25 from owners to retired type 1 of row 1460254941640027
-[row_clv] add txn 25 type 0 to waiters of row 1460255159361021
-[row_clv] bring 25 from waiters to owners of row 1460255159361021
-[row_clv] rm txn 25 from owners of row 1460255159361021
-[row_clv] move txn 25 from owners to retired type 0 of row 1460255159361021
-[row_clv] add txn 25 type 1 to waiters of row 1460254994330011
-[row_clv] bring 25 from waiters to owners of row 1460254994330011
-[row_clv] rm txn 25 from owners of row 1460254994330011
-[row_clv] move txn 25 from owners to retired type 1 of row 1460254994330011
-[row_clv] add txn 25 type 0 to waiters of row 1460255358116956
-[row_clv] bring 25 from waiters to owners of row 1460255358116956
-[row_clv] rm txn 25 from owners of row 1460255358116956
-[row_clv] move txn 25 from owners to retired type 0 of row 1460255358116956
-[row_clv] add txn 25 type 1 to waiters of row 1460254970188083
-[row_clv] bring 25 from waiters to owners of row 1460254970188083
-[row_clv] rm txn 25 from owners of row 1460254970188083
-[row_clv] move txn 25 from owners to retired type 1 of row 1460254970188083
-[row_clv] add txn 25 type 0 to waiters of row 1460255266851740
-[row_clv] bring 25 from waiters to owners of row 1460255266851740
-[row_clv] rm txn 25 from owners of row 1460255266851740
-[row_clv] move txn 25 from owners to retired type 0 of row 1460255266851740
-[row_clv] add txn 25 type 1 to waiters of row 1460254925230746
-[row_clv] bring 25 from waiters to owners of row 1460254925230746
-[row_clv] rm txn 25 from owners of row 1460254925230746
-[row_clv] move txn 25 from owners to retired type 1 of row 1460254925230746
-[row_clv] add txn 25 type 0 to waiters of row 1460255097793205
-[row_clv] bring 25 from waiters to owners of row 1460255097793205
-[row_clv] rm txn 25 from owners of row 1460255097793205
-[row_clv] move txn 25 from owners to retired type 0 of row 1460255097793205
-[row_clv] add txn 25 type 1 to waiters of row 1460255006890005
-[row_clv] bring 25 from waiters to owners of row 1460255006890005
-[row_clv] rm txn 25 from owners of row 1460255006890005
-[row_clv] move txn 25 from owners to retired type 1 of row 1460255006890005
-[row_clv] add txn 25 type 0 to waiters of row 1460255405414575
-[row_clv] bring 25 from waiters to owners of row 1460255405414575
-[row_clv] rm txn 25 from owners of row 1460255405414575
-[row_clv] move txn 25 from owners to retired type 0 of row 1460255405414575
-[row_clv] add txn 25 type 1 to waiters of row 1460254994653030
-[row_clv] bring 25 from waiters to owners of row 1460254994653030
-[row_clv] rm txn 25 from owners of row 1460254994653030
-[row_clv] move txn 25 from owners to retired type 1 of row 1460254994653030
-[row_clv] add txn 25 type 0 to waiters of row 1460255359352800
-[row_clv] bring 25 from waiters to owners of row 1460255359352800
-[row_clv] rm txn 25 from owners of row 1460255359352800
-[row_clv] move txn 25 from owners to retired type 0 of row 1460255359352800
-[row_clv] add txn 25 type 1 to waiters of row 1460254985160193
-[row_clv] bring 25 from waiters to owners of row 1460254985160193
-[row_clv] rm txn 25 from owners of row 1460254985160193
-[row_clv] move txn 25 from owners to retired type 1 of row 1460254985160193
-[row_clv] add txn 25 type 0 to waiters of row 1460255323429180
-[row_clv] bring 25 from waiters to owners of row 1460255323429180
-[row_clv] rm txn 25 from owners of row 1460255323429180
-[row_clv] move txn 25 from owners to retired type 0 of row 1460255323429180
-[row_clv] add txn 25 type 1 to waiters of row 1460254968528769
-[row_clv] bring 25 from waiters to owners of row 1460254968528769
-[row_clv] rm txn 25 from owners of row 1460254968528769
-[row_clv] move txn 25 from owners to retired type 1 of row 1460254968528769
-[row_clv] add txn 25 type 0 to waiters of row 1460255260614900
-[row_clv] bring 25 from waiters to owners of row 1460255260614900
-[row_clv] rm txn 25 from owners of row 1460255260614900
-[row_cl
+[row_clv] add txn 1 type 0 to waiters of row 1461933064635926
+[row_clv] bring 1 from waiters to owners of row 1461933064635926
+[row_clv] add txn 2 type 0 to waiters of row 1461932999172269
+[row_clv] rm txn 1 from owners of row 1461933064635926
+[row_clv] bring 2 from waiters to owners of row 1461932999172269
+[row_clv] move txn 1 from owners to retired type 0 of row 1461933064635926
+[row_clv] rm txn 2 from owners of row 1461932999172269
+[row_clv] move txn 2 from owners to retired type 0 of row 1461932999172269
+[row_clv] add txn 1 type 1 to waiters of row 1461932921451823
+[txn] increment barrier for txn 2
+[row_clv] bring 1 from waiters to owners of row 1461932921451823
+[row_clv] add txn 2 type 0 to waiters of row 1461932999180134
+[row_clv] rm txn 1 from owners of row 1461932921451823
+[row_clv] bring 2 from waiters to owners of row 1461932999180134
+[row_clv] move txn 1 from owners to retired type 1 of row 1461932921451823
+[row_clv] rm txn 2 from owners of row 1461932999180134
+[row_clv] move txn 2 from owners to retired type 0 of row 1461932999180134
+[row_clv] add txn 1 type 0 to waiters of row 1461933205221669
+[row_clv] bring 1 from waiters to owners of row 1461933205221669
+[row_clv] add txn 2 type 0 to waiters of row 1461933555751562
+[row_clv] bring 2 from waiters to owners of row 1461933555751562
+[row_clv] rm txn 2 from owners of row 1461933555751562
+[row_clv] move txn 2 from owners to retired type 0 of row 1461933555751562
+[row_clv] rm txn 1 from owners of row 1461933205221669
+[txn] # bariers of txn 2 = 1
+[row_clv] move txn 1 from owners to retired type 0 of row 1461933205221669
+[row_clv] add txn 1 type 1 to waiters of row 1461932973083266
+[row_clv] bring 1 from waiters to owners of row 1461932973083266
+[row_clv] rm txn 1 from owners of row 1461932973083266
+[row_clv] move txn 1 from owners to retired type 1 of row 1461932973083266
+[row_clv] add txn 1 type 0 to waiters of row 1461933398159103
+[row_clv] bring 1 from waiters to owners of row 1461933398159103
+[row_clv] rm txn 1 from owners of row 1461933398159103
+[row_clv] move txn 1 from owners to retired type 0 of row 1461933398159103
+[row_clv] add txn 1 type 1 to waiters of row 1461932949966312
+[row_clv] bring 1 from waiters to owners of row 1461932949966312
+[row_clv] rm txn 1 from owners of row 1461932949966312
+[row_clv] move txn 1 from owners to retired type 1 of row 1461932949966312
+[row_clv] add txn 1 type 0 to waiters of row 1461933311685601
+[row_clv] bring 1 from waiters to owners of row 1461933311685601
+[row_clv] rm txn 1 from owners of row 1461933311685601
+[row_clv] move txn 1 from owners to retired type 0 of row 1461933311685601
+[row_clv] add txn 1 type 1 to waiters of row 1461932967665630
+[row_clv] bring 1 from waiters to owners of row 1461932967665630
+[row_clv] rm txn 1 from owners of row 1461932967665630
+[row_clv] move txn 1 from owners to retired type 1 of row 1461932967665630
+[row_clv] add txn 1 type 0 to waiters of row 1461933377901930
+[row_clv] bring 1 from waiters to owners of row 1461933377901930
+[row_clv] rm txn 1 from owners of row 1461933377901930
+[row_clv] move txn 1 from owners to retired type 0 of row 1461933377901930
+[row_clv] add txn 1 type 1 to waiters of row 1461932964604233
+[row_clv] bring 1 from waiters to owners of row 1461932964604233
+[row_clv] rm txn 1 from owners of row 1461932964604233
+[row_clv] move txn 1 from owners to retired type 1 of row 1461932964604233
+[row_clv] add txn 1 type 0 to waiters of row 1461933366414387
+[row_clv] bring 1 from waiters to owners of row 1461933366414387
+[row_clv] rm txn 1 from owners of row 1461933366414387
+[row_clv] move txn 1 from owners to retired type 0 of row 1461933366414387
+[row_clv] add txn 1 type 1 to waiters of row 1461932948675414
+[row_clv] bring 1 from waiters to owners of row 1461932948675414
+[row_clv] rm txn 1 from owners of row 1461932948675414
+[row_clv] move txn 1 from owners to retired type 1 of row 1461932948675414
+[row_clv] add txn 1 type 0 to waiters of row 1461933306831506
+[row_clv] bring 1 from waiters to owners of row 1461933306831506
+[row_clv] rm txn 1 from owners of row 1461933306831506
+[row_clv] move txn 1 from owners to retired type 0 of row 1461933306831506
+[row_clv] add txn 1 type 1 to waiters of row 1461932902227072
+[row_clv] bring 1 from waiters to owners of row 1461932902227072
+[row_clv] rm txn 1 from owners of row 1461932902227072
+[row_clv] move txn 1 from owners to retired type 1 of row 1461932902227072
+[row_clv] add txn 1 type 0 to waiters of row 1461933133447851
+[row_clv] bring 1 from waiters to owners of row 1461933133447851
+[row_clv] rm txn 1 from owners of row 1461933133447851
+[row_clv] move txn 1 from owners to retired type 0 of row 1461933133447851
+[row_clv] add txn 1 type 1 to waiters of row 1461932956836433
+[row_clv] bring 1 from waiters to owners of row 1461932956836433
+[row_clv] rm txn 1 from owners of row 1461932956836433
+[row_clv] move txn 1 from owners to retired type 1 of row 1461932956836433
+[row_clv] add txn 1 type 0 to waiters of row 1461933337388202
+[row_clv] bring 1 from waiters to owners of row 1461933337388202
+[row_clv] rm txn 1 from owners of row 1461933337388202
+[row_clv] move txn 1 from owners to retired type 0 of row 1461933337388202
+[row_clv] add txn 1 type 1 to waiters of row 1461932962267160
+[row_clv] bring 1 from waiters to owners of row 1461932962267160
+[row_clv] rm txn 1 from owners of row 1461932962267160
+[row_clv] move txn 1 from owners to retired type 1 of row 1461932962267160
+[row_clv] add txn 1 type 0 to waiters of row 1461933357663482
+[row_clv] bring 1 from waiters to owners of row 1461933357663482
+[row_clv] rm txn 1 from owners of row 1461933357663482
+[row_clv] move txn 1 from owners to retir

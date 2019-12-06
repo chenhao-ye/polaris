@@ -40,6 +40,12 @@
 
 #define ASSERT(cond) assert(cond)
 
+/************************************************/
+// QUEUE helper (push & pop)
+/************************************************/
+#define QUEUE_PUSH(tail, entry) { \
+	if (tail == NULL) tail = entry; \
+	else { tail->next = entry; tail = entry;}
 
 /************************************************/
 // STACK helper (push & pop)
