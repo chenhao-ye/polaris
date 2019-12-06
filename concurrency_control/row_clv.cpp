@@ -303,11 +303,9 @@ Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
         if (prev)
             prev->next = en->next;
         else {
-			if (is_owner) {
-				if (owners == en)
+			if (is_owner && (owners == en))
 					owners = en->next;
-			} else {
-				if (retired == en)
+			} else if ((!is_owner) && (retired == en))
 					retired = en->next;
 			}
         }
