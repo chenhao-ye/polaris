@@ -167,7 +167,7 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 			return_row(type, txn, NULL);
 #if DEBUG_CLV
 			printf("[row] detected abort in txn %lu when acquired row %lu\n",
-				   txn->get_txn_id(), row->get_row_id());
+				   txn->get_txn_id(), this->get_row_id());
 #endif
 		}
 #endif
@@ -175,7 +175,7 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 	} else if (rc == Abort) {
 #if DEBUG_CLV
 		printf("[row] return abort in txn %lu when trying to get row %lu\n",
-			   txn->get_txn_id(), row->get_row_id());
+			   txn->get_txn_id(), this->get_row_id());
 #endif
 	}
 	else if (rc == WAIT) {
@@ -239,7 +239,7 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 			return_row(type, txn, NULL);
 #if DEBUG_CLV
 			printf("[row] detected abort in txn %lu when waiting row %lu\n",
-					txn->get_txn_id(), row->get_row_id());
+					txn->get_txn_id(), this->get_row_id());
 #endif
 		}
 		row = this;

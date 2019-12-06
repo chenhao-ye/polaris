@@ -273,8 +273,8 @@ Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner
                         owners = en->next;
                     else if ((!is_owner) && (retired == en)){
                         retired = en->next;
-			// retired head changed
-			retired->txn->decrement_commit_barriers();
+			if (retired != NULL)
+				retired->txn->decrement_commit_barriers();
 		    }
                 }
                 // update count
