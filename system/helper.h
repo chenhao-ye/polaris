@@ -47,6 +47,11 @@
 	if (head == NULL) {	head = entry;	tail = entry; }\
 	else {	tail->next = entry; 	tail = entry; } }
 
+#define QUEUE_RM(head, tail, prev, en, cnt) { \
+	if (prev != NULL) prev->next = en->next; \
+	else if (head == en)	head = en->next; \
+	if (tail == en)	tail = prev;	cnt-- ;}
+
 /************************************************/
 // STACK helper (push & pop)
 /************************************************/

@@ -253,6 +253,7 @@ RC
 Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner, bool has_conflict) {
 	LockEntry * en = list;
 	LockEntry * prev = NULL;
+	LockEntry * prev_head = NULL;
 	while (en != NULL) {
 		if (conflict_lock(en->type, type) && (en->txn->get_ts() > txn->get_ts() || txn->get_ts() == 0))
 			has_conflict = true;
@@ -269,35 +270,22 @@ Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner
 				#if DEBUG_CLV
 				printf("[row_clv] txn %lu abort txn %lu on row %lu\n", txn->get_txn_id(), en->txn->get_txn_id(), _row->get_row_id());
 				#endif
-				// remove aborted txn (en->txn) from retired/owner
-				if (prev != NULL)
-					prev->next = en->next;
-				else {
-					if (is_owner && (owners == en))
-						owners = en->next;
-					else if ((!is_owner) && (retired == en)){
-						retired = en->next;
-						// as prev is null, after this get abort, 
-						if (retired != NULL)
-							retired->txn->decrement_commit_barriers();
-					}
-				}
-				// update count
+
 				if (is_owner) {
 					#if DEBUG_CLV
 					printf("[row_clv] txn %lu rm another txn %lu from owners of row %lu\n", txn->get_txn_id(), en->txn->get_txn_id(), _row->get_row_id());
 					#endif
-					if (owners_tail == en)
-						owners_tail = prev;
-					owner_cnt--;
+					QUEUE_RM(owners, owners_tail, prev, en, owner_cnt);
+
 				} else {
-					if (retired_tail == en)
-						retired_tail = prev;
-					retired_cnt--;
 					#if DEBUG_CLV
 					printf("[row_clv] txn %lu rm another txn %lu from retired of row %lu\n", txn->get_txn_id(), en->txn->get_txn_id(), _row->get_row_id());
-					assert_notin_list(retired, retired_tail, retired_cnt, en->txn);
 					#endif
+					prev_head = retired;
+					QUEUE_RM(retired, retired_tail, prev, en, retired_cnt);
+					if ((retired_cnt > 0) && (retired != prev_head))
+						retired->txn->decrement_commit_barriers();
+					assert_notin_list(retired, retired_tail, retired_cnt, en->txn);
 				}
 			}
 			if (en->txn->get_ts() == 0)
@@ -323,37 +311,23 @@ Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
 		en = en->next;
 	}
 	if (en) { // find the entry in the retired list
-		if (prev != NULL)
-			prev->next = en->next;
-		else {
-			if (is_owner && (owners == en)) {
-					owners = en->next;
-			} else if ((!is_owner) && (retired == en)) {
-				retired = en->next;
-				// retired head changed
-				if (retired)
-					retired->txn->decrement_commit_barriers();
-			}
-		}
 		if (is_owner) {
-			if (owners_tail == en)
-				owners_tail = prev;
-			owner_cnt--;
-		} else {
-			if (retired_tail == en)
-				retired_tail = prev;
-			retired_cnt--;
-		}
+			#if DEBUG_CLV
+			printf("[row_clv] rm txn %lu from owners of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
+			#endif
+			QUEUE_RM(owners, owners_tail, prev, en, owner_cnt);
 
-		#if DEBUG_CLV
-		assert(txn->get_txn_id() == en->txn->get_txn_id());
-		if (is_owner)
-				printf("[row_clv] rm txn %lu from owners of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
-		else {
-				printf("[row_clv] rm txn %lu from retired of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
-				assert_notin_list(retired, retired_tail, retired_cnt, txn);
+		} else {
+			#if DEBUG_CLV
+			printf("[row_clv] rm txn %lu from retired of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
+			assert_notin_list(retired, retired_tail, retired_cnt, en->txn);
+			#endif
+			prev_head = retired;
+			QUEUE_RM(retired, retired_tail, prev, en, retired_cnt);
+			if ((retired_cnt > 0) && (retired != prev_head))
+				retired->txn->decrement_commit_barriers();
+			assert_notin_list(retired, retired_tail, retired_cnt, txn);
 		}
-		#endif
 		return en;
 	}
 	return NULL;
