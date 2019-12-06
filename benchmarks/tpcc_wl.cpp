@@ -67,24 +67,11 @@ RC tpcc_wl::init_table() {
 /**********************************/
 	tpcc_buffer = new drand48_data * [g_num_wh];
 	pthread_t * p_thds = new pthread_t[g_num_wh - 1];
-	#if DEBUG_BENCHMARK
-		cout << "debug pt 1" << endl;
-	#endif
 	for (uint32_t i = 0; i < g_num_wh - 1; i++) 
 		pthread_create(&p_thds[i], NULL, threadInitWarehouse, this);
-	#if DEBUG_BENCHMARK
-		cout << "debug pt 2" << endl;
-	#endif
 	threadInitWarehouse(this);
-	#if DEBUG_BENCHMARK
-		cout << "debug pt 8" << endl;
-	#endif
 	for (uint32_t i = 0; i < g_num_wh - 1; i++) 
 		pthread_join(p_thds[i], NULL);
-
-	#if DEBUG_BENCHMARK
-		cout << "debug pt 9" << endl;
-	#endif
 	printf("TPCC Data Initialization Complete!\n");
 	return RCOK;
 }
@@ -438,25 +425,13 @@ void * tpcc_wl::threadInitWarehouse(void * This) {
 	if (tid == 0)
 		wl->init_tab_item();
 	wl->init_tab_wh( wid );
-	#if DEBUG_BENCHMARK
-		cout << "debug pt 4" << endl;
-	#endif
 	wl->init_tab_dist( wid );
-	#if DEBUG_BENCHMARK
-		cout << "debug pt 5" << endl;
-	#endif
 	wl->init_tab_stock( wid );
-	#if DEBUG_BENCHMARK
-		cout << "debug pt 6" << endl;
-	#endif
 	for (uint64_t did = 1; did <= DIST_PER_WARE; did++) {
 		wl->init_tab_cust(did, wid);
 		wl->init_tab_order(did, wid);
 		for (uint64_t cid = 1; cid <= g_cust_per_dist; cid++) 
 			wl->init_tab_hist(cid, did, wid);
 	}
-	#if DEBUG_BENCHMARK
-		cout << "debug pt 7" << endl;
-	#endif
 	return NULL;
 }

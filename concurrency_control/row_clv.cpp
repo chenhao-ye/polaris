@@ -73,6 +73,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
             rc = RCOK;
             break;
         }
+	en = en->next;
     }
 
     if (g_central_man)

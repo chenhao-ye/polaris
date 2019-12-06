@@ -104,7 +104,6 @@ void txn_man::cleanup(RC rc) {
 			continue;
 		}
 #endif
-
 		if (ROLL_BACK && type == XP &&
 					(CC_ALG == DL_DETECT || 
 					CC_ALG == NO_WAIT || 

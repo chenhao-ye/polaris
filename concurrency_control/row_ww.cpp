@@ -37,6 +37,11 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 		glob_manager->lock_row(_row);
 	else 
 		pthread_mutex_lock( latch );
+	
+	#if DEBUG_TMP
+		printf("[row_ww] %lu got mutex in lock_get %lu\n", txn->get_txn_id(), _row->get_row_id());
+	#endif
+
     // each thread has at most one owner of a lock
 	assert(owner_cnt <= g_thread_cnt);
 	// each thread has at most one waiter
@@ -64,19 +69,6 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 	assert(cnt == waiter_cnt);
 #endif
 
-	// check lock type with owner
-	// owner:
-	// - SH then followers are SH
-	// - EX then followers are NONE
-
-	// bool conflict = conflict_lock(lock_type, type);
-
-	// added one more condition for conflicts -- check wait dependency
-	//if (!conflict) {
-	    // TODO: waiters_head is not null and current txn's ts < waiter_head's ts -- conflict and need to wound them
-	//	if (waiters_head && txn->get_ts() < waiters_head->txn->get_ts())
-	//		conflict = true;
-	//}
 	
 	if (owner_cnt == 0) {
 			// if owner is empty, grab the lock
@@ -89,37 +81,30 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 		txn->lock_ready = true;
         	rc = RCOK;
 		#if DEBUG_WW
-			printf("[row_ww] add txn %lu to owners of row %lu\n", txn->get_txn_id(), _row->get_row_id());
+			printf("[row_ww] add txn %lu type %d to owners of row %lu\n", txn->get_txn_id(), type, _row->get_row_id());
 		#endif
 	} else {
-	    // Cannot be added to the owner list.
-        ///////////////////////////////////////////////////////////
-        //  - T is the txn currently running
-        //  always can wait but need to abort txns has lower priority (larger ts)
-        //////////////////////////////////////////////////////////
-
-        // always can wait
-        //bool canwait = true;
-        // go through owners
-        LockEntry * en = owners;
-        LockEntry * prev = NULL;
-        while (en != NULL) {
-	        if (en->txn->get_ts() > txn->get_ts() && conflict_lock(lock_type, type)) {
-                // step 1 - figure out what need to be done when aborting a txn
-                // ask thread to abort
-                #if DEBUG_WW
+        	LockEntry * en = owners;
+        	LockEntry * prev = NULL;
+        	while (en != NULL) {
+	        	if (en->txn->get_ts() > txn->get_ts() && conflict_lock(lock_type, type)) {
+                		// step 1 - figure out what need to be done when aborting a txn
+                		// ask thread to abort
+                	#if DEBUG_WW
 			        printf("[row_ww]txn %lu abort txn %lu\n", txn->get_txn_id(), en->txn->get_txn_id());
-                #endif
-                txn->wound_txn(en->txn);
-                // remove from owner
-                if (prev)
-                    prev->next = en->next;
-                else
-                    owners = en->next;
-                // update count
-                owner_cnt--;
-            }
-            en = en->next;
+                	#endif
+                		txn->wound_txn(en->txn);
+                		// remove from owner
+                		if (prev)
+                    			prev->next = en->next;
+                		else
+                    			owners = en->next;
+                		// update count
+                		owner_cnt--;
+				if (owner_cnt == 0)
+					lock_type = LOCK_NONE;
+            		}
+            	en = en->next;
 	        prev = en;
         }
 
@@ -142,25 +127,38 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
         txn->lock_ready = false;
         rc = WAIT;
 #if DEBUG_WW
-        printf("[row_ww] add txn %lu to waiters of row %lu\n", txn->get_txn_id(), _row->get_row_id());
+        printf("[row_ww] add txn %lu type %d to waiters of row %lu\n", txn->get_txn_id(), type, _row->get_row_id());
 #endif
 
         bring_next();
+#if DEBUG_TMP
+        printf("[row_ww] txn %lu tried to take waiters to owners of row %lu\n", txn->get_txn_id(), _row->get_row_id());
+#endif
 
         // if brought in owner return acquired lock
         en = owners;
         while(en){
             if (en->txn == txn) {
                 rc = RCOK;
+#if DEBUG_TMP
+        	printf("[row_ww] txn %lu is brought to owners of row %lu\n", txn->get_txn_id(),  _row->get_row_id());
+#endif
                 break;
             }
+		en = en->next;
         }
 	}
 
+	#if DEBUG_TMP
+		printf("[row_ww] %lu try to release mutex in lock_get %lu\n", txn->get_txn_id(), _row->get_row_id());
+	#endif
 	if (g_central_man)
 		glob_manager->release_row(_row);
 	else
 		pthread_mutex_unlock( latch );
+	#if DEBUG_TMP
+		printf("[row_ww] %lu release mutex in lock_get %lu\n", txn->get_txn_id(), _row->get_row_id());
+	#endif
 
 	return rc;
 }
@@ -168,12 +166,19 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 
 RC Row_ww::lock_release(txn_man * txn) {
 
+	#if DEBUG_TMP
+		printf("[row_ww] try to acquire mutex in lock_release %lu held by %lu\n", _row->get_row_id(), txn->get_txn_id());
+	#endif
+
 
 	if (g_central_man)
 		glob_manager->lock_row(_row);
 	else 
 		pthread_mutex_lock( latch );
 
+	#if DEBUG_TMP
+		printf("[row_ww] got mutex in lock_release %lu held by %lu\n", _row->get_row_id(), txn->get_txn_id());
+	#endif
 	// Try to find the entry in the owners
 	LockEntry * en = owners;
 	LockEntry * prev = NULL;
@@ -193,20 +198,23 @@ RC Row_ww::lock_release(txn_man * txn) {
 			printf("[row_ww] rm txn %lu from owners of row %lu\n", txn->get_txn_id(), _row->get_row_id());
 		#endif
 	} else {
+		printf("[row_ww] not found txn %lu to release in owners, try waiters of row %lu\n", txn->get_txn_id(), _row->get_row_id());
 		// Not in owners list, try waiters list.
 		en = waiters_head;
 		while (en != NULL && en->txn != txn)
 			en = en->next;
-		LIST_REMOVE(en);
-		if (en == waiters_head)
-			waiters_head = en->next;
-		if (en == waiters_tail)
-			waiters_tail = en->prev;
-		return_entry(en);
-		waiter_cnt --;
+		if (en) {
+			LIST_REMOVE(en);
+			if (en == waiters_head)
+				waiters_head = en->next;
+			if (en == waiters_tail)
+				waiters_tail = en->prev;
+			return_entry(en);
+			waiter_cnt --;
 		#if DEBUG_WW
 			printf("[row_ww] rm txn %lu from waiters of row %lu\n", txn->get_txn_id(), _row->get_row_id());
 		#endif
+		}
 	}
 
 	bring_next();
