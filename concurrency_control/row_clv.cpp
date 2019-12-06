@@ -101,7 +101,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
 
     // Try to find the entry in the owners and remove
     LockEntry * entry = remove_if_exists(owners, txn, true);
-    if (entry != NULL) {
+    if (entry == NULL) {
     	// may be already wounded by others
     	assert(txn->status == ABORTED);
     	rc = Abort;
