@@ -365,7 +365,6 @@ Row_clv::print_list(LockEntry * list, LockEntry * tail, int cnt) {
 	int count = 0;
 	while(en){
 		printf("(%lu, %d) -> ", en->txn->get_txn_id(), en->type);
-		assert(txn )
 		prev = en;
 		en = en->next;
 		count += 1;
@@ -380,7 +379,7 @@ Row_clv::assert_notin_list(LockEntry * list, LockEntry * tail, int cnt, txn_man 
 	LockEntry * prev = NULL;
 	int count = 0;
 	while(en){
-		assert(txn->get_txn_id() != en->get_txn_id());
+		assert(txn->get_txn_id() != en->txn->get_txn_id());
 		prev = en;
 		en = en->next;
 		count += 1;
@@ -390,13 +389,13 @@ Row_clv::assert_notin_list(LockEntry * list, LockEntry * tail, int cnt, txn_man 
 }
 
 void
-Row_clv::assert_notin_list(LockEntry * list, LockEntry * tail, int cnt, txn_man * txn) {
+Row_clv::assert_in_list(LockEntry * list, LockEntry * tail, int cnt, txn_man * txn) {
 	LockEntry * en = list;
 	LockEntry * prev = NULL;
 	int count = 0;
 	bool in = false;
 	while(en){
-		if(txn->get_txn_id() == en->get_txn_id())
+		if(txn->get_txn_id() == en->txn->get_txn_id())
 			in = true;
 		prev = en;
 		en = en->next;
