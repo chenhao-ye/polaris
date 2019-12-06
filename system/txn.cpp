@@ -249,18 +249,18 @@ RC txn_man::finish(RC rc) {
         if (!ATOM_CAS(status, RUNNING, COMMITED))
             rc = Abort;
 	}
-#if DEBUG_WW
+	#if DEBUG_WW
     if (rc == Abort)
         printf("[txn] txn %lu is set to aborted\n", get_txn_id());
     else if (rc == RCOK)
     printf("[txn] txn %lu is set to commited\n", get_txn_id());
-#endif
+	#endif
 	cleanup(rc);
 #elif CC_ALG == CLV
 	if (rc == RCOK) {
-	#if DEBUG_CLV
+		#if DEBUG_CLV
 		printf("[txn] # bariers of txn %lu = %d\n", get_txn_id(), commit_barriers);
-	#endif
+		#endif
         while(commit_barriers > 0 && status == RUNNING)
             continue;
         if (!ATOM_CAS(status, RUNNING, COMMITED))
