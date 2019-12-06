@@ -100,7 +100,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
     LockEntry * entry = remove_if_exists(owners, txn, true);
     assert(entry != NULL);
     // append entry to retired
-    QUEUE_PUSH(retired_tail, entry);
+    QUEUE_PUSH(retired, retired_tail, entry);
     retired_cnt++;
 #if DEBUG_CLV
 	printf("[row_clv] move txn %lu from owners to retired type %d of row %lu\n",
@@ -175,7 +175,7 @@ Row_clv::bring_next() {
     // If any waiter can join the owners, just do it!
     while (waiters_head && (owners == NULL || !conflict_lock(owners->type, waiters_head->type) )) {
         LIST_GET_HEAD(waiters_head, waiters_tail, entry);
-        QUEUE_PUSH(owners_tail, entry);
+        QUEUE_PUSH(owner, owners_tail, entry);
         owner_cnt ++;
         waiter_cnt --;
         ASSERT(entry->txn->lock_ready == 0);

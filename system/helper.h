@@ -43,8 +43,8 @@
 /************************************************/
 // QUEUE helper (push & pop)
 /************************************************/
-#define QUEUE_PUSH(tail, entry) { \
-	if (tail == NULL) tail = entry; \
+#define QUEUE_PUSH(head, tail, entry) { \
+	if (head == NULL) {	head = entry;	tail = entry; }\
 	else {	tail->next = entry; 	tail = entry; } }
 
 /************************************************/
