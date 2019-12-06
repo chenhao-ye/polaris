@@ -53,6 +53,8 @@ private:
     
     // debugging method
     void print_list(LockEntry * list, LockEntry * tail, int cnt);
+    void assert_notin_list(LockEntry * list, LockEntry * tail, int cnt, txn_man * txn);
+    void assert_in_list(LockEntry * list, LockEntry * tail, int cnt, txn_man * txn);
 
 };
 

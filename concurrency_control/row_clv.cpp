@@ -123,7 +123,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
 #if DEBUG_CLV
 	printf("[row_clv] move txn %lu from owners to retired type %d of row %lu\n",
 			txn->get_txn_id(), entry->type, _row->get_row_id());
-	print_list(retired, retired_tail, retired_cnt);
+	assert_in_list(retired, retired_tail, retired_cnt, entry->txn);
 #endif
 	// increment barriers
 	if (retired_cnt > 1)
@@ -290,13 +290,13 @@ Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner
 						owners_tail = prev;
 					owner_cnt--;
 				} else {
-					#if DEBUG_CLV
-					printf("[row_clv] txn %lu rm another txn %lu from retired of row %lu\n", txn->get_txn_id(), en->txn->get_txn_id(), _row->get_row_id());
-					print_list(retired, retired_tail, retired_cnt);
-					#endif
 					if (retired_tail == en)
 						retired_tail = prev;
 					retired_cnt--;
+					#if DEBUG_CLV
+					printf("[row_clv] txn %lu rm another txn %lu from retired of row %lu\n", txn->get_txn_id(), en->txn->get_txn_id(), _row->get_row_id());
+					assert_notin_list(retired, retired_tail, retired_cnt, en->txn);
+					#endif
 				}
 			}
 			if (en->txn->get_ts() == 0)
@@ -348,10 +348,10 @@ Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
 		assert(txn->get_txn_id() == en->txn->get_txn_id());
 		if (is_owner)
 				printf("[row_clv] rm txn %lu from owners of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
-		else
+		else {
 				printf("[row_clv] rm txn %lu from retired of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
-				print_list(retired, retired_tail, retired_cnt);
-			
+				assert_notin_list(retired, retired_tail, retired_cnt, txn);
+		}
 		#endif
 		return en;
 	}
@@ -365,15 +365,47 @@ Row_clv::print_list(LockEntry * list, LockEntry * tail, int cnt) {
 	int count = 0;
 	while(en){
 		printf("(%lu, %d) -> ", en->txn->get_txn_id(), en->type);
+		assert(txn )
 		prev = en;
 		en = en->next;
 		count += 1;
 	}
-	printf(" || expected cnt: %d, real cnt: %d || ", cnt, count);
-	printf("retired tail should equal real tail: %d\n", retired_tail == prev);
-
+	printf("expected cnt: %d, real cnt: %d, same tail: %d\n", cnt, count, tail == prev);
 }
 
+
+void
+Row_clv::assert_notin_list(LockEntry * list, LockEntry * tail, int cnt, txn_man * txn) {
+	LockEntry * en = list;
+	LockEntry * prev = NULL;
+	int count = 0;
+	while(en){
+		assert(txn->get_txn_id() != en->get_txn_id());
+		prev = en;
+		en = en->next;
+		count += 1;
+	}
+	assert(count == cnt);
+	assert(tail == prev);
+}
+
+void
+Row_clv::assert_notin_list(LockEntry * list, LockEntry * tail, int cnt, txn_man * txn) {
+	LockEntry * en = list;
+	LockEntry * prev = NULL;
+	int count = 0;
+	bool in = false;
+	while(en){
+		if(txn->get_txn_id() == en->get_txn_id())
+			in = true;
+		prev = en;
+		en = en->next;
+		count += 1;
+	}
+	assert(count == cnt);
+	assert(tail == prev);
+	assert(in);
+}
 
 
 
