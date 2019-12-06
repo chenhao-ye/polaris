@@ -139,8 +139,12 @@ RC Row_clv::lock_release(txn_man * txn) {
 	LockEntry * en = remove_if_exists(retired, txn, false);
 	if (en != NULL) {
         return_entry(en);
+#if DEBUG_ASSERT
+		assert(en->txn == txn);
+#endif
     } else {
 	    en = remove_if_exists(owners, txn, true);
+
 	    if (en != NULL) {
 	        return_entry(en);
 	    } else {
@@ -248,8 +252,15 @@ Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner
         if (has_conflict) {
             if (txn->get_ts() != 0) {
                 // abort txn
-                if (txn->wound_txn(en->txn) == ERROR)
-			return Abort;
+                if (txn->wound_txn(en->txn) == ERROR) {
+#if DEBUG_CLV
+					printf("[row_clv] detected txn %lu is aborted when "
+			"trying to wound others on row %lu\n",
+						   txn->get_txn_id(),  _row->get_row_id());
+#endif
+					return Abort;
+                }
+
 #if DEBUG_CLV
 				printf("[row_clv] txn %lu abort txn %lu on row %lu\n",
 			        		txn->get_txn_id(), en->txn->get_txn_id(), _row->get_row_id());

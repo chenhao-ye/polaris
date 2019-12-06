@@ -170,7 +170,7 @@ RC Row_ww::lock_release(txn_man * txn) {
 	LockEntry * en = owners;
 	LockEntry * prev = NULL;
 
-	while (en != NULL && en->txn != txn) {
+	while ((en != NULL) && (en->txn != txn)) {
 		prev = en;
 		en = en->next;
 	}
