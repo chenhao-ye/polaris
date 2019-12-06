@@ -102,6 +102,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
         //bool canwait = true;
         // go through owners
         LockEntry * en = owners;
+        LockEntry * prev = NULL;
         while (en != NULL) {
 	        if (en->txn->get_ts() > txn->get_ts() && conflict_lock(lock_type, type)) {
                 // step 1 - figure out what need to be done when aborting a txn
@@ -110,11 +111,19 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 			        printf("[row_ww]txn %lu abort txn %lu\n", txn->get_txn_id(), en->txn->get_txn_id());
                 #endif
                 txn->wound_txn(en->txn);
+                // remove from owner
+                if (prev)
+                    prev->next = en->next;
+                else
+                    owners = en->next;
+                // update count
+                owner_cnt--;
             }
             en = en->next;
+	        prev = en;
         }
 
-        // TODO: insert to wait list
+        // insert to wait list
         // insert txn to the right position
         // the waiter list is always in timestamp order
         LockEntry * entry = get_entry();
@@ -132,11 +141,12 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
         waiter_cnt ++;
         txn->lock_ready = false;
         rc = WAIT;
-
-        bring_next();
 #if DEBUG_WW
         printf("[row_ww] add txn %lu to waiters of row %lu\n", txn->get_txn_id(), _row->get_row_id());
 #endif
+
+        bring_next();
+
         // if brought in owner return acquired lock
         en = owners;
         while(en){
@@ -145,9 +155,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
                 break;
             }
         }
-
 	}
-
 
 	if (g_central_man)
 		glob_manager->release_row(_row);

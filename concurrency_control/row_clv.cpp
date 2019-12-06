@@ -63,7 +63,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 
     check_abort(type, txn, retired, false);
     check_abort(type, txn, owners, true);
-
+    insert_to_waiters(type, txn);
 	bring_next();
 
     // if brought in owner return acquired lock
@@ -81,44 +81,6 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
         pthread_mutex_unlock( latch );
 
     return rc;
-}
-
-void
-Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner) {
-    LockEntry * en = list;
-    LockEntry * prev = NULL;
-    bool has_conflict = false;
-    while (en != NULL) {
-        if (conflict_lock(en->type, type) && (en->txn->get_ts() > txn->get_ts() || txn->get_ts() == 0))
-            has_conflict = true;
-        if (has_conflict) {
-            if (txn->get_ts() != 0) {
-                // abort txn
-                txn->wound_txn(en->txn);
-                // remove from retired/owner
-                if (prev)
-                    prev->next = en->next;
-                else {
-                    if (is_owner)
-                        owners = en->next;
-                    else
-                        retired = en->next;
-                }
-                // update count
-                if (is_owner)
-                    owner_cnt--;
-                else
-                    retired_cnt--;
-            }
-            if (en->txn->get_ts() == 0)
-                en->txn->set_next_ts();
-        }
-        if (has_conflict)
-            txn->set_next_ts();
-        insert_to_waiters(type, txn);
-        prev = en;
-        en = en->next;
-    }
 }
 
 RC Row_clv::lock_retire(txn_man * txn) {
@@ -253,6 +215,44 @@ Row_clv::insert_to_waiters(lock_t type, txn_man * txn) {
     LIST_PUT_TAIL(waiters_head, waiters_tail, entry);
     waiter_cnt ++;
     txn->lock_ready = false;
+}
+
+void
+Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner) {
+    LockEntry * en = list;
+    LockEntry * prev = NULL;
+    bool has_conflict = false;
+    while (en != NULL) {
+        if (conflict_lock(en->type, type) && (en->txn->get_ts() > txn->get_ts() || txn->get_ts() == 0))
+            has_conflict = true;
+        if (has_conflict) {
+            if (txn->get_ts() != 0) {
+                // abort txn
+                txn->wound_txn(en->txn);
+                // remove from retired/owner
+                if (prev)
+                    prev->next = en->next;
+                else {
+                    if (is_owner)
+                        owners = en->next;
+                    else
+                        retired = en->next;
+                }
+                // update count
+                if (is_owner)
+                    owner_cnt--;
+                else
+                    retired_cnt--;
+            }
+            if (en->txn->get_ts() == 0)
+                en->txn->set_next_ts();
+        }
+        prev = en;
+        en = en->next;
+    }
+    if (has_conflict)
+        txn->set_next_ts();
+
 }
 
 LockEntry *

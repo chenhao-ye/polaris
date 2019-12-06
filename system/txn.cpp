@@ -246,13 +246,16 @@ RC txn_man::finish(RC rc) {
 	rc = validate_hekaton(rc);
 	cleanup(rc);
 #elif CC_ALG == WOUND_WAIT
-#if DEBUG_WW
-	printf("[txn] finish up txn %lu due to %d\n", get_txn_id(), rc);
-#endif
 	if (rc == RCOK) {
         if (!ATOM_CAS(status, RUNNING, COMMITED))
             rc = Abort;
 	}
+#if DEBUG_WW
+    if (rc == Abort)
+        printf("[txn] txn %lu is set to aborted\n", get_txn_id());
+    else if (rc == RCOK)
+    printf("[txn] txn %lu is set to commited\n", get_txn_id());
+#endif
 	cleanup(rc);
 #elif CC_ALG == CLV
 	if (rc == RCOK) {
@@ -264,6 +267,12 @@ RC txn_man::finish(RC rc) {
 	if (rc == Abort) {
 	    set_next_ts();
 	}
+	#if DEBUG_CLV
+	if (rc == Abort)
+        printf("[txn] txn %lu set to aborted\n", get_txn_id());
+	else if (rc == RCOK)
+	    printf("[txn] txn %lu set to commited\n", get_txn_id());
+    #endif
 	cleanup(rc);
 #else 
 	cleanup(rc);

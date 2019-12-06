@@ -159,15 +159,10 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 	else
 		rc = this->manager->lock_get(lt, txn);
 #endif
-	/*#if DEBUG_WW
-		printf("test if finally get row for txn %lu\n",  txn->get_txn_id());
-	#endif */
+
 	if (rc == RCOK) {
 #if CC_ALG == WOUND_WAIT || CC_ALG == CLV
-		if(txn->lock_abort) {			
-			#if DEBUG_WW
-				printf("[row] txn %lu is aborted while trying to get row (rcok)\n", txn->get_txn_id());
-			#endif
+		if(txn->lock_abort) {
 			rc = Abort;
 			return_row(type, txn, NULL);
 		}
@@ -176,7 +171,7 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 	} else if (rc == Abort) {} 
 	else if (rc == WAIT) {
 		ASSERT(CC_ALG == WAIT_DIE || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT || CC_ALG == CLV);
-		//txn->lock_abort = false;
+
 		uint64_t starttime = get_sys_clock();
 #if CC_ALG == DL_DETECT	
 		bool dep_added = false;
@@ -186,9 +181,6 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 		while (!txn->lock_ready && !txn->lock_abort) 
 		{
 #if CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT || CC_ALG == CLV
-			#if DEBUG_WW && CC_ALG == WOUND_WAIT
-				//printf("[row] thread-%lu txn %lu is waiting for lock\n",txn->get_thd_id(), txn->get_txn_id() );
-			#endif
 			continue;
 #elif CC_ALG == DL_DETECT	
 			uint64_t last_detect = starttime;
@@ -230,15 +222,9 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 		if (txn->lock_ready) {
 			endtime = get_sys_clock();
 			INC_TMP_STATS(thd_id, time_wait, endtime - starttime);
-			//#if DEBUG_WW
-			//	printf("[row] thread-%lu increment wait time %lu since txn %lu is waiting\n", thd_id, endtime - starttime, txn->get_txn_id());
-			//#endif
 			rc = RCOK;
 		} 
-		else if (txn->lock_abort) { 
-			#if   DEBUG_WW
-				printf("[row] txn %lu is aborted while trying to get row (wait)\n", txn->get_txn_id());
-			#endif
+		else if (txn->lock_abort) {
 			// check if txn is aborted
 			rc = Abort;
 			return_row(type, txn, NULL);

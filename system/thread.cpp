@@ -165,9 +165,9 @@ RC thread_t::run() {
         //rc = m_txn->lock_abort ? Abort : rc;
 	//printf("%d\n", rc);
 	if (rc == Abort)
-		printf("[thread-%lu] txn %lu is aborted\n", get_thd_id(), m_txn->get_txn_id());
+		printf("[thread-%lu] finish txn %lu (aborted)\n", get_thd_id(), m_txn->get_txn_id());
 	else if (rc == RCOK)
-        printf("[thread-%lu] txn %lu is commited\n", get_thd_id(), m_txn->get_txn_id());
+        printf("[thread-%lu] finish txn %lu (commited)\n", get_thd_id(), m_txn->get_txn_id());
 #endif
 
 		if (rc == Abort) {

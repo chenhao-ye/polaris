@@ -141,6 +141,9 @@ inline RC txn_man::wound_txn(txn_man * txn)
     assert(status == RUNNING);
 
     if ( ATOM_CAS(txn->status, RUNNING, ABORTED)) {
+#if DEBUG_WW || DEBUG_CLV
+        printf("[txn] %lu set txn %lu to abort\n", get_txn_id(), txn->get_txn_id());
+#endif
         txn->lock_abort = true;
         // no need to abort descendants as lock manager will abort descendants
     } //else {
