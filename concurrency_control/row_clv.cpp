@@ -365,7 +365,7 @@ Row_clv::print_list(LockEntry * list, int cnt) {
 		count += 1;
 	}
 	printf("\n");
-	assert(count == cnt);
+	printf("expected cnt: %d, real cnt: %d", cnt, count);
 }
 
 
