@@ -132,10 +132,11 @@ RC Row_clv::lock_retire(txn_man * txn) {
 	// increment barriers
 	if (retired_cnt > 1)
 		txn->increment_commit_barriers();
-	// bring next owners from waiters
-	bring_next();
+	
 
 final:
+	// bring next owners from waiters
+	bring_next();
 	if (g_central_man)
 		glob_manager->release_row(_row);
 	else
@@ -179,7 +180,8 @@ RC Row_clv::lock_release(txn_man * txn) {
 				}
 		}
 	}
-		bring_next();
+	
+	bring_next();
 
 	if (g_central_man)
 		glob_manager->release_row(_row);
