@@ -79,7 +79,8 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	memcpy(w_name, tmp_str, 10);
 	w_name[10] = '\0';
 #if CC_ALG == CLV
-    retire_row(r_wh);
+	if (retire_row(r_wh) == Abort)
+		return finish(Abort);
 #endif
 	/*=====================================================+
 		EXEC SQL UPDATE district SET d_ytd = d_ytd + :h_amount
@@ -107,7 +108,8 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	d_name[10] = '\0';
 
 #if CC_ALG == CLV
-    retire_row(r_dist);
+	if (retire_row(r_dist) == Abort)
+		return finish(Abort);
 #endif
 
 	/*====================================================================+
@@ -232,7 +234,8 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	h_data[length+14] = '\0';
 
 #if CC_ALG == CLV
-    retire_row(r_cust);
+    if (retire_row(r_cust) == Abort)
+    	return finish(Abort);
 #endif
 	/*=============================================================================+
 	  EXEC SQL INSERT INTO
@@ -291,7 +294,8 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 	r_wh_local->get_value(W_TAX, w_tax);
 
 #if CC_ALG == CLV
-    retire_row(r_wh);
+	if (retire_row(r_wh) == Abort)
+		return finish(Abort);
 #endif
 
 	key = custKey(c_id, d_id, w_id);
@@ -314,7 +318,8 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 	//c_credit = r_cust_local->get_value(C_CREDIT);
 
 #if CC_ALG == CLV
-    retire_row(r_cust);
+	if (retire_row(r_cust) == Abort)
+		return finish(Abort);
 #endif
  	
 	/*==================================================+
@@ -344,7 +349,8 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 	r_dist_local->set_value(D_NEXT_O_ID, o_id);
 
 #if CC_ALG == CLV
-    retire_row(r_dist);
+	if (retire_row(r_dist) == Abort)
+		return finish(Abort);
 #endif
 
 	/*========================================================================================+
@@ -401,7 +407,8 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 		//i_data = r_item_local->get_value(I_DATA);
 
 #if CC_ALG == CLV
-        retire_row(r_item);
+		if (retire_row(r_item) == Abort)
+			return finish(Abort);
 #endif
 
 		/*===================================================================+
@@ -462,7 +469,8 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 		r_stock_local->set_value(S_QUANTITY, &quantity);
 
 #if CC_ALG == CLV
-        retire_row(r_stock);
+		if (retire_row(r_stock) == Abort)
+			return finish(Abort);
 #endif
 
 		/*====================================================+

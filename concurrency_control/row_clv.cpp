@@ -91,6 +91,9 @@ final:
 }
 
 RC Row_clv::lock_retire(txn_man * txn) {
+
+	RC rc = RCOK;
+
     if (g_central_man)
         glob_manager->lock_row(_row);
     else
@@ -98,7 +101,12 @@ RC Row_clv::lock_retire(txn_man * txn) {
 
     // Try to find the entry in the owners and remove
     LockEntry * entry = remove_if_exists(owners, txn, true);
-    assert(entry != NULL);
+    if (entry != NULL) {
+    	// may be already wounded by others
+    	assert(txn->status == ABORTED);
+    	rc = Abort;
+    	goto final;
+    }
     // append entry to retired
     QUEUE_PUSH(retired, retired_tail, entry);
     retired_cnt++;
@@ -112,12 +120,13 @@ RC Row_clv::lock_retire(txn_man * txn) {
     // bring next owners from waiters
     bring_next();
 
+final:
     if (g_central_man)
         glob_manager->release_row(_row);
     else
         pthread_mutex_unlock( latch );
 
-    return RCOK;
+    return rc;
 }
 
 RC Row_clv::lock_release(txn_man * txn) {
