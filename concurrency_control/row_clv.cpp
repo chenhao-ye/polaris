@@ -63,6 +63,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 #endif
 	if (check_abort(type, txn, retired, false) == ERROR || check_abort(type, txn, owners, true) == ERROR) {
 		rc = Abort;
+		bring_next();
 		goto final;
 	}
 	insert_to_waiters(type, txn);
@@ -100,8 +101,8 @@ RC Row_clv::lock_retire(txn_man * txn) {
     STACK_PUSH(retired, entry);
     retired_cnt++;
 #if DEBUG_CLV
-	printf("[row_clv] move txn %lu from retired to owners of row %lu\n",
-			txn->get_txn_id(), _row->get_row_id());
+	printf("[row_clv] move txn %lu from owners to retired type %d of row %lu\n",
+			txn->get_txn_id(), entry->type, _row->get_row_id());
 #endif
     // increment barriers
     if (retired_cnt > 1)
@@ -224,7 +225,7 @@ Row_clv::insert_to_waiters(lock_t type, txn_man * txn) {
     LIST_PUT_TAIL(waiters_head, waiters_tail, entry);
     waiter_cnt ++;
     txn->lock_ready = false;
-#if DEBUG_WW
+#if DEBUG_CLV
 	printf("[row_clv] add txn %lu type %d to waiters of row %lu\n",
 			txn->get_txn_id(), type, _row->get_row_id());
 #endif

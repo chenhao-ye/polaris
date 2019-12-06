@@ -258,7 +258,10 @@ RC txn_man::finish(RC rc) {
 	cleanup(rc);
 #elif CC_ALG == CLV
 	if (rc == RCOK) {
-        while(commit_barriers > 0 || status == RUNNING)
+	#if DEBUG_CLV
+		printf("[txn] # bariers of txn %lu = %d\n", get_txn_id(), commit_barriers);
+	#endif
+        while(commit_barriers > 0 && status == RUNNING)
             continue;
         if (!ATOM_CAS(status, RUNNING, COMMITED))
             rc = Abort;
