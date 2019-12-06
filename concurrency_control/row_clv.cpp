@@ -60,10 +60,9 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	}
 	assert(cnt == waiter_cnt);
 #endif
-
-    check_abort(type, txn, retired, false);
-    check_abort(type, txn, owners, true);
-    insert_to_waiters(type, txn);
+	check_abort(type, txn, retired, false);
+	check_abort(type, txn, owners, true);
+	insert_to_waiters(type, txn);
 	bring_next();
 
     // if brought in owner return acquired lock
@@ -277,8 +276,13 @@ Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
         } else {
             retired_cnt--;
         }
+
 #if DEBUG_CLV
-        printf("[row_clv] rm txn %lu from owners of row %lu\n", txn->get_txn_id(), _row->get_row_id());
+	if (is_owner)
+        	printf("[row_clv] rm txn %lu from owners of row %lu\n", txn->get_txn_id(), _row->get_row_id());
+	else
+        	printf("[row_clv] rm txn %lu from retired of row %lu\n", txn->get_txn_id(), _row->get_row_id());
+		
 #endif
         return en;
     }

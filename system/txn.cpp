@@ -268,9 +268,9 @@ RC txn_man::finish(RC rc) {
 	}
 	#if DEBUG_CLV
 	if (rc == Abort)
-        printf("[txn] txn %lu set to aborted\n", get_txn_id());
+        printf("[txn] txn %lu is set to aborted\n", get_txn_id());
 	else if (rc == RCOK)
-	    printf("[txn] txn %lu set to commited\n", get_txn_id());
+	    printf("[txn] txn %lu is set to commited\n", get_txn_id());
     #endif
 	cleanup(rc);
 #else 
