@@ -215,6 +215,7 @@ bool Row_clv::conflict_lock(lock_t l1, lock_t l2) {
 
 LockEntry * Row_clv::get_entry() {
 	LockEntry * entry = (LockEntry *) mem_allocator.alloc(sizeof(LockEntry), _row->get_part_id());
+	entry->next = NULL;
 	return entry;
 }
 
