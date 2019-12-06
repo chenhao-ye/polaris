@@ -249,8 +249,8 @@ Row_ww::bring_next() {
         waiter_cnt --;
         ASSERT(entry->txn->lock_ready == 0);
         entry->txn->lock_ready = true;
-#if DEBUG_CLV
-        printf("[row_clv] bring %lu from waiter to owner to row %lu\n", entry->txn->get_txn_id(), _row->get_row_id());
+#if DEBUG_WW
+        printf("[row_ww] bring %lu from waiter to owner of row %lu\n", entry->txn->get_txn_id(), _row->get_row_id());
 #endif
     }
     ASSERT((owners == NULL) == (owner_cnt == 0));
