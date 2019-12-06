@@ -127,10 +127,10 @@ RC Row_clv::lock_release(txn_man * txn) {
 		pthread_mutex_lock( latch );
 
 	// Try to find the entry in the retired
-	txn_man * prev_retired = retired->txn;
+	txn_man * prev_retired = retired;
 	LockEntry * en = remove_if_exists(retired, txn, false);
 	if (en != NULL) {
-        if ((retired != NULL) && (retired->txn != prev_retired)) {
+        if ((retired != NULL) && (retired != prev_retired)) {
             // becoming head always remove one barrier
             retired->txn->decrement_commit_barriers();
         }
