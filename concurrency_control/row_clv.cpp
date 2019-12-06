@@ -118,6 +118,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
 		goto final;
 	}
 	// append entry to retired
+	entry->next = NULL;
 	QUEUE_PUSH(retired, retired_tail, entry);
 	retired_cnt++;
 #if DEBUG_CLV
@@ -197,7 +198,7 @@ Row_clv::bring_next() {
 		ASSERT(entry->txn->lock_ready == 0);
 		entry->txn->lock_ready = true;
 	#if DEBUG_CLV
-		printf("[row_clv] bring %lu from waiters to owners of row %lu\n",
+		printf("[row_clv] brilock_retireng %lu from waiters to owners of row %lu\n",
 				entry->txn->get_txn_id(), _row->get_row_id());
 	#endif
 	}
@@ -335,15 +336,14 @@ Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
 void
 Row_clv::print_list(LockEntry * list, LockEntry * tail, int cnt) {
 	LockEntry * en = list;
-	LockEntry * prev = NULL;
 	int count = 0;
 	while(en){
 		printf("(%lu, %d) -> ", en->txn->get_txn_id(), en->type);
-		prev = en;
 		en = en->next;
 		count += 1;
 	}
-	printf("expected cnt: %d, real cnt: %d, same tail: %d\n", cnt, count, tail == prev);
+	printf("expected cnt: %d, real cnt: %d, expected tail: %lu\n", cnt, count, 
+		tail->txn->get_txn_id());
 }
 
 
@@ -375,9 +375,15 @@ Row_clv::assert_in_list(LockEntry * list, LockEntry * tail, int cnt, txn_man * t
 		en = en->next;
 		count += 1;
 	}
-	assert(count == cnt);
-	assert(tail == prev);
+	#if DEBUG_CLV
+	if ((tail->txn->get_txn_id() != txn->get_txn_id()) || (tail != prev))
+		print_list(list, tail, cnt);
+	#endif
+	assert(tail->txn->get_txn_id() == txn->get_txn_id());
 	assert(in);
+	assert(tail == prev);
+	assert(count == cnt);
+	
 }
 
 
