@@ -315,7 +315,7 @@ Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
 	LockEntry * en = list;
 	LockEntry * prev = NULL;
 
-	while (en != NULL && en->txn != txn) {
+	while (en != NULL && en->txn->get_txn_id() != txn->get_txn_id()) {
 		prev = en;
 		en = en->next;
 	}
@@ -343,7 +343,7 @@ Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
 		}
 
 		#if DEBUG_CLV
-		assert(txn == en->txn);
+		assert(txn->get_txn_id() == en->txn->get_txn_id());
 		if (is_owner)
 				printf("[row_clv] rm txn %lu from owners of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
 		else
