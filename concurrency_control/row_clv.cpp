@@ -276,7 +276,6 @@ Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner
 					printf("[row_clv] txn %lu rm another txn %lu from owners of row %lu\n", txn->get_txn_id(), en->txn->get_txn_id(), _row->get_row_id());
 					#endif
 					QUEUE_RM(owners, owners_tail, prev, en, owner_cnt);
-
 				} else {
 					#if DEBUG_CLV
 					printf("[row_clv] txn %lu rm another txn %lu from retired of row %lu\n", txn->get_txn_id(), en->txn->get_txn_id(), _row->get_row_id());
@@ -290,8 +289,8 @@ Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner
 			}
 			if (en->txn->get_ts() == 0)
 				en->txn->set_next_ts();
-		}
-		prev = en;
+		} else
+			prev = en;
 		en = en->next;
 	}
 	if (has_conflict) {
@@ -305,6 +304,7 @@ LockEntry *
 Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
 	LockEntry * en = list;
 	LockEntry * prev = NULL;
+	LockEntry * prev_head = NULL;
 
 	while (en != NULL && en->txn->get_txn_id() != txn->get_txn_id()) {
 		prev = en;
@@ -320,7 +320,6 @@ Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
 		} else {
 			#if DEBUG_CLV
 			printf("[row_clv] rm txn %lu from retired of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
-			assert_notin_list(retired, retired_tail, retired_cnt, en->txn);
 			#endif
 			prev_head = retired;
 			QUEUE_RM(retired, retired_tail, prev, en, retired_cnt);
