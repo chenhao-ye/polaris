@@ -159,7 +159,7 @@ RC Row_clv::lock_release(txn_man * txn) {
 		} else {
 				// Not in owners list, try waiters list.
 				LockEntry *en = waiters_head;
-			 while (en != NULL && en->txn != txn)
+			 	while (en != NULL && en->txn != txn)
 					en = en->next;
 				if (en) {
 					LIST_REMOVE(en);
@@ -169,11 +169,12 @@ RC Row_clv::lock_release(txn_man * txn) {
 							waiters_tail = en->prev;
 					return_entry(en);
 					waiter_cnt--;
-				#if DEBUG_CLV
-						printf("[row_clv] rm txn %lu from waiters of row %lu\n", txn->get_txn_id(), _row->get_row_id());
-				#endif
-					}
-			}
+					#if DEBUG_CLV
+					printf("[row_clv] rm txn %lu from waiters of row %lu\n", txn->get_txn_id(), _row->get_row_id());
+					assert_notin_list(waiters_head, waiters_tail, waiter_cnt, txn);
+					#endif
+				}
+		}
 	}
 		bring_next();
 
@@ -198,8 +199,10 @@ Row_clv::bring_next() {
 		ASSERT(entry->txn->lock_ready == 0);
 		entry->txn->lock_ready = true;
 	#if DEBUG_CLV
-		printf("[row_clv] brilock_retireng %lu from waiters to owners of row %lu\n",
+		printf("[row_clv] bring %lu from waiters to owners of row %lu\n",
 				entry->txn->get_txn_id(), _row->get_row_id());
+		assert_in_list(owners, owners_tail, owner_cnt, entry->txn);
+		assert_notin_list(waiters_head, waiters_tail, waiter_cnt, entry->txn);
 	#endif
 	}
 	ASSERT((owners == NULL) == (owner_cnt == 0));
@@ -247,6 +250,7 @@ Row_clv::insert_to_waiters(lock_t type, txn_man * txn) {
 #if DEBUG_CLV
 	printf("[row_clv] add txn %lu type %d to waiters of row %lu\n",
 			txn->get_txn_id(), type, _row->get_row_id());
+	assert_in_list(waiters_head, waiters_tail, waiter_cnt, txn);
 #endif
 }
 
@@ -277,6 +281,7 @@ Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner
 					printf("[row_clv] txn %lu rm another txn %lu from owners of row %lu\n", txn->get_txn_id(), en->txn->get_txn_id(), _row->get_row_id());
 					#endif
 					QUEUE_RM(owners, owners_tail, prev, en, owner_cnt);
+					assert_notin_list(owners, owners_tail, owner_cnt, en->txn);
 				} else {
 					#if DEBUG_CLV
 					printf("[row_clv] txn %lu rm another txn %lu from retired of row %lu\n", txn->get_txn_id(), en->txn->get_txn_id(), _row->get_row_id());
@@ -317,7 +322,7 @@ Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
 			printf("[row_clv] rm txn %lu from owners of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
 			#endif
 			QUEUE_RM(owners, owners_tail, prev, en, owner_cnt);
-
+			assert_notin_list(owners, owners_tail, owner_cnt, txn);
 		} else {
 			#if DEBUG_CLV
 			printf("[row_clv] rm txn %lu from retired of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
@@ -376,10 +381,10 @@ Row_clv::assert_in_list(LockEntry * list, LockEntry * tail, int cnt, txn_man * t
 		count += 1;
 	}
 	#if DEBUG_CLV
-	if ((tail->txn->get_txn_id() != txn->get_txn_id()) || (tail != prev))
+	if (tail != prev)
 		print_list(list, tail, cnt);
 	#endif
-	assert(tail->txn->get_txn_id() == txn->get_txn_id());
+	// assert(tail->txn->get_txn_id() == txn->get_txn_id());
 	assert(in);
 	assert(tail == prev);
 	assert(count == cnt);
