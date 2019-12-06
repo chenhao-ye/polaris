@@ -65,7 +65,9 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 #endif
 
 	RC status = RCOK;
+	txn->lock_ts();
 	status = check_abort(type, txn, retired, false, status == WAIT);
+
 	if (status == ERROR) {
 		rc = Abort;
 		bring_next();
@@ -77,6 +79,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 		bring_next();
 		goto final;
 	}
+	txn->unlock_ts();
 
 	insert_to_waiters(type, txn);
 	bring_next();
@@ -260,6 +263,7 @@ Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner
 	LockEntry * prev = NULL;
 	LockEntry * prev_head = NULL;
 	while (en != NULL) {
+		en->txn->lock_ts();
 		if (conflict_lock(en->type, type) && (en->txn->get_ts() > txn->get_ts() || txn->get_ts() == 0))
 			has_conflict = true;
 		if (has_conflict) {
@@ -295,8 +299,10 @@ Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner
 			}
 			if (en->txn->get_ts() == 0)
 				en->txn->set_next_ts();
+
 		} else
 			prev = en;
+		en->txn->unlock_ts();
 		en = en->next;
 	}
 	if (has_conflict) {

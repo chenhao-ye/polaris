@@ -14,10 +14,12 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 	this->h_thd = h_thd;
 	this->h_wl = h_wl;
 	pthread_mutex_init(&txn_lock, NULL);
+	pthread_mutex_init(&txn_ts_lock, NULL);
 	lock_ready = false;
 	lock_abort = false;
+	timestamp = 0;
 #if CC_ALG == CLV
-    timestamp = 0;
+    
     commit_barriers = 0;
 #endif
 	ready_part = 0;
@@ -73,7 +75,25 @@ uint64_t txn_man::get_thd_id() {
 }
 
 void txn_man::set_next_ts() {
-    this->timestamp = h_thd->get_next_ts();
+	this->timestamp = h_thd->get_next_ts();
+	// need to be atomic
+	// lock_ts();
+    //ATOM_CAS(this->timestamp, 0, h_thd->get_next_ts());
+    // unlock_ts();
+}
+
+void txn_man::lock_ts() {
+	pthread_mutex_lock( &txn_ts_lock );
+	#if DEBUG_TMP
+	printf("hold lock %lu\n", get_txn_id());
+	#endif
+}
+
+void txn_man::unlock_ts() {
+	pthread_mutex_unlock( &txn_ts_lock );
+	#if DEBUG_TMP
+	printf("unlock %lu\n", get_txn_id());
+	#endif
 }
 
 void txn_man::set_ts(ts_t timestamp) {

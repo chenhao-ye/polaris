@@ -61,6 +61,7 @@ public:
 	ts_t 			get_ts();
 
 	pthread_mutex_t txn_lock;
+	pthread_mutex_t txn_ts_lock;
 	row_t * volatile cur_row;
 #if CC_ALG == HEKATON
 	void * volatile history_entry;
@@ -103,6 +104,8 @@ public:
 	// For CLV
 #if CC_ALG == CLV
     RC              retire_row(row_t * row);
+    void			lock_ts();
+    void			unlock_ts();
 #endif
 
 protected:	
@@ -112,7 +115,7 @@ private:
 	uint64_t 		insert_cnt;
 	row_t * 		insert_rows[MAX_ROW_PER_TXN];
 	txnid_t 		txn_id;
-	ts_t 			timestamp;
+	ts_t volatile			timestamp;
 	int volatile    commit_barriers;
 
 	bool _write_copy_ptr;
