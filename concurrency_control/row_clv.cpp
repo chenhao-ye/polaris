@@ -123,6 +123,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
 #if DEBUG_CLV
 	printf("[row_clv] move txn %lu from owners to retired type %d of row %lu\n",
 			txn->get_txn_id(), entry->type, _row->get_row_id());
+	print_list(retired, retired_tail, retired_cnt);
 #endif
 	// increment barriers
 	if (retired_cnt > 1)
@@ -291,6 +292,7 @@ Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner
 				} else {
 					#if DEBUG_CLV
 					printf("[row_clv] txn %lu rm another txn %lu from retired of row %lu\n", txn->get_txn_id(), en->txn->get_txn_id(), _row->get_row_id());
+					print_list(retired, retired_tail, retired_cnt);
 					#endif
 					if (retired_tail == en)
 						retired_tail = prev;
@@ -348,6 +350,7 @@ Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
 				printf("[row_clv] rm txn %lu from owners of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
 		else
 				printf("[row_clv] rm txn %lu from retired of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
+				print_list(retired, retired_tail, retired_cnt);
 			
 		#endif
 		return en;
@@ -356,16 +359,18 @@ Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
 }
 
 void
-Row_clv::print_list(LockEntry * list, int cnt) {
+Row_clv::print_list(LockEntry * list, LockEntry * tail, int cnt) {
 	LockEntry * en = list;
+	LockEntry * prev = NULL;
 	int count = 0;
 	while(en){
 		printf("(%lu, %d) -> ", en->txn->get_txn_id(), en->type);
+		prev = en;
 		en = en->next;
 		count += 1;
 	}
-	printf(" || expected cnt: %d, real cnt: %d\n", cnt, count);
-	printf("\n");
+	printf(" || expected cnt: %d, real cnt: %d || ", cnt, count);
+	printf("retired tail should equal real tail: %d\n", retired_tail == prev);
 
 }
 
