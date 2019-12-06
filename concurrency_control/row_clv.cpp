@@ -136,13 +136,8 @@ RC Row_clv::lock_release(txn_man * txn) {
 		pthread_mutex_lock( latch );
 
 	// Try to find the entry in the retired
-	LockEntry * prev_retired = retired;
 	LockEntry * en = remove_if_exists(retired, txn, false);
 	if (en != NULL) {
-        if ((retired != NULL) && (retired != prev_retired)) {
-            // becoming head always remove one barrier
-            retired->txn->decrement_commit_barriers();
-        }
         return_entry(en);
     } else {
 	    en = remove_if_exists(owners, txn, true);
@@ -256,23 +251,26 @@ Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner
                 if (txn->wound_txn(en->txn) == ERROR)
 			return Abort;
 #if DEBUG_CLV
-				printf("[row_clv] txn %lu abort txn %lu\n",
-			        		txn->get_txn_id(), en->txn->get_txn_id());
+				printf("[row_clv] txn %lu abort txn %lu on row %lu\n",
+			        		txn->get_txn_id(), en->txn->get_txn_id(), _row->get_row_id());
 #endif
                 // remove from retired/owner
                 if (prev)
                     prev->next = en->next;
                 else {
-                    if (is_owner)
+                    if (is_owner && (owners == en))
                         owners = en->next;
-                    else
+                    else if ((!is_owner) && (retired == en)){
                         retired = en->next;
+			// retired head changed
+			retired->txn->decrement_commit_barriers();
+		    }
                 }
                 // update count
                 if (is_owner) {
 #if DEBUG_CLV
 					printf("[row_clv] rm txn %lu from owners of row %lu\n",
-			        		txn->get_txn_id(), _row->get_row_id());
+			        		en->txn->get_txn_id(), _row->get_row_id());
 #endif
 					if (owners_tail == en)
 						owners_tail = prev;
@@ -280,7 +278,7 @@ Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner
 				} else {
 #if DEBUG_CLV
 					printf("[row_clv] rm txn %lu from retired of row %lu\n",
-			        		txn->get_txn_id(), _row->get_row_id());
+			        		en->txn->get_txn_id(), _row->get_row_id());
 #endif
 					if (retired_tail == en)
 						retired_tail = prev;
@@ -316,6 +314,9 @@ Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
 					owners = en->next;
 			} else if ((!is_owner) && (retired == en)) {
 					retired = en->next;
+					// retired head changed
+					if (retired)
+						retired->txn->decrement_commit_barriers();
 			}
         }
         if (is_owner) {
@@ -329,10 +330,11 @@ Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
         }
 
 #if DEBUG_CLV
+	assert(txn == en->txn);
 	if (is_owner)
-        	printf("[row_clv] rm txn %lu from owners of row %lu\n", txn->get_txn_id(), _row->get_row_id());
+        	printf("[row_clv] rm txn %lu from owners of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
 	else
-        	printf("[row_clv] rm txn %lu from retired of row %lu\n", txn->get_txn_id(), _row->get_row_id());
+        	printf("[row_clv] rm txn %lu from retired of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
 		
 #endif
         return en;
