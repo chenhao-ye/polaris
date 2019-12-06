@@ -32,6 +32,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn) {
 RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) {
 	assert (CC_ALG == CLV);
 	RC rc = WAIT;
+	LockEntry * en;
 
 	if (g_central_man)
 		glob_manager->lock_row(_row);
@@ -44,7 +45,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	assert(waiter_cnt < g_thread_cnt);
 
 #if DEBUG_ASSERT
-	LockEntry * en = owners;
+	en = owners;
 	UInt32 cnt = 0;
 	while (en) {
 		assert(en->txn->get_thd_id() != txn->get_thd_id());
@@ -66,7 +67,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	bring_next();
 
     // if brought in owner return acquired lock
-    LockEntry * en = owners;
+    en = owners;
     while(en){
         if (en->txn == txn) {
             rc = RCOK;
@@ -291,8 +292,13 @@ Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
         if (prev)
             prev->next = en->next;
         else {
-            if (is_owner) owners = en->next;
-            else retired = en->next;
+		if (is_owner) {
+			if (owners == en)
+				owners = en->next;
+		} else {
+			if (retired == en)
+				retired = en->next;
+		}
         }
         if (is_owner) {
             owner_cnt--;

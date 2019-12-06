@@ -138,7 +138,8 @@ private:
 
 inline RC txn_man::wound_txn(txn_man * txn)
 {
-    assert(status == RUNNING);
+    if (status != RUNNING)
+	return ERROR;
 
     if ( ATOM_CAS(txn->status, RUNNING, ABORTED)) {
 #if DEBUG_WW || DEBUG_CLV
