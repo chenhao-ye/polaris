@@ -61,8 +61,10 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	}
 	assert(cnt == waiter_cnt);
 #endif
-	check_abort(type, txn, retired, false);
-	check_abort(type, txn, owners, true);
+	if (check_abort(type, txn, retired, false) == ERROR || check_abort(type, txn, owners, true) == ERROR) {
+		rc = Abort;
+		goto final;
+	}
 	insert_to_waiters(type, txn);
 	bring_next();
 
@@ -76,6 +78,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	en = en->next;
     }
 
+final:
     if (g_central_man)
         glob_manager->release_row(_row);
     else
@@ -227,7 +230,7 @@ Row_clv::insert_to_waiters(lock_t type, txn_man * txn) {
 #endif
 }
 
-void
+RC
 Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner) {
     LockEntry * en = list;
     LockEntry * prev = NULL;
@@ -238,7 +241,8 @@ Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner
         if (has_conflict) {
             if (txn->get_ts() != 0) {
                 // abort txn
-                txn->wound_txn(en->txn);
+                if (txn->wound_txn(en->txn) == ERROR)
+			return Abort;
 #if DEBUG_CLV
 				printf("[row_clv] txn %lu abort txn %lu\n",
 			        		txn->get_txn_id(), en->txn->get_txn_id());
@@ -276,7 +280,7 @@ Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner
     }
     if (has_conflict)
         txn->set_next_ts();
-
+    return RCOK;
 }
 
 LockEntry *
