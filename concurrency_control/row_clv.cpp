@@ -100,7 +100,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
     LockEntry * entry = remove_if_exists(owners, txn, true);
     assert(entry != NULL);
     // append entry to retired
-    QUEUE_PUSH(retired, entry);
+    QUEUE_PUSH(retired_tail, entry);
     retired_cnt++;
 #if DEBUG_CLV
 	printf("[row_clv] move txn %lu from owners to retired type %d of row %lu\n",
@@ -265,12 +265,16 @@ Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner
 					printf("[row_clv] rm txn %lu from owners of row %lu\n",
 			        		txn->get_txn_id(), _row->get_row_id());
 #endif
+					if (owners_tail == en)
+						owners_tail = prev;
 					owner_cnt--;
 				} else {
 #if DEBUG_CLV
 					printf("[row_clv] rm txn %lu from retired of row %lu\n",
 			        		txn->get_txn_id(), _row->get_row_id());
 #endif
+					if (retired_tail == en)
+						retired_tail = prev;
 					retired_cnt--;
 				}
 
@@ -299,17 +303,21 @@ Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
         if (prev)
             prev->next = en->next;
         else {
-		if (is_owner) {
-			if (owners == en)
-				owners = en->next;
-		} else {
-			if (retired == en)
-				retired = en->next;
-		}
+			if (is_owner) {
+				if (owners == en)
+					owners = en->next;
+			} else {
+				if (retired == en)
+					retired = en->next;
+			}
         }
         if (is_owner) {
+			if (owners_tail == en)
+				owners_tail = prev;
             owner_cnt--;
         } else {
+			if (retired_tail == en)
+				retired_tail = prev;
             retired_cnt--;
         }
 
