@@ -175,7 +175,7 @@ Row_clv::bring_next() {
     // If any waiter can join the owners, just do it!
     while (waiters_head && (owners == NULL || !conflict_lock(owners->type, waiters_head->type) )) {
         LIST_GET_HEAD(waiters_head, waiters_tail, entry);
-        QUEUE_PUSH(owner, owners_tail, entry);
+        QUEUE_PUSH(owners, owners_tail, entry);
         owner_cnt ++;
         waiter_cnt --;
         ASSERT(entry->txn->lock_ready == 0);
