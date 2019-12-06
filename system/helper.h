@@ -45,7 +45,7 @@
 /************************************************/
 #define QUEUE_PUSH(tail, entry) { \
 	if (tail == NULL) tail = entry; \
-	else { tail->next = entry; tail = entry;}
+	else { tail->next = entry; tail = entry; } }
 
 /************************************************/
 // STACK helper (push & pop)
