@@ -76,7 +76,9 @@ uint64_t txn_man::get_thd_id() {
 
 void txn_man::set_next_ts() {
 	this->timestamp = h_thd->get_next_ts();
+	#if DEBUG_CLV
 	printf("[txn] set ts %lu for txn %lu\n", this->timestamp, get_txn_id());
+	#endif
 	// need to be atomic
 	// lock_ts();
     //ATOM_CAS(this->timestamp, 0, h_thd->get_next_ts());
