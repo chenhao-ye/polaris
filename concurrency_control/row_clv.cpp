@@ -68,7 +68,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	txn->lock_ts();
 	status = check_abort(type, txn, retired, false, status == WAIT);
 
-	if (status == ERROR) {
+	if (status == Abort) {
 		rc = Abort;
 		txn->unlock_ts();
 		bring_next();
@@ -76,7 +76,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	} 
 
 	status = check_abort(type, txn, owners, true, status == WAIT);
-	if (status == ERROR) {
+	if (status == Abort) {
 		rc = Abort;
 		txn->unlock_ts();
 		bring_next();

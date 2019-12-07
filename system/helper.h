@@ -93,7 +93,7 @@
 	if (en->next) en->next->prev = en->prev; \
 	if (en->prev) en->prev->next = en->next; \
 	else if (head == en) {	head = en->next; } \
-	if (tail == en)	{ tail = en->prev;}	cnt--;}
+	if (tail == en)	{ tail = en->prev; }	cnt--;}
 
 /************************************************/
 // STATS helper
