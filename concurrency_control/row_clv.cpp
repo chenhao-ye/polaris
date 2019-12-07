@@ -352,9 +352,11 @@ Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
 			prev_head = retired;
 			QUEUE_RM(retired, retired_tail, prev, en, retired_cnt);
 			// coalescing two parts if they are not conflicted, and one part has head
-			if ((retired_cnt >= 2) && )
-				;
-			else if ((retired_cnt > 0) && (retired != prev_head) && (conflict_lock(retired->type, en->type)))
+			// if (retired_cnt >= 2) {
+			// 	// TODO: check from head to current, no conflicts
+			// 	;
+			// }
+			if ((retired_cnt > 0) && (retired != prev_head) && (conflict_lock(retired->type, en->type)))
 				retired->txn->decrement_commit_barriers();
 			assert_notin_list(retired, retired_tail, retired_cnt, txn);
 		}
