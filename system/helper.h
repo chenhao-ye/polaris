@@ -90,6 +90,12 @@
 	else { assert(entry == head); head = entry->next; } \
 }
 
+#define LIST_RM(head, tail, en, cnt) { \
+	if (en->prev != NULL) en->prev->next = en->next; \
+	else if (head == en)	head = en->next;	head->prev = NULL; \
+	if (en->next) en->next->prev = en->prev; \
+	if (tail == en)	tail = en->prev;	cnt-- ;}
+
 /************************************************/
 // STATS helper
 /************************************************/

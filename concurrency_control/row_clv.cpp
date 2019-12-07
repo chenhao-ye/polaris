@@ -34,7 +34,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn) {
 RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) {
 	assert (CC_ALG == CLV);
 	RC rc = WAIT;
-	LockEntry * en;
+	CLVLockEntry * en;
 
 	if (g_central_man)
 		glob_manager->lock_row(_row);
@@ -116,7 +116,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
 		pthread_mutex_lock( latch );
 
 	// Try to find the entry in the owners and remove
-	LockEntry * entry = remove_if_exists(owners, txn, true);
+	CLVLockEntry * entry = remove_if_exists(owners, txn, true);
 	if (entry == NULL) {
 		// may be already wounded by others
 		assert(txn->status == ABORTED);
@@ -124,18 +124,26 @@ RC Row_clv::lock_retire(txn_man * txn) {
 		goto final;
 	}
 	// append entry to retired
-	entry->next = NULL;
-	QUEUE_PUSH(retired, retired_tail, entry);
+	LIST_PUT_TAIL(retired, retired_tail, entry);
 	retired_cnt++;
+
 #if DEBUG_CLV
 	printf("[row_clv] move txn %lu from owners to retired type %d of row %lu\n",
 			txn->get_txn_id(), entry->type, _row->get_row_id());
 	assert_in_list(retired, retired_tail, retired_cnt, entry->txn);
 #endif
+
 	// increment barriers if conflict
-	if ((retired_cnt > 1) && has_conflicts_in_list(retired, entry))
-		txn->increment_commit_barriers();
-	
+	if (retired_tail) {
+		if (conflict_lock_entry(retired_tail, entry)) {
+			entry->delta = true;
+			txn->increment_commit_barriers();
+		} else {
+			entry->is_cohead = retired_tail->is_cohead;
+		}
+	} else {
+		entry->is_cohead = true;
+	}
 
 final:
 	// bring next owners from waiters
@@ -155,7 +163,7 @@ RC Row_clv::lock_release(txn_man * txn) {
 		pthread_mutex_lock( latch );
 
 	// Try to find the entry in the retired
-	LockEntry * en = remove_if_exists(retired, txn, false);
+	CLVLockEntry * en = remove_if_exists(retired, txn, false);
 	if (en != NULL) {
 			return_entry(en);
 	 } else {
@@ -165,7 +173,7 @@ RC Row_clv::lock_release(txn_man * txn) {
 			return_entry(en);
 		} else {
 				// Not in owners list, try waiters list.
-				LockEntry *en = waiters_head;
+				CLVLockEntry *en = waiters_head;
 			 	while (en != NULL && en->txn != txn)
 					en = en->next;
 				if (en) {
@@ -197,7 +205,7 @@ RC Row_clv::lock_release(txn_man * txn) {
 void
 Row_clv::bring_next() {
 
-	LockEntry * entry;
+	CLVLockEntry * entry;
 	// If any waiter can join the owners, just do it!
 	while (waiters_head) {
 		if ((owners == NULL) || (!conflict_lock(owners->type, waiters_head->type))) {
@@ -237,22 +245,30 @@ bool Row_clv::conflict_lock(lock_t l1, lock_t l2) {
 		return false;
 }
 
-LockEntry * Row_clv::get_entry() {
-	LockEntry * entry = (LockEntry *) mem_allocator.alloc(sizeof(LockEntry), _row->get_part_id());
+bool Row_clv::conflict_lock_entry(CLVLockEntry * l1, CLVLockEntry * l2) {
+	if (l1 == NULL || l2 == NULL)
+		return false;
+	return conflict_lock(l1, l2);
+}
+
+CLVLockEntry * Row_clv::get_entry() {
+	CLVLockEntry * entry = (CLVLockEntry *) mem_allocator.alloc(sizeof(CLVLockEntry), _row->get_part_id());
 	entry->next = NULL;
+	entry->delta = false;
+	entry->is_cohead = false;
 	return entry;
 }
 
-void Row_clv::return_entry(LockEntry * entry) {
-	mem_allocator.free(entry, sizeof(LockEntry));
+void Row_clv::return_entry(CLVLockEntry * entry) {
+	mem_allocator.free(entry, sizeof(CLVLockEntry));
 }
 
 void
 Row_clv::insert_to_waiters(lock_t type, txn_man * txn) {
-	LockEntry * entry = get_entry();
+	CLVLockEntry * entry = get_entry();
 	entry->txn = txn;
 	entry->type = type;
-	LockEntry * en = waiters_head;
+	CLVLockEntry * en = waiters_head;
 	while (en != NULL)
 	{
 		if (txn->get_ts() < en->txn->get_ts())
@@ -275,10 +291,10 @@ Row_clv::insert_to_waiters(lock_t type, txn_man * txn) {
 }
 
 RC
-Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner, bool has_conflict) {
-	LockEntry * en = list;
-	LockEntry * prev = NULL;
-	LockEntry * prev_head = NULL;
+Row_clv::check_abort(lock_t type, txn_man * txn, CLVLockEntry * list, bool is_owner, bool has_conflict) {
+	CLVLockEntry * en = list;
+	CLVLockEntry * prev = NULL;
+	CLVLockEntry * prev_head = NULL;
 	while (en != NULL) {
 		en->txn->lock_ts();
 		if (conflict_lock(en->type, type) && (en->txn->get_ts() > txn->get_ts() || txn->get_ts() == 0))
@@ -307,10 +323,11 @@ Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner
 					#if DEBUG_CLV
 					printf("[row_clv] txn %lu rm another txn %lu from retired of row %lu\n", txn->get_txn_id(), en->txn->get_txn_id(), _row->get_row_id());
 					#endif
-					prev_head = retired;
-					QUEUE_RM(retired, retired_tail, prev, en, retired_cnt);
-					if ((retired_cnt > 0) && (retired != prev_head) && (conflict_lock(retired->type, prev_head->type)))
-						retired->txn->decrement_commit_barriers();
+					// TODO: update cohead & delta info before removing entry
+					update_entry(en);
+					LIST_RM(retired, retired_tail, en, retired_cnt);
+					// if ((retired_cnt > 0) && (retired != prev_head) && (conflict_lock(retired->type, prev_head->type)))
+					// 	retired->txn->decrement_commit_barriers();
 					assert_notin_list(retired, retired_tail, retired_cnt, en->txn);
 				}
 			}
@@ -328,11 +345,11 @@ Row_clv::check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner
 	return RCOK;
 }
 
-LockEntry *
-Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
-	LockEntry * en = list;
-	LockEntry * prev = NULL;
-	LockEntry * prev_head = NULL;
+CLVLockEntry *
+Row_clv::remove_if_exists(CLVLockEntry * list, txn_man * txn, bool is_owner) {
+	CLVLockEntry * en = list;
+	CLVLockEntry * prev = NULL;
+	CLVLockEntry * prev_head = NULL;
 
 	while (en != NULL && en->txn->get_txn_id() != txn->get_txn_id()) {
 		prev = en;
@@ -349,15 +366,8 @@ Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
 			#if DEBUG_CLV
 			printf("[row_clv] rm txn %lu from retired of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
 			#endif
-			prev_head = retired;
-			QUEUE_RM(retired, retired_tail, prev, en, retired_cnt);
-			// coalescing two parts if they are not conflicted, and one part has head
-			// if (retired_cnt >= 2) {
-			// 	// TODO: check from head to current, no conflicts
-			// 	;
-			// }
-			if ((retired_cnt > 0) && (retired != prev_head) && (conflict_lock(retired->type, en->type)))
-				retired->txn->decrement_commit_barriers();
+			update_entry(en);
+			LIST_RM(retired, retired_tail, en, retired_cnt);
 			assert_notin_list(retired, retired_tail, retired_cnt, txn);
 		}
 		return en;
@@ -366,8 +376,45 @@ Row_clv::remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner) {
 }
 
 void
-Row_clv::print_list(LockEntry * list, LockEntry * tail, int cnt) {
-	LockEntry * en = list;
+Row_clv::update_entry(CLVLockEntry * en) {
+	CLVLockEntry * entry;
+	if (en->prev) {
+		if (en->next) {
+			if (en->next->delta == true) {
+				if (!conflict_lock_entry(en->prev, en->next)) {
+					// both are SH
+					en->next->delta = false;
+					// change delta, need to check cohead
+					if (en->prev->is_cohead) {
+						entry = en->next;
+						while(entry && (entry->delta == false)) {
+							entry->is_cohead = true;
+							entry->txn->decrement_commit_barriers();
+						}
+					} // else, not cohead, nothing to do
+				}
+			} else {
+				en->next->delta = en->delta;
+			}
+		} else {
+			// has no next, nothing needs to be updated
+		}
+	} else {
+		// has no previous
+		if (en->next) {
+			// has next entry
+			en->next->is_cohead = true;
+			en->next->delta = false;
+		} else {
+			// has no next entry, never mind
+		}
+	}
+	assert(retired->is_cohead);
+}
+
+void
+Row_clv::print_list(CLVLockEntry * list, CLVLockEntry * tail, int cnt) {
+	CLVLockEntry * en = list;
 	int count = 0;
 	while(en){
 		printf("(%lu, %d) -> ", en->txn->get_txn_id(), en->type);
@@ -380,9 +427,9 @@ Row_clv::print_list(LockEntry * list, LockEntry * tail, int cnt) {
 
 
 void
-Row_clv::assert_notin_list(LockEntry * list, LockEntry * tail, int cnt, txn_man * txn) {
-	LockEntry * en = list;
-	LockEntry * prev = NULL;
+Row_clv::assert_notin_list(CLVLockEntry * list, CLVLockEntry * tail, int cnt, txn_man * txn) {
+	CLVLockEntry * en = list;
+	CLVLockEntry * prev = NULL;
 	int count = 0;
 	while(en){
 		assert(txn->get_txn_id() != en->txn->get_txn_id());
@@ -395,9 +442,9 @@ Row_clv::assert_notin_list(LockEntry * list, LockEntry * tail, int cnt, txn_man 
 }
 
 void
-Row_clv::assert_in_list(LockEntry * list, LockEntry * tail, int cnt, txn_man * txn) {
-	LockEntry * en = list;
-	LockEntry * prev = NULL;
+Row_clv::assert_in_list(CLVLockEntry * list, CLVLockEntry * tail, int cnt, txn_man * txn) {
+	CLVLockEntry * en = list;
+	CLVLockEntry * prev = NULL;
 	int count = 0;
 	bool in = false;
 	while(en){
@@ -415,12 +462,11 @@ Row_clv::assert_in_list(LockEntry * list, LockEntry * tail, int cnt, txn_man * t
 	assert(in);
 	assert(tail == prev);
 	assert(count == cnt);
-	
 }
 
 bool
-Row_clv::has_conflicts_in_list(LockEntry * list, LockEntry * entry) {
-	LockEntry * en;
+Row_clv::has_conflicts_in_list(CLVLockEntry * list, CLVLockEntry * entry) {
+	CLVLockEntry * en;
 	en = list;
 	while(en) {
 		if (conflict_lock(en->type, entry->type)) {

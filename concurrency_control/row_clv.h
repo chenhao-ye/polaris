@@ -1,18 +1,18 @@
 #ifndef ROW_CLV_H
 #define ROW_CLV_H
 
-#include "row_lock.h"
-/*
-struct LockEntry {
+//#include "row_lock.h"
+
+struct CLVLockEntry {
     // type of lock: EX or SH
 	lock_t type;
+	bool is_cohead;
+	bool delta;
 	txn_man * txn;
-	LockEntry * next;
-	LockEntry * prev;
+	CLVLockEntry * next;
+	CLVLockEntry * prev;
 };
-*/
 
-struct LockEntry;
 
 class Row_clv {
 public:
@@ -28,8 +28,8 @@ private:
 	bool blatch;
 	
 	bool 		conflict_lock(lock_t l1, lock_t l2);
-	LockEntry * get_entry();
-	void 		return_entry(LockEntry * entry);
+	CLVLockEntry * get_entry();
+	void 		return_entry(CLVLockEntry * entry);
 	row_t * _row;
     UInt32 owner_cnt;
     UInt32 waiter_cnt;
@@ -39,23 +39,25 @@ private:
 	// waiters is a double linked list 
 	// [waiters] head is the oldest txn, tail is the youngest txn. 
 	//   So new txns are inserted into the tail.
-	LockEntry * owners;
-	LockEntry * owners_tail;
-	LockEntry * retired;
-	LockEntry * retired_tail;
-	LockEntry * waiters_head;
-	LockEntry * waiters_tail;
+	CLVLockEntry * owners;
+	CLVLockEntry * owners_tail;
+	CLVLockEntry * retired;
+	CLVLockEntry * retired_tail;
+	CLVLockEntry * waiters_head;
+	CLVLockEntry * waiters_tail;
 
 	void bring_next();
 	void insert_to_waiters(lock_t type, txn_man * txn);
-	LockEntry * remove_if_exists(LockEntry * list, txn_man * txn, bool is_owner);
-	RC check_abort(lock_t type, txn_man * txn, LockEntry * list, bool is_owner, bool has_conflict);
-	bool has_conflicts_in_list(LockEntry * list, LockEntry * entry);
+	CLVLockEntry * remove_if_exists(CLVLockEntry * list, txn_man * txn, bool is_owner);
+	RC check_abort(lock_t type, txn_man * txn, CLVLockEntry * list, bool is_owner, bool has_conflict);
+	bool has_conflicts_in_list(CLVLockEntry * list, CLVLockEntry * entry);
+	bool conflict_lock_entry(CLVLockEntry * l1, CLVLockEntry * l2);
+	void update_entry(CLVLockEntry * en);
     
     // debugging method
-    void print_list(LockEntry * list, LockEntry * tail, int cnt);
-    void assert_notin_list(LockEntry * list, LockEntry * tail, int cnt, txn_man * txn);
-    void assert_in_list(LockEntry * list, LockEntry * tail, int cnt, txn_man * txn);
+    void print_list(CLVLockEntry * list, CLVLockEntry * tail, int cnt);
+    void assert_notin_list(CLVLockEntry * list, CLVLockEntry * tail, int cnt, txn_man * txn);
+    void assert_in_list(CLVLockEntry * list, CLVLockEntry * tail, int cnt, txn_man * txn);
 
 };
 
