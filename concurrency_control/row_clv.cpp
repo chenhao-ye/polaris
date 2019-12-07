@@ -403,8 +403,13 @@ Row_clv::update_entry(CLVLockEntry * en) {
 		// has no previous
 		if (en->next) {
 			// has next entry
-			en->next->is_cohead = true;
+			// en->next->is_cohead = true;
 			en->next->delta = false;
+			entry = en->next;
+			while(entry && (entry->delta == false)) {
+				entry->is_cohead = true;
+				entry->txn->decrement_commit_barriers();
+			}
 		} else {
 			// has no next entry, never mind
 		}
