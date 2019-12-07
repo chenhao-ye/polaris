@@ -70,16 +70,16 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 
 	if (status == ERROR) {
 		rc = Abort;
-		bring_next();
 		txn->unlock_ts();
+		bring_next();
 		goto final;
 	} 
 
 	status = check_abort(type, txn, owners, true, status == WAIT);
 	if (status == ERROR) {
 		rc = Abort;
-		bring_next();
 		txn->unlock_ts();
+		bring_next();
 		goto final;
 	}
 	if ((status == WAIT) && (txn->get_ts() == 0))
