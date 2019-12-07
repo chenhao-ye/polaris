@@ -104,9 +104,9 @@ public:
 	// For CLV
 #if CC_ALG == CLV
     RC              retire_row(row_t * row);
+#endif
     void			lock_ts();
     void			unlock_ts();
-#endif
 
 protected:	
 	void 			insert_row(row_t * row, table_t * table);
