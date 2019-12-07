@@ -185,7 +185,7 @@ extern TestCases					g_test_case;
 #define DEBUG_CC					false //true
 #define DEBUG_WW                    		false //true
 #define DEBUG_BENCHMARK                    		false
-#define DEBUG_TMP					true//false
+#define DEBUG_TMP					false
 #define DEBUG_CLV					false
 
 /***********************************************/
