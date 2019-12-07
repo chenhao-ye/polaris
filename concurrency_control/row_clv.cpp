@@ -401,17 +401,22 @@ Row_clv::update_entry(CLVLockEntry * en) {
 			// has no next, nothing needs to be updated
 		}
 	} else {
-		// has no previous
+		// has no previous, en = head
 		if (en->next) {
+			#if DEBUG_CLV
+			assert(en == retired);
+			#endif
 			// has next entry
 			// en->next->is_cohead = true;
-			en->next->delta = false;
-			entry = en->next;
-			while(entry && (entry->delta == false)) {
-				entry->is_cohead = true;
-				entry->txn->decrement_commit_barriers();
-				entry = entry->next;
-			}
+			if (en->next->delta) {
+				en->next->delta = false;
+				entry = en->next;
+				while(entry && (entry->delta == false)) {
+					entry->is_cohead = true;
+					entry->txn->decrement_commit_barriers();
+					entry = entry->next;
+				}
+			} // else (R)RR, no changes
 		} else {
 			// has no next entry, never mind
 		}
