@@ -71,6 +71,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	if (status == ERROR) {
 		rc = Abort;
 		bring_next();
+		txn->unlock_ts();
 		goto final;
 	} 
 
@@ -78,6 +79,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	if (status == ERROR) {
 		rc = Abort;
 		bring_next();
+		txn->unlock_ts();
 		goto final;
 	}
 	if ((status == WAIT) && (txn->get_ts() == 0))
@@ -94,7 +96,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 			rc = RCOK;
 			break;
 		}
-	en = en->next;
+		en = en->next;
 	}
 
 final:
@@ -310,6 +312,7 @@ Row_clv::check_abort(lock_t type, txn_man * txn, CLVLockEntry * list, bool is_ow
 					printf("[row_clv] detected txn %lu is aborted when "
 					"trying to wound others on row %lu\n", txn->get_txn_id(),  _row->get_row_id());
 					#endif
+					en->txn->unlock_ts();
 					return Abort;
 				}
 				#if DEBUG_CLV
