@@ -126,7 +126,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
 
 	// increment barriers if conflict
 	if (retired_tail) {
-		if (conflict_lock_entry(retired_tail, entry)) {
+		if (conflict_lock(retired_tail->type, entry->type)) {
 			entry->delta = true;
 			txn->increment_commit_barriers();
 		} else {
