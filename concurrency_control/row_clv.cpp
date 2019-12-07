@@ -248,7 +248,7 @@ bool Row_clv::conflict_lock(lock_t l1, lock_t l2) {
 bool Row_clv::conflict_lock_entry(CLVLockEntry * l1, CLVLockEntry * l2) {
 	if (l1 == NULL || l2 == NULL)
 		return false;
-	return conflict_lock(l1, l2);
+	return conflict_lock(l1->type, l2->type);
 }
 
 CLVLockEntry * Row_clv::get_entry() {
@@ -294,7 +294,6 @@ RC
 Row_clv::check_abort(lock_t type, txn_man * txn, CLVLockEntry * list, bool is_owner, bool has_conflict) {
 	CLVLockEntry * en = list;
 	CLVLockEntry * prev = NULL;
-	CLVLockEntry * prev_head = NULL;
 	while (en != NULL) {
 		en->txn->lock_ts();
 		if (conflict_lock(en->type, type) && (en->txn->get_ts() > txn->get_ts() || txn->get_ts() == 0))
@@ -349,7 +348,6 @@ CLVLockEntry *
 Row_clv::remove_if_exists(CLVLockEntry * list, txn_man * txn, bool is_owner) {
 	CLVLockEntry * en = list;
 	CLVLockEntry * prev = NULL;
-	CLVLockEntry * prev_head = NULL;
 
 	while (en != NULL && en->txn->get_txn_id() != txn->get_txn_id()) {
 		prev = en;
