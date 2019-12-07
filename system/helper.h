@@ -89,11 +89,10 @@
 	if (entry->prev) entry->prev->next = entry->next; \
 	else { assert(entry == head); head = entry->next; } \
 }
-
 #define LIST_RM(head, tail, en, cnt) { \
-	if (en->prev != NULL) en->prev->next = en->next; \
-	else if (head == en)	head = en->next;	head->prev = NULL; \
 	if (en->next) en->next->prev = en->prev; \
+	if (en->prev) en->prev->next = en->next; \
+	else if (head == en)	head = en->next;	head->prev = NULL; \
 	if (tail == en)	tail = en->prev;	cnt-- ;}
 
 /************************************************/

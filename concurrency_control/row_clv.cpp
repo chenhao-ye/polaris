@@ -256,6 +256,7 @@ bool Row_clv::conflict_lock_entry(CLVLockEntry * l1, CLVLockEntry * l2) {
 
 CLVLockEntry * Row_clv::get_entry() {
 	CLVLockEntry * entry = (CLVLockEntry *) mem_allocator.alloc(sizeof(CLVLockEntry), _row->get_part_id());
+	entry->prev = NULL;
 	entry->next = NULL;
 	entry->delta = false;
 	entry->is_cohead = false;
