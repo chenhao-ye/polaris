@@ -123,15 +123,6 @@ RC Row_clv::lock_retire(txn_man * txn) {
 		rc = Abort;
 		goto final;
 	}
-	// append entry to retired
-	LIST_PUT_TAIL(retired, retired_tail, entry);
-	retired_cnt++;
-
-#if DEBUG_CLV
-	printf("[row_clv] move txn %lu from owners to retired type %d of row %lu\n",
-			txn->get_txn_id(), entry->type, _row->get_row_id());
-	assert_in_list(retired, retired_tail, retired_cnt, entry->txn);
-#endif
 
 	// increment barriers if conflict
 	if (retired_tail) {
@@ -144,6 +135,18 @@ RC Row_clv::lock_retire(txn_man * txn) {
 	} else {
 		entry->is_cohead = true;
 	}
+
+	// append entry to retired
+	LIST_PUT_TAIL(retired, retired_tail, entry);
+	retired_cnt++;
+
+#if DEBUG_CLV
+	printf("[row_clv] move txn %lu from owners to retired type %d of row %lu\n",
+			txn->get_txn_id(), entry->type, _row->get_row_id());
+	assert_in_list(retired, retired_tail, retired_cnt, entry->txn);
+#endif
+
+
 
 final:
 	// bring next owners from waiters
@@ -325,8 +328,6 @@ Row_clv::check_abort(lock_t type, txn_man * txn, CLVLockEntry * list, bool is_ow
 					// TODO: update cohead & delta info before removing entry
 					update_entry(en);
 					LIST_RM(retired, retired_tail, en, retired_cnt);
-					// if ((retired_cnt > 0) && (retired != prev_head) && (conflict_lock(retired->type, prev_head->type)))
-					// 	retired->txn->decrement_commit_barriers();
 					assert_notin_list(retired, retired_tail, retired_cnt, en->txn);
 				}
 			}
