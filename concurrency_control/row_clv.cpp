@@ -390,6 +390,7 @@ Row_clv::update_entry(CLVLockEntry * en) {
 						while(entry && (entry->delta == false)) {
 							entry->is_cohead = true;
 							entry->txn->decrement_commit_barriers();
+							entry = entry->next;
 						}
 					} // else, not cohead, nothing to do
 				}
@@ -409,6 +410,7 @@ Row_clv::update_entry(CLVLockEntry * en) {
 			while(entry && (entry->delta == false)) {
 				entry->is_cohead = true;
 				entry->txn->decrement_commit_barriers();
+				entry = entry->next;
 			}
 		} else {
 			// has no next entry, never mind
