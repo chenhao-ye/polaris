@@ -92,8 +92,8 @@
 #define LIST_RM(head, tail, en, cnt) { \
 	if (en->next) en->next->prev = en->prev; \
 	if (en->prev) en->prev->next = en->next; \
-	else if (head == en) {	head = en->next;	head->prev = NULL;} \
-	if (tail == en)	tail = en->prev;	cnt-- ;}
+	else if (head == en) {	head = en->next;	if (head)	head->prev = NULL;} \
+	if (tail == en)	{ tail = en->prev;}	cnt--;}
 
 /************************************************/
 // STATS helper
