@@ -348,14 +348,18 @@ Row_clvp::remove_if_exists(CLVLockEntry * list, txn_man * txn, bool is_owner) {
 			printf("[row_clv] rm txn %lu from owners of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
 			#endif
 			QUEUE_RM(owners, owners_tail, prev, en, owner_cnt);
+			#if DEBUG_CLV
 			assert_notin_list(owners, owners_tail, owner_cnt, txn);
+			#endif
 		} else {
 			#if DEBUG_CLV
 			printf("[row_clv] rm txn %lu from retired of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
 			#endif
 			update_entry(en);
 			LIST_RM(retired, retired_tail, en, retired_cnt);
+			#if DEBUG_CLV
 			assert_notin_list(retired, retired_tail, retired_cnt, txn);
+			#endif
 		}
 		return en;
 	}

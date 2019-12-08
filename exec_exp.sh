@@ -1,9 +1,10 @@
+rm outputs/log.out
 cp -r config_real.h config.h
 
 wl="TPCC"
 epochs=1
 threads=20
-cnt=100000
+cnt=1000000
 wh=1
 
 for alg in "NO_WAIT" "WAIT_DIE" "WOUND_WAIT" "CLV"

@@ -110,7 +110,7 @@
 // max number of rows touched per transaction
 #define MAX_ROW_PER_TXN				64
 #define QUERY_INTVL 				1UL
-#define MAX_TXN_PER_PART 100000
+#define MAX_TXN_PER_PART 1000000
 #define FIRST_PART_LOCAL 			true
 #define MAX_TUPLE_SIZE				1024 // in bytes
 // ==== [YCSB] ====
@@ -134,7 +134,7 @@
 // are not modeled.
 #define TPCC_ACCESS_ALL 			false 
 #define WH_UPDATE					true
-#define NUM_WH 						1
+#define NUM_WH 1
 //
 enum TPCCTxnType {TPCC_ALL, 
 				TPCC_PAYMENT, 
