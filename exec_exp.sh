@@ -1,3 +1,4 @@
+rm outputs/log.out
 cp -r config_real.h config.h
 
 wl="TPCC"
@@ -6,7 +7,8 @@ threads=20
 cnt=100000
 wh=1
 
-for alg in "NO_WAIT" "WAIT_DIE" "WOUND_WAIT" "CLV"
+#for alg in "NO_WAIT" "WAIT_DIE" "WOUND_WAIT" "CLV"
+for alg in "CLV"
 do
 	for penalty in 1 10 1000 10000 100000
 	do
