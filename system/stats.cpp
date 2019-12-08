@@ -148,11 +148,12 @@ void Stats::print() {
 	FILE * outf;
 	if (output_file != NULL) {
 		outf = fopen(output_file, "w");
-		fprintf(outf, "[summary] txn_cnt=%ld, abort_cnt=%ld"
+		fprintf(outf, "[summary] throughput=%f, txn_cnt=%ld, abort_cnt=%ld"
 			", run_time=%f, time_wait=%f, time_ts_alloc=%f"
 			", time_man=%f, time_index=%f, time_abort=%f, time_cleanup=%f, latency=%f"
 			", deadlock_cnt=%ld, cycle_detect=%ld, dl_detect_time=%f, dl_wait_time=%f"
-			", time_query=%f, debug1=%f, debug2=%f, debug3=%f, debug4=%f, debug5=%f, throughput=%f\n",
+			", time_query=%f, debug1=%f, debug2=%f, debug3=%f, debug4=%f, debug5=%f\n",
+			total_txn_cnt / total_run_time * BILLION * THREAD_CNT,
 			total_txn_cnt, 
 			total_abort_cnt,
 			total_run_time / BILLION,
@@ -172,16 +173,16 @@ void Stats::print() {
 			total_debug2, // / BILLION,
 			total_debug3, // / BILLION,
 			total_debug4, // / BILLION,
-			total_debug5 / BILLION,
-			total_txn_cnt / total_run_time * BILLION * THREAD_CNT
+			total_debug5 / BILLION
 		);
 		fclose(outf);
 	}
-	printf("[summary] txn_cnt=%ld, abort_cnt=%ld"
+	printf("[summary] throughput=%f, txn_cnt=%ld, abort_cnt=%ld"
 		", run_time=%f, time_wait=%f, time_ts_alloc=%f"
 		", time_man=%f, time_index=%f, time_abort=%f, time_cleanup=%f, latency=%f"
 		", deadlock_cnt=%ld, cycle_detect=%ld, dl_detect_time=%f, dl_wait_time=%f"
-		", time_query=%f, debug1=%f, debug2=%f, debug3=%f, debug4=%f, debug5=%f, throughput=%f\n", 
+		", time_query=%f, debug1=%f, debug2=%f, debug3=%f, debug4=%f, debug5=%f\n", 
+		total_txn_cnt / total_run_time * BILLION * THREAD_CNT,
 		total_txn_cnt, 
 		total_abort_cnt,
 		total_run_time / BILLION,
@@ -201,8 +202,7 @@ void Stats::print() {
 		total_debug2, // / BILLION,
 		total_debug3, // / BILLION,
 		total_debug4, // / BILLION,
-		total_debug5,  // / BILLION 
-		total_txn_cnt / total_run_time * BILLION * THREAD_CNT
+		total_debug5  // / BILLION 
 	);
 	if (g_prt_lat_distr)
 		print_lat_distr();
