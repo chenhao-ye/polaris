@@ -50,7 +50,7 @@
 // per-row lock/ts management or central lock/ts management
 #define CENTRAL_MAN					false
 #define BUCKET_CNT					31
-#define ABORT_PENALTY 				1 //100000
+#define ABORT_PENALTY 				100000
 #define ABORT_BUFFER_SIZE			1 //10
 #define ABORT_BUFFER_ENABLE			true
 // [ INDEX ]
@@ -181,7 +181,7 @@ extern TestCases					g_test_case;
 #define DEBUG_LOCK					false
 #define DEBUG_TIMESTAMP				false
 #define DEBUG_SYNTH					false
-#define DEBUG_ASSERT				true//false
+#define DEBUG_ASSERT				false
 #define DEBUG_CC					false //true
 #define DEBUG_WW                    		false //true
 #define DEBUG_BENCHMARK                    		false

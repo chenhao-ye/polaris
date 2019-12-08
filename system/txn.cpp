@@ -289,11 +289,12 @@ RC txn_man::finish(RC rc) {
         if (!ATOM_CAS(status, RUNNING, COMMITED))
             rc = Abort;
 	}
+	/*
 	if (rc == Abort) {
 	    set_next_ts();
 	} else {
 	    set_ts(0);
-	}
+	} */
 	#if DEBUG_CLV
 	if (rc == Abort)
         printf("[txn] txn %lu is set to aborted\n", get_txn_id());
