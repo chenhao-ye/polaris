@@ -55,9 +55,9 @@ void txn_man::set_txn_id(txnid_t txn_id) {
 		lock_abort = false;
 		lock_ready = false;
 		status = RUNNING;
-    #if CC_ALG == CLV
+    	#if CC_ALG == CLV
 		commit_barriers = 0;
-    #endif
+    	#endif
 	#endif
 	this->txn_id = txn_id;
 }
