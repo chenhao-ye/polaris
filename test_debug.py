@@ -17,16 +17,6 @@ def replace(filename, pattern, replacement):
 	f.close()
 
 
-def insert_job(alg, workload, penalty, max_txn_cnt, threads):
-	jobs[alg + '_' + workload] = {
-		"WORKLOAD"			: workload,
-		"CC_ALG"			: alg,
-		"ABORT_PENALTY"			: penalty,
-		"THREAD_CNT"			: threads,
-		"MAX_TXN_PER_PART"		: max_txn_cnt		
-	}
-
-
 def compile(job):
 	# define workload
         for (param, value) in job.iteritems():
@@ -51,10 +41,9 @@ def run(test = '', job=None):
 	os.system("./rundb %s" % app_flags)
 	
 
-def run_all_test(jobs) :
-	for (jobname, job) in jobs.iteritems():
-		compile(job)
-		run('', job)
+def compile_and_run(job) :
+	compile(job)
+	run('', job)
 
 if __name__ == "__main__":
 	# TODO: use argparse to set params. default settings 
@@ -64,12 +53,11 @@ if __name__ == "__main__":
 	workload = "TPCC"
 
 	# parse workload
-	if sys.argv[1].lower() != workload:
+	if sys.argv[1].lower() != workload.lower():
 		workload = "YCSB"
 	
 	# parse algorithms
-	for item in sys.argv[2].split(","):
-		algs.append(item)
+	alg = sys.argv[2]
 
 	# parse threads
 	threads = int(sys.argv[3])
@@ -80,11 +68,19 @@ if __name__ == "__main__":
 	# parse penalty
 	penalty = int(sys.argv[5])
 
-	print("[CONFIGURATION] {} {} {} {}".format(workload, threads, max_txn_cnt, penalty))	
-	jobs = {}
-	for alg in algs:
-		insert_job(alg, workload, penalty, max_txn_cnt, threads)
-	run_all_test(jobs)
+	# parse warehouse
+	warehouse = int(sys.argv[6])
+
+	job = {
+		"WORKLOAD"			: workload,
+		"CC_ALG"			: alg,
+		"ABORT_PENALTY"			: penalty,
+		"THREAD_CNT"			: threads,
+		"MAX_TXN_PER_PART"		: max_txn_cnt,		
+		"NUM_WH"			: warehouse
+	}
+	print("[CONFIGURATION] {} {} {} {} {} {}".format(workload, threads, max_txn_cnt, penalty, alg, warehouse))	
+	compile_and_run(job)
 	
 
 
