@@ -148,7 +148,10 @@ RC Row_clvp::lock_retire(txn_man * txn) {
 #if DEBUG_CLV
 	printf("[row_clv] move txn %lu from owners to retired type %d of row %lu\n",
 			txn->get_txn_id(), entry->type, _row->get_row_id());
+#endif
+#if DEBUG_ASSERT
 	assert_in_list(retired, retired_tail, retired_cnt, entry->txn);
+
 #endif
 
 final:
@@ -200,6 +203,8 @@ RC Row_clvp::lock_release(txn_man * txn, RC rc) {
 				waiter_cnt--;
 				#if DEBUG_CLV
 				printf("[row_clv] rm txn %lu from waiters of row %lu\n", txn->get_txn_id(), _row->get_row_id());
+				#endif
+				#if DEBUG_ASSERT
 				assert_notin_list(waiters_head, waiters_tail, waiter_cnt, txn);
 				#endif
 			}
@@ -228,13 +233,13 @@ Row_clvp::bring_next() {
 	while (waiters_head) {
 		if ((owners == NULL) || (!conflict_lock(owners->type, waiters_head->type))) {
 			LIST_GET_HEAD(waiters_head, waiters_tail, entry);
-			#if DEBUG_CLV
+			#if DEBUG_ASSERT
 			// aseert no conflicts
 			if (has_conflicts_in_list(owners, entry))
 				assert(false);
 			#endif
 			QUEUE_PUSH(owners, owners_tail, entry);
-			#if DEBUG_CLV
+			#if DEBUG_ASSERT
 			if (owner_cnt > 0)
 				assert(!conflict_lock(owners->type, entry->type));
 			#endif
@@ -245,7 +250,9 @@ Row_clvp::bring_next() {
 			#if DEBUG_CLV
 			printf("[row_clv] bring %lu from waiters to owners of row %lu\n",
 					entry->txn->get_txn_id(), _row->get_row_id());
-			assert_in_list(owners, owners_tail, owner_cnt, entry->txn);
+			#endif
+			#if DEBUG_ASSERT
+			//assert_in_list(owners, owners_tail, owner_cnt, entry->txn);
 			assert_notin_list(waiters_head, waiters_tail, waiter_cnt, entry->txn);
 			#endif
 		} else
@@ -306,6 +313,8 @@ Row_clvp::insert_to_waiters(lock_t type, txn_man * txn) {
 #if DEBUG_CLV
 	printf("[row_clv] add txn %lu type %d to waiters of row %lu\n",
 			txn->get_txn_id(), type, _row->get_row_id());
+#endif
+#if DEBUG_ASSERT
 	assert_in_list(waiters_head, waiters_tail, waiter_cnt, txn);
 #endif
 }
@@ -451,7 +460,7 @@ Row_clvp::remove_if_exists_in_retired(txn_man * txn, bool is_abort) {
 			#endif
 			update_entry(en);
 			LIST_RM(retired, retired_tail, en, retired_cnt);
-			#if DEBUG_CLV
+			#if DEBUG_ASSERT
 			assert_notin_list(retired, retired_tail, retired_cnt, txn);
 			#endif
 		} else {
@@ -479,6 +488,8 @@ Row_clvp::remove_if_exists_in_owner(txn_man * txn) {
 			to_return = en;
 			#if DEBUG_CLV
 			printf("[row_clv] rm txn %lu from owners of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
+			#endif
+			#if DEBUG_ASSERT
 			assert_notin_list(owners, owners_tail, owner_cnt, txn);
 			#endif
 		}
@@ -502,7 +513,7 @@ Row_clvp::remove_if_exists_in_owner(txn_man * txn) {
 		printf("[row_clv] rm txn %lu from owners of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
 		#endif
 		QUEUE_RM(owners, owners_tail, prev, en, owner_cnt);
-		#if DEBUG_CLV
+		#if DEBUG_ASSERT
 		assert_notin_list(owners, owners_tail, owner_cnt, txn);
 		#endif
 		// find and return
@@ -540,7 +551,7 @@ Row_clvp::update_entry(CLVLockEntry * en) {
 	} else {
 		// has no previous, en = head
 		if (en->next) {
-			#if DEBUG_CLV
+			#if DEBUG_ASSERT
 			assert(en == retired);
 			#endif
 			// has next entry
@@ -558,7 +569,7 @@ Row_clvp::update_entry(CLVLockEntry * en) {
 			// has no next entry, never mind
 		}
 	}
-	assert(retired->is_cohead);
+	assert(retired || retired->is_cohead);
 }
 
 void
