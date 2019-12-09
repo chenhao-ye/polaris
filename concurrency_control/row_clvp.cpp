@@ -64,12 +64,12 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 	assert(cnt == waiter_cnt);
 #endif
 
-	RC status = check_abort(type, txn, retired, false)
+	RC status = check_abort(type, txn, retired, false);
 	if (status == Abort) {
 		rc = Abort;
 		bring_next();
 		goto final;
-	} elif (status == WAIT) {
+	} else if (status == WAIT) {
 		// check owners
 		if (check_abort(type, txn, owners, true) == Abort) {
 			rc = Abort;
@@ -170,10 +170,10 @@ RC Row_clvp::lock_release(txn_man * txn, RC rc) {
 		pthread_mutex_lock( latch );
 
 	// Try to find the entry in the retired
-	bool status;
-	status = remove_if_exists(retired, txn, false, rc == Abort);
+	bool status = remove_if_exists(retired, txn, false, rc == Abort);
 	if (status == RCOK) {
 		// owners should be all aborted and becomes empty
+		CLVLockEntry en;
 		while(owners) {
 			en = owners;
 			en->txn->set_abort();
@@ -311,7 +311,6 @@ RC
 Row_clvp::check_abort(lock_t type, txn_man * txn, CLVLockEntry * list, bool is_owner) {
 	CLVLockEntry * en = list;
 	CLVLockEntry * prev = NULL;
-	CLVLockEntry * to_return = NULL;
 	while (en != NULL) {
 		if (en->txn->lock_abort || (conflict_lock(en->type, type) && (en->txn->get_ts() > txn->get_ts())) ) {
 			if (txn->wound_txn(en->txn) == ERROR) {
@@ -337,7 +336,7 @@ Row_clvp::check_abort(lock_t type, txn_man * txn, CLVLockEntry * list, bool is_o
 				#endif
 			} else {
 				// in retired, need to remove & abort descendants of en as well
-				return remove_descendants();
+				return remove_descendants(en, txn);
 			}
 		} else {
 			prev = en;
@@ -349,6 +348,7 @@ Row_clvp::check_abort(lock_t type, txn_man * txn, CLVLockEntry * list, bool is_o
 
 RC
 Row_clvp::remove_descendants(CLVLockEntry * en, txn_man * txn) {
+	CLVLockEntry * to_return = NULL;
 	// 1. remove self
 	LIST_RM(retired, retired_tail, en, retired_cnt);
 	#if DEBUG_CLV

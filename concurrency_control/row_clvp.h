@@ -48,11 +48,12 @@ private:
 
 	void bring_next();
 	void insert_to_waiters(lock_t type, txn_man * txn);
-	CLVLockEntry * remove_if_exists(CLVLockEntry * list, txn_man * txn, bool is_owner);
+	CLVLockEntry * remove_if_exists(CLVLockEntry * list, txn_man * txn, bool is_owner, bool is_abort);
 	RC check_abort(lock_t type, txn_man * txn, CLVLockEntry * list, bool is_owner);
 	bool has_conflicts_in_list(CLVLockEntry * list, CLVLockEntry * entry);
 	bool conflict_lock_entry(CLVLockEntry * l1, CLVLockEntry * l2);
 	void update_entry(CLVLockEntry * en);
+	RC remove_descendants(CLVLockEntry * en, txn_man * txn);
     
     // debugging method
     void print_list(CLVLockEntry * list, CLVLockEntry * tail, int cnt);
