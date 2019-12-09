@@ -431,7 +431,6 @@ Row_clvp::remove_if_exists_in_retired(txn_man * txn, bool is_abort) {
 		if (en->txn->get_txn_id() == txn->get_txn_id()) {
 			break;
 		}
-		prev = en;
 		en = en->next;
 		if (to_return) {
 			return_entry(to_return);
