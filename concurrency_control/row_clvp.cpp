@@ -463,7 +463,6 @@ CLVLockEntry *
 Row_clvp::remove_if_exists_in_owner(txn_man * txn) {
 	CLVLockEntry * en = owners;
 	CLVLockEntry * prev = NULL;
-	CLVLockEntry * found;
 	CLVLockEntry * to_return = NULL;
 
 	while (en != NULL) {
