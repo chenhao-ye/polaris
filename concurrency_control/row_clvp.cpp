@@ -365,11 +365,14 @@ Row_clvp::remove_descendants(CLVLockEntry * en, txn_man * txn, lock_t type) {
 		// for lock_get only: not depend on detected aborts, but still need to check if conflict with current txn
 		if (txn && conflict_lock(en->type, type) && (en->txn->get_ts() > txn->get_ts())) {
 			if (txn->wound_txn(en->txn) == ERROR) {
-
+				if (conflict_lock_entry(en->prev, en)) {
+					en->delta = false;
+				}
 				#if DEBUG_CLV
 				printf("[row_clv] detected txn %lu is aborted when "
 				"trying to wound others on row %lu\n", txn->get_txn_id(),  _row->get_row_id());
 				#endif
+				// already removed, has to release
 				return_entry(prev);
 				return Abort;
 			}
@@ -385,7 +388,9 @@ Row_clvp::remove_descendants(CLVLockEntry * en, txn_man * txn, lock_t type) {
 			en = en->next;
 			return_entry(to_return);
 		} else {
-			if (conflict_lock_entry(en->prev, ))
+			if (conflict_lock_entry(en->prev, en)) {
+				en->delta = false;
+			}
 			en = en->next;
 		}
 	}
