@@ -170,7 +170,7 @@ RC Row_clvp::lock_release(txn_man * txn, RC rc) {
 		pthread_mutex_lock( latch );
 
 	// Try to find the entry in the retired
-	bool status = remove_if_exists(retired, txn, false, rc == Abort);
+	RC status = remove_if_exists(retired, txn, false, rc == Abort);
 	if (status == RCOK) {
 		// owners should be all aborted and becomes empty
 		CLVLockEntry * en;
@@ -296,8 +296,9 @@ Row_clvp::insert_to_waiters(lock_t type, txn_man * txn) {
 		LIST_INSERT_BEFORE(en, entry);
 		if (en == waiters_head)
 			waiters_head = entry;
-	} else
+	} else {
 		LIST_PUT_TAIL(waiters_head, waiters_tail, entry);
+	}
 	waiter_cnt ++;
 	txn->lock_ready = false;
 #if DEBUG_CLV
@@ -386,9 +387,9 @@ Row_clvp::remove_descendants(CLVLockEntry * en, txn_man * txn, lock_t type) {
 		}
 	}
 	
-	if (en)
+	if (en) {
 		LIST_RM_SINCE(retired, retired_tail, en);
-	else {
+	} else {
 		// has no conflicting entry after removed
 		// 3. if owners do not conflict with removed entry
 		if (!conflict_lock_entry(prev, owners)) {
