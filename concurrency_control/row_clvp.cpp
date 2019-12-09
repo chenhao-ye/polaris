@@ -120,7 +120,7 @@ RC Row_clvp::lock_retire(txn_man * txn) {
 		pthread_mutex_lock( latch );
 
 	// Try to find the entry in the owners and remove
-	CLVLockEntry * entry = remove_if_exists(owners, txn, true);
+	CLVLockEntry * entry = remove_if_exists(owners, txn, true, false);
 	if (entry == NULL) {
 		// may be already wounded by others
 		assert(txn->status == ABORTED);
@@ -173,7 +173,7 @@ RC Row_clvp::lock_release(txn_man * txn, RC rc) {
 	bool status = remove_if_exists(retired, txn, false, rc == Abort);
 	if (status == RCOK) {
 		// owners should be all aborted and becomes empty
-		CLVLockEntry en;
+		CLVLockEntry * en;
 		while(owners) {
 			en = owners;
 			en->txn->set_abort();
@@ -187,7 +187,7 @@ RC Row_clvp::lock_release(txn_man * txn, RC rc) {
 		status = remove_if_exists(owners, txn, true, false);
 		if (status == ERROR) {
 			// Not in owners list, try waiters list.
-			CLVLockEntry *en = waiters_head;
+			CLVLockEntry * en = waiters_head;
 		 	while (en != NULL && en->txn != txn)
 				en = en->next;
 			if (en) {
