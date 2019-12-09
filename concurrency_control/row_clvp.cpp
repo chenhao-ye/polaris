@@ -120,12 +120,14 @@ RC Row_clvp::lock_retire(txn_man * txn) {
 		pthread_mutex_lock( latch );
 
 	// Try to find the entry in the owners and remove
-	CLVLockEntry * entry = remove_if_exists(owners, txn, true, false);
-	if (entry == NULL) {
+	RC rc = remove_if_exists(owners, txn, true, false);
+	if (rc == ERROR) {
 		// may be already wounded by others
 		assert(txn->status == ABORTED);
 		rc = Abort;
 		goto final;
+	} else {
+		assert(rc == FINISH);
 	}
 
 	// increment barriers if conflict
