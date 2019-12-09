@@ -123,7 +123,7 @@ RC Row_clvp::lock_retire(txn_man * txn) {
 	// Try to find the entry in the owners and remove
 	CLVLockEntry * entry = remove_if_exists_in_owner(txn);
 	if (entry == NULL) {
-		// may be already wounded by others
+		// may be already wounded by others, or self is aborted
 		assert(txn->status == ABORTED);
 		rc = Abort;
 		goto final;
@@ -462,7 +462,7 @@ Row_clvp::remove_if_exists_in_retired(txn_man * txn, bool is_abort) {
 CLVLockEntry * 
 Row_clvp::remove_if_exists_in_owner(txn_man * txn) {
 	CLVLockEntry * en = owners;
-	CLVLockEntry * prev;
+	CLVLockEntry * prev = NULL;
 	CLVLockEntry * found;
 	CLVLockEntry * to_return = NULL;
 
