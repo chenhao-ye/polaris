@@ -151,8 +151,6 @@ RC Row_clvp::lock_retire(txn_man * txn) {
 	assert_in_list(retired, retired_tail, retired_cnt, entry->txn);
 #endif
 
-
-
 final:
 	// bring next owners from waiters
 	bring_next();
@@ -464,7 +462,8 @@ Row_clvp::remove_if_exists_in_retired(txn_man * txn, bool is_abort) {
 CLVLockEntry * 
 Row_clvp::remove_if_exists_in_owner(txn_man * txn) {
 	CLVLockEntry * en = owners;
-	CLVLockEntry * prev = NULL;
+	CLVLockEntry * prev;
+	CLVLockEntry * found;
 	CLVLockEntry * to_return = NULL;
 
 	while (en != NULL) {
@@ -478,6 +477,10 @@ Row_clvp::remove_if_exists_in_owner(txn_man * txn) {
 			#endif
 		}
 		if (en->txn->get_txn_id() == txn->get_txn_id()) {
+			if (to_return == en) {
+				return_entry(to_return);
+				return NULL;
+			}
 			break;
 		}
 		prev = en;
@@ -487,6 +490,7 @@ Row_clvp::remove_if_exists_in_owner(txn_man * txn) {
 			to_return = NULL;
 		}
 	}
+	
 	if (en) { // find the entry in the retired list
 		#if DEBUG_CLV
 		printf("[row_clv] rm txn %lu from owners of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
