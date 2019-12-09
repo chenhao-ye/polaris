@@ -94,6 +94,11 @@
 	if (en->prev) en->prev->next = en->next; \
 	else if (head == en) {	head = en->next; } \
 	if (tail == en)	{ tail = en->prev; }	cnt--;}
+#define LIST_RM_SINCE(head, tail, en) { \
+	if (en->prev) en->prev->next = NULL; \
+	else if (head == en) {	head = NULL; } \
+	if (tail == en)	{ tail = NULL; } \
+	else { tail = en->prev; } }
 
 /************************************************/
 // STATS helper

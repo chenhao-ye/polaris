@@ -64,16 +64,28 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 	assert(cnt == waiter_cnt);
 #endif
 
-	if (check_abort(type, txn, retired, false) == Abort) {
+	RC status = check_abort(type, txn, retired, false)
+	if (status == Abort) {
 		rc = Abort;
 		bring_next();
 		goto final;
-	} 
-
-	if (check_abort(type, txn, owners, true) == Abort) {
-		rc = Abort;
-		bring_next();
-		goto final;
+	} elif (status == WAIT) {
+		// check owners
+		if (check_abort(type, txn, owners, true) == Abort) {
+			rc = Abort;
+			bring_next();
+			goto final;
+		}
+	} else {
+		// owners should be all aborted and becomes empty
+		while(owners) {
+			en = owners;
+			en->txn->set_abort();
+			return_entry(en);
+			owners = owners->next;
+		}
+		owners = NULL;
+		owner_cnt = 0;
 	}
 
 	insert_to_waiters(type, txn);
@@ -151,42 +163,51 @@ final:
 	return rc;
 }
 
-RC Row_clvp::lock_release(txn_man * txn) {
+RC Row_clvp::lock_release(txn_man * txn, RC rc) {
 	if (g_central_man)
 		glob_manager->lock_row(_row);
 	else 
 		pthread_mutex_lock( latch );
 
 	// Try to find the entry in the retired
-	CLVLockEntry * en = remove_if_exists(retired, txn, false);
-	if (en != NULL) {
+	bool status;
+	status = remove_if_exists(retired, txn, false, rc == Abort);
+	if (status == RCOK) {
+		// owners should be all aborted and becomes empty
+		while(owners) {
+			en = owners;
+			en->txn->set_abort();
 			return_entry(en);
-	 } else {
-		en = remove_if_exists(owners, txn, true);
-
-		if (en != NULL) {
-			return_entry(en);
-		} else {
-				// Not in owners list, try waiters list.
-				CLVLockEntry *en = waiters_head;
-			 	while (en != NULL && en->txn != txn)
-					en = en->next;
-				if (en) {
-					LIST_REMOVE(en);
-					if (en == waiters_head)
-							waiters_head = en->next;
-					if (en == waiters_tail)
-							waiters_tail = en->prev;
-					return_entry(en);
-					waiter_cnt--;
-					#if DEBUG_CLV
-					printf("[row_clv] rm txn %lu from waiters of row %lu\n", txn->get_txn_id(), _row->get_row_id());
-					assert_notin_list(waiters_head, waiters_tail, waiter_cnt, txn);
-					#endif
-				}
+			owners = owners->next;
 		}
-	}
-	
+		owners = NULL;
+		owner_cnt = 0;
+	} else if (status == ERROR) {
+		// need to check owners
+		status = remove_if_exists(owners, txn, true, false);
+		if (status == ERROR) {
+			// Not in owners list, try waiters list.
+			CLVLockEntry *en = waiters_head;
+		 	while (en != NULL && en->txn != txn)
+				en = en->next;
+			if (en) {
+				LIST_REMOVE(en);
+				if (en == waiters_head)
+						waiters_head = en->next;
+				if (en == waiters_tail)
+						waiters_tail = en->prev;
+				return_entry(en);
+				waiter_cnt--;
+				#if DEBUG_CLV
+				printf("[row_clv] rm txn %lu from waiters of row %lu\n", txn->get_txn_id(), _row->get_row_id());
+				assert_notin_list(waiters_head, waiters_tail, waiter_cnt, txn);
+				#endif
+			}
+		}
+	} 
+
+	// WAIT - done releasing with is_abort = true
+	// FINISH - done releasing with is_abort = false
 	bring_next();
 
 	if (g_central_man)
@@ -290,8 +311,9 @@ RC
 Row_clvp::check_abort(lock_t type, txn_man * txn, CLVLockEntry * list, bool is_owner) {
 	CLVLockEntry * en = list;
 	CLVLockEntry * prev = NULL;
+	CLVLockEntry * to_return = NULL;
 	while (en != NULL) {
-		if (conflict_lock(en->type, type) && (en->txn->get_ts() > txn->get_ts())) {
+		if (en->txn->lock_abort || (conflict_lock(en->type, type) && (en->txn->get_ts() > txn->get_ts())) ) {
 			if (txn->wound_txn(en->txn) == ERROR) {
 				#if DEBUG_CLV
 				printf("[row_clv] detected txn %lu is aborted when "
@@ -314,33 +336,113 @@ Row_clvp::check_abort(lock_t type, txn_man * txn, CLVLockEntry * list, bool is_o
 				assert_notin_list(owners, owners_tail, owner_cnt, en->txn);
 				#endif
 			} else {
-				#if DEBUG_CLV
-				printf("[row_clv] txn %lu rm another txn %lu from retired of row %lu\n", 
-					txn->get_txn_id(), en->txn->get_txn_id(), _row->get_row_id());
-				#endif
-				// TODO: update cohead & delta info before removing entry
-				update_entry(en);
-				LIST_RM(retired, retired_tail, en, retired_cnt);
-				#if DEBUG_ASSERT
-				assert_notin_list(retired, retired_tail, retired_cnt, en->txn);
-				#endif
+				// in retired, need to remove & abort descendants of en as well
+				return remove_descendants();
 			}
 		} else {
 			prev = en;
 		}
 		en = en->next;
 	}
+	return WAIT;
+}
+
+RC
+Row_clvp::remove_descendants(CLVLockEntry * en, txn_man * txn) {
+	// 1. remove self
+	LIST_RM(retired, retired_tail, en, retired_cnt);
+	#if DEBUG_CLV
+	printf("[row_clv] rm aborted txn %lu from retired of row %lu\n", 
+			en->txn->get_txn_id(), _row->get_row_id());
+	#endif
+	prev = en;
+	// 2. remove from next conflict till end
+	en = en->next;
+	while(en && (!en->delta)) {
+		// for lock_get only: not depend on detected aborts, but still need to check if conflict with current txn
+		if (txn && conflict_lock(en->type, type) && (en->txn->get_ts() > txn->get_ts())) {
+			if (txn->wound_txn(en->txn) == ERROR) {
+
+				#if DEBUG_CLV
+				printf("[row_clv] detected txn %lu is aborted when "
+				"trying to wound others on row %lu\n", txn->get_txn_id(),  _row->get_row_id());
+				#endif
+
+				return Abort;
+			}
+			LIST_RM(retired, retired_tail, en, retired_cnt);
+
+			#if DEBUG_CLV
+			printf("[row_clv] txn %lu abort txn %lu on row %lu\n", txn->get_txn_id(), 
+				en->txn->get_txn_id(), _row->get_row_id());
+			printf("[row_clv] rm aborted txn %lu from retired of row %lu\n", 
+			en->txn->get_txn_id(), _row->get_row_id());
+			#endif
+			to_return = en;
+			en = en->next;
+			return_entry(to_return);
+		} else {
+			en = en->next;
+		}
+	}
+	
+	if (en)
+		LIST_RM_SINCE(retired, retired_tail, en);
+	else {
+		// has no conflicting entry after removed
+		// 3. if owners do not conflict with removed entry
+		if (!conflict_lock_entry(prev, owners)) {
+			return_entry(prev);
+			return WAIT;
+		}
+	}
+	
+	// 4. abort from next conflict (en) till end
+	while(en) {
+		to_return = en;
+		en->txn->set_abort();
+		retired_cnt--;
+		en = en->next;
+		return_entry(to_return);
+		#if DEBUG_CLV
+		printf("[row_clv] rm aborted txn %lu from retired of row %lu\n", 
+			en->txn->get_txn_id(), _row->get_row_id());
+		#endif
+	}
+	// 5.need to abort all owners as well, and txn can definitely hold the lock
 	return RCOK;
 }
 
-CLVLockEntry *
-Row_clvp::remove_if_exists(CLVLockEntry * list, txn_man * txn, bool is_owner) {
+RC
+Row_clvp::remove_if_exists(CLVLockEntry * list, txn_man * txn, bool is_owner, bool is_abort) {
 	CLVLockEntry * en = list;
 	CLVLockEntry * prev = NULL;
+	CLVLockEntry * to_return = NULL;
 
-	while (en != NULL && en->txn->get_txn_id() != txn->get_txn_id()) {
+	while (en != NULL) {
+		if (en->txn->lock_abort) {
+			if (is_owner) {
+				// just remove the entry and continue, no one is depending on it
+				QUEUE_RM(owners, owners_tail, prev, en, owner_cnt);
+				to_return = en;
+				#if DEBUG_CLV
+				printf("[row_clv] rm txn %lu from owners of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
+				assert_notin_list(owners, owners_tail, owner_cnt, txn);
+				#endif
+			} else {
+				// in retired, need to remove anything behind
+				is_abort = true;
+				break;
+			}
+		}
+		if (en->txn->get_txn_id() == txn->get_txn_id()) {
+			break;
+		}
 		prev = en;
 		en = en->next;
+		if (to_return) {
+			return_entry(to_return);
+		}
 	}
 	if (en) { // find the entry in the retired list
 		if (is_owner) {
@@ -352,18 +454,25 @@ Row_clvp::remove_if_exists(CLVLockEntry * list, txn_man * txn, bool is_owner) {
 			assert_notin_list(owners, owners_tail, owner_cnt, txn);
 			#endif
 		} else {
-			#if DEBUG_CLV
-			printf("[row_clv] rm txn %lu from retired of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
-			#endif
-			update_entry(en);
-			LIST_RM(retired, retired_tail, en, retired_cnt);
-			#if DEBUG_CLV
-			assert_notin_list(retired, retired_tail, retired_cnt, txn);
-			#endif
+			if (!is_abort) {
+				#if DEBUG_CLV
+				printf("[row_clv] rm txn %lu from retired of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
+				#endif
+				update_entry(en);
+				LIST_RM(retired, retired_tail, en, retired_cnt);
+				#if DEBUG_CLV
+				assert_notin_list(retired, retired_tail, retired_cnt, txn);
+				#endif
+			} else {
+				return remove_descendants(en, NULL);
+			}
 		}
-		return en;
+		return_entry(en);
+		// find and removed
+		return FINISH;
 	}
-	return NULL;
+	// did not find, need to keep working
+	return ERROR;
 }
 
 void

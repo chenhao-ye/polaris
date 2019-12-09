@@ -20,7 +20,7 @@ public:
 	// [DL_DETECT] txnids are the txn_ids that current txn is waiting for.
     RC lock_get(lock_t type, txn_man * txn);
     RC lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt);
-    RC lock_release(txn_man * txn);
+    RC lock_release(txn_man * txn, RC rc);
     RC lock_retire(txn_man * txn);
 	
 private:
@@ -33,7 +33,7 @@ private:
 	row_t * _row;
     UInt32 owner_cnt;
     UInt32 waiter_cnt;
-    UInt32 retired_cnt;
+    UInt32 retired_cnt; // no need to keep retied cnt
 	
 	// owners is a single linked list
 	// waiters is a double linked list 
