@@ -361,12 +361,13 @@ Row_clvp::remove_descendants(CLVLockEntry * en, txn_man * txn, lock_t type) {
 	CLVLockEntry * prev = en;
 	// 2. remove from next conflict till end
 	en = en->next;
-	while(en && (en->delta)) {
+	// delta = false: has no delta, 0
+	while(en && (en->delta == 0)) {
 		// for lock_get only: not depend on detected aborts, but still need to check if conflict with current txn
 		if (txn && conflict_lock(en->type, type) && (en->txn->get_ts() > txn->get_ts())) {
 			if (txn->wound_txn(en->txn) == ERROR) {
 				if (conflict_lock_entry(en->prev, en)) {
-					en->delta = false;
+					en->delta = true;
 				}
 				#if DEBUG_CLV
 				printf("[row_clv] detected txn %lu is aborted when "
@@ -389,7 +390,7 @@ Row_clvp::remove_descendants(CLVLockEntry * en, txn_man * txn, lock_t type) {
 			return_entry(to_return);
 		} else {
 			if (conflict_lock_entry(en->prev, en)) {
-				en->delta = false;
+				en->delta = true;
 			}
 			en = en->next;
 		}
