@@ -154,7 +154,7 @@ inline RC txn_man::wound_txn(txn_man * txn)
 
 inline void txn_man::set_abort()
 {
-	if ( ATOM_CAS(txn->status, RUNNING, ABORTED)) {
-        txn->lock_abort = true;
+	if (ATOM_CAS(status, RUNNING, ABORTED)) {
+        lock_abort = true;
     }
 }
