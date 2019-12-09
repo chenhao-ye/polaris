@@ -53,7 +53,7 @@ private:
 	bool has_conflicts_in_list(CLVLockEntry * list, CLVLockEntry * entry);
 	bool conflict_lock_entry(CLVLockEntry * l1, CLVLockEntry * l2);
 	void update_entry(CLVLockEntry * en);
-	RC remove_descendants(CLVLockEntry * en, txn_man * txn);
+	RC remove_descendants(CLVLockEntry * en, txn_man * txn, lock_t type);
     
     // debugging method
     void print_list(CLVLockEntry * list, CLVLockEntry * tail, int cnt);

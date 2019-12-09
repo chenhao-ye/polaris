@@ -336,7 +336,7 @@ Row_clvp::check_abort(lock_t type, txn_man * txn, CLVLockEntry * list, bool is_o
 				#endif
 			} else {
 				// in retired, need to remove & abort descendants of en as well
-				return remove_descendants(en, txn);
+				return remove_descendants(en, txn, type);
 			}
 		} else {
 			prev = en;
@@ -347,7 +347,7 @@ Row_clvp::check_abort(lock_t type, txn_man * txn, CLVLockEntry * list, bool is_o
 }
 
 RC
-Row_clvp::remove_descendants(CLVLockEntry * en, txn_man * txn) {
+Row_clvp::remove_descendants(CLVLockEntry * en, txn_man * txn, lock_t type) {
 	CLVLockEntry * to_return = NULL;
 	// 1. remove self
 	LIST_RM(retired, retired_tail, en, retired_cnt);
@@ -355,7 +355,7 @@ Row_clvp::remove_descendants(CLVLockEntry * en, txn_man * txn) {
 	printf("[row_clv] rm aborted txn %lu from retired of row %lu\n", 
 			en->txn->get_txn_id(), _row->get_row_id());
 	#endif
-	prev = en;
+	CLVLockEntry * prev = en;
 	// 2. remove from next conflict till end
 	en = en->next;
 	while(en && (!en->delta)) {
@@ -410,6 +410,7 @@ Row_clvp::remove_descendants(CLVLockEntry * en, txn_man * txn) {
 		#endif
 	}
 	// 5.need to abort all owners as well, and txn can definitely hold the lock
+	return_entry(prev);
 	return RCOK;
 }
 
@@ -464,7 +465,7 @@ Row_clvp::remove_if_exists(CLVLockEntry * list, txn_man * txn, bool is_owner, bo
 				assert_notin_list(retired, retired_tail, retired_cnt, txn);
 				#endif
 			} else {
-				return remove_descendants(en, NULL);
+				return remove_descendants(en, NULL, LOCK_NONE);
 			}
 		}
 		return_entry(en);
