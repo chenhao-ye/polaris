@@ -1,0 +1,124 @@
+mem_allocator initialized!
+CLV
+reading schema file: ./benchmarks/TPCC_full_schema.txt
+TPCC schema initialized
+TPCC Data Initialization Complete!
+workload initialized!
+Query Queue Init Time 2.160385
+query_queue initialized!
+PASS! SimTime = 25218257461
+[tid=0] txn_cnt=99936,abort_cnt=157886
+[tid=1] txn_cnt=99675,abort_cnt=156956
+[tid=2] txn_cnt=99815,abort_cnt=157135
+[tid=3] txn_cnt=99820,abort_cnt=157628
+[tid=4] txn_cnt=99795,abort_cnt=157780
+[tid=5] txn_cnt=99842,abort_cnt=157869
+[tid=6] txn_cnt=99851,abort_cnt=158472
+[tid=7] txn_cnt=99757,abort_cnt=157583
+[tid=8] txn_cnt=99880,abort_cnt=157644
+[tid=9] txn_cnt=99770,abort_cnt=157416
+[tid=10] txn_cnt=99832,abort_cnt=157365
+[tid=11] txn_cnt=99822,abort_cnt=157122
+[tid=12] txn_cnt=99866,abort_cnt=157051
+[tid=13] txn_cnt=99933,abort_cnt=157644
+[tid=14] txn_cnt=99913,abort_cnt=157299
+[tid=15] txn_cnt=99822,abort_cnt=157372
+[tid=16] txn_cnt=100000,abort_cnt=157358
+[tid=17] txn_cnt=99946,abort_cnt=157644
+[tid=18] txn_cnt=99806,abort_cnt=157357
+[tid=19] txn_cnt=99925,abort_cnt=158035
+[summary] throughput=79210.450230, txn_cnt=1997006, abort_cnt=3150616, run_time=504.227913, time_wait=79.088615, time_ts_alloc=0.267418, time_man=149.493221, time_index=1.431752, time_abort=250.705063, time_cleanup=162.473447, latency=0.000252, deadlock_cnt=0, cycle_detect=0, dl_detect_time=0.000000, dl_wait_time=0.000000, time_query=0.497120, debug1=0.000000, debug2=0.000000, debug3=0.000000, debug4=0.000000, debug5=0.000000
+[CONFIGURATION] TPCC 20 100000 10 CLV 1
+mem_allocator initialized!
+NO_WAIT
+reading schema file: ./benchmarks/TPCC_full_schema.txt
+TPCC schema initialized
+TPCC Data Initialization Complete!
+workload initialized!
+Query Queue Init Time 2.219687
+query_queue initialized!
+PASS! SimTime = 32464499473
+[tid=0] txn_cnt=98424,abort_cnt=4201731
+[tid=1] txn_cnt=97841,abort_cnt=4179658
+[tid=2] txn_cnt=96636,abort_cnt=4169291
+[tid=3] txn_cnt=97603,abort_cnt=4153483
+[tid=4] txn_cnt=96938,abort_cnt=4152660
+[tid=5] txn_cnt=100000,abort_cnt=4259001
+[tid=6] txn_cnt=98802,abort_cnt=4181189
+[tid=7] txn_cnt=97869,abort_cnt=4210208
+[tid=8] txn_cnt=98704,abort_cnt=4193740
+[tid=9] txn_cnt=98220,abort_cnt=4227584
+[tid=10] txn_cnt=97970,abort_cnt=4179823
+[tid=11] txn_cnt=97459,abort_cnt=4162160
+[tid=12] txn_cnt=98717,abort_cnt=4221859
+[tid=13] txn_cnt=99709,abort_cnt=4243025
+[tid=14] txn_cnt=99062,abort_cnt=4228448
+[tid=15] txn_cnt=98997,abort_cnt=4235396
+[tid=16] txn_cnt=95967,abort_cnt=4147204
+[tid=17] txn_cnt=98653,abort_cnt=4208529
+[tid=18] txn_cnt=98579,abort_cnt=4216856
+[tid=19] txn_cnt=97057,abort_cnt=4105917
+[summary] throughput=60592.319827, txn_cnt=1963207, abort_cnt=83877762, run_time=648.005228, time_wait=0.000000, time_ts_alloc=0.000000, time_man=69.477377, time_index=2.101142, time_abort=569.184539, time_cleanup=34.205183, latency=0.000330, deadlock_cnt=0, cycle_detect=0, dl_detect_time=0.000000, dl_wait_time=0.000000, time_query=3.040766, debug1=0.000000, debug2=0.000000, debug3=0.000000, debug4=0.000000, debug5=0.000000
+[CONFIGURATION] TPCC 20 100000 10 NO_WAIT 1
+mem_allocator initialized!
+WAIT_DIE
+reading schema file: ./benchmarks/TPCC_full_schema.txt
+TPCC schema initialized
+TPCC Data Initialization Complete!
+workload initialized!
+Query Queue Init Time 2.319928
+query_queue initialized!
+PASS! SimTime = 16406904757
+[tid=0] txn_cnt=99696,abort_cnt=1446538
+[tid=1] txn_cnt=99295,abort_cnt=1458181
+[tid=2] txn_cnt=99726,abort_cnt=1541837
+[tid=3] txn_cnt=99009,abort_cnt=1371999
+[tid=4] txn_cnt=99631,abort_cnt=1483917
+[tid=5] txn_cnt=99537,abort_cnt=1353908
+[tid=6] txn_cnt=98712,abort_cnt=1457809
+[tid=7] txn_cnt=99135,abort_cnt=1434544
+[tid=8] txn_cnt=99664,abort_cnt=1530935
+[tid=9] txn_cnt=98800,abort_cnt=1374107
+[tid=10] txn_cnt=99230,abort_cnt=1452326
+[tid=11] txn_cnt=99338,abort_cnt=1447958
+[tid=12] txn_cnt=99625,abort_cnt=1392632
+[tid=13] txn_cnt=98964,abort_cnt=1436411
+[tid=14] txn_cnt=99002,abort_cnt=1345673
+[tid=15] txn_cnt=100000,abort_cnt=1460932
+[tid=16] txn_cnt=99373,abort_cnt=1376527
+[tid=17] txn_cnt=99570,abort_cnt=1483379
+[tid=18] txn_cnt=99372,abort_cnt=1447617
+[tid=19] txn_cnt=99026,abort_cnt=1365724
+[summary] throughput=121355.525194, txn_cnt=1986705, abort_cnt=28662954, run_time=327.418961, time_wait=141.773012, time_ts_alloc=0.252497, time_man=57.246599, time_index=2.012919, time_abort=118.309078, time_cleanup=19.766279, latency=0.000165, deadlock_cnt=0, cycle_detect=0, dl_detect_time=0.000000, dl_wait_time=0.000000, time_query=1.359630, debug1=0.000000, debug2=0.000000, debug3=0.000000, debug4=0.000000, debug5=0.000000
+[CONFIGURATION] TPCC 20 100000 10 WAIT_DIE 1
+mem_allocator initialized!
+WOUND_WAIT
+reading schema file: ./benchmarks/TPCC_full_schema.txt
+TPCC schema initialized
+TPCC Data Initialization Complete!
+workload initialized!
+Query Queue Init Time 2.444451
+query_queue initialized!
+PASS! SimTime = 17029360800
+[tid=0] txn_cnt=99852,abort_cnt=1186
+[tid=1] txn_cnt=99974,abort_cnt=1243
+[tid=2] txn_cnt=99891,abort_cnt=1196
+[tid=3] txn_cnt=99813,abort_cnt=1189
+[tid=4] txn_cnt=99949,abort_cnt=1150
+[tid=5] txn_cnt=99971,abort_cnt=1283
+[tid=6] txn_cnt=99960,abort_cnt=1291
+[tid=7] txn_cnt=99950,abort_cnt=1160
+[tid=8] txn_cnt=99916,abort_cnt=1211
+[tid=9] txn_cnt=99868,abort_cnt=1192
+[tid=10] txn_cnt=99872,abort_cnt=1150
+[tid=11] txn_cnt=99770,abort_cnt=1231
+[tid=12] txn_cnt=100000,abort_cnt=1275
+[tid=13] txn_cnt=99935,abort_cnt=1237
+[tid=14] txn_cnt=99929,abort_cnt=1322
+[tid=15] txn_cnt=99842,abort_cnt=1181
+[tid=16] txn_cnt=99976,abort_cnt=1180
+[tid=17] txn_cnt=99906,abort_cnt=1316
+[tid=18] txn_cnt=100000,abort_cnt=1366
+[tid=19] txn_cnt=99829,abort_cnt=1086
+[summary] throughput=117365.553505, txn_cnt=1998203, abort_cnt=24445, run_time=340.509279, time_wait=307.565718, time_ts_alloc=0.308049, time_man=19.909688, time_index=2.040050, time_abort=3.691658, time_cleanup=4.383029, latency=0.000170, deadlock_cnt=0, cycle_detect=0, dl_detect_time=0.000000, dl_wait_time=0.000000, time_query=0.445484, debug1=0.000000, debug2=0.000000, debug3=0.000000, debug4=0.000000, debug5=0.000000
+[CONFIGURATION] TPCC 20 100000 10 WOUND_WAIT 1

@@ -20,7 +20,7 @@ public:
 	// [DL_DETECT] txnids are the txn_ids that current txn is waiting for.
     RC lock_get(lock_t type, txn_man * txn);
     RC lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt);
-    RC lock_release(txn_man * txn);
+    RC lock_release(txn_man * txn, RC rc);
     RC lock_retire(txn_man * txn);
 	
 private:
@@ -33,7 +33,7 @@ private:
 	row_t * _row;
     UInt32 owner_cnt;
     UInt32 waiter_cnt;
-    UInt32 retired_cnt;
+    UInt32 retired_cnt; // no need to keep retied cnt
 	
 	// owners is a single linked list
 	// waiters is a double linked list 
@@ -48,16 +48,19 @@ private:
 
 	void bring_next();
 	void insert_to_waiters(lock_t type, txn_man * txn);
-	CLVLockEntry * remove_if_exists(CLVLockEntry * list, txn_man * txn, bool is_owner);
+	RC remove_if_exists_in_retired(txn_man * txn, bool is_abort);
 	RC check_abort(lock_t type, txn_man * txn, CLVLockEntry * list, bool is_owner);
+	CLVLockEntry * remove_if_exists_in_owner(txn_man * txn);
 	bool has_conflicts_in_list(CLVLockEntry * list, CLVLockEntry * entry);
 	bool conflict_lock_entry(CLVLockEntry * l1, CLVLockEntry * l2);
 	void update_entry(CLVLockEntry * en);
+	RC remove_descendants(CLVLockEntry * en, txn_man * txn, lock_t type);
     
     // debugging method
     void print_list(CLVLockEntry * list, CLVLockEntry * tail, int cnt);
     void assert_notin_list(CLVLockEntry * list, CLVLockEntry * tail, int cnt, txn_man * txn);
     void assert_in_list(CLVLockEntry * list, CLVLockEntry * tail, int cnt, txn_man * txn);
+    void assert_in_list(CLVLockEntry * list, CLVLockEntry * tail, int cnt, CLVLockEntry * l);
 
 };
 

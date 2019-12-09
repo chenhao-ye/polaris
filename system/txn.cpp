@@ -127,17 +127,26 @@ void txn_man::cleanup(RC rc) {
 			continue;
 		}
 #endif
+
+#if (CC_ALG == CLV) 
+		if (ROLL_BACK && type == XP) {
+			orig_r->return_row(type, this, accesses[rid]->orig_data, rc);
+		} else {
+			orig_r->return_row(type, this, accesses[rid]->data, rc);
+		}
+#else
+
 		if (ROLL_BACK && type == XP &&
 					(CC_ALG == DL_DETECT || 
 					CC_ALG == NO_WAIT || 
 					CC_ALG == WAIT_DIE ||
-					CC_ALG == WOUND_WAIT ||
-					CC_ALG == CLV))
+					CC_ALG == WOUND_WAIT))
 		{
 			orig_r->return_row(type, this, accesses[rid]->orig_data);
 		} else {
 			orig_r->return_row(type, this, accesses[rid]->data);
 		}
+#endif
 
 #if CC_ALG != TICTOC && CC_ALG != SILO
 		accesses[rid]->data = NULL;

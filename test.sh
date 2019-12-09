@@ -1,10 +1,14 @@
-rm debug-1.out
+rm debug.out
 cp -r config_tpcc_debug.h config.h
-#cp -r config_real.h config.h
-wl='tpcc'
-#wl='ycsb'
-#python test_debug.py ${wl} "CLV,NO_WAIT,WOUND_WAIT,WAIT_DIE" |& tee debug-1.out
-python test_debug.py ${wl} "CLV" |& tee -a debug-1.out
-python test_debug.py ${wl} "NO_WAIT" |& tee -a debug-1.out
-python test_debug.py ${wl} "WOUND_WAIT" |& tee -a debug-1.out
-python test_debug.py ${wl} "WAIT_DIE" |& tee -a  debug-1.out
+
+wl="TPCC"
+threads=10
+cnt=100000
+wh=1
+penalty=10
+
+for alg in "CLV" "NO_WAIT" "WAIT_DIE" "WOUND_WAIT" 
+#for alg in "CLV"
+do
+	timeout 300 python test_debug.py ${wl} $alg $threads $cnt $penalty $wh |& tee -a debug.out
+done

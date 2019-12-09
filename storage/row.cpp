@@ -155,6 +155,10 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 	int txncnt; 
 	rc = this->manager->lock_get(lt, txn, txnids, txncnt);	
 #else
+		#if DEBUG_CLV
+		printf("[row] txn %lu try to get row %lu\n",
+				   txn->get_txn_id(), this->get_row_id());
+		#endif
 	if (txn->lock_abort) {
 		#if DEBUG_CLV
 		printf("[row] detected abort in txn %lu before lock_get row %lu\n",
@@ -169,7 +173,11 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 		#if CC_ALG == WOUND_WAIT || CC_ALG == CLV
 		if(txn->lock_abort) {
 			rc = Abort;
-			return_row(type, txn, NULL);
+			#if CC_ALG == CLV
+				return_row(type, txn, NULL, Abort);
+			#else
+				return_row(type, txn, NULL);
+			#endif
 			#if DEBUG_CLV
 			printf("[row] detected abort in txn %lu when acquired row %lu\n",
 				   txn->get_txn_id(), this->get_row_id());
@@ -242,7 +250,11 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 		else if (txn->lock_abort) {
 			// check if txn is aborted
 			rc = Abort;
-			return_row(type, txn, NULL);
+			#if CC_ALG == CLV
+				return_row(type, txn, NULL, Abort);
+			#else
+				return_row(type, txn, NULL);
+			#endif
 			#if DEBUG_CLV
 			printf("[row] detected abort in txn %lu when waiting row %lu\n",
 					txn->get_txn_id(), this->get_row_id());
@@ -305,6 +317,19 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 #endif
 }
 
+#if CC_ALG == CLV
+void row_t::return_row(access_t type, txn_man * txn, row_t * row, RC rc) {	
+	assert (row == NULL || row == this || type == XP);
+	if (ROLL_BACK && type == XP) {// recover from previous writes.
+		this->copy(row);
+	}
+	#if DEBUG_CLV
+		printf("[row] try to release lock when aborted %lu for txn %lu\n", get_row_id(), txn->get_txn_id());
+	#endif
+	this->manager->lock_release(txn, rc);
+}
+#endif
+
 // the "row" is the row read out in get_row(). 
 // For locking based CC_ALG, the "row" is the same as "this". 
 // For timestamp based CC_ALG, the "row" != "this", and the "row" must be freed.
@@ -313,7 +338,7 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 // For TIMESTAMP, the row will be explicity deleted at the end of access().
 // (cf. row_ts.cpp)
 void row_t::return_row(access_t type, txn_man * txn, row_t * row) {	
-#if CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT || CC_ALG == CLV
+#if CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT
 	assert (row == NULL || row == this || type == XP);
 	if (ROLL_BACK && type == XP) {// recover from previous writes.
 		this->copy(row);

@@ -55,6 +55,7 @@ public:
     RC              wound_txn(txn_man * txn);
     void            increment_commit_barriers();
     void            decrement_commit_barriers();
+    void			set_abort();
 
 	void 			set_ts(ts_t timestamp);
     void            set_next_ts();
@@ -144,14 +145,16 @@ inline RC txn_man::wound_txn(txn_man * txn)
     if (status != RUNNING)
 	return ERROR;
 
-    if ( ATOM_CAS(txn->status, RUNNING, ABORTED)) {
-#if DEBUG_WW || DEBUG_CLV
+	txn->set_abort();
+	#if DEBUG_WW || DEBUG_CLV
         printf("[txn] %lu set txn %lu to abort\n", get_txn_id(), txn->get_txn_id());
-#endif
-        txn->lock_abort = true;
-        // no need to abort descendants as lock manager will abort descendants
-    } //else {
-        // two cases: 1) commited 2) aborted
-        // either case no need to worry about }
+	#endif
     return FINISH;
+}
+
+inline void txn_man::set_abort()
+{
+	if (ATOM_CAS(status, RUNNING, ABORTED)) {
+        lock_abort = true;
+    }
 }
