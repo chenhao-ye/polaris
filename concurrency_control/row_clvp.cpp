@@ -365,7 +365,7 @@ Row_clvp::remove_descendants(CLVLockEntry * en, txn_man * txn, lock_t type) {
 	LIST_RM(retired, retired_tail, en, retired_cnt);
 
 	#if DEBUG_ASSERT
-		assert_notin_list(retired, retired_tail, retired_cnt, en);
+		assert_notin_list(retired, retired_tail, retired_cnt, en->txn);
 		#endif
 	#if DEBUG_CLV
 	printf("[row_clv] rm aborted txn %lu from retired of row %lu\n", 
@@ -411,7 +411,7 @@ Row_clvp::remove_descendants(CLVLockEntry * en, txn_man * txn, lock_t type) {
 	}
 
 	#if DEBUG_ASSERT
-		assert_notin_list(retired, retired_tail, retired_cnt, prev);
+		assert_notin_list(retired, retired_tail, retired_cnt, prev->txn);
 	#endif
 	
 	if (en) {
@@ -430,7 +430,7 @@ Row_clvp::remove_descendants(CLVLockEntry * en, txn_man * txn, lock_t type) {
 	// 4. abort from next conflict (en) till end
 	while(en) {
 		#if DEBUG_ASSERT
-		assert_notin_list(retired, retired_tail, retired_cnt, en);
+		assert_notin_list(retired, retired_tail, retired_cnt, en->txn);
 		#endif
 		to_return = en;
 		en->txn->set_abort();
