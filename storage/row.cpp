@@ -169,7 +169,11 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 		#if CC_ALG == WOUND_WAIT || CC_ALG == CLV
 		if(txn->lock_abort) {
 			rc = Abort;
-			return_row(type, txn, NULL);
+			#if CC_ALG == CLV
+				return_row(type, txn, NULL, Abort);
+			#else
+				return_row(type, txn, NULL);
+			#endif
 			#if DEBUG_CLV
 			printf("[row] detected abort in txn %lu when acquired row %lu\n",
 				   txn->get_txn_id(), this->get_row_id());
@@ -242,7 +246,11 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 		else if (txn->lock_abort) {
 			// check if txn is aborted
 			rc = Abort;
-			return_row(type, txn, NULL);
+			#if CC_ALG == CLV
+				return_row(type, txn, NULL, Abort);
+			#else
+				return_row(type, txn, NULL);
+			#endif
 			#if DEBUG_CLV
 			printf("[row] detected abort in txn %lu when waiting row %lu\n",
 					txn->get_txn_id(), this->get_row_id());
