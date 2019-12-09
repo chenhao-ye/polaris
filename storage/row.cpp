@@ -155,6 +155,10 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 	int txncnt; 
 	rc = this->manager->lock_get(lt, txn, txnids, txncnt);	
 #else
+		#if DEBUG_CLV
+		printf("[row] txn %lu try to get row %lu\n",
+				   txn->get_txn_id(), this->get_row_id());
+		#endif
 	if (txn->lock_abort) {
 		#if DEBUG_CLV
 		printf("[row] detected abort in txn %lu before lock_get row %lu\n",

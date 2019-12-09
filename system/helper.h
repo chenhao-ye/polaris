@@ -75,6 +75,11 @@
 	en->prev = NULL; \
 	if (ltail) { en->prev = ltail; ltail->next = en; ltail = en; } \
 	else { lhead = en; ltail = en; }}
+#define RETIRED_LIST_PUT_TAIL(lhead, ltail, en) {\
+	en->next = NULL; \
+	en->prev = NULL; \
+	if (ltail) { en->prev = ltail; ltail->next = en; ltail = en; } \
+	else { lhead = en; ltail = en; }}
 #define LIST_INSERT_BEFORE(entry, newentry) { \
 	newentry->next = entry; \
 	newentry->prev = entry->prev; \
@@ -99,8 +104,7 @@
 #define LIST_RM_SINCE(head, tail, en) { \
 	if (en->prev) en->prev->next = NULL; \
 	else if (head == en) {	head = NULL; } \
-	if (tail == en)	{ tail = NULL; } \
-	else { tail = en->prev; } }
+	tail = en->prev; }
 
 /************************************************/
 // STATS helper
