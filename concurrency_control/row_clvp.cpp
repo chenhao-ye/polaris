@@ -85,6 +85,7 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 			owners = owners->next;
 		}
 		owners = NULL;
+		owners_tail = NULL;
 		owner_cnt = 0;
 	}
 
@@ -180,6 +181,7 @@ RC Row_clvp::lock_release(txn_man * txn, RC rc) {
 			return_entry(en);
 			owners = owners->next;
 		}
+		owners_tail = NULL;
 		owners = NULL;
 		owner_cnt = 0;
 	} else if (status == ERROR) {
