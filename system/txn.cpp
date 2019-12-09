@@ -134,7 +134,7 @@ void txn_man::cleanup(RC rc) {
 		} else {
 			orig_r->return_row(type, this, accesses[rid]->data, rc);
 		}
-#endif
+#else
 
 		if (ROLL_BACK && type == XP &&
 					(CC_ALG == DL_DETECT || 
@@ -146,6 +146,7 @@ void txn_man::cleanup(RC rc) {
 		} else {
 			orig_r->return_row(type, this, accesses[rid]->data);
 		}
+#endif
 
 #if CC_ALG != TICTOC && CC_ALG != SILO
 		accesses[rid]->data = NULL;
