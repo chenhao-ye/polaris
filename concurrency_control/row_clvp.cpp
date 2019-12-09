@@ -420,7 +420,6 @@ Row_clvp::remove_descendants(CLVLockEntry * en, txn_man * txn, lock_t type) {
 RC
 Row_clvp::remove_if_exists_in_retired(txn_man * txn, bool is_abort) {
 	CLVLockEntry * en = retired;
-	CLVLockEntry * prev = NULL;
 	CLVLockEntry * to_return = NULL;
 
 	while (en != NULL) {
