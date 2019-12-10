@@ -7,18 +7,18 @@ threads=20
 cnt=100000
 wh=1
 
-for cnt in 10000 100000 1000000
+for i in $(seq 1 $epochs) 
 do
-for alg in "NO_WAIT" "WAIT_DIE" "WOUND_WAIT" "CLV"
+for wh in 16 8 4 2 1
 #for alg in "CLV"
 do
-	for penalty in 1 10 100
+	for penalty in 1
 	do
-		for threads in 5 10 20
+		for threads in 32 16 8 4 2 1
 		do
-			for wh in 1 2 3 4
+			for alg in "CLV" "NO_WAIT" "WAIT_DIE" "WOUND_WAIT" 
 			do
-				for i in $(seq 1 $epochs) 
+				for cnt in 100000 
 				do
 					timeout 300 python test_debug.py ${wl} $alg $threads $cnt $penalty $wh |& tee -a  outputs/log.out
 				done
