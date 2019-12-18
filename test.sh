@@ -1,11 +1,11 @@
-#rm debug.out
+rm debug.out
 cp -r config_tpcc_debug.h config.h
 
 wl="TPCC"
 threads=10
 cnt=100000
 wh=3
-penalty=10
+penalty=1
 
 #for alg in "CLV" "NO_WAIT" "WAIT_DIE" "WOUND_WAIT" 
 for i in 1 2 3
