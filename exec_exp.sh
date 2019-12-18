@@ -20,7 +20,7 @@ do
 			do
 				for cnt in 100000 
 				do
-					timeout 300 python test_debug.py ${wl} $alg $threads $cnt $penalty $wh |& tee -a  outputs/log.out
+					timeout 300 python test.py ${wl} $alg $threads $cnt $penalty $wh |& tee -a  outputs/log.out
 				done
 			done
 		done

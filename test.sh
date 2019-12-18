@@ -13,7 +13,7 @@ for threads in 5 10 20
 do
 for alg in "HEKATON"
 do
-	timeout 300 python test_debug.py ${wl} $alg $threads $cnt $penalty $wh |& tee -a debug.out
+	timeout 300 python test.py ${wl} $alg $threads $cnt $penalty $wh |& tee -a debug.out
 done
 done
 done
