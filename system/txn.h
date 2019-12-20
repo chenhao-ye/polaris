@@ -55,10 +55,10 @@ public:
     RC              wound_txn(txn_man * txn);
     void            increment_commit_barriers();
     void            decrement_commit_barriers();
-    void			set_abort();
-
-	void 			set_ts(ts_t timestamp);
+    void		set_abort();
     void            set_next_ts();
+	void 			set_ts(ts_t timestamp);
+
 	ts_t 			get_ts();
 
 	pthread_mutex_t txn_lock;
@@ -137,24 +137,27 @@ private:
 #endif
 };
 
-
 #include "thread.h"
 
 inline RC txn_man::wound_txn(txn_man * txn)
 {
-    if (status != RUNNING)
-	return ERROR;
+#if CC_ALG == CLV || CC_ALG == WOUND_WAIT
+	if (status != RUNNING)
+		return ERROR;
 
 	txn->set_abort();
 	#if DEBUG_WW || DEBUG_CLV
         printf("[txn] %lu set txn %lu to abort\n", get_txn_id(), txn->get_txn_id());
 	#endif
+#endif
     return FINISH;
 }
 
 inline void txn_man::set_abort()
 {
+#if CC_ALG == CLV || CC_ALG == WOUND_WAIT
 	if (ATOM_CAS(status, RUNNING, ABORTED)) {
         lock_abort = true;
     }
+#endif
 }

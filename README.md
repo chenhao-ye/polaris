@@ -18,7 +18,14 @@ To build the database.
 
 To test the database
 
-    python test.py
+    python test.py $workload $algorithm $threads $max_txn_count $penalty $abort_penalty $num_warehouses
+
+
+$workload: 'TPCC' or 'YCSB'
+$threads: int, number of threads
+$max_txn_count:  int, default is 100000
+$abort_penalty: int, default is 1
+$num_warehouses: int, default is 1
     
 Configuration
 -------------
