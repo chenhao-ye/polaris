@@ -7,13 +7,7 @@ cnt=100000
 wh=3
 penalty=1
 
-for i in 1 2 3
-do
-for threads in 5 10 20
-do
-for alg in "HEKATON"
+for alg in "CLV" "WOUND_WAIT"
 do
 	timeout 300 python test.py ${wl} $alg $threads $cnt $penalty $wh |& tee -a debug.out
-done
-done
 done

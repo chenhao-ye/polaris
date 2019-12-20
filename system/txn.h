@@ -142,8 +142,8 @@ private:
 inline RC txn_man::wound_txn(txn_man * txn)
 {
 #if CC_ALG == CLV || CC_ALG == WOUND_WAIT
-    if (status != RUNNING)
-	return ERROR;
+	if (status != RUNNING)
+		return ERROR;
 
 	txn->set_abort();
 	#if DEBUG_WW || DEBUG_CLV
