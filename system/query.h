@@ -19,6 +19,7 @@ public:
 class Query_thd {
 public:
 	void init(workload * h_wl, int thread_id);
+	void init(workload * h_wl, int thread_id, Query_thd * thread0);
 	base_query * get_next_query(); 
 	int q_idx;
 #if WORKLOAD == YCSB

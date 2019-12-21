@@ -146,6 +146,9 @@ RC row_t::retire_row(txn_man * txn) {
 #endif
 
 RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
+#if DEBUG_TMP
+	printf("txn %lu tries to get row: %lu\n", txn->get_txn_id(), _row_id);
+#endif	
 	RC rc = RCOK;
 #if CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT || CC_ALG == CLV
 	uint64_t thd_id = txn->get_thd_id();
