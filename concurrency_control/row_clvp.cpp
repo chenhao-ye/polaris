@@ -136,12 +136,43 @@ RC Row_clvp::lock_retire(txn_man * txn) {
 		// may be already wounded by others, or self is aborted
 		assert(txn->status == ABORTED);
 		rc = Abort;
-		goto final;
+		//goto final;
 	}
 
 #if DEBUG_ASSERT
 	assert_notin_list(retired, retired_tail, retired_cnt, entry->txn);
 #endif
+	if (rc != Abort) {
+	// TODO: must clean out retired list before inserting!!
+	CLVLockEntry * next = NULL;
+	CLVLockEntry * en = retired;
+	RC status;
+	while (en) {
+		next = en->next;
+		if (en->txn->status == ABORTED) {
+			//rescan from the beginning
+			next = en->prev;
+			status = remove_if_exists_in_retired(en->txn, true);
+			if (status == RCOK) {
+				// owners should be all aborted and becomes empty
+				CLVLockEntry * owner;
+				while(owners) {
+					owner = owners;
+					owner->txn->set_abort();
+					return_entry(owner);
+					owners = owners->next;
+				}
+				owners_tail = NULL;
+				owners = NULL;
+				owner_cnt = 0;
+			}
+		}
+		else if (en->txn->status == COMMITED) {
+			status = remove_if_exists_in_retired(en->txn, false);
+		}
+		en = next;
+	}
+
 	// increment barriers if conflict
 	if (retired_tail) {
 		if (conflict_lock(retired_tail->type, entry->type)) {
@@ -166,8 +197,8 @@ RC Row_clvp::lock_retire(txn_man * txn) {
 	assert_in_list(retired, retired_tail, retired_cnt, entry->txn);
 
 #endif
-
-final:
+	}
+//final:
 	// bring next owners from waiters
 	bring_next();
 	if (g_central_man)
