@@ -142,6 +142,24 @@ RC Row_clvp::lock_retire(txn_man * txn) {
 #if DEBUG_ASSERT
 	assert_notin_list(retired, retired_tail, retired_cnt, entry->txn);
 #endif
+	
+	// TODO: must clean out retired list before inserting!!
+	CLVLockEntry en = retired_head
+	CLVLockEntry next = NULL;
+	status_t status;
+	while (en) {
+		next = en->next;
+		if (en->txn->status == ABORTED) {
+			//rescan from the beginning
+			next = en->prev;
+			status = remove_if_exists_in_retired(en->txn, true);
+		}
+		else if (en->txn->status == COMMITED) {
+			status = remove_if_exists_in_retired(en->txn, false);
+		}
+		en = next;
+	}
+
 	// increment barriers if conflict
 	if (retired_tail) {
 		if (conflict_lock(retired_tail->type, entry->type)) {
@@ -354,10 +372,6 @@ Row_clvp::check_abort(lock_t type, txn_man * txn, CLVLockEntry * list, bool is_o
 		}
 		en = en->next;
 	}
-	#if DEBUG_ASSERT
-	if(owners)
-		assert_in_list(owners, owners_tail, owner_cnt, owners);
-	#endif
 	return WAIT;
 }
 
