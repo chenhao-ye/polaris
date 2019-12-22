@@ -600,7 +600,7 @@ Row_clvp::debug() {
 	assert(cnt == waiter_cnt);
 	// check owner
 	cnt = 0;
-	en = owner;
+	en = owners;
 	while(en) {
 		cnt += 1;
 		prev = en;
