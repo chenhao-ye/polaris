@@ -263,7 +263,7 @@ Row_clvp::rm_if_in_waiters(txn_man * txn) {
 
 
 CLVLockEntry * 
-Row_clvp::rm_from_owners(CLVLockEntry * en, CLVLockEntry * prev, bool destroy=true) {
+Row_clvp::rm_from_owners(CLVLockEntry * en, CLVLockEntry * prev, bool destroy) {
 	CLVLockEntry * to_return = prev->next;
 	QUEUE_RM(owners, owners_tail, prev, en, owner_cnt);
 	if (destroy) {
@@ -417,11 +417,10 @@ Row_clvp::insert_to_waiters(lock_t type, txn_man * txn) {
 CLVLockEntry * 
 Row_clvp::remove_descendants(CLVLockEntry * en) {
 	assert(en != NULL);
-	CLVLockEntry * to_destroy = NULL;
 	CLVLockEntry * prev = en->prev;
 
 	// 1. remove self, set iterator to next entry
-	bool conflict_with_owners = conflict_lock(en, owners);
+	bool conflict_with_owners = conflict_lock_entry(en, owners);
 	en = rm_from_retired(en);
 	en = en->next;
 
@@ -491,7 +490,7 @@ Row_clvp::update_entry(CLVLockEntry * en) {
 		// has no previous, en = head
 		if (en->next) {
 			#if DEBUG_ASSERT
-			assert(en == retired);
+			assert(en == retired_head);
 			#endif
 			// has next entry
 			// en->next->is_cohead = true;
@@ -508,7 +507,7 @@ Row_clvp::update_entry(CLVLockEntry * en) {
 			// has no next entry, never mind
 		}
 	}
-	assert(retired || retired->is_cohead);
+	assert(retired_head || retired->is_cohead);
 }
 
 /* debug methods */
@@ -527,7 +526,7 @@ Row_clvp::debug() {
 			assert(en->delta);
 			has_conflicts = true;
 		}
-		if (en != retired) {
+		if (en != retired_head) {
 			if (!conflict_lock_entry(retired_head, en)) {
 				if (!has_conflicts) {
 					assert(en->is_cohead);
