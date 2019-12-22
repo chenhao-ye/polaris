@@ -55,7 +55,8 @@ private:
 	bool has_conflicts_in_list(CLVLockEntry * list, CLVLockEntry * entry);
 	bool conflict_lock_entry(CLVLockEntry * l1, CLVLockEntry * l2);
 	void update_entry(CLVLockEntry * en);
-	RC remove_descendants(CLVLockEntry * en);
+	//RC remove_descendants(CLVLockEntry * en);
+	CLVLockEntry * remove_descendants(CLVLockEntry * en);
 	CLVLockEntry * rm_if_in_owner(txn_man * txn);
 	CLVLockEntry * rm_if_in_list(txn_man * txn, bool is_retired);
     //RC remove_descendants(CLVLockEntry * en, txn_man * txn, lock_t type);

@@ -177,9 +177,9 @@ RC Row_clvp::lock_release(txn_man * txn, RC rc) {
 	// Try to find the entry in the retired
 	CLVLockEntry * en;
 	if (rc == Abort) {
-		en = remove_descendants(txn);
+		en = rm_if_in_list(txn, true, true);
 	} else {
-		en = rm_if_in_list(txn, true);
+		en = rm_if_in_list(txn, true, false);
 	}
 	// try to rm in owners
 	if (en) {
@@ -190,7 +190,7 @@ RC Row_clvp::lock_release(txn_man * txn, RC rc) {
 		if (en) {
 			return_entry(en);
 		} else {
-			en = rm_if_in_list(txn, false);
+			en = rm_if_in_list(txn, false, false);
 			if (en) {
 				return_entry(en);
 			}
@@ -426,12 +426,13 @@ Row_clvp::rm_if_in_owner(txn_man * txn) {
 }
 
 CLVLockEntry * 
-Row_clvp::rm_if_in_list(txn_man * txn, bool is_retired=false) {
+Row_clvp::rm_if_in_list(txn_man * txn, bool is_retired=false, bool is_abort=true) {
 	
+	CLVLockEntry * en;
 	if (is_retired)
-		CLVLockEntry * en = retired;
+		en = retired;
 	else
-		CLVLockEntry * en = waiters_head;
+		en = waiters_head;
 
 	while (en != NULL) {
 		if (en->txn->get_txn_id() == txn->get_txn_id()) {
@@ -441,12 +442,16 @@ Row_clvp::rm_if_in_list(txn_man * txn, bool is_retired=false) {
 	}
 	if (en) { // find the entry in the retired list
 		if (is_retired) {
-			// retired needs to update entry
-			update_entry(en);
-			LIST_RM(retired, retired_tail, en, retired_cnt);
-			#if DEBUG_CLV
-			printf("[row_clv] rm txn %lu from retired of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
-			#endif
+			if (is_abort) {
+				en = remove_descendants(en);
+			} else {
+				// retired needs to update entry
+				update_entry(en);
+				LIST_RM(retired, retired_tail, en, retired_cnt);
+				#if DEBUG_CLV
+				printf("[row_clv] rm txn %lu from retired of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
+				#endif
+			}	
 		}
 		else {
 			LIST_RM(waiters_head, waiters_tail, en, waiter_cnt);
