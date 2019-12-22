@@ -355,7 +355,7 @@ Row_clvp::remove_descendants(CLVLockEntry * en) {
 	#endif
 	#if DEBUG_ASSERT
 	debug();
-	assert_notin_list(retired, retired_tail, retired_cnt, en);
+	assert_notin_list(retired, retired_tail, retired_cnt, en->txn);
 	#endif
 
 	// 2. remove from next conflict till end
@@ -380,6 +380,10 @@ Row_clvp::remove_descendants(CLVLockEntry * en) {
 			return prev;
 		}
 	}
+
+	#if DEBUG_ASSERT
+	debug();
+	#endif
 
 	// 4. abort from next conflict (en) till end
 	while(en) {
@@ -407,6 +411,11 @@ Row_clvp::remove_descendants(CLVLockEntry * en) {
 	owners_tail = NULL;
 	owners = NULL;
 	owner_cnt = 0;
+
+	#if DEBUG_ASSERT
+	debug();
+	#endif
+
 	return prev;
 }
 
@@ -433,12 +442,19 @@ Row_clvp::rm_if_in_owner(txn_man * txn) {
 		printf("[row_clv] rm txn %lu from owners of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
 		#endif
 		QUEUE_RM(owners, owners_tail, prev, en, owner_cnt);
+
 		#if DEBUG_ASSERT
 		assert_notin_list(owners, owners_tail, owner_cnt, txn);
+		debug();
 		#endif
 		// find and return
 		return en;
+
 	}
+
+	#if DEBUG_ASSERT
+	debug();
+	#endif
 	// did not find
 	return NULL;
 }
@@ -477,9 +493,16 @@ Row_clvp::rm_if_in_list(txn_man * txn, bool is_retired=false, bool is_abort=true
 			printf("[row_clv] rm txn %lu from waiters of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
 			#endif
 		}
+		#if DEBUG_ASSERT
+		debug();
+		#endif
 		// FINISH: find and removed
 		return en;
 	}
+
+	#if DEBUG_ASSERT
+	debug();
+	#endif
 	// did not find, need to keep working
 	return NULL;
 }
@@ -539,11 +562,25 @@ void
 Row_clvp::debug() {
 	CLVLockEntry * en;
 	CLVLockEntry * prev = NULL;
-	int cnt = 0;
+	UInt32 cnt = 0;
 	// check retired
+	bool has_conflicts = false;
 	en = retired;
 	while(en) {
 		assert(prev == en->prev);
+		if (conflict_lock_entry(prev, en)) {
+			assert(en->delta);
+			has_conflicts = true;
+		}
+		if (!conflict_lock_entry(retired, en)) {
+			if (!has_conflicts) {
+				assert(en->is_cohead);
+			} else {
+				assert(!en->is_cohead);
+			}
+		} else {
+			assert(!en->is_cohead);
+		}
 		cnt += 1;
 		prev = en;
 		en = en->next;
