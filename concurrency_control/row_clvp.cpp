@@ -381,10 +381,6 @@ Row_clvp::remove_descendants(CLVLockEntry * en) {
 		}
 	}
 
-	#if DEBUG_ASSERT
-	debug();
-	#endif
-
 	// 4. abort from next conflict (en) till end
 	while(en) {
 		to_return = en;
@@ -572,14 +568,19 @@ Row_clvp::debug() {
 			assert(en->delta);
 			has_conflicts = true;
 		}
-		if (!conflict_lock_entry(retired, en)) {
-			if (!has_conflicts) {
-				assert(en->is_cohead);
+		if (en != retired) {
+			if (!conflict_lock_entry(retired, en)) {
+				if (!has_conflicts) {
+					assert(en->is_cohead);
+				} else {
+					assert(!(en->is_cohead));
+				}
 			} else {
-				assert(!en->is_cohead);
+				assert(!(en->is_cohead));
 			}
 		} else {
-			assert(!en->is_cohead);
+			assert(en->is_cohead);
+			assert(!en->delta);
 		}
 		cnt += 1;
 		prev = en;
@@ -589,6 +590,7 @@ Row_clvp::debug() {
 	assert(cnt == retired_cnt);
 	// check waiters
 	cnt = 0;
+	prev = NULL;
 	en = waiters_head;
 	while(en) {
 		assert(prev == en->prev);
@@ -600,6 +602,7 @@ Row_clvp::debug() {
 	assert(cnt == waiter_cnt);
 	// check owner
 	cnt = 0;
+	prev = NULL;
 	en = owners;
 	while(en) {
 		cnt += 1;
