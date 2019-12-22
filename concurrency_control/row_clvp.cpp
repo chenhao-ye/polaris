@@ -308,7 +308,7 @@ Row_clvp::insert_to_waiters(lock_t type, txn_man * txn) {
 RC
 Row_clvp::check_abort(lock_t type, txn_man * txn, CLVLockEntry * list) {
 	CLVLockEntry * en = list;
-	RC status = ERROR;
+	RC status = RCOK;
 	while (en != NULL) {
 		if (conflict_lock(en->type, type) && (en->txn->get_ts() > txn->get_ts()) ) {
 			if (txn->wound_txn(en->txn) == ERROR) {
@@ -326,7 +326,7 @@ Row_clvp::check_abort(lock_t type, txn_man * txn, CLVLockEntry * list) {
 		}
 		en = en->next;
 	}
-	return RCOK;
+	return status;
 }
 
 CLVLockEntry * 
