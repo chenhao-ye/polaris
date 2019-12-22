@@ -264,7 +264,7 @@ Row_clvp::rm_if_in_waiters(txn_man * txn) {
 
 CLVLockEntry * 
 Row_clvp::rm_from_owners(CLVLockEntry * en, CLVLockEntry * prev, bool destroy) {
-	CLVLockEntry * to_return = prev->next;
+	CLVLockEntry * to_return = en->next;
 	QUEUE_RM(owners, owners_tail, prev, en, owner_cnt);
 	if (destroy) {
 		// return next entry
