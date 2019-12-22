@@ -48,14 +48,19 @@ private:
 
 	void bring_next();
 	void insert_to_waiters(lock_t type, txn_man * txn);
-	RC remove_if_exists_in_retired(txn_man * txn, bool is_abort);
-	RC check_abort(lock_t type, txn_man * txn, CLVLockEntry * list, bool is_owner);
-	CLVLockEntry * remove_if_exists_in_owner(txn_man * txn);
+	//RC remove_if_exists_in_retired(txn_man * txn, bool is_abort);
+	//RC check_abort(lock_t type, txn_man * txn, CLVLockEntry * list, bool is_owner);
+	RC check_abort(lock_t type, txn_man * txn, CLVLockEntry * list) ;
+	//CLVLockEntry * remove_if_exists_in_owner(txn_man * txn);
 	bool has_conflicts_in_list(CLVLockEntry * list, CLVLockEntry * entry);
 	bool conflict_lock_entry(CLVLockEntry * l1, CLVLockEntry * l2);
 	void update_entry(CLVLockEntry * en);
-	RC remove_descendants(CLVLockEntry * en, txn_man * txn, lock_t type);
-    
+	RC remove_descendants(CLVLockEntry * en);
+	CLVLockEntry * rm_if_in_owner(txn_man * txn);
+	CLVLockEntry * rm_if_in_list(txn_man * txn, bool is_retired);
+    //RC remove_descendants(CLVLockEntry * en, txn_man * txn, lock_t type);
+    void clean_aborted();
+
     // debugging method
     void print_list(CLVLockEntry * list, CLVLockEntry * tail, int cnt);
     void assert_notin_list(CLVLockEntry * list, CLVLockEntry * tail, int cnt, txn_man * txn);
