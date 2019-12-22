@@ -58,7 +58,7 @@ private:
 	//RC remove_descendants(CLVLockEntry * en);
 	CLVLockEntry * remove_descendants(CLVLockEntry * en);
 	CLVLockEntry * rm_if_in_owner(txn_man * txn);
-	CLVLockEntry * rm_if_in_list(txn_man * txn, bool is_retired);
+	CLVLockEntry * rm_if_in_list(txn_man * txn, bool is_retired, bool is_abort);
     //RC remove_descendants(CLVLockEntry * en, txn_man * txn, lock_t type);
     void clean_aborted();
 
