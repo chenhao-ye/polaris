@@ -108,7 +108,7 @@
 // Benchmark
 /***********************************************/
 // max number of rows touched per transaction
-#define MAX_ROW_PER_TXN				64
+#define MAX_ROW_PER_TXN				5//64
 #define QUERY_INTVL 				1UL
 #define MAX_TXN_PER_PART 			100
 #define FIRST_PART_LOCAL 			true
@@ -186,7 +186,7 @@ extern TestCases					g_test_case;
 #define DEBUG_CC					false //true
 #define DEBUG_WW                    		false
 #define DEBUG_BENCHMARK				false
-#define DEBUG_CLV                   		false
+#define DEBUG_CLV                   		true//false
 #define DEBUG_TMP				false
 
 /***********************************************/

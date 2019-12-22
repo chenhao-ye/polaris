@@ -12,5 +12,5 @@ penalty=1
 
 for alg in "CLV" 
 do
-	timeout 300 python test.py ${wl} $alg $threads $cnt $penalty $wh |& tee -a debug.out
+	timeout 100 python test.py ${wl} $alg $threads $cnt $penalty $wh |& tee -a debug.out
 done

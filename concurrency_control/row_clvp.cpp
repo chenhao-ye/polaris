@@ -46,6 +46,18 @@ Row_clvp::clean_aborted(){
 			en = en->next;
 		}
 	}
+	en = owners;
+	CLVLockEntry * prev = NULL;
+	while (en) {
+		if (en->txn->lock_abort) {
+			QUEUE_RM(owners, owners_tail, prev, en, owner_cnt);
+			return_entry(en);
+			en = prev->next;
+		} else {
+			prev = en;
+			en = en->next;
+		}
+	}
 	#if DEBUG_ASSERT
 	debug();
 	#endif
@@ -220,13 +232,19 @@ Row_clvp::bring_next() {
 	while (waiters_head) {
 		if ((owners == NULL) || (!conflict_lock(owners->type, waiters_head->type))) {
 			LIST_GET_HEAD(waiters_head, waiters_tail, entry);
+			waiter_cnt --;
+
+			if (entry->txn->lock_abort) {
+				continue;
+			}
 
 			#if DEBUG_ASSERT
 			// aseert no conflicts
 			if (has_conflicts_in_list(owners, entry))
 				assert(false);
 			#endif
-
+			
+			// add to onwers
 			QUEUE_PUSH(owners, owners_tail, entry);
 
 			#if DEBUG_ASSERT
@@ -235,7 +253,6 @@ Row_clvp::bring_next() {
 			#endif
 
 			owner_cnt ++;
-			waiter_cnt --;
 			ASSERT(entry->txn->lock_ready == 0);
 			entry->txn->lock_ready = true;
 
@@ -385,7 +402,9 @@ Row_clvp::remove_descendants(CLVLockEntry * en) {
 	while(en) {
 		to_return = en;
 		en->txn->set_abort();
-		// removed from list, no need to decrement barrier as it is no longer commit
+		// removed from list, still need to decrement commit barriers as it may already in committed?
+		// no, it cannot be set to commited if set abort
+		//en->txn->decrement_commit_barriers();
 		retired_cnt--;
 
 		#if DEBUG_CLV
@@ -491,6 +510,7 @@ Row_clvp::rm_if_in_list(txn_man * txn, bool is_retired=false, bool is_abort=true
 		}
 		#if DEBUG_ASSERT
 		debug();
+		assert_notin_list(retired, retired_tail, retired_cnt, txn);
 		#endif
 		// FINISH: find and removed
 		return en;
