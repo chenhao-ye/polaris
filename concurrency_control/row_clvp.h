@@ -63,6 +63,7 @@ private:
     void clean_aborted();
 
     // debugging method
+    void debug();
     void print_list(CLVLockEntry * list, CLVLockEntry * tail, int cnt);
     void assert_notin_list(CLVLockEntry * list, CLVLockEntry * tail, int cnt, txn_man * txn);
     void assert_in_list(CLVLockEntry * list, CLVLockEntry * tail, int cnt, txn_man * txn);
