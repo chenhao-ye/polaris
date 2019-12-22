@@ -507,7 +507,7 @@ Row_clvp::update_entry(CLVLockEntry * en) {
 			// has no next entry, never mind
 		}
 	}
-	assert(retired_head || retired->is_cohead);
+	assert(retired_head || retired_head->is_cohead);
 }
 
 /* debug methods */
