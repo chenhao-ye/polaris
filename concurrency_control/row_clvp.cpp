@@ -257,6 +257,7 @@ Row_clvp::rm_if_in_waiters(txn_man * txn) {
 			#endif
 			return true;
 		}
+		en = en->next;
 	}
 	return false;
 }
@@ -417,15 +418,16 @@ Row_clvp::insert_to_waiters(lock_t type, txn_man * txn) {
 CLVLockEntry * 
 Row_clvp::remove_descendants(CLVLockEntry * en) {
 	assert(en != NULL);
+	CLVLockEntry * to_destroy = NULL;
 	CLVLockEntry * prev = en->prev;
-
 	// 1. remove self, set iterator to next entry
+	lock_t type = en->type;
 	bool conflict_with_owners = conflict_lock_entry(en, owners);
 	en = rm_from_retired(en);
 
 	// 2. remove next conflict till end
 	// 2.1 find next conflict
-	while(en && (!conflict_lock_entry(prev, en))) {
+	while(en && (!conflict_lock(type, en->type))) {
 		en = en->next;
 	}
 	// 2.2 remove dependees
@@ -446,6 +448,7 @@ Row_clvp::remove_descendants(CLVLockEntry * en) {
 		// abort till end
 		LIST_RM_SINCE(retired_head, retired_tail, en);
 		while(en) {
+			to_destroy = en;
 			#if DEBUG_CLV
 			printf("[row_clv] rm aborted txn %lu from retired of row %lu\n", 
 				en->txn->get_txn_id(), _row->get_row_id());
@@ -453,10 +456,13 @@ Row_clvp::remove_descendants(CLVLockEntry * en) {
 			en->txn->set_abort();
 			retired_cnt--;
 			en = en->next;
-			return_entry(en->prev);
+			return_entry(to_destroy);
 		}
 	}
-	return prev->next;
+	if (prev)
+		return prev->next;
+	else
+		return retired_head;
 }
 
 
