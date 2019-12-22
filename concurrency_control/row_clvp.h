@@ -41,26 +41,25 @@ private:
 	//   So new txns are inserted into the tail.
 	CLVLockEntry * owners;
 	CLVLockEntry * owners_tail;
-	CLVLockEntry * retired;
+	CLVLockEntry * retired_head;
 	CLVLockEntry * retired_tail;
 	CLVLockEntry * waiters_head;
 	CLVLockEntry * waiters_tail;
 
+	void clean_aborted_retired();
+	void clean_aborted_owner();
+	CLVLockEntry rm_if_in_owners(txn_man * txn);
+	bool rm_if_in_retired(txn_man * txn, bool is_abort);
+	bool rm_if_in_waiters(txn_man * txn);
+	CLVLockEntry * rm_from_owners(CLVLockEntry * en, CLVLockEntry * prev, bool destroy=true);
+	CLVLockEntry * rm_from_retired(CLVLockEntry * en);
 	void bring_next();
-	void insert_to_waiters(lock_t type, txn_man * txn);
-	//RC remove_if_exists_in_retired(txn_man * txn, bool is_abort);
-	//RC check_abort(lock_t type, txn_man * txn, CLVLockEntry * list, bool is_owner);
-	RC check_abort(lock_t type, txn_man * txn, CLVLockEntry * list) ;
-	//CLVLockEntry * remove_if_exists_in_owner(txn_man * txn);
 	bool has_conflicts_in_list(CLVLockEntry * list, CLVLockEntry * entry);
 	bool conflict_lock_entry(CLVLockEntry * l1, CLVLockEntry * l2);
-	void update_entry(CLVLockEntry * en);
-	//RC remove_descendants(CLVLockEntry * en);
+	RC wound_conflict(lock_t type, txn_man * txn, CLVLockEntry * list);
+	void insert_to_waiters(lock_t type, txn_man * txn);
 	CLVLockEntry * remove_descendants(CLVLockEntry * en);
-	CLVLockEntry * rm_if_in_owner(txn_man * txn);
-	CLVLockEntry * rm_if_in_list(txn_man * txn, bool is_retired, bool is_abort);
-    //RC remove_descendants(CLVLockEntry * en, txn_man * txn, lock_t type);
-    void clean_aborted();
+	void update_entry(CLVLockEntry * en);
 
     // debugging method
     void debug();
