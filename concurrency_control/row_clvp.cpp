@@ -282,7 +282,7 @@ Row_clvp::rm_from_owners(CLVLockEntry * en, CLVLockEntry * prev, bool destroy) {
 
 CLVLockEntry * 
 Row_clvp::rm_from_retired(CLVLockEntry * en) {
-	CLVLockEntry * to_return = en->prev;
+	CLVLockEntry * to_return = en->next;
 	update_entry(en);
 	LIST_RM(retired_head, retired_tail, en, retired_cnt);
 	return_entry(en);
@@ -422,7 +422,6 @@ Row_clvp::remove_descendants(CLVLockEntry * en) {
 	// 1. remove self, set iterator to next entry
 	bool conflict_with_owners = conflict_lock_entry(en, owners);
 	en = rm_from_retired(en);
-	en = en->next;
 
 	// 2. remove next conflict till end
 	// 2.1 find next conflict
