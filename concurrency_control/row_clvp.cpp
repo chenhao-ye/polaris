@@ -109,7 +109,7 @@ RC Row_clvp::lock_retire(txn_man * txn) {
 		} else 
 			entry->is_cohead = true;
 		// 2.3 append entry to retired
-		RETIRED_LIST_PUT_TAIL(retired, retired_tail, entry);
+		RETIRED_LIST_PUT_TAIL(retired_head, retired_tail, entry);
 		retired_cnt++;
 
 	#if DEBUG_CLV
@@ -118,7 +118,7 @@ RC Row_clvp::lock_retire(txn_man * txn) {
 	#endif
 	#if DEBUG_ASSERT
 		debug();
-		assert_in_list(retired, retired_tail, retired_cnt, entry->txn);
+		assert_in_list(retired_head, retired_tail, retired_cnt, entry->txn);
 	#endif
 	}
 
@@ -148,7 +148,7 @@ RC Row_clvp::lock_release(txn_man * txn, RC rc) {
 		if (en) {
 			return_entry(en);
 		} else {
-			rm_if_in_waiters();
+			rm_if_in_waiters(txn);
 		}
 	}
 
@@ -187,7 +187,7 @@ Row_clvp::clean_aborted_owner() {
 	while (en) {
 		if (en->txn->lock_abort) {
 			// no changes to prev
-			en = rm_from_owners(en);
+			en = rm_from_owners(en, prev);
 		} else {
 			prev = en;
 			en = en->next;
@@ -284,7 +284,7 @@ CLVLockEntry *
 Row_clvp::rm_from_retired(CLVLockEntry * en) {
 	CLVLockEntry * to_return = en->prev;
 	update_entry(en);
-	LIST_RM(retired, retired_tail, en, retired_cnt);
+	LIST_RM(retired_head, retired_tail, en, retired_cnt);
 	return_entry(en);
 	#if DEBUG_ASSERT
 	debug();
@@ -446,7 +446,7 @@ Row_clvp::remove_descendants(CLVLockEntry * en) {
 		} // else, nothing to do
 	} else {
 		// abort till end
-		LIST_RM_SINCE(retired, retired_tail, en);
+		LIST_RM_SINCE(retired_head, retired_tail, en);
 		while(en) {
 			#if DEBUG_CLV
 			printf("[row_clv] rm aborted txn %lu from retired of row %lu\n", 
@@ -520,7 +520,7 @@ Row_clvp::debug() {
 	UInt32 cnt = 0;
 	// check retired
 	bool has_conflicts = false;
-	en = retired;
+	en = retired_head;
 	while(en) {
 		assert(prev == en->prev);
 		if (conflict_lock_entry(prev, en)) {
@@ -528,7 +528,7 @@ Row_clvp::debug() {
 			has_conflicts = true;
 		}
 		if (en != retired) {
-			if (!conflict_lock_entry(retired, en)) {
+			if (!conflict_lock_entry(retired_head, en)) {
 				if (!has_conflicts) {
 					assert(en->is_cohead);
 				} else {
