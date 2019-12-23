@@ -1,9 +1,9 @@
 rm debug.out
-cp -r config_tpcc_debug.h config.h
-#cp -r config_ycsb_debug.h config.h
+#cp -r config_tpcc_debug.h config.h
+cp -r config_ycsb_debug.h config.h
 
 wl="TPCC"
-#wl="YCSB"
+wl="YCSB"
 threads=10
 cnt=100000
 #cnt=3

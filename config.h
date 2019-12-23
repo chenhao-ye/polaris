@@ -16,7 +16,7 @@
 // # of transactions to run for warmup
 #define WARMUP						0
 // YCSB or TPCC
-#define WORKLOAD TPCC
+#define WORKLOAD YCSB
 // print the transaction latency distribution
 #define PRT_LAT_DISTR				false
 #define STATS_ENABLE				true
@@ -125,7 +125,7 @@
 #define PERC_MULTI_PART				1
 #define REQ_PER_QUERY				16
 #define FIELD_PER_TUPLE				10
-#define SYNTHETIC_YCSB				true//false
+#define SYNTHETIC_YCSB				false
 // ==== [TPCC] ====
 // For large warehouse count, the tables do not fit in memory
 // small tpcc schemas shrink the table size.
@@ -180,14 +180,14 @@ extern TestCases					g_test_case;
 #define VERB_ALLOC					true
 
 #define DEBUG_LOCK					false
-#define DEBUG_TIMESTAMP					false
+#define DEBUG_TIMESTAMP				false
 #define DEBUG_SYNTH					false
-#define DEBUG_ASSERT					false//true
-#define DEBUG_CC					false//true
-#define DEBUG_WW                    			false
-#define DEBUG_BENCHMARK             			false
-#define DEBUG_CLV                    			false
-#define DEBUG_TMP					false
+#define DEBUG_ASSERT				true//false
+#define DEBUG_CC					false //true
+#define DEBUG_WW                    		false
+#define DEBUG_BENCHMARK				false
+#define DEBUG_CLV                   		false
+#define DEBUG_TMP				false
 
 /***********************************************/
 // Constant
@@ -212,7 +212,7 @@ extern TestCases					g_test_case;
 #define VLL							10
 #define HEKATON 					11
 #define WOUND_WAIT                  12
-#define CLV                         13
+#define CLV						13
 //Isolation Levels 
 #define SERIALIZABLE				1
 #define SNAPSHOT					2
