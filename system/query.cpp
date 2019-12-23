@@ -39,15 +39,7 @@ Query_queue::init(workload * h_wl) {
 void 
 Query_queue::init_per_thread(int thread_id) {	
 	all_queries[thread_id] = (Query_thd *) _mm_malloc(sizeof(Query_thd), 64);
-#if SYNTHETIC_YCSB
-	if (thread_id != 0) {
-		all_queries[thread_id]->init(_wl, thread_id, all_queries[0]);
-	} else {
-		all_queries[thread_id]->init(_wl, thread_id);
-	}
-#else
 	all_queries[thread_id]->init(_wl, thread_id);
-#endif
 }
 
 base_query * 
@@ -72,24 +64,6 @@ Query_queue::threadInitQuery(void * This) {
 //     class Query_thd
 /*************************************************/
 
-void 
-Query_thd::init(workload * h_wl, int thread_id, Query_thd * thread0) {
-	uint64_t request_cnt;
-	q_idx = 0;
-	request_cnt = WARMUP / g_thread_cnt + MAX_TXN_PER_PART + 4;
-#if ABORT_BUFFER_ENABLE
-    request_cnt += ABORT_BUFFER_SIZE;
-#endif
-#if WORKLOAD == YCSB
-    	queries = thread0->queries;
-#elif WORKLOAD == TPCC
-	queries = (tpcc_query *) _mm_malloc(sizeof(tpcc_query) * request_cnt, 64);
-	for (UInt32 qid = 0; qid < request_cnt; qid ++) {
-		new(&queries[qid]) tpcc_query();
-		queries[qid].init(thread_id, h_wl);
-	}
-#endif
-}
 
 void 
 Query_thd::init(workload * h_wl, int thread_id) {
@@ -108,23 +82,15 @@ Query_thd::init(workload * h_wl, int thread_id) {
 #endif
 	for (UInt32 qid = 0; qid < request_cnt; qid ++) {
 #if WORKLOAD == YCSB
-#if SYNTHETIC_YCSB
-		if (qid != 0)
-			queries[qid] = queries[qid-1];
-		else {
-			new(&queries[qid]) ycsb_query();
-			queries[qid].init(thread_id, h_wl, this);
-		}
-#else
 		new(&queries[qid]) ycsb_query();
 		queries[qid].init(thread_id, h_wl, this);
-#endif
 #elif WORKLOAD == TPCC
 		new(&queries[qid]) tpcc_query();
 		queries[qid].init(thread_id, h_wl);
 #endif
 	}
 }
+
 
 base_query * 
 Query_thd::get_next_query() {
