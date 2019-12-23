@@ -56,6 +56,13 @@ uint64_t ycsb_query::zipf(uint64_t n, double theta) {
 	return 1 + (uint64_t)(n * pow(eta*u -eta + 1, alpha));
 }
 
+uint64_t ycsb_query::get_new_row() {
+	uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
+	uint64_t row_id = zipf(table_size - 1, g_zipf_theta);
+	assert(row_id < table_size);
+	return row_id;
+}
+
 void ycsb_query::gen_requests(uint64_t thd_id, workload * h_wl) {
 #if CC_ALG == HSTORE
 	assert(g_virtual_part_cnt == g_part_cnt);
@@ -91,9 +98,23 @@ void ycsb_query::gen_requests(uint64_t thd_id, workload * h_wl) {
 
 	int rid = 0;
 	for (UInt32 tmp = 0; tmp < g_req_per_query; tmp ++) {		
-		double r;
-		drand48_r(&_query_thd->buffer, &r);
 		ycsb_request * req = &requests[rid];
+		// the request will access part_id.
+		uint64_t ith = tmp * part_num / g_req_per_query;
+		uint64_t part_id = 
+			part_to_access[ ith ];
+		uint64_t row_id; 
+#if SYNTHETIC_YCSB
+		if (tmp == 0) {
+			// insert hotpost at the beginning
+			req->rtype = WR;
+			row_id = 0;
+
+		} else {
+#endif
+		double r;
+		// get a random number r to determine read/write ratio
+		drand48_r(&_query_thd->buffer, &r);
 		if (r < g_read_perc) {
 			req->rtype = RD;
 		} else if (r >= g_read_perc && r <= g_write_perc + g_read_perc) {
@@ -103,13 +124,12 @@ void ycsb_query::gen_requests(uint64_t thd_id, workload * h_wl) {
 			req->scan_len = SCAN_LEN;
 		}
 
-		// the request will access part_id.
-		uint64_t ith = tmp * part_num / g_req_per_query;
-		uint64_t part_id = 
-			part_to_access[ ith ];
-		uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
-		uint64_t row_id = zipf(table_size - 1, g_zipf_theta);
-		assert(row_id < table_size);
+		//uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
+		//uint64_t row_id = zipf(table_size - 1, g_zipf_theta);
+		row_id = get_new_row();
+#if SYNTHETIC_YCSB
+		}
+#endif
 		uint64_t primary_key = row_id * g_virtual_part_cnt + part_id;
 		req->key = primary_key;
 		int64_t rint64;
@@ -149,8 +169,11 @@ void ycsb_query::gen_requests(uint64_t thd_id, workload * h_wl) {
 					requests[j] = requests[j + 1];
 					requests[j + 1] = tmp;
 				}
-		for (UInt32 i = 0; i < request_cnt - 1; i++)
+		part_num = 0;
+		for (UInt32 i = 0; i < request_cnt - 1; i++) {
 			assert(requests[i].key < requests[i + 1].key);
+			//printf("thread-%lu request[%d] %lu\n", thd_id, i, requests[i].key);
+		}
 	}
 
 }

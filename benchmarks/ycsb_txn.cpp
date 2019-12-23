@@ -77,15 +77,22 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 			iteration ++;
 			if (req->rtype == RD || req->rtype == WR || iteration == req->scan_len)
 				finish_req = true;
+#if CC_ALG == CLV
+			/*
+			if (finish_req) {
+				if (retire_row(row) == Abort) {
+					finish(Abort);
+				}
+			}*/
+			if (finish_req && (retire_row(row) == Abort))
+                	return finish(Abort);
+#endif
 		}
+	
 	}
 	rc = RCOK;
 final:
 	rc = finish(rc);
-	#if DEBUG_WW
-		if (rc == Abort)
-			printf("[YCSB] detected abort\n" );
-	#endif
 	return rc;
 }
 

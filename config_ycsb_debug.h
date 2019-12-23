@@ -44,7 +44,7 @@
 #define ISOLATION_LEVEL 			SERIALIZABLE
 
 // all transactions acquire tuples according to the primary key order.
-#define KEY_ORDER					false
+#define KEY_ORDER					true//false
 // transaction roll back changes after abort
 #define ROLL_BACK					true
 // per-row lock/ts management or central lock/ts management
@@ -125,6 +125,7 @@
 #define PERC_MULTI_PART				1
 #define REQ_PER_QUERY				16
 #define FIELD_PER_TUPLE				10
+#define SYNTHETIC_YCSB				true//false
 // ==== [TPCC] ====
 // For large warehouse count, the tables do not fit in memory
 // small tpcc schemas shrink the table size.
@@ -181,9 +182,9 @@ extern TestCases					g_test_case;
 #define DEBUG_LOCK					false
 #define DEBUG_TIMESTAMP				false
 #define DEBUG_SYNTH					false
-#define DEBUG_ASSERT				true
+#define DEBUG_ASSERT				false
 #define DEBUG_CC					false //true
-#define DEBUG_WW                    		true
+#define DEBUG_WW                    		false
 #define DEBUG_BENCHMARK				false
 #define DEBUG_CLV                   		false
 #define DEBUG_TMP				false

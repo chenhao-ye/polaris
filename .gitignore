@@ -4,3 +4,4 @@
 config.h
 rundb
 cmake-build-debug
+.DS_STORE

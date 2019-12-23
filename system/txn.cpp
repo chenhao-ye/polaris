@@ -128,7 +128,7 @@ void txn_man::cleanup(RC rc) {
 		}
 #endif
 
-#if (CC_ALG == CLV) 
+#if CC_ALG == CLV 
 		if (ROLL_BACK && type == XP) {
 			orig_r->return_row(type, this, accesses[rid]->orig_data, rc);
 		} else {
@@ -191,6 +191,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
 #endif
 		num_accesses_alloc ++;
 	}
+
 	
 	rc = row->get_row(type, this, accesses[ row_cnt ]->data);
 

@@ -16,7 +16,7 @@
 // # of transactions to run for warmup
 #define WARMUP						0
 // YCSB or TPCC
-#define WORKLOAD TPCC
+#define WORKLOAD YCSB
 // print the transaction latency distribution
 #define PRT_LAT_DISTR				false
 #define STATS_ENABLE				true
@@ -39,12 +39,12 @@
 /***********************************************/
 // WAIT_DIE, NO_WAIT, DL_DETECT, TIMESTAMP, MVCC, HEKATON, HSTORE, OCC, VLL, TICTOC, SILO
 // TODO TIMESTAMP does not work at this moment
-//#define CC_ALG WOUND_WAIT
-#define CC_ALG WOUND_WAIT
+//#define CC_ALG CLV
+#define CC_ALG CLV
 #define ISOLATION_LEVEL 			SERIALIZABLE
 
 // all transactions acquire tuples according to the primary key order.
-#define KEY_ORDER					false
+#define KEY_ORDER					true//false
 // transaction roll back changes after abort
 #define ROLL_BACK					true
 // per-row lock/ts management or central lock/ts management
@@ -125,6 +125,7 @@
 #define PERC_MULTI_PART				1
 #define REQ_PER_QUERY				16
 #define FIELD_PER_TUPLE				10
+#define SYNTHETIC_YCSB				true//false
 // ==== [TPCC] ====
 // For large warehouse count, the tables do not fit in memory
 // small tpcc schemas shrink the table size.
@@ -134,7 +135,7 @@
 // are not modeled.
 #define TPCC_ACCESS_ALL 			false 
 #define WH_UPDATE					true
-#define NUM_WH 3
+#define NUM_WH 1
 //
 enum TPCCTxnType {TPCC_ALL, 
 				TPCC_PAYMENT, 
@@ -179,14 +180,14 @@ extern TestCases					g_test_case;
 #define VERB_ALLOC					true
 
 #define DEBUG_LOCK					false
-#define DEBUG_TIMESTAMP					false
+#define DEBUG_TIMESTAMP				false
 #define DEBUG_SYNTH					false
-#define DEBUG_ASSERT					false//true
-#define DEBUG_CC					false//true
-#define DEBUG_WW                    			false
-#define DEBUG_BENCHMARK             			false
-#define DEBUG_CLV                    			false
-#define DEBUG_TMP					false
+#define DEBUG_ASSERT				false
+#define DEBUG_CC					false //true
+#define DEBUG_WW                    		false
+#define DEBUG_BENCHMARK				false
+#define DEBUG_CLV                   		false
+#define DEBUG_TMP				false
 
 /***********************************************/
 // Constant
@@ -211,7 +212,7 @@ extern TestCases					g_test_case;
 #define VLL							10
 #define HEKATON 					11
 #define WOUND_WAIT                  12
-#define CLV                         13
+#define CLV						13
 //Isolation Levels 
 #define SERIALIZABLE				1
 #define SNAPSHOT					2
