@@ -27,6 +27,7 @@ public:
 
 	uint64_t request_cnt;
 	ycsb_request * requests;
+	uint64_t get_new_row();
 
 private:
 	void gen_requests(uint64_t thd_id, workload * h_wl);
