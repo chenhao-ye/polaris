@@ -5,7 +5,9 @@ cp -r config_ycsb_debug.h config.h
 wl="TPCC"
 wl="YCSB"
 threads=10
+threads=2
 cnt=100000
+cnt=3
 wh=1
 penalty=1
 

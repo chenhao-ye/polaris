@@ -428,6 +428,9 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list
 				if (!en->txn->atomic_set_ts(local_ts)) {
 					// it has a ts already
 					recheck = true;
+#if DEBUG_TMP
+					printf("txn %lu rechecking\n", txn->get_txn_id());
+#endif
 				} else {
 					local_ts++;
 				}
