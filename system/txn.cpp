@@ -19,7 +19,6 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 	lock_abort = false;
 	timestamp = 0;
 #if CC_ALG == CLV
-    
     commit_barriers = 0;
 #endif
 	ready_part = 0;
@@ -74,15 +73,25 @@ uint64_t txn_man::get_thd_id() {
 	return h_thd->get_thd_id();
 }
 
-void txn_man::set_next_ts() {
-	this->timestamp = h_thd->get_next_ts();
-	#if DEBUG_CLV
-	printf("[txn] set ts %lu for txn %lu\n", this->timestamp, get_txn_id());
-	#endif
+bool txn_man::set_next_ts() {
+	if (ATOM_CAS(this->timestamp, 0, h_thd->get_next_ts())) {
+		#if DEBUG_CLV
+		printf("[txn] set ts %lu for txn %lu\n", this->timestamp, get_txn_id());
+		#endif
+		return true;
+	} else {
+		return false;
+	}
 	// need to be atomic
 	// lock_ts();
-    //ATOM_CAS(this->timestamp, 0, h_thd->get_next_ts());
     // unlock_ts();
+}
+
+void txn_man::reassign_ts() {
+	this->timestamp = h_thd->get_next_ts();
+	#if DEBUG_CLV
+	printf("[txn] change ts to %lu for aborted txn %lu\n", this->timestamp, get_txn_id());
+	#endif
 }
 
 void txn_man::lock_ts() {
@@ -299,12 +308,13 @@ RC txn_man::finish(RC rc) {
         if (!ATOM_CAS(status, RUNNING, COMMITED))
             rc = Abort;
 	}
-	/*
+	
 	if (rc == Abort) {
-	    set_next_ts();
+	    reassign_ts();
 	} else {
 	    set_ts(0);
-	} */
+	} 
+
 	#if DEBUG_CLV
 	if (rc == Abort)
         printf("[txn] txn %lu is set to aborted\n", get_txn_id());

@@ -90,8 +90,7 @@ RC thread_t::run() {
 					}
 					else if (m_query == NULL) {
 						m_query = query_queue->get_next_query( _thd_id );
-					#if CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT || CC_ALG == CLV
-						// TODO: preset priority for clvp
+					#if CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT
 						m_txn->set_ts(get_next_ts());
 					#endif
 					}
@@ -103,10 +102,6 @@ RC thread_t::run() {
 					m_query = query_queue->get_next_query( _thd_id );
 			}
 		}
-
-#if DEBUG_WW || DEBUG_CLV
-        printf("[thread] query set up in thread %lu for txn %lu\n", get_thd_id(), m_txn->get_txn_id());
-#endif
 
 		INC_STATS(_thd_id, time_query, get_sys_clock() - starttime);
 		m_txn->abort_cnt = 0;

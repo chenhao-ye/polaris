@@ -1,6 +1,7 @@
-*.o
-*.d
-*.out
+**.o
+**.d
+**.out
+**.swp
 config.h
 rundb
 cmake-build-debug
