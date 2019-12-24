@@ -110,8 +110,8 @@ public:
   #elif CC_ALG == WOUND_WAIT
   	Row_ww * manager;
   #elif CC_ALG == CLV
-  	//Row_clv * manager;
-  	Row_clvp * manager;
+  	Row_clv * manager;
+  	//Row_clvp * manager;
   #endif
 	char * data;
 	table_t * table;
