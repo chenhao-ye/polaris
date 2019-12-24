@@ -59,8 +59,8 @@ void row_t::init_manager(row_t * row) {
 #elif CC_ALG == WOUND_WAIT
     manager = (Row_ww *) mem_allocator.alloc(sizeof(Row_ww), _part_id);
 #elif CC_ALG == CLV
-    //manager = (Row_clv *) mem_allocator.alloc(sizeof(Row_clv), _part_id);
-    manager = (Row_clvp *) mem_allocator.alloc(sizeof(Row_clvp), _part_id);
+    manager = (Row_clv *) mem_allocator.alloc(sizeof(Row_clv), _part_id);
+    //manager = (Row_clvp *) mem_allocator.alloc(sizeof(Row_clvp), _part_id);
 #endif
 
 #if CC_ALG != HSTORE

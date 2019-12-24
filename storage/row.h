@@ -32,8 +32,8 @@ class Row_tictoc;
 class Row_silo;
 class Row_vll;
 class Row_ww;
-//class Row_clv;
-class Row_clvp;
+class Row_clv;
+//class Row_clvp;
 
 class row_t
 {
