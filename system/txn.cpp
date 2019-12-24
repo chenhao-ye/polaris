@@ -76,7 +76,7 @@ uint64_t txn_man::get_thd_id() {
 bool txn_man::atomic_set_ts(ts_t ts) {
 	if (ATOM_CAS(this->timestamp, 0, ts)) {
 		#if DEBUG_CLV
-		printf("[txn] set ts %lu for txn %lu\n", this->timestamp, get_txn_id());
+		printf("[txn-%lu] set ts %lu\n", get_txn_id(), this->timestamp);
 		#endif
 		return true;
 	}
@@ -330,21 +330,20 @@ txn_man::release() {
 
 void
 txn_man::decrement_commit_barriers() {
-    // TODO: may have to be atomic since is not called in critical section
+	ATOM_SUB(this->commit_barriers, 1);
 #if DEBUG_CLV
-printf("[txn-%lu] decrement barrier\n", get_txn_id());
-assert(commit_barriers >= 0);
+	printf("[txn-%lu] decrement barrier to %d/n", get_txn_id(), commit_barriers);
+	assert(commit_barriers >= 0);
 #endif
-    ATOM_SUB(this->commit_barriers, 1);
 }
 
 void
 txn_man::increment_commit_barriers() {
+	// not necessarily atomic, called in critical section only
+	ATOM_ADD(this->commit_barriers, 1);
 #if DEBUG_CLV
-	printf("[txn-%lu] increment barrier\n", get_txn_id());
+	printf("[txn-%lu] increment barrier to %d\n", get_txn_id(), commit_barriers);
 #endif
-    // not necessarily atomic, called in critical section only
-    ATOM_ADD(this->commit_barriers, 1);
 }
 
 #if CC_ALG == CLV
