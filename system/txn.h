@@ -54,10 +54,10 @@ public:
 	// [WW, CLV]
     RC              wound_txn(txn_man * txn);
     void            increment_commit_barriers();
-    void            decrement_commit_barriers();
-    void			set_abort();
-    bool            set_next_ts();
-    bool			reassign_ts();
+    void		decrement_commit_barriers();
+    void		set_abort();
+    bool		set_next_ts();
+    void		reassign_ts();
 	void 			set_ts(ts_t timestamp);
 
 	ts_t 			get_ts();

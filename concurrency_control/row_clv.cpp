@@ -1,6 +1,6 @@
 #include "row.h"
 #include "txn.h"
-#include "row_clvp.h"
+#include "row_clv.h"
 #include "mem_alloc.h"
 #include "manager.h"
 
@@ -400,17 +400,17 @@ Row_clv::wound_txn(txn_man * txn, CLVLockEntry * en) {
 
 
 RC
-Row_clv::wound_conflict(lock_t type, txn_man * txn, CLVLockEntry * list, RC status) {
+Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list, RC status) {
 	CLVLockEntry * en = list;
 	bool recheck = false;
 	while (en != NULL) {
 		recheck = false;
 		if (status == RCOK && conflict_lock(en->type, type) && 
-			(en->txn->get_ts() == 0 || en->txn->get_ts() > txn->get_ts()) ) {
+			(en->txn->get_ts() == 0 || en->txn->get_ts() > ts) ) {
 			status = WAIT; // has conflicts
 		}
 		if (status == WAIT) {
-			if (txn->get_ts() != 0) {
+			if (ts != 0) {
 				// abort txn
 				wound_txn(txn, en);
 			}
