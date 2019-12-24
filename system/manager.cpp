@@ -60,6 +60,11 @@ Manager::get_ts(uint64_t thread_id) {
 	return time;
 }
 
+uint64_t
+Manager::get_n_ts(int n) {
+	return ATOM_FETCH_ADD((*timestamp), n);
+}
+
 ts_t Manager::get_min_ts(uint64_t tid) {
 	uint64_t now = get_sys_clock();
 	uint64_t last_time = _last_min_ts_time; 

@@ -11,6 +11,7 @@ public:
 	void 			init();
 	// returns the next timestamp.
 	ts_t			get_ts(uint64_t thread_id);
+	ts_t			get_n_ts(int n); // book n timestamps
 
 	// For MVCC. To calculate the min active ts in the system
 	void 			add_ts(uint64_t thd_id, ts_t ts);

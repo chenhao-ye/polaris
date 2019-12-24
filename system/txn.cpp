@@ -14,7 +14,7 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 	this->h_thd = h_thd;
 	this->h_wl = h_wl;
 	pthread_mutex_init(&txn_lock, NULL);
-	pthread_mutex_init(&txn_ts_lock, NULL);
+	//pthread_mutex_init(&txn_ts_lock, NULL);
 	lock_ready = false;
 	lock_abort = false;
 	timestamp = 0;
@@ -73,38 +73,28 @@ uint64_t txn_man::get_thd_id() {
 	return h_thd->get_thd_id();
 }
 
-bool txn_man::set_next_ts() {
-	if (ATOM_CAS(this->timestamp, 0, h_thd->get_next_ts())) {
+bool atomic_set_ts(ts_t ts) {
+	if (ATOM_CAS(this->timestamp, 0, ts)) {
 		#if DEBUG_CLV
 		printf("[txn] set ts %lu for txn %lu\n", this->timestamp, get_txn_id());
 		#endif
 		return true;
-	} else {
-		return false;
 	}
-	// need to be atomic
-	// lock_ts();
-    // unlock_ts();
+	return false;
+}
+
+uint64_t txn_man::set_next_ts(int n) {
+	if (atomic_set_ts(h_thd->get_next_n_ts(n))) {
+		return this->timestamp;
+	} else {
+		return 0; // fail to set timestamp
+	}
 }
 
 void txn_man::reassign_ts() {
-	this->timestamp = h_thd->get_next_ts();
+	this->timestamp = h_thd->get_next_n_ts(1);
 	#if DEBUG_CLV
 	printf("[txn] change ts to %lu for aborted txn %lu\n", this->timestamp, get_txn_id());
-	#endif
-}
-
-void txn_man::lock_ts() {
-	pthread_mutex_lock( &txn_ts_lock );
-	#if DEBUG_TMP
-	printf("hold lock %lu\n", get_txn_id());
-	#endif
-}
-
-void txn_man::unlock_ts() {
-	pthread_mutex_unlock( &txn_ts_lock );
-	#if DEBUG_TMP
-	printf("unlock %lu\n", get_txn_id());
 	#endif
 }
 

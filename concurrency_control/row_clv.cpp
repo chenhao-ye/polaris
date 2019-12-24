@@ -18,6 +18,8 @@ void Row_clv::init(row_t * row) {
 	owner_cnt = 0;
 	waiter_cnt = 0;
 	retired_cnt = 0;
+	// local timestamp
+	local_ts = -1;
 
 	latch = new pthread_mutex_t;
 	pthread_mutex_init(latch, NULL);
@@ -49,10 +51,24 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 
 	RC rc = WAIT;
 	RC status = RCOK;
+	bool unassigned = false;
+
+	// if unassigned, assign the largest possible number
+	local_ts = -1;
+	if ( txn->get_ts() == 0 && 
+		( (waiter_cnt != 0) || (retired_cnt != 0) || (owner_cnt != 0 && conflict_lock(owners->type, type)) ) ) {
+		local_ts = txn->set_next_ts(retired_cnt + owner_cnt);
+		// if == 0, fail to assign, oops, self has an assigned number anyway
+		// if != 0, already booked n ts. 
+		if (local_ts != 0) {
+			unassigned = true;
+			local_ts = local_ts - (retired_cnt + owner_cnt) + 1;
+			assert(txn->get_ts() != local_ts); // make sure did not change pointed addr
+		}
+	}
 
 	// check retired
-	ts_t ts = txn->get_ts();
-	status = wound_conflict(type, txn, ts, retired_head, status);
+	status = wound_conflict(type, txn, txn->get_ts(), retired_head, status, unassigned);
 	if (status == Abort) {
 		rc = Abort;
 		bring_next();
@@ -60,20 +76,11 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	}
 
 	// check owners
-	status = wound_conflict(type, txn, ts, owners, status);
+	status = wound_conflict(type, txn, txn->get_ts(), owners, status, unassigned);
 	if (status == Abort) {
 		rc = Abort;
 		bring_next();
 		goto final;
-	}
-
-	if ((status == WAIT) && (ts == 0)) {
-		if (!txn->set_next_ts()) {
-			// abort self
-			rc = Abort;
-			bring_next();
-			goto final;
-		}
 	}
 
 	// 2. insert into waiters and bring in next waiter
@@ -400,11 +407,13 @@ Row_clv::wound_txn(txn_man * txn, CLVLockEntry * en) {
 
 
 RC
-Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list, RC status) {
+Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list, RC status, bool unassigned) {
 	CLVLockEntry * en = list;
 	bool recheck = false;
 	while (en != NULL) {
 		recheck = false;
+		if (en->txn->lock_abort)
+			continue;
 		if (status == RCOK && conflict_lock(en->type, type) && 
 			(en->txn->get_ts() == 0 || en->txn->get_ts() > ts) ) {
 			status = WAIT; // has conflicts
@@ -414,11 +423,13 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list
 				// abort txn
 				wound_txn(txn, en);
 			}
-			if (en->txn->get_ts() == 0) {
+			if (unassigned) {
 				// assign it a ts first
-				if (!en->txn->set_next_ts()) {
+				if (!en->txn->atomic_set_ts(local_ts)) {
 					// it has a ts already
 					recheck = true;
+				} else {
+					local_ts++;
 				}
 			}
 		}

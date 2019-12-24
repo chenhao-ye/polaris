@@ -226,6 +226,11 @@ RC thread_t::run() {
 
 
 ts_t
+thread_t::get_next_n_ts(int n) {
+	return glob_manager->get_n_ts(n);
+}
+
+ts_t
 thread_t::get_next_ts() {
 	if (g_ts_batch_alloc) {
 		if (_curr_ts % g_ts_batch_num == 0) {
