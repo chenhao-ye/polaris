@@ -94,7 +94,7 @@ uint64_t txn_man::set_next_ts(int n) {
 void txn_man::reassign_ts() {
 	this->timestamp = h_thd->get_next_n_ts(1);
 	#if DEBUG_CLV
-	printf("[txn] change ts to %lu for aborted txn %lu\n", this->timestamp, get_txn_id());
+	printf("[txn-%lu] change ts to %lu for aborted txn\n", get_txn_id(), this->timestamp);
 	#endif
 }
 
@@ -283,15 +283,15 @@ RC txn_man::finish(RC rc) {
 	}
 	#if DEBUG_WW
     if (rc == Abort)
-        printf("[txn] txn %lu is set to aborted\n", get_txn_id());
+        printf("[txn-%lu] is set to aborted\n", get_txn_id());
     else if (rc == RCOK)
-    printf("[txn] txn %lu is set to commited\n", get_txn_id());
+    printf("[txn-%lu] is set to commited\n", get_txn_id());
 	#endif
 	cleanup(rc);
 #elif CC_ALG == CLV
 	if (rc == RCOK) {
 		#if DEBUG_CLV
-		printf("[txn] # bariers of txn %lu = %d\n", get_txn_id(), commit_barriers);
+		printf("[txn-%lu] # bariers %d\n", get_txn_id(), commit_barriers);
 		#endif
         while(commit_barriers > 0 && status == RUNNING)
             continue;
@@ -307,9 +307,9 @@ RC txn_man::finish(RC rc) {
 
 	#if DEBUG_CLV
 	if (rc == Abort)
-        printf("[txn] txn %lu is set to aborted\n", get_txn_id());
+        printf("[txn-%lu] is set to aborted\n", get_txn_id());
 	else if (rc == RCOK)
-	    printf("[txn] txn %lu is set to commited\n", get_txn_id());
+	    printf("[txn-%lu] is set to commited\n", get_txn_id());
     #endif
 	cleanup(rc);
 #else 
@@ -332,7 +332,7 @@ void
 txn_man::decrement_commit_barriers() {
     // TODO: may have to be atomic since is not called in critical section
 #if DEBUG_CLV
-printf("[txn] decrement barrier for txn %lu\n", get_txn_id());
+printf("[txn-%lu] decrement barrier\n", get_txn_id());
 assert(commit_barriers >= 0);
 #endif
     ATOM_SUB(this->commit_barriers, 1);
@@ -341,7 +341,7 @@ assert(commit_barriers >= 0);
 void
 txn_man::increment_commit_barriers() {
 #if DEBUG_CLV
-	printf("[txn] increment barrier for txn %lu\n", get_txn_id());
+	printf("[txn-%lu] increment barrier\n", get_txn_id());
 #endif
     // not necessarily atomic, called in critical section only
     ATOM_ADD(this->commit_barriers, 1);

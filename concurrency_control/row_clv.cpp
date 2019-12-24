@@ -142,8 +142,8 @@ RC Row_clv::lock_retire(txn_man * txn) {
 		retired_cnt++;
 
 	#if DEBUG_CLV
-		printf("[row_clv] move txn %lu from owners to retired type %d of row %lu\n",
-				txn->get_txn_id(), entry->type, _row->get_row_id());
+		printf("[row_clv-%lu txn-%lu (%lu)] move to retired (type %d)\n",
+				_row->get_row_id(), txn->get_txn_id(), txn->get_ts(), entry->type);
 	#endif
 	#if DEBUG_ASSERT
 		debug();
@@ -277,7 +277,8 @@ Row_clv::rm_if_in_waiters(txn_man * txn) {
 		if (en->txn == txn) {
 			LIST_RM(waiters_head, waiters_tail, en, waiter_cnt);
 			#if DEBUG_CLV
-			printf("[row_clv] rm txn %lu from waiters of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
+			printf("[row_clv-%lu txn-%lu (%lu)] rm from waiters\n", 
+				_row->get_row_id(), en->txn->get_txn_id(), en->txn->get_ts());
 			#endif
 			return_entry(en);
 			#if DEBUG_ASSERT
@@ -301,7 +302,8 @@ Row_clv::rm_from_owners(CLVLockEntry * en, CLVLockEntry * prev, bool destroy) {
 		return_entry(en);
 	}
 	#if DEBUG_CLV
-	printf("[row_clv] rm txn %lu from owners of row %lu\n", en->txn->get_txn_id(), _row->get_row_id());
+	printf("[row_clv-%lu txn-%lu (%lu)] rm from owners\n", 
+		_row->get_row_id(), en->txn->get_txn_id(), en->txn->get_ts());
 	#endif
 	#if DEBUG_ASSERT
 	debug();
@@ -348,8 +350,8 @@ Row_clv::bring_next() {
 			entry->txn->lock_ready = true;
 
 			#if DEBUG_CLV
-			printf("[row_clv] bring %lu from waiters to owners of row %lu\n",
-					entry->txn->get_txn_id(), _row->get_row_id());
+			printf("[row_clv-%lu txn-%lu (%lu)] move to owners\n",
+					 _row->get_row_id(), entry->txn->get_txn_id(), entry->txn->get_ts());
 			#endif
 		} else
 			break;
@@ -393,14 +395,14 @@ RC
 Row_clv::wound_txn(txn_man * txn, CLVLockEntry * en) {
 	if (txn->wound_txn(en->txn) == ERROR) {
 		#if DEBUG_CLV
-		printf("[row_clv] detected txn %lu is aborted when "
-		"trying to wound others on row %lu\n", txn->get_txn_id(),  _row->get_row_id());
+		printf("[row_clv-%lu txn-%lu (%lu)] detected aborted when "
+		"trying to wound others\n", _row->get_row_id(), txn->get_txn_id(),  txn->get_ts());
 		#endif
 		return Abort;
 	}
 	#if DEBUG_CLV
-	printf("[row_clv] txn %lu abort txn %lu on row %lu\n", txn->get_txn_id(), 
-		en->txn->get_txn_id(), _row->get_row_id());
+	printf("[row_clv-%lu txn-%lu (%lu)] wound txn %lu (%lu)\n", 
+		_row->get_row_id(), txn->get_txn_id(),  txn->get_ts(), en->txn->get_txn_id(), en->txn->get_ts());
 	#endif
 	return RCOK;
 }
@@ -465,8 +467,8 @@ Row_clv::insert_to_waiters(lock_t type, txn_man * txn) {
 	txn->lock_ready = false;
 
 #if DEBUG_CLV
-	printf("[row_clv] add txn %lu type %d to waiters of row %lu\n",
-			txn->get_txn_id(), type, _row->get_row_id());
+	printf("[row_clv-%lu txn-%lu (%lu)] add to waiters (type %d)\n",
+			_row->get_row_id(), txn->get_txn_id(), txn->get_ts(), type);
 #endif
 #if DEBUG_ASSERT
 	assert_in_list(waiters_head, waiters_tail, waiter_cnt, txn);
@@ -496,6 +498,11 @@ Row_clv::remove_descendants(CLVLockEntry * en) {
 			while(owners) {
 				en = owners;
 				en->txn->set_abort();
+				#if DEBUG_CLV
+				printf("[row_clv-%lu txn-%lu (%lu)] rm descendants from owners\n", 
+					_row->get_row_id(), en->txn->get_txn_id(), en->txn->get_ts());
+				#endif
+				// no need to be too complicated (i.e. call function) as the owner will be empty in the end
 				owners = owners->next;
 				return_entry(en);
 			}
@@ -509,8 +516,8 @@ Row_clv::remove_descendants(CLVLockEntry * en) {
 		while(en) {
 			to_destroy = en;
 			#if DEBUG_CLV
-			printf("[row_clv] rm aborted txn %lu from retired of row %lu\n", 
-				en->txn->get_txn_id(), _row->get_row_id());
+			printf("[row_clv-%lu txn-%lu (%lu)] rm descendants from retired\n", 
+				_row->get_row_id(), en->txn->get_txn_id(), en->txn->get_ts());
 			#endif
 			en->txn->set_abort();
 			retired_cnt--;

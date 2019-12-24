@@ -148,9 +148,6 @@ inline RC txn_man::wound_txn(txn_man * txn)
 		return ERROR;
 
 	txn->set_abort();
-	#if DEBUG_WW || DEBUG_CLV
-        printf("[txn] %lu set txn %lu to abort\n", get_txn_id(), txn->get_txn_id());
-	#endif
 #endif
     return FINISH;
 }
@@ -160,6 +157,9 @@ inline void txn_man::set_abort()
 #if CC_ALG == CLV || CC_ALG == WOUND_WAIT
 	if (ATOM_CAS(status, RUNNING, ABORTED)) {
         lock_abort = true;
+        #if DEBUG_WW || DEBUG_CLV
+        printf("[txn-%lu] set to abort\n", get_txn_id());
+		#endif
     }
 #endif
 }

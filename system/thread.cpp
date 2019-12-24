@@ -59,7 +59,7 @@ RC thread_t::run() {
 	UInt64 txn_cnt = 0;
 
 #if DEBUG_WW || DEBUG_CLV
-    printf("[thread] thread starts! %lu \n", get_thd_id());
+    printf("[thread-%lu] starts!\n", get_thd_id());
 #endif
 
 	while (true) {
@@ -111,7 +111,8 @@ RC thread_t::run() {
 		m_txn->set_txn_id(get_thd_id() + thd_txn_id * g_thread_cnt);
 		thd_txn_id ++;
 		#if DEBUG_WW || DEBUG_CLV
-			printf("[thread] thread %lu start running txn %lu\n", get_thd_id(), m_txn->get_txn_id());
+			printf("[thread-%lu txn-%lu (%lu)] start running\n", 
+				get_thd_id(), m_txn->get_txn_id(), m_txn->get_ts());
 		#endif
 
 		if ((CC_ALG == HSTORE && !HSTORE_LOCAL_TS)
