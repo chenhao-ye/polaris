@@ -62,7 +62,8 @@ Manager::get_ts(uint64_t thread_id) {
 
 uint64_t
 Manager::get_n_ts(int n) {
-	return ATOM_FETCH_ADD((*timestamp), n);
+	uint64_t time = ATOM_ADD_FETCH((*timestamp), n);
+	return time;
 }
 
 ts_t Manager::get_min_ts(uint64_t tid) {

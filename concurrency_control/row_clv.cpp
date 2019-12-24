@@ -57,12 +57,12 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	local_ts = -1;
 	if ( txn->get_ts() == 0 && 
 		( (waiter_cnt != 0) || (retired_cnt != 0) || (owner_cnt != 0 && conflict_lock(owners->type, type)) ) ) {
-		local_ts = txn->set_next_ts(retired_cnt + owner_cnt);
+		local_ts = txn->set_next_ts(retired_cnt + owner_cnt + 1);
 		// if == 0, fail to assign, oops, self has an assigned number anyway
 		// if != 0, already booked n ts. 
 		if (local_ts != 0) {
 			unassigned = true;
-			local_ts = local_ts - (retired_cnt + owner_cnt) + 1;
+			local_ts = local_ts - (retired_cnt + owner_cnt);
 			assert(txn->get_ts() != local_ts); // make sure did not change pointed addr
 		}
 	}

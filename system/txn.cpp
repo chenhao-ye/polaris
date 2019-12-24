@@ -73,7 +73,7 @@ uint64_t txn_man::get_thd_id() {
 	return h_thd->get_thd_id();
 }
 
-bool atomic_set_ts(ts_t ts) {
+bool txn_man::atomic_set_ts(ts_t ts) {
 	if (ATOM_CAS(this->timestamp, 0, ts)) {
 		#if DEBUG_CLV
 		printf("[txn] set ts %lu for txn %lu\n", this->timestamp, get_txn_id());

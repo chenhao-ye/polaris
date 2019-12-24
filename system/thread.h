@@ -24,8 +24,9 @@ public:
 	// conversion is done within the function.
 	RC 			run();
 
-    // moved from private to global for clv
-    ts_t 		get_next_ts();
+    	// moved from private to global for clv
+    	ts_t 		get_next_ts();
+    	ts_t 		get_next_n_ts(int n);
 
 
 private:
