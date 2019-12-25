@@ -147,7 +147,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
 	#endif
 	#if DEBUG_ASSERT
 		debug();
-		assert_in_list(retired_head, retired_tail, retired_cnt, entry->txn);
+		assert_in_list(retired_head, retired_tail, retired_cnt, txn);
 	#endif
 	}
 
@@ -177,9 +177,18 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 		if (en) {
 			return_entry(en);
 		} else {
-			rm_if_in_waiters(txn);
+			if(!rm_if_in_waiters(txn)) {
+#if DEBUG_CLV
+				printf("[row_clv-%lu txn-%lu (%lu)] cannot find entry when trying to release\n", _row->get_row_id(), txn->get_txn_id(), txn->get_ts()); 
+#endif
+			}	
 		}
 	}
+	#if DEBUG_ASSERT
+	debug();
+	assert_notin_list(waiters_head, waiters_tail, waiter_cnt, txn);
+	assert_notin_list(retired_head, retired_tail, retired_cnt, txn);
+	#endif
 
 	// WAIT - done releasing with is_abort = true
 	// FINISH - done releasing with is_abort = false
@@ -267,6 +276,10 @@ Row_clv::rm_if_in_retired(txn_man * txn, bool is_abort) {
 			en = en->next;
 		}
 	}
+	#if DEBUG_ASSERT
+	debug();
+	assert_notin_list(retired_head, retired_tail, retired_cnt, txn);
+	#endif
 	return false;
 }
 
@@ -289,6 +302,10 @@ Row_clv::rm_if_in_waiters(txn_man * txn) {
 		}
 		en = en->next;
 	}
+	#if DEBUG_ASSERT
+	debug();
+	assert_notin_list(waiters_head, waiters_tail, waiter_cnt, txn);
+	#endif
 	return false;
 }
 
@@ -324,7 +341,7 @@ Row_clv::rm_from_retired(CLVLockEntry * en) {
 	return_entry(en);
 	#if DEBUG_ASSERT
 	debug();
-	assert_notin_list(waiters_head, waiters_tail, waiter_cnt, en->txn);
+	assert_notin_list(retired_head, retired_tail, retired_cnt, en->txn);
 	#endif
 	return to_return;
 }
@@ -421,7 +438,7 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list
 		if (en->txn->lock_abort)
 			continue;
 		if (status == RCOK && conflict_lock(en->type, type) && 
-			(en->txn->get_ts() == 0 || en->txn->get_ts() > ts) ) {
+			(txn->get_ts() == 0 || en->txn->get_ts() > ts) ) {
 			status = WAIT; // has conflicts
 		}
 		if (status == WAIT) {
@@ -529,6 +546,9 @@ Row_clv::remove_descendants(CLVLockEntry * en) {
 			return_entry(to_destroy);
 		}
 	}
+#if DEBUG_ASSERT
+	debug();
+#endif
 	if (prev)
 		return prev->next;
 	else
@@ -541,23 +561,8 @@ Row_clv::update_entry(CLVLockEntry * en) {
 	CLVLockEntry * entry;
 	if (en->prev) {
 		if (en->next) {
-			if (en->next->delta == true) {
-				if (!conflict_lock_entry(en->prev, en->next)) {
-					// both are SH
-					en->next->delta = false;
-					// change delta, need to check cohead
-					if (en->prev->is_cohead) {
-						entry = en->next;
-						while(entry && (entry->delta == false)) {
-							entry->is_cohead = true;
-							entry->txn->decrement_commit_barriers();
-							entry = entry->next;
-						}
-					} // else, not cohead, nothing to do
-				}
-			} else {
-				en->next->delta = en->delta;
-			}
+			if (en->delta && !en->next->delta) // WR(1)R(0)
+				en->next->delta = true;
 		} else {
 			// has no next, nothing needs to be updated
 		}
@@ -571,8 +576,10 @@ Row_clv::update_entry(CLVLockEntry * en) {
 			// en->next->is_cohead = true;
 			if (en->next->delta) {
 				en->next->delta = false;
+				assert(!en->next->is_cohead);
 				entry = en->next;
 				while(entry && (entry->delta == false)) {
+					assert(!entry->is_cohead);
 					entry->is_cohead = true;
 					entry->txn->decrement_commit_barriers();
 					entry = entry->next;
@@ -583,6 +590,9 @@ Row_clv::update_entry(CLVLockEntry * en) {
 		}
 	}
 	assert(retired_head || retired_head->is_cohead);
+#if DEBUG_ASSERT
+	debug();
+#endif
 }
 
 /* debug methods */
@@ -593,10 +603,15 @@ Row_clv::debug() {
 	CLVLockEntry * prev = NULL;
 	UInt32 cnt = 0;
 	// check retired
-	bool has_conflicts = false;
+	//bool has_conflicts = false;
 	en = retired_head;
 	while(en) {
+		if (cnt == 0) {
+			assert(en->is_cohead);
+			assert(!en->delta);
+		}
 		assert(prev == en->prev);
+		/*
 		if (conflict_lock_entry(prev, en)) {
 			assert(en->delta);
 			has_conflicts = true;
@@ -615,6 +630,7 @@ Row_clv::debug() {
 			assert(en->is_cohead);
 			assert(!en->delta);
 		}
+		*/
 		cnt += 1;
 		prev = en;
 		en = en->next;

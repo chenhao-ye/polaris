@@ -332,7 +332,7 @@ void
 txn_man::decrement_commit_barriers() {
 	ATOM_SUB(this->commit_barriers, 1);
 #if DEBUG_CLV
-	printf("[txn-%lu] decrement barrier to %d/n", get_txn_id(), commit_barriers);
+	printf("[txn-%lu] decrement barrier to %d\n", get_txn_id(), commit_barriers);
 	assert(commit_barriers >= 0);
 #endif
 }
