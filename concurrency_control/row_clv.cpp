@@ -317,6 +317,10 @@ Row_clv::rm_from_retired(CLVLockEntry * en) {
 	CLVLockEntry * to_return = en->next;
 	update_entry(en);
 	LIST_RM(retired_head, retired_tail, en, retired_cnt);
+	#if DEBUG_CLV
+	printf("[row_clv-%lu txn-%lu (%lu)] rm from retired\n", 
+		_row->get_row_id(), en->txn->get_txn_id(), en->txn->get_ts());
+	#endif
 	return_entry(en);
 	#if DEBUG_ASSERT
 	debug();
