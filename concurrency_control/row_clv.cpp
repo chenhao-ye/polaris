@@ -452,8 +452,10 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list
 	bool recheck = false;
 	while (en != NULL) {
 		recheck = false;
-		if (en->txn->lock_abort)
+		if (en->txn->lock_abort) {
+			en = en->next;
 			continue;
+		}
 		if (status == RCOK && conflict_lock(en->type, type) && 
 			(txn->get_ts() == 0 || en->txn->get_ts() > ts) ) {
 			status = WAIT; // has conflicts
@@ -582,7 +584,7 @@ Row_clv::update_entry(CLVLockEntry * en) {
 				en->next->delta = true;
 #if DEBUG_CLV
 				printf("[row_clv-%lu txn-%lu (%lu)] change delta=%d is_cohead=%d\n", 
-						_row->get_row_id(), en->txn->get_txn_id(), en->txn->get_ts(), en->delta, en->is_cohead);
+						_row->get_row_id(), en->next->txn->get_txn_id(), en->next->txn->get_ts(), en->next->delta, en->next->is_cohead);
 #endif
 		} else {
 			// has no next, nothing needs to be updated

@@ -180,14 +180,14 @@ extern TestCases					g_test_case;
 #define VERB_ALLOC					true
 
 #define DEBUG_LOCK					false
-#define DEBUG_TIMESTAMP				false
+#define DEBUG_TIMESTAMP					false
 #define DEBUG_SYNTH					false
-#define DEBUG_ASSERT				true//false
+#define DEBUG_ASSERT					false
 #define DEBUG_CC					false //true
-#define DEBUG_WW                    		false
-#define DEBUG_BENCHMARK				false
-#define DEBUG_CLV                   		true
-#define DEBUG_TMP				true
+#define DEBUG_WW                    			false
+#define DEBUG_BENCHMARK					false
+#define DEBUG_CLV                   			false	
+#define DEBUG_TMP					false	
 
 /***********************************************/
 // Constant

@@ -309,7 +309,7 @@ void row_t::return_row(access_t type, txn_man * txn, row_t * row, RC rc) {
 		this->copy(row);
 	}
 	#if DEBUG_CLV
-	//	printf("[row-%lu txn-%lu] try to release lock when aborted\n", get_row_id(), txn->get_txn_id());
+		printf("[row-%lu txn-%lu] try to release lock when aborted\n", get_row_id(), txn->get_txn_id());
 	#endif
 	this->manager->lock_release(txn, rc);
 }
