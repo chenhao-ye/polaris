@@ -6,10 +6,11 @@ wl="TPCC"
 wl="YCSB"
 threads=10
 cnt=100000
+cnt=100
 wh=1
 penalty=1
 
-for alg in "CLV"  
+for alg in "CLV" "WOUND_WAIT" 
 do
 	timeout 100 python test.py ${wl} $alg $threads $cnt $penalty $wh |& tee -a debug.out
 done
