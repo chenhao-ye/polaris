@@ -47,6 +47,7 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 			row_t * row = ((row_t *)m_item->location);
 			row_t * row_local; 
 			access_t type = req->rtype;
+			//printf("txn %lu try to get row %lu\n", get_txn_id(), row->get_row_id());
 			
 			row_local = get_row(row, type);
 			if (row_local == NULL) {
@@ -78,14 +79,10 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 			if (req->rtype == RD || req->rtype == WR || iteration == req->scan_len)
 				finish_req = true;
 #if CC_ALG == CLV
-			/*
 			if (finish_req) {
-				if (retire_row(row) == Abort) {
-					finish(Abort);
-				}
-			}*/
-			if (finish_req && (retire_row(row) == Abort))
-                	return finish(Abort);
+				if (retire_row(row) == Abort)
+                			return finish(Abort);
+			}
 #endif
 		}
 	
