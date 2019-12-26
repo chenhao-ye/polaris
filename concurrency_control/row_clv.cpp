@@ -87,6 +87,12 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	insert_to_waiters(type, txn);
 	bring_next();
 
+#if DEBUG_ASSERT
+	if (waiter_cnt != 0) {
+		assert(owner_cnt != 0);
+	}
+#endif
+
 	// 3. if brought txn in owner, return acquired lock
 	en = owners;
 	while(en){
@@ -127,23 +133,34 @@ RC Row_clv::lock_retire(txn_man * txn) {
 	if (rc != Abort) {
 		// 2.1 must clean out retired list before inserting!!
 		clean_aborted_retired();
+#if DEBUG_ASSERT
+		debug();
+#endif
 		// 2.2 increment barriers if conflicts with tail
 		if (retired_tail) {
 			if (conflict_lock(retired_tail->type, entry->type)) {
 				// default is_cohead = false
 				entry->delta = true;
 				txn->increment_commit_barriers();
-			} else 
+			} else { 
 				entry->is_cohead = retired_tail->is_cohead;
-		} else 
-			entry->is_cohead = true;
+				if (!entry->is_cohead)
+					txn->increment_commit_barriers();
+			}
+#if DEBUG_TMP
+		printf("[row_clv-%lu txn-%lu (%lu)] retired_tail(%lu)->type %d, entry->type %d, entry->delta %d\n", _row->get_row_id(), txn->get_txn_id(), txn->get_ts(), 
+				retired_tail->txn->get_txn_id(), retired_tail->type, entry->type, entry->delta);
+#endif
 		// 2.3 append entry to retired
+		} else {
+			entry->is_cohead = true;
+		}
 		RETIRED_LIST_PUT_TAIL(retired_head, retired_tail, entry);
 		retired_cnt++;
 
 	#if DEBUG_CLV
-		printf("[row_clv-%lu txn-%lu (%lu)] move to retired (type %d)\n",
-				_row->get_row_id(), txn->get_txn_id(), txn->get_ts(), entry->type);
+		printf("[row_clv-%lu txn-%lu (%lu)] move to retired (type %d), is_cohead=%d, delta=%d\n",
+				_row->get_row_id(), txn->get_txn_id(), txn->get_ts(), entry->type, entry->is_cohead, entry->delta);
 	#endif
 	#if DEBUG_ASSERT
 		debug();
@@ -563,6 +580,10 @@ Row_clv::update_entry(CLVLockEntry * en) {
 		if (en->next) {
 			if (en->delta && !en->next->delta) // WR(1)R(0)
 				en->next->delta = true;
+#if DEBUG_CLV
+				printf("[row_clv-%lu txn-%lu (%lu)] change delta=%d is_cohead=%d\n", 
+						_row->get_row_id(), en->txn->get_txn_id(), en->txn->get_ts(), en->delta, en->is_cohead);
+#endif
 		} else {
 			// has no next, nothing needs to be updated
 		}
@@ -578,9 +599,13 @@ Row_clv::update_entry(CLVLockEntry * en) {
 				en->next->delta = false;
 				assert(!en->next->is_cohead);
 				entry = en->next;
-				while(entry && (entry->delta == false)) {
+				while(entry && (!entry->delta)) {
 					assert(!entry->is_cohead);
 					entry->is_cohead = true;
+#if DEBUG_CLV
+				printf("[row_clv-%lu txn-%lu (%lu)] change delta=%d is_cohead=%d\n", 
+						_row->get_row_id(), entry->txn->get_txn_id(), en->txn->get_ts(), entry->delta, entry->is_cohead);
+#endif
 					entry->txn->decrement_commit_barriers();
 					entry = entry->next;
 				}
