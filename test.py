@@ -1,6 +1,6 @@
 import os, sys, re, os.path
 import platform
-import subprocess, datetime, time, signal
+import subprocess, datetime, time, signal, json
 
 
 jobs = {}
@@ -38,49 +38,47 @@ def run(test = '', job=None):
 		app_flags = "-Ar -t1"
 	if test == 'conflict':
 		app_flags = "-Ac -t4"
-	os.system("./rundb %s" % app_flags)
+	os.system("./rundb %s | tee temp.out" % app_flags)
 	
 
 def compile_and_run(job) :
 	compile(job)
 	run('', job)
 
+def parse_output(job):
+	output = open("temp.out")
+	for line in output:
+		line = line.strip()
+		if "[summary]" in line:
+			for token in line.strip().split('[summary]')[-1].split(','):
+				key, val = token.strip().split('=')
+				job[key] = val
+			break
+	output.close()
+	return job
+
 if __name__ == "__main__":
-	# TODO: use argparse to set params. default settings 
-	#penalty = 100000
-	#max_txn_cnt = 1000000
-	#threads = 32
-	workload = "TPCC"
+	# job = {
+	# 	"WORKLOAD"			: workload,
+	# 	"CC_ALG"			: alg,
+	# 	"ABORT_PENALTY"			: penalty,
+	# 	"THREAD_CNT"			: threads,
+	# 	"MAX_TXN_PER_PART"		: max_txn_cnt,		
+	# 	"NUM_WH"			: warehouse
+	# }
 
-	# parse workload
-	if sys.argv[1].lower() != workload.lower():
-		workload = "YCSB"
-	
-	# parse algorithms
-	alg = sys.argv[2]
+	job = {}
+	for item in sys.argv[1:]:
+		key = item.split("=")[0]
+		value = item.split("=")[1]
+		job[key] = value
 
-	# parse threads
-	threads = int(sys.argv[3])
-
-	# parse max txn cnt
-	max_txn_cnt = int(sys.argv[4])
-
-	# parse penalty
-	penalty = int(sys.argv[5])
-
-	# parse warehouse
-	warehouse = int(sys.argv[6])
-
-	job = {
-		"WORKLOAD"			: workload,
-		"CC_ALG"			: alg,
-		"ABORT_PENALTY"			: penalty,
-		"THREAD_CNT"			: threads,
-		"MAX_TXN_PER_PART"		: max_txn_cnt,		
-		"NUM_WH"			: warehouse
-	}
-	print("[CONFIGURATION] {} {} {} {} {} {}".format(workload, threads, max_txn_cnt, penalty, alg, warehouse))	
 	compile_and_run(job)
+	job = parse_output(job)
+	stats = open("outputs/stats.json", 'a+')
+	stats.write(json.dumps(job)+"\n")
+	stats.close()
+
 	
 
 
