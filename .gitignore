@@ -2,6 +2,7 @@
 **.d
 **.out
 **.swp
+**.swo
 config.h
 rundb
 cmake-build-debug
