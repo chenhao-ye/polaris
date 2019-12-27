@@ -484,6 +484,11 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list
 			}
 			else if (en->txn->get_ts() == 0) {
 				// assign it a ts first
+#if DEBUG_ASSERT
+				if (ts == 0) {
+					assert(local_ts < txn->get_ts());
+				}
+#endif
 				if (!en->txn->atomic_set_ts(local_ts)) {
 					// it has a ts already
 					recheck = true;
@@ -633,9 +638,6 @@ Row_clv::update_entry(CLVLockEntry * en) {
 			// has no next entry, never mind
 		}
 	}
-#if DEBUG_ASSERT
-	debug();
-#endif
 }
 
 /* debug methods */
@@ -654,26 +656,8 @@ Row_clv::debug() {
 			assert(!en->delta);
 		}
 		assert(prev == en->prev);
-		/*
-		if (conflict_lock_entry(prev, en)) {
-			assert(en->delta);
-			has_conflicts = true;
-		}
-		if (en != retired_head) {
-			if (!conflict_lock_entry(retired_head, en)) {
-				if (!has_conflicts) {
-					assert(en->is_cohead);
-				} else {
-					assert(!(en->is_cohead));
-				}
-			} else {
-				assert(!(en->is_cohead));
-			}
-		} else {
-			assert(en->is_cohead);
-			assert(!en->delta);
-		}
-		*/
+		if (prev)
+			assert(prev->txn->get_ts() <= en->txn->get_ts() || !conflict_lock(prev->type, en->type));
 		cnt += 1;
 		prev = en;
 		en = en->next;
@@ -685,6 +669,10 @@ Row_clv::debug() {
 	prev = NULL;
 	en = waiters_head;
 	while(en) {
+		if(retired_tail)
+			assert(retired_tail->txn->get_ts() <= en->txn->get_ts() || !conflict_lock(retired_tail->type, en->type));
+		if (prev)
+			assert(prev->txn->get_ts() <= en->txn->get_ts() || !conflict_lock(prev->type, en->type));
 		assert(prev == en->prev);
 		cnt += 1;
 		prev = en;
@@ -697,6 +685,8 @@ Row_clv::debug() {
 	prev = NULL;
 	en = owners;
 	while(en) {
+		if(retired_tail)
+			assert(retired_tail->txn->get_ts() <= en->txn->get_ts() || !conflict_lock(retired_tail->type, en->type));
 		cnt += 1;
 		prev = en;
 		en = en->next;
