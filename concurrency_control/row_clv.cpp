@@ -48,6 +48,9 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	assert(waiter_cnt < g_thread_cnt);
 
 	// 1. set txn to abort in owners and retired
+#if DEBUG_ASSERT
+	debug();
+#endif
 
 	RC rc = WAIT;
 	RC status = RCOK;
@@ -57,7 +60,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	if (ts == 0) {
 		// test if can grab the lock without assigning priority
 		if ((ts == 0) && (waiter_cnt == 0) && 
-				(retired_cnt == 0 || (!conflict_lock(retired_head->type, type) && retired_head->is_cohead)) && 
+				(retired_cnt == 0 || (!conflict_lock(retired_tail->type, type) && retired_tail->is_cohead)) && 
 				(owner_cnt == 0 || !conflict_lock(owners->type, type)) ) {
 			// add to owners
 			CLVLockEntry * entry = get_entry();
@@ -67,6 +70,10 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 			QUEUE_PUSH(owners, owners_tail, entry);
 			owner_cnt++;
 			rc = RCOK;
+			#if DEBUG_CLV
+			printf("[row_clv-%lu txn-%lu (%lu)] add to owners (type %d)\n",
+					 _row->get_row_id(), entry->txn->get_txn_id(), entry->txn->get_ts(), type);
+			#endif
 			goto final;
 		}
 
@@ -105,6 +112,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	bring_next();
 
 #if DEBUG_ASSERT
+	debug();
 	if (waiter_cnt != 0) {
 		assert(owner_cnt != 0);
 	}
@@ -135,6 +143,9 @@ RC Row_clv::lock_retire(txn_man * txn) {
 		glob_manager->lock_row(_row);
 	else
 		pthread_mutex_lock( latch );
+#if DEBUG_ASSERT
+	debug();
+#endif
 
 	RC rc = RCOK;
 
@@ -201,6 +212,9 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 		glob_manager->lock_row(_row);
 	else 
 		pthread_mutex_lock( latch );
+#if DEBUG_ASSERT
+	debug();
+#endif
 
 	CLVLockEntry * en;
 	
@@ -411,6 +425,9 @@ Row_clv::bring_next() {
 		} else
 			break;
 	}
+#if DEBUG_ASSERT
+	debug();
+#endif
 	ASSERT((owners == NULL) == (owner_cnt == 0));
 }
 
@@ -469,33 +486,32 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list
 	bool recheck = false;
 	while (en != NULL) {
 		recheck = false;
-		if (en->txn->lock_abort) {
+		if (en->txn->status != RUNNING) {
 			en = en->next;
 			continue;
 		}
-		if (status == RCOK && conflict_lock(en->type, type) && 
-			(ts == 0 || en->txn->get_ts() > txn->get_ts()) ) {
-			status = WAIT; // has conflicts
-		}
-		if (status == WAIT) {
-			if (en->txn->get_ts() > txn->get_ts()) {
-				// abort txn
-				wound_txn(txn, en);
+		if (ts != 0) {
+			// self assigned, if conflicted, assign a number
+			if (status == RCOK && conflict_lock(en->type, type) && (en->txn->get_ts() > txn->get_ts()))
+				status = WAIT;
+			if (status == WAIT) {
+				if (en->txn->get_ts() > ts)
+					wound_txn(txn, en);
 			}
-			else if (en->txn->get_ts() == 0) {
-				// assign it a ts first
-#if DEBUG_ASSERT
-				if (ts == 0) {
-					assert(local_ts < txn->get_ts());
-				}
-#endif
+		} else {
+			// self unassigned, if not assigned, assign a number;
+			if (en->txn->get_ts() == 0) {
 				if (!en->txn->atomic_set_ts(local_ts)) {
-					// it has a ts already
-					recheck = true;
+                                        // it has a ts already
+                                        recheck = true;
 				} else {
 					local_ts++;
 				}
 			}
+			if (en->txn->get_ts() > txn->get_ts()) {
+				wound_txn(txn, en);
+			}
+
 		}
 		if (!recheck)
 			en = en->next;
@@ -651,47 +667,68 @@ Row_clv::debug() {
 	//bool has_conflicts = false;
 	en = retired_head;
 	while(en) {
+		if (en->txn->status != RUNNING) {
+			cnt += 1;
+			en = en->next;
+			continue;
+		}
 		if (cnt == 0) {
 			assert(en->is_cohead);
 			assert(!en->delta);
 		}
-		assert(prev == en->prev);
-		if (prev)
+		//assert(prev == en->prev);
+		if (prev && prev->txn->status == RUNNING) {
+			if (prev->txn->get_ts() <= en->txn->get_ts() || !conflict_lock(prev->type, en->type))
+				printf("prev %lu next %lu\n", prev->txn->get_ts(), en->txn->get_ts());
 			assert(prev->txn->get_ts() <= en->txn->get_ts() || !conflict_lock(prev->type, en->type));
+		}
 		cnt += 1;
 		prev = en;
 		en = en->next;
 	}
-	assert(prev == retired_tail);
+	//assert(prev == retired_tail);
 	assert(cnt == retired_cnt);
 	// check waiters
 	cnt = 0;
 	prev = NULL;
 	en = waiters_head;
 	while(en) {
-		if(retired_tail)
+		if (en->txn->status != RUNNING)  {
+			cnt += 1;
+			en = en->next;
+			continue;
+		}
+		if(retired_tail && retired_tail->txn->status == RUNNING)
 			assert(retired_tail->txn->get_ts() <= en->txn->get_ts() || !conflict_lock(retired_tail->type, en->type));
-		if (prev)
+		if (prev && prev->txn->status == RUNNING) {
+			if (prev->txn->get_ts() <= en->txn->get_ts() || !conflict_lock(prev->type, en->type))
+				printf("prev %lu next %lu\n", prev->txn->get_ts(), en->txn->get_ts());
 			assert(prev->txn->get_ts() <= en->txn->get_ts() || !conflict_lock(prev->type, en->type));
-		assert(prev == en->prev);
+		}
+		//assert(prev == en->prev);
 		cnt += 1;
 		prev = en;
 		en = en->next;
 	}
-	assert(prev == waiters_tail);
+	//assert(prev == waiters_tail);
 	assert(cnt == waiter_cnt);
 	// check owner
 	cnt = 0;
 	prev = NULL;
 	en = owners;
 	while(en) {
-		if(retired_tail)
+		if (en->txn->status != RUNNING) {
+			cnt += 1;
+			en = en->next;
+			continue;
+		}
+		if(retired_tail && retired_tail->txn->status == RUNNING)
 			assert(retired_tail->txn->get_ts() <= en->txn->get_ts() || !conflict_lock(retired_tail->type, en->type));
 		cnt += 1;
 		prev = en;
 		en = en->next;
 	}
-	assert(prev == owners_tail);
+	//assert(prev == owners_tail);
 	assert(cnt == owner_cnt);
 }
 
