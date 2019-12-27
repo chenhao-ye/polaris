@@ -2,7 +2,7 @@ cp -r config_ycsb_debug.h config.h
 
 wl="YCSB"
 threads=20
-cnt=100000
+cnt=1000
 penalty=1
 zipf="0.6"
 synthetic="true"
