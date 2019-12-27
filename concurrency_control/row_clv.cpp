@@ -51,7 +51,6 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 
 	RC rc = WAIT;
 	RC status = RCOK;
-
 	// if unassigned, grab or assign the largest possible number
 	local_ts = -1;
 	ts_t ts = txn->get_ts();
@@ -84,6 +83,8 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	}
 
 	// check retired
+	// first check if has conflicts
+	
 	status = wound_conflict(type, txn, ts, retired_head, status);
 	if (status == Abort) {
 		rc = Abort;
@@ -473,15 +474,15 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list
 			continue;
 		}
 		if (status == RCOK && conflict_lock(en->type, type) && 
-			(ts == 0 || en->txn->get_ts() > ts) ) {
+			(ts == 0 || en->txn->get_ts() > txn->get_ts()) ) {
 			status = WAIT; // has conflicts
 		}
 		if (status == WAIT) {
-			if (ts != 0) {
+			if (en->txn->get_ts() > txn->get_ts()) {
 				// abort txn
 				wound_txn(txn, en);
 			}
-			if (en->txn->get_ts() == 0) {
+			else if (en->txn->get_ts() == 0) {
 				// assign it a ts first
 				if (!en->txn->atomic_set_ts(local_ts)) {
 					// it has a ts already
