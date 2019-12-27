@@ -51,24 +51,40 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 
 	RC rc = WAIT;
 	RC status = RCOK;
-	bool unassigned = false;
 
-	// if unassigned, assign the largest possible number
+	// if unassigned, grab or assign the largest possible number
 	local_ts = -1;
-	if ( txn->get_ts() == 0 && 
-		( (waiter_cnt != 0) || (retired_cnt != 0) || (owner_cnt != 0 && conflict_lock(owners->type, type)) ) ) {
+	ts_t ts = txn->get_ts();
+	if (ts == 0) {
+		// test if can grab the lock without assigning priority
+		if ((ts == 0) && (waiter_cnt == 0) && 
+				(retired_cnt == 0 || (!conflict_lock(retired_head->type, type) && retired_head->is_cohead)) && 
+				(owner_cnt == 0 || !conflict_lock(owners->type, type)) ) {
+			// add to owners
+			CLVLockEntry * entry = get_entry();
+			entry->type = type;
+			entry->txn = txn;
+			txn->lock_ready = true;
+			QUEUE_PUSH(owners, owners_tail, entry);
+			owner_cnt++;
+			rc = RCOK;
+			goto final;
+		}
+
+		// else has to assign a priority and add to waiters first 
 		local_ts = txn->set_next_ts(retired_cnt + owner_cnt + 1);
-		// if == 0, fail to assign, oops, self has an assigned number anyway
-		// if != 0, already booked n ts. 
 		if (local_ts != 0) {
-			unassigned = true;
+			// if == 0, fail to assign, oops, self has an assigned number anyway
 			local_ts = local_ts - (retired_cnt + owner_cnt);
 			assert(txn->get_ts() != local_ts); // make sure did not change pointed addr
+		} else {
+			// if != 0, already booked n ts. 
+			ts = txn->get_ts();
 		}
 	}
 
 	// check retired
-	status = wound_conflict(type, txn, txn->get_ts(), retired_head, status, unassigned);
+	status = wound_conflict(type, txn, ts, retired_head, status);
 	if (status == Abort) {
 		rc = Abort;
 		bring_next();
@@ -76,7 +92,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	}
 
 	// check owners
-	status = wound_conflict(type, txn, txn->get_ts(), owners, status, unassigned);
+	status = wound_conflict(type, txn, ts, owners, status);
 	if (status == Abort) {
 		rc = Abort;
 		bring_next();
@@ -447,7 +463,7 @@ Row_clv::wound_txn(txn_man * txn, CLVLockEntry * en) {
 
 
 RC
-Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list, RC status, bool unassigned) {
+Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list, RC status) {
 	CLVLockEntry * en = list;
 	bool recheck = false;
 	while (en != NULL) {
@@ -457,7 +473,7 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list
 			continue;
 		}
 		if (status == RCOK && conflict_lock(en->type, type) && 
-			(txn->get_ts() == 0 || en->txn->get_ts() > ts) ) {
+			(ts == 0 || en->txn->get_ts() > ts) ) {
 			status = WAIT; // has conflicts
 		}
 		if (status == WAIT) {
@@ -465,14 +481,11 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list
 				// abort txn
 				wound_txn(txn, en);
 			}
-			if (unassigned) {
+			if (en->txn->get_ts() == 0) {
 				// assign it a ts first
 				if (!en->txn->atomic_set_ts(local_ts)) {
 					// it has a ts already
 					recheck = true;
-#if DEBUG_TMP
-					printf("txn %lu rechecking\n", txn->get_txn_id());
-#endif
 				} else {
 					local_ts++;
 				}
@@ -486,6 +499,7 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list
 
 void
 Row_clv::insert_to_waiters(lock_t type, txn_man * txn) {
+	assert(txn->get_ts() != 0);
 	CLVLockEntry * entry = get_entry();
 	entry->txn = txn;
 	entry->type = type;
@@ -567,6 +581,8 @@ Row_clv::remove_descendants(CLVLockEntry * en) {
 	}
 #if DEBUG_ASSERT
 	debug();
+	if (retired_head)
+		assert(retired_head->is_cohead);
 #endif
 	if (prev)
 		return prev->next;
@@ -597,9 +613,8 @@ Row_clv::update_entry(CLVLockEntry * en) {
 			#endif
 			// has next entry
 			// en->next->is_cohead = true;
-			if (en->next->delta) {
+			if (!en->next->is_cohead) {
 				en->next->delta = false;
-				assert(!en->next->is_cohead);
 				entry = en->next;
 				while(entry && (!entry->delta)) {
 					assert(!entry->is_cohead);
@@ -612,11 +627,11 @@ Row_clv::update_entry(CLVLockEntry * en) {
 					entry = entry->next;
 				}
 			} // else (R)RR, no changes
+			assert(en->next->is_cohead);
 		} else {
 			// has no next entry, never mind
 		}
 	}
-	assert(retired_head || retired_head->is_cohead);
 #if DEBUG_ASSERT
 	debug();
 #endif

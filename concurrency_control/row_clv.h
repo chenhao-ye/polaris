@@ -57,7 +57,7 @@ private:
 	void bring_next();
 	bool has_conflicts_in_list(CLVLockEntry * list, CLVLockEntry * entry);
 	bool conflict_lock_entry(CLVLockEntry * l1, CLVLockEntry * l2);
-	RC wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list, RC status, bool unassigned);
+	RC wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list, RC status);
 	RC wound_txn(txn_man * txn, CLVLockEntry * en);
 	void insert_to_waiters(lock_t type, txn_man * txn);
 	CLVLockEntry * remove_descendants(CLVLockEntry * en);

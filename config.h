@@ -4,7 +4,7 @@
 /***********************************************/
 // Simulation + Hardware
 /***********************************************/
-#define THREAD_CNT 8
+#define THREAD_CNT 2
 #define PART_CNT					1 
 // each transaction only accesses 1 virtual partition. But the lock/ts manager and index are not aware of such partitioning. VIRTUAL_PART_CNT describes the request distribution and is only used to generate queries. For HSTORE, VIRTUAL_PART_CNT should be the same as PART_CNT.
 #define VIRTUAL_PART_CNT			1
@@ -110,7 +110,7 @@
 // max number of rows touched per transaction
 #define MAX_ROW_PER_TXN				64
 #define QUERY_INTVL 				1UL
-#define MAX_TXN_PER_PART 100
+#define MAX_TXN_PER_PART 1000
 #define FIRST_PART_LOCAL 			true
 #define MAX_TUPLE_SIZE				1024 // in bytes
 // ==== [YCSB] ====
@@ -135,7 +135,7 @@
 // are not modeled.
 #define TPCC_ACCESS_ALL 			false 
 #define WH_UPDATE					true
-#define NUM_WH 4
+#define NUM_WH 1
 //
 enum TPCCTxnType {TPCC_ALL, 
 				TPCC_PAYMENT, 
@@ -186,8 +186,8 @@ extern TestCases					g_test_case;
 #define DEBUG_CC					false
 #define DEBUG_WW                    			false
 #define DEBUG_BENCHMARK             			false
-#define DEBUG_CLV                    			true
-#define DEBUG_TMP					false
+#define DEBUG_CLV                    			false
+#define DEBUG_TMP					false	
 
 /***********************************************/
 // Constant

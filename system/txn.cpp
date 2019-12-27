@@ -74,7 +74,7 @@ uint64_t txn_man::get_thd_id() {
 }
 
 bool txn_man::atomic_set_ts(ts_t ts) {
-	if (ATOM_CAS(this->timestamp, 0, ts)) {
+	if (ATOM_CAS(timestamp, 0, ts)) {
 		#if DEBUG_CLV
 		printf("[txn-%lu] set ts %lu\n", get_txn_id(), this->timestamp);
 		#endif
