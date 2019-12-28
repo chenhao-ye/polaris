@@ -33,7 +33,7 @@ class Row_silo;
 class Row_vll;
 class Row_ww;
 class Row_clv;
-//class Row_clvp;
+class Row_clvp;
 
 class row_t
 {
@@ -110,8 +110,11 @@ public:
   #elif CC_ALG == WOUND_WAIT
   	Row_ww * manager;
   #elif CC_ALG == CLV
+  	#if DYNMAIC_TS
   	Row_clv * manager;
-  	//Row_clvp * manager;
+  	#else
+  	Row_clvp * manager;
+  	#endif
   #endif
 	char * data;
 	table_t * table;

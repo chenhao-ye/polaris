@@ -96,6 +96,8 @@
 #define HSTORE_LOCAL_TS				false
 // [VLL] 
 #define TXN_QUEUE_SIZE_LIMIT		THREAD_CNT
+// [CLV]
+#define DYNAMIC_TS					true
 
 /***********************************************/
 // Logging
@@ -212,7 +214,7 @@ extern TestCases					g_test_case;
 #define VLL							10
 #define HEKATON 					11
 #define WOUND_WAIT                  12
-#define CLV						13
+#define CLV							13
 //Isolation Levels 
 #define SERIALIZABLE				1
 #define SNAPSHOT					2

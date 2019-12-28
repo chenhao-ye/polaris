@@ -1,17 +1,9 @@
 #ifndef ROW_CLVP_H
 #define ROW_CLVP_H
 
-//#include "row_clv.h"
+#include "row_clv.h"
 
-struct CLVLockEntry {
-    // type of lock: EX or SH
-	lock_t type;
-	bool is_cohead;
-	bool delta;
-	txn_man * txn;
-	CLVLockEntry * next;
-	CLVLockEntry * prev;
-};
+struct CLVLockEntry;
 
 
 class Row_clvp {
@@ -34,6 +26,7 @@ private:
     UInt32 owner_cnt;
     UInt32 waiter_cnt;
     UInt32 retired_cnt; // no need to keep retied cnt
+    ts_t local_ts;
 	
 	// owners is a single linked list
 	// waiters is a double linked list 
@@ -53,10 +46,11 @@ private:
 	bool rm_if_in_waiters(txn_man * txn);
 	CLVLockEntry * rm_from_owners(CLVLockEntry * en, CLVLockEntry * prev, bool destroy=true);
 	CLVLockEntry * rm_from_retired(CLVLockEntry * en);
-	void bring_next();
+	bool bring_next(txn_man * txn);
 	bool has_conflicts_in_list(CLVLockEntry * list, CLVLockEntry * entry);
 	bool conflict_lock_entry(CLVLockEntry * l1, CLVLockEntry * l2);
-	RC wound_conflict(lock_t type, txn_man * txn, CLVLockEntry * list);
+	RC wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list, RC status);
+	RC wound_txn(txn_man * txn, CLVLockEntry * en);
 	void insert_to_waiters(lock_t type, txn_man * txn);
 	CLVLockEntry * remove_descendants(CLVLockEntry * en);
 	void update_entry(CLVLockEntry * en);

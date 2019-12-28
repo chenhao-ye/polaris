@@ -96,6 +96,8 @@
 #define HSTORE_LOCAL_TS				false
 // [VLL] 
 #define TXN_QUEUE_SIZE_LIMIT		THREAD_CNT
+// [CLV]
+#define DYNAMIC_TS					true
 
 /***********************************************/
 // Logging

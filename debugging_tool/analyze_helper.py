@@ -2,7 +2,7 @@ import re
 import pandas as pd
 
 clv = True
-NUM_THREAD = 20
+NUM_THREAD = 8
 STATUS = {0:"commit", 2:"abort"}
 
 
@@ -51,6 +51,13 @@ def find_locktable_with_txn(txn, disp=False):
                 print(locktable[row])
             found = True
     return found
+
+def update_locktable_with_txn(txn, p):
+    for row in locktable:
+        for place in ['owners', 'waiters', 'retired']:
+            for i, item in enumerate(locktable[row][place]):
+                if item[0] == txn:
+                    locktable[row][place][i] = tuple([j if idx != 1 else p for idx, j in enumerate(item)])
             
 def find_locktable_with_row(row):
     print(locktable[row])
@@ -82,7 +89,7 @@ def add_to(row, place, item):
     
 def parse(line, ts): 
     if "[" not in line:
-        return
+        return ts
     ts += 1
     # init variables
     thread = -1
@@ -115,6 +122,8 @@ def parse(line, ts):
     if row != "":
         if "add to waiters" in content:
             add_to(row, "waiters", (txn, p, extract_type(content)))
+        elif "add to owners" in content:
+            add_to(row, "owners", (txn, p, extract_type(content)))
         elif "move to owners" in content:
             thread, item = rm_txn(row, "waiters", txn)
             add_to(row, "owners", item)
@@ -146,8 +155,12 @@ def parse(line, ts):
     elif txn != -1:
         if thread == -1:
             if "set ts" in line:
+                p = int(content.split()[-1])
                 schedule.loc[ts, get_thd(txn)] = "txn %d "%txn + content
+                # update locktable
                 priority[txn] = p
+                update_locktable_with_txn(txn, p)
+                
             elif "set to" in content:
                 schedule.loc[ts, get_thd(txn)] = "txn %d "%txn + content
                 status[txn] = content.split()[-1]

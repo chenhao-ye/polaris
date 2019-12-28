@@ -58,10 +58,6 @@ RC thread_t::run() {
 	uint64_t thd_txn_id = 0;
 	UInt64 txn_cnt = 0;
 
-#if DEBUG_WW || DEBUG_CLV
-    printf("[thread-%lu] starts!\n", get_thd_id());
-#endif
-
 	while (true) {
     		starttime = get_sys_clock();
 		if (WORKLOAD != TEST) {
@@ -90,7 +86,7 @@ RC thread_t::run() {
 					}
 					else if (m_query == NULL) {
 						m_query = query_queue->get_next_query( _thd_id );
-					#if CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT
+					#if CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT || (CC_ALG == CLV && !DYNAMIC_TS)
 						m_txn->set_ts(get_next_ts());
 					#endif
 					}

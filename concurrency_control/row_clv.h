@@ -1,7 +1,6 @@
 #ifndef ROW_CLV_H
 #define ROW_CLV_H
 
-//#include "row_clv.h"
 
 struct CLVLockEntry {
     // type of lock: EX or SH
@@ -54,7 +53,7 @@ private:
 	bool rm_if_in_waiters(txn_man * txn);
 	CLVLockEntry * rm_from_owners(CLVLockEntry * en, CLVLockEntry * prev, bool destroy=true);
 	CLVLockEntry * rm_from_retired(CLVLockEntry * en);
-	void bring_next();
+	bool bring_next(txn_man * txn);
 	bool has_conflicts_in_list(CLVLockEntry * list, CLVLockEntry * entry);
 	bool conflict_lock_entry(CLVLockEntry * l1, CLVLockEntry * l2);
 	RC wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list, RC status);
