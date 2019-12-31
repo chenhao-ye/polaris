@@ -6,7 +6,7 @@ cnt=100000
 penalty=1
 zipf=0
 synthetic="true"
-table_size="1024 * 1024 * 10"
+table_size="1024*1024*10"
 
 for alg in "CLV" "WOUND_WAIT" "WAIT_DIE" "NO_WAIT" 
 do

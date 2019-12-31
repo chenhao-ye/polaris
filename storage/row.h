@@ -110,10 +110,10 @@ public:
   #elif CC_ALG == WOUND_WAIT
   	Row_ww * manager;
   #elif CC_ALG == CLV
-  	#if DYNMAIC_TS
-  	Row_clv * manager;
+  	#if DYNAMIC_TS
+	Row_clv * manager;
   	#else
-  	Row_clvp * manager;
+	Row_clvp * manager;
   	#endif
   #endif
 	char * data;

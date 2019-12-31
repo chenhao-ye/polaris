@@ -35,7 +35,6 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn) {
 
 RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) {
 	assert (CC_ALG == CLV);
-	CLVLockEntry * en;
 
 	if (g_central_man)
 		glob_manager->lock_row(_row);

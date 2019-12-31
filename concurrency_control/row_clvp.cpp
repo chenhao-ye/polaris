@@ -35,7 +35,7 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn) {
 
 RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) {
 	assert (CC_ALG == CLV);
-	CLVLockEntry * en;
+	//CLVLockEntry * en;
 
 	if (g_central_man)
 		glob_manager->lock_row(_row);
@@ -443,9 +443,7 @@ Row_clvp::wound_txn(txn_man * txn, CLVLockEntry * en) {
 RC
 Row_clvp::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list, RC status) {
 	CLVLockEntry * en = list;
-	bool recheck = false;
 	while (en != NULL) {
-		recheck = false;
 		if (en->txn->status != RUNNING) {
 			en = en->next;
 			continue;
