@@ -188,7 +188,8 @@ RC Row_clv::lock_retire(txn_man * txn) {
 
 	#if DEBUG_ASSERT
 	debug();
-	assert_in_list(retired_head, retired_tail, retired_cnt, txn);
+	if (txn->status != ABORTED)
+		assert_in_list(retired_head, retired_tail, retired_cnt, txn);
 	#endif
 
 	if (g_central_man)
@@ -485,10 +486,10 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list
 		}
 		if (ts != 0) {
 			// self assigned, if conflicted, assign a number
-			if (status == RCOK && conflict_lock(en->type, type) && (en->txn->get_ts() > txn->get_ts()))
+			if (status == RCOK && conflict_lock(en->type, type) && (en->txn->get_ts() > txn->get_ts() || en->txn->get_ts() == 0))
 				status = WAIT;
 			if (status == WAIT) {
-				if (en->txn->get_ts() > ts)
+				if (en->txn->get_ts() > ts || en->txn->get_ts() == 0)
 					wound_txn(txn, en);
 			}
 		} else {
@@ -671,7 +672,7 @@ Row_clv::debug() {
 		}
 		//assert(prev == en->prev);
 		if (prev && prev->txn->status == RUNNING) {
-			if (prev->txn->get_ts() <= en->txn->get_ts() || !conflict_lock(prev->type, en->type))
+			if (prev->txn->get_ts() >= en->txn->get_ts() && conflict_lock(prev->type, en->type))
 				printf("prev %lu next %lu\n", prev->txn->get_ts(), en->txn->get_ts());
 			assert(prev->txn->get_ts() <= en->txn->get_ts() || !conflict_lock(prev->type, en->type));
 		}
@@ -694,7 +695,7 @@ Row_clv::debug() {
 		if(retired_tail && retired_tail->txn->status == RUNNING)
 			assert(retired_tail->txn->get_ts() <= en->txn->get_ts() || !conflict_lock(retired_tail->type, en->type));
 		if (prev && prev->txn->status == RUNNING) {
-			if (prev->txn->get_ts() <= en->txn->get_ts() || !conflict_lock(prev->type, en->type))
+			if (prev->txn->get_ts() >= en->txn->get_ts() && conflict_lock(prev->type, en->type))
 				printf("prev %lu next %lu\n", prev->txn->get_ts(), en->txn->get_ts());
 			assert(prev->txn->get_ts() <= en->txn->get_ts() || !conflict_lock(prev->type, en->type));
 		}
