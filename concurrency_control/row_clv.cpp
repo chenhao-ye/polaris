@@ -185,7 +185,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
 	// 2. if txn not aborted, try to add to retired
 	if (rc != Abort) {
 		// 2.1 must clean out retired list before inserting!!
-		clean_aborted_retired();
+		//clean_aborted_retired();
 
 		#if DEBUG_PROFILING
 		INC_STATS(txn->get_thd_id(), debug8, get_sys_clock() - starttime);
@@ -437,8 +437,8 @@ Row_clv::rm_from_retired(CLVLockEntry * en) {
 bool
 Row_clv::bring_next(txn_man * txn) {
 
-	clean_aborted_retired();
-	clean_aborted_owner();
+	// clean_aborted_retired();
+	// clean_aborted_owner();
 	bool has_txn = false;
 
 	CLVLockEntry * entry;
