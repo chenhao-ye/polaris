@@ -195,7 +195,14 @@ void Stats::print() {
 			total_debug2, // / BILLION,
 			total_debug3, // / BILLION,
 			total_debug4, // / BILLION,
-			total_debug5, // / BILLION
+			total_debug5 // / BILLION
+			#if DEBUG_PROFILING
+			,total_debug6,
+			total_debug7, // / BILLION,
+			total_debug8, // / BILLION,
+			total_debug9, // / BILLION,
+			total_debug10  // / BILLION
+			#endif
 		);
 		fclose(outf);
 	}
@@ -225,9 +232,9 @@ void Stats::print() {
 		total_debug2, // / BILLION,
 		total_debug3, // / BILLION,
 		total_debug4, // / BILLION,
-		total_debug5,  // / BILLION
+		total_debug5  // / BILLION
 		#if DEBUG_PROFILING
-		total_debug6,
+		,total_debug6,
 		total_debug7, // / BILLION,
 		total_debug8, // / BILLION,
 		total_debug9, // / BILLION,
