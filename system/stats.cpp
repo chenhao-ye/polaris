@@ -23,6 +23,13 @@ void Stats_thd::clear() {
 	debug3 = 0;
 	debug4 = 0;
 	debug5 = 0;
+	#if DEBUG_PROFILING
+	debug6 = 0;
+	debug7 = 0;
+	debug8 = 0;
+	debug9 = 0;
+	debug10 = 0;
+	#endif
 	time_index = 0;
 	time_abort = 0;
 	time_cleanup = 0;
@@ -114,6 +121,13 @@ void Stats::print() {
 	double total_debug3 = 0;
 	double total_debug4 = 0;
 	double total_debug5 = 0;
+	#if DEBUG_PROFILING
+	double total_debug6 = 0;
+	double total_debug7 = 0;
+	double total_debug8 = 0;
+	double total_debug9 = 0;
+	double total_debug10 = 0;
+	#endif
 	double total_time_index = 0;
 	double total_time_abort = 0;
 	double total_time_cleanup = 0;
@@ -131,6 +145,13 @@ void Stats::print() {
 		total_debug3 += _stats[tid]->debug3;
 		total_debug4 += _stats[tid]->debug4;
 		total_debug5 += _stats[tid]->debug5;
+		#if DEBUG_PROFILING
+		total_debug6 += _stats[tid]->debug6;
+		total_debug7 += _stats[tid]->debug7;
+		total_debug8 += _stats[tid]->debug8;
+		total_debug9 += _stats[tid]->debug9;
+		total_debug10 += _stats[tid]->debug10;
+		#endif
 		total_time_index += _stats[tid]->time_index;
 		total_time_abort += _stats[tid]->time_abort;
 		total_time_cleanup += _stats[tid]->time_cleanup;
@@ -173,7 +194,7 @@ void Stats::print() {
 			total_debug2, // / BILLION,
 			total_debug3, // / BILLION,
 			total_debug4, // / BILLION,
-			total_debug5 / BILLION
+			total_debug5, // / BILLION
 		);
 		fclose(outf);
 	}
@@ -202,7 +223,14 @@ void Stats::print() {
 		total_debug2, // / BILLION,
 		total_debug3, // / BILLION,
 		total_debug4, // / BILLION,
-		total_debug5  // / BILLION 
+		total_debug5,  // / BILLION
+		#if DEBUG_PROFILING
+		total_debug6,
+		total_debug7, // / BILLION,
+		total_debug8, // / BILLION,
+		total_debug9, // / BILLION,
+		total_debug10  // / BILLION
+		#endif
 	);
 	if (g_prt_lat_distr)
 		print_lat_distr();

@@ -36,10 +36,20 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn) {
 RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) {
 	assert (CC_ALG == CLV);
 
+	#if DEBUG_PROFILING
+	uint64_t starttime = get_sys_clock();
+	#endif
+
 	if (g_central_man)
 		glob_manager->lock_row(_row);
 	else 
 		pthread_mutex_lock( latch );
+
+	#if DEBUG_PROFILING
+	INC_STATS(get_thd_id(), debug1, get_sys_clock() - starttime);
+	starttime = get_sys_clock();
+	#endif
+
 
 	// each thread has at most one owner of a lock
 	assert(owner_cnt <= g_thread_cnt);
@@ -47,9 +57,6 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	assert(waiter_cnt < g_thread_cnt);
 
 	// 1. set txn to abort in owners and retired
-#if DEBUG_ASSERT
-	debug();
-#endif
 
 	RC rc = WAIT;
 	RC status = RCOK;
@@ -88,6 +95,11 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 		}
 	}
 
+	#if DEBUG_PROFILING
+	INC_STATS(get_thd_id(), debug2, get_sys_clock() - starttime);
+	starttime = get_sys_clock();
+	#endif
+
 	// check retired
 	// first check if has conflicts
 	
@@ -106,12 +118,21 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 		goto final;
 	}
 
+	#if DEBUG_PROFILING
+	INC_STATS(get_thd_id(), debug4, get_sys_clock() - starttime);
+	starttime = get_sys_clock();
+	#endif
+
 	// 2. insert into waiters and bring in next waiter
 	insert_to_waiters(type, txn);
 	if (bring_next(txn)) {
 		// 3. if brought txn in owner, return acquired lock
 		rc = RCOK;
 	}
+
+	#if DEBUG_PROFILING
+	INC_STATS(get_thd_id(), debug5, get_sys_clock() - starttime);
+	#endif
 
 #if DEBUG_ASSERT
 	debug();
@@ -132,13 +153,19 @@ final:
 
 RC Row_clv::lock_retire(txn_man * txn) {
 
+	#if DEBUG_PROFILING
+	uint64_t starttime = get_sys_clock();
+	#endif
+
 	if (g_central_man)
 		glob_manager->lock_row(_row);
 	else
 		pthread_mutex_lock( latch );
-#if DEBUG_ASSERT
-	debug();
-#endif
+
+	#if DEBUG_PROFILING
+	INC_STATS(get_thd_id(), debug6, get_sys_clock() - starttime);
+	starttime = get_sys_clock();
+	#endif
 
 	RC rc = RCOK;
 
@@ -150,10 +177,20 @@ RC Row_clv::lock_retire(txn_man * txn) {
 		rc = Abort;
 	}
 
+	#if DEBUG_PROFILING
+	INC_STATS(get_thd_id(), debug7, get_sys_clock() - starttime);
+	starttime = get_sys_clock();
+	#endif
+
 	// 2. if txn not aborted, try to add to retired
 	if (rc != Abort) {
 		// 2.1 must clean out retired list before inserting!!
 		clean_aborted_retired();
+
+		#if DEBUG_PROFILING
+		INC_STATS(get_thd_id(), debug8, get_sys_clock() - starttime);
+		starttime = get_sys_clock();
+		#endif
 
 #if DEBUG_ASSERT
 		debug();
@@ -181,10 +218,19 @@ RC Row_clv::lock_retire(txn_man * txn) {
 		printf("[row_clv-%lu txn-%lu (%lu)] move to retired (type %d), is_cohead=%d, delta=%d\n",
 				_row->get_row_id(), txn->get_txn_id(), txn->get_ts(), entry->type, entry->is_cohead, entry->delta);
 	#endif
+
+	#if DEBUG_PROFILING
+	INC_STATS(get_thd_id(), debug9, get_sys_clock() - starttime);
+	starttime = get_sys_clock();
+	#endif
 	}
 
 	// bring next owners from waiters
 	bring_next(NULL);
+
+	#if DEBUG_PROFILING
+	INC_STATS(get_thd_id(), debug10, get_sys_clock() - starttime);
+	#endif
 
 	#if DEBUG_ASSERT
 	debug();

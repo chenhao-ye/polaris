@@ -22,6 +22,13 @@ public:
 	uint64_t debug3;
 	uint64_t debug4;
 	uint64_t debug5;
+	#if DEBUG_PROFILING
+	uint64_t debug6;
+	uint64_t debug7;
+	uint64_t debug8;
+	uint64_t debug9;
+	uint64_t debug10;
+	#endif
 	
 	uint64_t latency;
 	uint64_t * all_debug1;
