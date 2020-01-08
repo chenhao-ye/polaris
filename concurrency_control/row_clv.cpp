@@ -119,7 +119,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	}
 
 	#if DEBUG_PROFILING
-	INC_STATS(txn->get_thd_id(), debug4, get_sys_clock() - starttime);
+	INC_STATS(txn->get_thd_id(), debug3, get_sys_clock() - starttime);
 	starttime = get_sys_clock();
 	#endif
 
@@ -131,7 +131,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	}
 
 	#if DEBUG_PROFILING
-	INC_STATS(txn->get_thd_id(), debug5, get_sys_clock() - starttime);
+	INC_STATS(txn->get_thd_id(), debug4, get_sys_clock() - starttime);
 	#endif
 
 #if DEBUG_ASSERT
@@ -163,7 +163,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
 		pthread_mutex_lock( latch );
 
 	#if DEBUG_PROFILING
-	INC_STATS(txn->get_thd_id(), debug6, get_sys_clock() - starttime);
+	INC_STATS(txn->get_thd_id(), debug5, get_sys_clock() - starttime);
 	starttime = get_sys_clock();
 	#endif
 
@@ -178,7 +178,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
 	}
 
 	#if DEBUG_PROFILING
-	INC_STATS(txn->get_thd_id(), debug7, get_sys_clock() - starttime);
+	INC_STATS(txn->get_thd_id(), debug6, get_sys_clock() - starttime);
 	starttime = get_sys_clock();
 	#endif
 
@@ -188,7 +188,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
 		//clean_aborted_retired();
 
 		#if DEBUG_PROFILING
-		INC_STATS(txn->get_thd_id(), debug8, get_sys_clock() - starttime);
+		INC_STATS(txn->get_thd_id(), debug7, get_sys_clock() - starttime);
 		starttime = get_sys_clock();
 		#endif
 
@@ -220,7 +220,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
 	#endif
 
 	#if DEBUG_PROFILING
-	INC_STATS(txn->get_thd_id(), debug9, get_sys_clock() - starttime);
+	INC_STATS(txn->get_thd_id(), debug8, get_sys_clock() - starttime);
 	starttime = get_sys_clock();
 	#endif
 	}
@@ -229,7 +229,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
 	bring_next(NULL);
 
 	#if DEBUG_PROFILING
-	INC_STATS(txn->get_thd_id(), debug10, get_sys_clock() - starttime);
+	INC_STATS(txn->get_thd_id(), debug9, get_sys_clock() - starttime);
 	#endif
 
 	#if DEBUG_ASSERT
@@ -252,9 +252,9 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 	else 
 		pthread_mutex_lock( latch );
 
-#if DEBUG_ASSERT
-	debug();
-#endif
+	#if DEBUG_PROFILING
+	uint64_t starttime = get_sys_clock();
+	#endif
 
 	CLVLockEntry * en;
 	
@@ -281,6 +281,10 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 	// WAIT - done releasing with is_abort = true
 	// FINISH - done releasing with is_abort = false
 	bring_next(NULL);
+
+	#if DEBUG_PROFILING
+	INC_STATS(txn->get_thd_id(), debug10, get_sys_clock() - starttime);
+	#endif
 
 	if (g_central_man)
 		glob_manager->release_row(_row);
