@@ -174,7 +174,11 @@ void Stats::print() {
 			", time_man=%f, time_index=%f, time_abort=%f, time_cleanup=%f, latency=%f"
 			", deadlock_cnt=%ld, cycle_detect=%ld, dl_detect_time=%f, dl_wait_time=%f"
 			", time_query=%f, debug1=%f, debug2=%f, debug3=%f, debug4=%f, debug5=%f"
-			", debug6=%f, debug7=%f, debug8=%f, debug9=%f, debug10=%f,\n",
+			#if DEBUG_PROFILING
+			", debug6=%f, debug7=%f, debug8=%f, debug9=%f, debug10=%f\n",
+			#else
+			"\n",
+			#endif
 			total_txn_cnt / total_run_time * BILLION * THREAD_CNT,
 			total_txn_cnt, 
 			total_abort_cnt,
@@ -211,7 +215,11 @@ void Stats::print() {
 		", time_man=%f, time_index=%f, time_abort=%f, time_cleanup=%f, latency=%f"
 		", deadlock_cnt=%ld, cycle_detect=%ld, dl_detect_time=%f, dl_wait_time=%f"
 		", time_query=%f, debug1=%f, debug2=%f, debug3=%f, debug4=%f, debug5=%f"
-		", debug6=%f, debug7=%f, debug8=%f, debug9=%f, debug10=%f,\n",
+		#if DEBUG_PROFILING
+		", debug6=%f, debug7=%f, debug8=%f, debug9=%f, debug10=%f\n",
+		#else
+		"\n",
+		#endif
 		total_txn_cnt / total_run_time * BILLION * THREAD_CNT,
 		total_txn_cnt, 
 		total_abort_cnt,
