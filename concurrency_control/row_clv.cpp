@@ -19,7 +19,7 @@ void Row_clv::init(row_t * row) {
 	waiter_cnt = 0;
 	retired_cnt = 0;
 	// a switch for retire
-	retire_on = (g_thread_cnt > 1);
+	retire_on = false;
 	// local timestamp
 	local_ts = -1;
 
