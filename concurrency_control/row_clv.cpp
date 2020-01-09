@@ -163,16 +163,16 @@ RC Row_clv::lock_retire(txn_man * txn) {
 	else
 		pthread_mutex_lock( latch );
 
+	RC rc = RCOK;
+
 	if (retired_cnt > 4) {
-		return RCOK;
+		goto final;
 	}
 
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug5, get_sys_clock() - starttime);
 	starttime = get_sys_clock();
 	#endif
-
-	RC rc = RCOK;
 
 	// 1. find entry in owner and remove
 	CLVLockEntry * entry = rm_if_in_owners(txn);
@@ -243,6 +243,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
 		assert_in_list(retired_head, retired_tail, retired_cnt, txn);
 	#endif
 
+final:
 	if (g_central_man)
 		glob_manager->release_row(_row);
 	else
