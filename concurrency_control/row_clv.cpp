@@ -163,6 +163,10 @@ RC Row_clv::lock_retire(txn_man * txn) {
 	else
 		pthread_mutex_lock( latch );
 
+	if (retired_cnt > 4) {
+		return RCOK;
+	}
+
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug5, get_sys_clock() - starttime);
 	starttime = get_sys_clock();
