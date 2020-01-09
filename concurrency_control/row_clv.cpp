@@ -450,7 +450,7 @@ Row_clv::rm_from_retired(CLVLockEntry * en) {
 }
 
 bool
-Row_clv::bring_next(txn_man * txn, bool clean_aborted) {
+Row_clv::bring_next(txn_man * txn) {
 
 	// clean_aborted_retired();
 	// clean_aborted_owner();
