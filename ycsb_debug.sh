@@ -2,11 +2,11 @@ cp -r config_ycsb_debug.h config.h
 
 wl="YCSB"
 threads=20
-cnt=100000
+cnt=10000 #00
 penalty=1
 zipf=0
 synthetic="true"
-table_size="1024*1024*10"
+table_size="1024*1024*20"
 profile="true"
 
 for alg in "CLV" #"WOUND_WAIT" "WAIT_DIE" "NO_WAIT" 
