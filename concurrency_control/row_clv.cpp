@@ -441,7 +441,7 @@ Row_clv::rm_from_retired(CLVLockEntry * en) {
 bool
 Row_clv::bring_next(txn_man * txn) {
 
-	// clean_aborted_retired();
+	clean_aborted_retired();
 	// clean_aborted_owner();
 	bool has_txn = false;
 
@@ -536,7 +536,8 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list
 		}
 		if (ts != 0) {
 			// self assigned, if conflicted, assign a number
-			if (status == RCOK && conflict_lock(en->type, type) && (en->txn->get_ts() > txn->get_ts() || en->txn->get_ts() == 0))
+			if (status == RCOK && conflict_lock(en->type, type) && 
+				 (en->txn->get_ts() > txn->get_ts() || en->txn->get_ts() == 0))
 				status = WAIT;
 			if (status == WAIT) {
 				if (en->txn->get_ts() > ts || en->txn->get_ts() == 0)
@@ -546,8 +547,8 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list
 			// self unassigned, if not assigned, assign a number;
 			if (en->txn->get_ts() == 0) {
 				if (!en->txn->atomic_set_ts(local_ts)) {
-                                        // it has a ts already
-                                        recheck = true;
+					// it has a ts already
+					recheck = true;
 				} else {
 					local_ts++;
 				}
