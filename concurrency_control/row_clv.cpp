@@ -236,7 +236,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
 	}
 
 	// bring next owners from waiters
-	if (retired_cnt < 4)
+	if (retired_cnt < (g_thread_cnt / 2))
 		bring_next(NULL);
 
 	#if DEBUG_PROFILING
