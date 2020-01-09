@@ -125,6 +125,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 
 	// 2. insert into waiters and bring in next waiter
 	insert_to_waiters(type, txn);
+	clean_aborted_retired();
 	if (bring_next(txn)) {
 		// 3. if brought txn in owner, return acquired lock
 		rc = RCOK;
@@ -441,7 +442,7 @@ Row_clv::rm_from_retired(CLVLockEntry * en) {
 bool
 Row_clv::bring_next(txn_man * txn) {
 
-	clean_aborted_retired();
+	// clean_aborted_retired();
 	// clean_aborted_owner();
 	bool has_txn = false;
 
