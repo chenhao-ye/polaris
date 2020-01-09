@@ -9,9 +9,9 @@ synthetic="true"
 table_size="1024*1024*20"
 pf="false"
 
-for alg in "CLV" "WOUND_WAIT" "WAIT_DIE" "NO_WAIT" 
+for alg in "CLV" #"WOUND_WAIT" "WAIT_DIE" "NO_WAIT" 
 do
-for zipf in 0
+for zipf in 0 0 0 
 do
 for threads in 1 2 4 8 16 #32
 do
