@@ -18,6 +18,8 @@ void Row_clv::init(row_t * row) {
 	owner_cnt = 0;
 	waiter_cnt = 0;
 	retired_cnt = 0;
+	// a switch for retire
+	retire_on = (g_thread_cnt > 1);
 	// local timestamp
 	local_ts = -1;
 
@@ -125,6 +127,11 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 
 	// 2. insert into waiters and bring in next waiter
 	insert_to_waiters(type, txn);
+
+	// turn on retire only when needed
+	if (waiter_cnt > (g_thread_cnt / 2))
+		retire_on = true;
+
 	//clean_aborted_retired();
 	if (status == RCOK) {
 		// 3. if brought txn in owner, return acquired lock
@@ -158,6 +165,9 @@ RC Row_clv::lock_retire(txn_man * txn) {
 	#if DEBUG_PROFILING
 	uint64_t starttime = get_sys_clock();
 	#endif
+
+	if(!retire_on)
+		return RCOK;
 
 	if (g_central_man)
 		glob_manager->lock_row(_row);
