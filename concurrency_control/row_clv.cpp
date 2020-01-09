@@ -166,7 +166,11 @@ RC Row_clv::lock_retire(txn_man * txn) {
 	RC rc = RCOK;
 
 	if (retired_cnt > 4) {
-		goto final;
+		if (g_central_man)
+			glob_manager->release_row(_row);
+		else
+			pthread_mutex_unlock( latch );
+		return rc;
 	}
 
 	#if DEBUG_PROFILING
@@ -243,7 +247,6 @@ RC Row_clv::lock_retire(txn_man * txn) {
 		assert_in_list(retired_head, retired_tail, retired_cnt, txn);
 	#endif
 
-final:
 	if (g_central_man)
 		glob_manager->release_row(_row);
 	else
