@@ -5,8 +5,8 @@ wl="TPCC"
 threads=4
 cnt=10000
 penalty=1
-wh=1
-pf="true"
+wh=4
+pf="false"
 
 alg="CLV"
 for threads in 1 4 8 16
