@@ -2,17 +2,16 @@ cp -r config_tpcc_debug.h config.h
 rm debug.out
 
 wl="TPCC"
-threads=1
+threads=4
 cnt=10000
 penalty=1
-wh=4
+wh=1
+pf="true"
 
 alg="CLV"
+for threads in 1 4 8 16
+do
+timeout 30 python test.py DEBUG_PROFILING=${pf} WORKLOAD=${wl} CC_ALG=$alg THREAD_CNT=$threads MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty NUM_WH=${wh} |& tee -a debug.out
+done
 
-timeout 5 python test.py WORKLOAD=${wl} CC_ALG=$alg THREAD_CNT=$threads MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty NUM_WH=${wh} |& tee -a debug.out
-valgrind --tool=callgrind ./rundb
-
-alg="WOUND_WAIT"
-timeout 5 python test.py WORKLOAD=${wl} CC_ALG=$alg THREAD_CNT=$threads MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty NUM_WH=${wh} |& tee -a debug.out
-valgrind --tool=callgrind ./rundb
 
