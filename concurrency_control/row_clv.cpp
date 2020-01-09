@@ -125,8 +125,8 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 
 	// 2. insert into waiters and bring in next waiter
 	insert_to_waiters(type, txn);
-	clean_aborted_retired();
-	if (bring_next(txn)) {
+	//clean_aborted_retired();
+	if (bring_next(txn, status == RCOK)) {
 		// 3. if brought txn in owner, return acquired lock
 		rc = RCOK;
 	}
@@ -165,13 +165,13 @@ RC Row_clv::lock_retire(txn_man * txn) {
 
 	RC rc = RCOK;
 
-	if (retired_cnt > 4) {
-		if (g_central_man)
-			glob_manager->release_row(_row);
-		else
-			pthread_mutex_unlock( latch );
-		return rc;
-	}
+	// if (retired_cnt > 4) {
+	// 	if (g_central_man)
+	// 		glob_manager->release_row(_row);
+	// 	else
+	// 		pthread_mutex_unlock( latch );
+	// 	return rc;
+	// }
 
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug5, get_sys_clock() - starttime);
@@ -448,7 +448,7 @@ Row_clv::rm_from_retired(CLVLockEntry * en) {
 }
 
 bool
-Row_clv::bring_next(txn_man * txn) {
+Row_clv::bring_next(txn_man * txn, bool clean_aborted) {
 
 	// clean_aborted_retired();
 	// clean_aborted_owner();
@@ -457,7 +457,7 @@ Row_clv::bring_next(txn_man * txn) {
 	CLVLockEntry * entry;
 	// If any waiter can join the owners, just do it!
 	while (waiters_head) {
-		if ((owners == NULL) || (!conflict_lock(owners->type, waiters_head->type))) {
+		if (clean_aborted && ((owners == NULL) || (!conflict_lock(owners->type, waiters_head->type)))) {
 			LIST_GET_HEAD(waiters_head, waiters_tail, entry);
 			waiter_cnt --;
 			// add to onwers
