@@ -256,6 +256,10 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 	else 
 		pthread_mutex_lock( latch );
 
+	#if DEBUG_PROFILING
+	INC_STATS(txn->get_thd_id(), debug7, get_sys_clock() - starttime);
+	#endif
+
 	CLVLockEntry * en;
 	
 	// Try to find the entry in the retired
@@ -274,7 +278,7 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 	}
 
 	#if DEBUG_PROFILING
-	INC_STATS(txn->get_thd_id(), debug7, get_sys_clock() - starttime);
+	INC_STATS(txn->get_thd_id(), debug8, get_sys_clock() - starttime);
 	#endif
 
 	#if DEBUG_ASSERT
@@ -288,7 +292,7 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 	bring_next(NULL);
 
 	#if DEBUG_PROFILING
-	INC_STATS(txn->get_thd_id(), debug8, get_sys_clock() - starttime);
+	INC_STATS(txn->get_thd_id(), debug9, get_sys_clock() - starttime);
 	#endif
 
 	if (g_central_man)
@@ -450,6 +454,10 @@ Row_clv::bring_next(txn_man * txn) {
 	// clean_aborted_owner();
 	bool has_txn = false;
 
+	#if DEBUG_PROFILING
+	uint64_t starttime = get_sys_clock();
+	#endif
+
 	CLVLockEntry * entry;
 	// If any waiter can join the owners, just do it!
 	while (waiters_head) {
@@ -472,9 +480,15 @@ Row_clv::bring_next(txn_man * txn) {
 		} else
 			break;
 	}
-#if DEBUG_ASSERT
+	
+	#if DEBUG_ASSERT
 	debug();
-#endif
+	#endif
+
+	#if DEBUG_PROFILING
+	INC_STATS(txn->get_thd_id(), debug10, get_sys_clock() - starttime);
+	#endif
+
 	ASSERT((owners == NULL) == (owner_cnt == 0));
 
 	return has_txn;
