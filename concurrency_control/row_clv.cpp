@@ -49,6 +49,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug1, get_sys_clock() - starttime);
+	INC_STATS(txn->get_thd_id(), debug2, 1);
 	#endif
 
 
@@ -258,6 +259,7 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug7, get_sys_clock() - starttime);
+	INC_STATS(txn->get_thd_id(), debug3, 1);
 	#endif
 
 	CLVLockEntry * en;
