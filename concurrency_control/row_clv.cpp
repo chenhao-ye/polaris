@@ -49,6 +49,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug1, get_sys_clock() - starttime);
+	INC_STATS(txn->get_thd_id(), debug10, get_sys_clock() - starttime);
 	INC_STATS(txn->get_thd_id(), debug2, 1);
 	#endif
 
@@ -456,10 +457,6 @@ Row_clv::bring_next(txn_man * txn) {
 	// clean_aborted_owner();
 	bool has_txn = false;
 
-	#if DEBUG_PROFILING
-	uint64_t starttime = get_sys_clock();
-	#endif
-
 	CLVLockEntry * entry;
 	// If any waiter can join the owners, just do it!
 	while (waiters_head) {
@@ -485,10 +482,6 @@ Row_clv::bring_next(txn_man * txn) {
 	
 	#if DEBUG_ASSERT
 	debug();
-	#endif
-
-	#if DEBUG_PROFILING
-	INC_STATS(0, debug10, get_sys_clock() - starttime);
 	#endif
 
 	ASSERT((owners == NULL) == (owner_cnt == 0));
