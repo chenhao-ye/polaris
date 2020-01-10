@@ -237,16 +237,16 @@ void Stats::print() {
 		dl_wait_time / BILLION,
 		total_time_query / BILLION,
 		total_debug1 / BILLION,
-		total_debug2, // / BILLION,
-		total_debug3, // / BILLION,
-		total_debug4, // / BILLION,
-		total_debug5  // / BILLION
+		total_debug2 / BILLION,
+		total_debug3 / BILLION,
+		total_debug4 / BILLION,
+		total_debug5 / BILLION
 		#if DEBUG_PROFILING
-		,total_debug6,
-		total_debug7, // / BILLION,
-		total_debug8, // / BILLION,
-		total_debug9, // / BILLION,
-		total_debug10  // / BILLION
+		,total_debug6 / BILLION,
+		total_debug7 / BILLION,
+		total_debug8 / BILLION,
+		total_debug9 / BILLION,
+		total_debug10 / BILLION
 		#endif
 	);
 	if (g_prt_lat_distr)
