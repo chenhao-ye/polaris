@@ -33,11 +33,23 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 	LockEntry * en;
 	// get part id
 	//int part_id =_row->get_part_id();
-	if (g_central_man)
-		// if using central manager
-		glob_manager->lock_row(_row);
-	else 
-		pthread_mutex_lock( latch );
+
+	#if DEBUG_PROFILING
+	uint64_t starttime = get_sys_clock();
+	#endif
+
+	if (g_thread_cnt > 1){
+		if (g_central_man)
+			// if using central manager
+			glob_manager->lock_row(_row);
+		else 
+			pthread_mutex_lock( latch );
+	}
+
+	#if DEBUG_PROFILING
+	INC_STATS(txn->get_thd_id(), debug1, get_sys_clock() - starttime);
+	INC_STATS(txn->get_thd_id(), debug10, 1);
+	#endif
 
 	// each thread has at most one owner of a lock
 	assert(owner_cnt <= g_thread_cnt);
@@ -161,10 +173,20 @@ final:
 
 RC Row_ww::lock_release(txn_man * txn) {
 
-	if (g_central_man)
-		glob_manager->lock_row(_row);
-	else 
-		pthread_mutex_lock( latch );
+	#if DEBUG_PROFILING
+	uint64_t starttime = get_sys_clock();
+	#endif
+
+	if (g_thread_cnt > 1) {
+		if (g_central_man)
+			glob_manager->lock_row(_row);
+		else 
+			pthread_mutex_lock( latch );
+	}
+
+	#if DEBUG_PROFILING
+	INC_STATS(txn->get_thd_id(), debug7, get_sys_clock() - starttime);
+	#endif
 
 	// Try to find the entry in the owners
 	LockEntry * en = owners;

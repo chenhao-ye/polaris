@@ -51,8 +51,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug1, get_sys_clock() - starttime);
-	INC_STATS(txn->get_thd_id(), debug10, get_sys_clock() - starttime);
-	INC_STATS(txn->get_thd_id(), debug2, 1);
+	INC_STATS(txn->get_thd_id(), debug10, 1);
 	#endif
 
 
@@ -180,6 +179,10 @@ RC Row_clv::lock_retire(txn_man * txn) {
 	else
 		pthread_mutex_lock( latch );
 
+	#if DEBUG_PROFILING
+	INC_STATS(txn->get_thd_id(), debug8, get_sys_clock() - starttime);
+	#endif
+
 	RC rc = RCOK;
 
 	// 1. find entry in owner and remove
@@ -267,7 +270,6 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug7, get_sys_clock() - starttime);
-	INC_STATS(txn->get_thd_id(), debug3, 1);
 	#endif
 
 	CLVLockEntry * en;
@@ -287,10 +289,6 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 		}
 	}
 
-	#if DEBUG_PROFILING
-	INC_STATS(txn->get_thd_id(), debug8, get_sys_clock() - starttime);
-	#endif
-
 	#if DEBUG_ASSERT
 	debug();
 	assert_notin_list(waiters_head, waiters_tail, waiter_cnt, txn);
@@ -302,7 +300,7 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 	bring_next(NULL);
 
 	#if DEBUG_PROFILING
-	INC_STATS(txn->get_thd_id(), debug9, get_sys_clock() - starttime);
+	INC_STATS(txn->get_thd_id(), debug8, get_sys_clock() - starttime);
 	#endif
 
 	if (g_thread_cnt > 1) {
