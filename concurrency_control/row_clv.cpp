@@ -486,7 +486,7 @@ Row_clv::bring_next(txn_man * txn) {
 	#endif
 
 	#if DEBUG_PROFILING
-	INC_STATS(txn->get_thd_id(), debug10, get_sys_clock() - starttime);
+	INC_STATS(0, debug10, get_sys_clock() - starttime);
 	#endif
 
 	ASSERT((owners == NULL) == (owner_cnt == 0));
