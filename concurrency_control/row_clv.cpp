@@ -42,10 +42,12 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	uint64_t starttime = get_sys_clock();
 	#endif
 
-	if (g_central_man)
-		glob_manager->lock_row(_row);
-	else 
-		pthread_mutex_lock( latch );
+	if (g_thread_cnt > 1) {
+		if (g_central_man)
+			glob_manager->lock_row(_row);
+		else 
+			pthread_mutex_lock( latch );
+	}
 
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug1, get_sys_clock() - starttime);
@@ -154,10 +156,12 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 
 
 final:
-	if (g_central_man)
-		glob_manager->release_row(_row);
-	else
-		pthread_mutex_unlock( latch );
+	if (g_thread_cnt > 1) {
+		if (g_central_man)
+			glob_manager->release_row(_row);
+		else
+			pthread_mutex_unlock( latch );
+	}
 
 	return rc;
 }
@@ -253,10 +257,13 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 	uint64_t starttime = get_sys_clock();
 	#endif
 
-	if (g_central_man)
-		glob_manager->lock_row(_row);
-	else 
-		pthread_mutex_lock( latch );
+	if (g_thread_cnt > 1) {
+		if (g_central_man)
+			glob_manager->lock_row(_row);
+		else 
+			pthread_mutex_lock( latch );
+	}
+	
 
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug7, get_sys_clock() - starttime);
@@ -298,10 +305,12 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 	INC_STATS(txn->get_thd_id(), debug9, get_sys_clock() - starttime);
 	#endif
 
-	if (g_central_man)
-		glob_manager->release_row(_row);
-	else
-		pthread_mutex_unlock( latch );
+	if (g_thread_cnt > 1) {
+		if (g_central_man)
+			glob_manager->release_row(_row);
+		else
+			pthread_mutex_unlock( latch );
+	}
 
 	return RCOK;
 }
