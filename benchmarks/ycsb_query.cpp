@@ -172,7 +172,7 @@ void ycsb_query::gen_requests(uint64_t thd_id, workload * h_wl) {
 		part_num = 0;
 		for (UInt32 i = 0; i < request_cnt - 1; i++) {
 			assert(requests[i].key < requests[i + 1].key);
-			printf("thread-%lu request[%d] %lu\n", thd_id, i, requests[i].key);
+			//printf("thread-%lu request[%d] %lu\n", thd_id, i, requests[i].key);
 		}
 	}
 
