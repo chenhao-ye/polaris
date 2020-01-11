@@ -265,7 +265,6 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug6, get_sys_clock() - starttime);
-	INC_STATS(txn->get_thd_id(), debug8, 1);
 	starttime = get_sys_clock();
 	#endif
 

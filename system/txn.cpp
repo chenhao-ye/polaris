@@ -293,8 +293,14 @@ RC txn_man::finish(RC rc) {
 		#if DEBUG_CLV
 		printf("[txn-%lu] # bariers %d\n", get_txn_id(), commit_barriers);
 		#endif
+		#if DEBUG_PROFILING
+		uint64_t starttime = get_sys_clock();
+		#endif
         while(commit_barriers > 0 && status == RUNNING)
             continue;
+        #if DEBUG_PROFILING
+        	INC_STATS(get_thd_id(), debug8, get_sys_clock() - starttime);
+        #endif
         if (!ATOM_CAS(status, RUNNING, COMMITED))
             rc = Abort;
 	}
