@@ -185,7 +185,8 @@ RC Row_ww::lock_release(txn_man * txn) {
 	}
 
 	#if DEBUG_PROFILING
-	INC_STATS(txn->get_thd_id(), debug7, get_sys_clock() - starttime);
+	INC_STATS(txn->get_thd_id(), debug6, get_sys_clock() - starttime);
+	INC_STATS(txn->get_thd_id(), debug8, 1);
 	#endif
 
 	// Try to find the entry in the owners

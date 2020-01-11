@@ -52,6 +52,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug1, get_sys_clock() - starttime);
 	INC_STATS(txn->get_thd_id(), debug10, 1);
+	starttime = get_sys_clock();
 	#endif
 
 
@@ -99,10 +100,6 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 		}
 	}
 
-	#if DEBUG_PROFILING
-	INC_STATS(txn->get_thd_id(), debug2, get_sys_clock() - starttime);
-	#endif
-
 	// check retired
 	// first check if has conflicts
 	
@@ -122,7 +119,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	}
 
 	#if DEBUG_PROFILING
-	INC_STATS(txn->get_thd_id(), debug3, get_sys_clock() - starttime);
+	INC_STATS(txn->get_thd_id(), debug2, get_sys_clock() - starttime);
 	#endif
 
 	// 2. insert into waiters and bring in next waiter
@@ -143,7 +140,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	}
 
 	#if DEBUG_PROFILING
-	INC_STATS(txn->get_thd_id(), debug4, get_sys_clock() - starttime);
+	INC_STATS(txn->get_thd_id(), debug3, get_sys_clock() - starttime);
 	#endif
 
 #if DEBUG_ASSERT
@@ -180,7 +177,9 @@ RC Row_clv::lock_retire(txn_man * txn) {
 		pthread_mutex_lock( latch );
 
 	#if DEBUG_PROFILING
-	INC_STATS(txn->get_thd_id(), debug8, get_sys_clock() - starttime);
+	INC_STATS(txn->get_thd_id(), debug4, get_sys_clock() - starttime);
+	INC_STATS(txn->get_thd_id(), debug9, 1);
+	starttime = get_sys_clock();
 	#endif
 
 	RC rc = RCOK;
@@ -227,10 +226,6 @@ RC Row_clv::lock_retire(txn_man * txn) {
 
 	}
 
-	#if DEBUG_PROFILING
-	INC_STATS(txn->get_thd_id(), debug5, get_sys_clock() - starttime);
-	#endif
-
 	// bring next owners from waiters
 	//if (retired_cnt < (g_thread_cnt / 2))
 	bring_next(NULL);
@@ -242,7 +237,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
 	#endif
 
 	#if DEBUG_PROFILING
-	INC_STATS(txn->get_thd_id(), debug6, get_sys_clock() - starttime);
+	INC_STATS(txn->get_thd_id(), debug5, get_sys_clock() - starttime);
 	starttime = get_sys_clock();
 	#endif
 
@@ -269,7 +264,9 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 	
 
 	#if DEBUG_PROFILING
-	INC_STATS(txn->get_thd_id(), debug7, get_sys_clock() - starttime);
+	INC_STATS(txn->get_thd_id(), debug6, get_sys_clock() - starttime);
+	INC_STATS(txn->get_thd_id(), debug8, 1);
+	starttime = get_sys_clock();
 	#endif
 
 	CLVLockEntry * en;
@@ -300,7 +297,7 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 	bring_next(NULL);
 
 	#if DEBUG_PROFILING
-	INC_STATS(txn->get_thd_id(), debug8, get_sys_clock() - starttime);
+	INC_STATS(txn->get_thd_id(), debug7, get_sys_clock() - starttime);
 	#endif
 
 	if (g_thread_cnt > 1) {
