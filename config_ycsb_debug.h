@@ -98,6 +98,7 @@
 #define TXN_QUEUE_SIZE_LIMIT		THREAD_CNT
 // [CLV]
 #define DYNAMIC_TS					true
+#define SPINLOCK					false
 
 /***********************************************/
 // Logging

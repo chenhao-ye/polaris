@@ -23,9 +23,13 @@ void Row_clv::init(row_t * row) {
 	// local timestamp
 	local_ts = -1;
 
+#if SPINLOCK
+	latch = new pthread_spinlock_t;
+	pthread_spin_init(latch, PTHREAD_PROCESS_SHARED);
+#else
 	latch = new pthread_mutex_t;
 	pthread_mutex_init(latch, NULL);
-
+#endif
 	blatch = false;
 }
 
@@ -45,8 +49,13 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	if (g_thread_cnt > 1) {
 		if (g_central_man)
 			glob_manager->lock_row(_row);
-		else 
+		else {
+			#if SPINLOCK
+			pthread_spin_lock( latch );
+			#else
 			pthread_mutex_lock( latch );
+			#endif
+		}
 	}
 
 	#if DEBUG_PROFILING
@@ -155,8 +164,13 @@ final:
 	if (g_thread_cnt > 1) {
 		if (g_central_man)
 			glob_manager->release_row(_row);
-		else
+		else {
+			#if SPINLOCK
+			pthread_spin_unlock( latch );
+			#else
 			pthread_mutex_unlock( latch );
+			#endif
+		}
 	}
 
 	return rc;
@@ -173,8 +187,13 @@ RC Row_clv::lock_retire(txn_man * txn) {
 
 	if (g_central_man)
 		glob_manager->lock_row(_row);
-	else
-		pthread_mutex_lock( latch );
+	else {
+			#if SPINLOCK
+			pthread_spin_lock( latch );
+			#else
+			pthread_mutex_lock( latch );
+			#endif
+		}
 
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug4, get_sys_clock() - starttime);
@@ -244,8 +263,13 @@ RC Row_clv::lock_retire(txn_man * txn) {
 
 	if (g_central_man)
 		glob_manager->release_row(_row);
-	else
-		pthread_mutex_unlock( latch );
+	else {
+			#if SPINLOCK
+			pthread_spin_unlock( latch );
+			#else
+			pthread_mutex_unlock( latch );
+			#endif
+		}
 
 	return rc;
 }
@@ -258,8 +282,13 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 	if (g_thread_cnt > 1) {
 		if (g_central_man)
 			glob_manager->lock_row(_row);
-		else 
+		else {
+			#if SPINLOCK
+			pthread_spin_lock( latch );
+			#else
 			pthread_mutex_lock( latch );
+			#endif
+		}
 	}
 	
 
@@ -302,8 +331,13 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 	if (g_thread_cnt > 1) {
 		if (g_central_man)
 			glob_manager->release_row(_row);
-		else
+		else {
+			#if SPINLOCK
+			pthread_spin_unlock( latch );
+			#else
 			pthread_mutex_unlock( latch );
+			#endif
+		}
 	}
 
 	return RCOK;
