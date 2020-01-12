@@ -17,7 +17,11 @@ public:
     RC lock_release(txn_man * txn);
 	
 private:
+    #if SPINLOCK
+	pthread_spinlock_t * latch;
+	#else
     pthread_mutex_t * latch;
+    #endif
 	bool blatch;
 	
 	bool 		conflict_lock(lock_t l1, lock_t l2);
