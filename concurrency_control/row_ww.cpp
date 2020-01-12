@@ -14,8 +14,13 @@ void Row_ww::init(row_t * row) {
 	owner_cnt = 0;
 	waiter_cnt = 0;
 
+#if SPINLOCK
+	latch = new pthread_spinlock_t;
+	pthread_spin_init(latch, PTHREAD_PROCESS_SHARED);
+#else
 	latch = new pthread_mutex_t;
 	pthread_mutex_init(latch, NULL);
+#endif
 	
 	lock_type = LOCK_NONE;
 	blatch = false;
@@ -42,8 +47,13 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 		if (g_central_man)
 			// if using central manager
 			glob_manager->lock_row(_row);
-		else 
+		else {
+			#if SPINLOCK
+			pthread_spin_lock( latch );
+			#else
 			pthread_mutex_lock( latch );
+			#endif
+		}
 	}
 
 	#if DEBUG_PROFILING
@@ -165,7 +175,13 @@ final:
 	if (g_central_man)
 		glob_manager->release_row(_row);
 	else
-		pthread_mutex_unlock( latch );
+		{
+			#if SPINLOCK
+			pthread_spin_unlock( latch );
+			#else
+			pthread_mutex_unlock( latch );
+			#endif
+		}
 
 	return rc;
 }
@@ -180,8 +196,13 @@ RC Row_ww::lock_release(txn_man * txn) {
 	if (g_thread_cnt > 1) {
 		if (g_central_man)
 			glob_manager->lock_row(_row);
-		else 
+		else {
+			#if SPINLOCK
+			pthread_spin_lock( latch );
+			#else
 			pthread_mutex_lock( latch );
+			#endif
+		}
 	}
 
 	#if DEBUG_PROFILING
@@ -235,7 +256,13 @@ RC Row_ww::lock_release(txn_man * txn) {
 	if (g_central_man)
 		glob_manager->release_row(_row);
 	else
-		pthread_mutex_unlock( latch );
+		{
+			#if SPINLOCK
+			pthread_spin_unlock( latch );
+			#else
+			pthread_mutex_unlock( latch );
+			#endif
+		}
 
 	return RCOK;
 }

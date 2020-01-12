@@ -6,10 +6,10 @@ cnt=100000
 penalty=1
 wh=1
 spin="true"
-pf="true"
+pf="false"
 for i in {1..3}
 do
-for alg in "CLV" #"WOUND_WAIT" "WAIT_DIE" "NO_WAIT" 
+for alg in "CLV" "WOUND_WAIT" "WAIT_DIE" "NO_WAIT" 
 do
 for wh in 16 8 4 2 1
 do
