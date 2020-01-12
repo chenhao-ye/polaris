@@ -12,8 +12,13 @@ void Row_lock::init(row_t * row) {
 	owner_cnt = 0;
 	waiter_cnt = 0;
 
+#if SPINLOCK
+	latch = new pthread_spinlock_t;
+	pthread_spin_init(latch, PTHREAD_PROCESS_SHARED);
+#else
 	latch = new pthread_mutex_t;
 	pthread_mutex_init(latch, NULL);
+#endif
 	
 	lock_type = LOCK_NONE;
 	blatch = false;
