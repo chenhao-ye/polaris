@@ -139,7 +139,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	//min(g_thread_cnt / 2, (UInt32) 0)
 	if (!retire_on && waiter_cnt > CLV_RETIRE_ON)
 		retire_on = true;
-	else if ((retire_cnt + owner_cnt) > CLV_RETIRE_OFF)
+	else if ((retired_cnt + owner_cnt) > CLV_RETIRE_OFF)
 		retire_on = false;
 
 	//clean_aborted_retired();
