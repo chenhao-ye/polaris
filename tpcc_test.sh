@@ -6,7 +6,7 @@ cnt=100000
 penalty=1
 wh=1
 spin="true"
-pf="true"
+pf="false"
 on=0
 off=16
 
