@@ -12,5 +12,10 @@ alg="CLV"
 on=0
 off=16
 
+for off in 8 16
+do
+for on in 0 1
+do
 timeout 50 python test.py CLV_RETIRE_ON=$on CLV_RETIRE_OFF=$off DEBUG_PROFILING=$pf SPINLOCK=$spin WORKLOAD=${wl} CC_ALG=$alg THREAD_CNT=$threads MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty NUM_WH=${wh}|& tee -a debug.out
-
+done
+done
