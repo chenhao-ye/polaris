@@ -19,7 +19,7 @@ for zipf in 0
 do
 for threads in 1 2 4 8 16 #32
 do
-	timeout 50 python CLV_RETIRE_ON=$on CLV_RETIRE_OFF=$off test.py REQ_PER_QUERY=$req SPINLOCK=$spin DEBUG_PROFILING=$pf SYNTH_TABLE_SIZE=${table_size} WORKLOAD=${wl} CC_ALG=$alg THREAD_CNT=$threads MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty ZIPF_THETA=$zipf SYNTHETIC_YCSB=$synthetic  |& tee -a debug.out
+	timeout 50 python test.py CLV_RETIRE_ON=$on CLV_RETIRE_OFF=$off REQ_PER_QUERY=$req SPINLOCK=$spin DEBUG_PROFILING=$pf SYNTH_TABLE_SIZE=${table_size} WORKLOAD=${wl} CC_ALG=$alg THREAD_CNT=$threads MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty ZIPF_THETA=$zipf SYNTHETIC_YCSB=$synthetic  |& tee -a debug.out
 done
 done
 done
