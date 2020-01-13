@@ -12,7 +12,7 @@ alg="CLV"
 on=0
 off=16
 
-for off in 8 16
+for off in 8 12 16
 do
 for on in 0 1
 do
