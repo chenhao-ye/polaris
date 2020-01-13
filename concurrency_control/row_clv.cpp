@@ -136,11 +136,11 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 
 	// turn on retire only when needed
 	//if (!retire_on && waiter_cnt >= min(g_thread_cnt / 2, (UInt32) 1))
-	if (!retire_on && waiter_cnt > min(g_thread_cnt / 2, (UInt32) 0))
+	//min(g_thread_cnt / 2, (UInt32) 0)
+	if (!retire_on && waiter_cnt > CLV_RETIRE_ON)
 		retire_on = true;
-	//else if ( retired_cnt >= max(g_thread_cnt / 2, (UInt32) 2) ){
-	//	retire_on = false;
-	//}
+	else if ((retire_cnt + owner_cnt) > CLV_RETIRE_OFF)
+		retire_on = false;
 
 	//clean_aborted_retired();
 	if (status == RCOK) {

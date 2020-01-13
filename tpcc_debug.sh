@@ -2,16 +2,15 @@ cp -r config_tpcc_debug.h config.h
 rm debug.out
 
 wl="TPCC"
-threads=4
-cnt=10000
+threads=16
+cnt=100000
 penalty=1
-wh=4
-pf="false"
-
+wh=1
+spin="true"
+pf="true"
 alg="CLV"
-for threads in 1 4 8 16
-do
-timeout 30 python test.py DEBUG_PROFILING=${pf} WORKLOAD=${wl} CC_ALG=$alg THREAD_CNT=$threads MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty NUM_WH=${wh} |& tee -a debug.out
-done
+on=0
+off=16
 
+timeout 50 python test.py CLV_RETIRE_ON=$on CLV_RETIRE_OFF=$off DEBUG_PROFILING=$pf SPINLOCK=$spin WORKLOAD=${wl} CC_ALG=$alg THREAD_CNT=$threads MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty NUM_WH=${wh}|& tee -a debug.out
 
