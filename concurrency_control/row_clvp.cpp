@@ -21,9 +21,13 @@ void Row_clvp::init(row_t * row) {
 	// local timestamp
 	local_ts = -1;
 
+	#if SPINLOCK
+	latch = new pthread_spinlock_t;
+	pthread_spin_init(latch, PTHREAD_PROCESS_SHARED);
+	#else
 	latch = new pthread_mutex_t;
 	pthread_mutex_init(latch, NULL);
-
+	#endif
 	blatch = false;
 }
 
