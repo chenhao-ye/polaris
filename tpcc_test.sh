@@ -7,8 +7,8 @@ penalty=1
 wh=1
 spin="true"
 pf="true"
-on=0
-off=16
+on=1
+off=17
 
 
 #for i in {1..3}

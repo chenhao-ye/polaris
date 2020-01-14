@@ -10,8 +10,8 @@ table_size="1024*1024*20"
 req=16
 pf="false"
 spin="true"
-on=0
-off=16
+on=1
+off=17
 
 for i in 0 1
 do

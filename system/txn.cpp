@@ -114,6 +114,8 @@ void txn_man::cleanup(RC rc) {
 	insert_cnt = 0;
 	return;
 #endif
+
+	// go through accesses and release
 	for (int rid = row_cnt - 1; rid >= 0; rid --) {
 		row_t * orig_r = accesses[rid]->orig_row;
 		access_t type = accesses[rid]->type;
@@ -128,6 +130,10 @@ void txn_man::cleanup(RC rc) {
 #endif
 
 #if CC_ALG == CLV 
+		#if PRIORITIZE_HS
+		if (!orig_r->is_retire_on())
+			continue
+		#endif
 		if (ROLL_BACK && type == XP) {
 			orig_r->return_row(type, this, accesses[rid]->orig_data, rc);
 		} else {

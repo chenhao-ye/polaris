@@ -101,6 +101,7 @@
 #define SPINLOCK					true
 #define CLV_RETIRE_ON				0
 #define CLV_RETIRE_OFF              10000
+#define PRIORITIZE_HS				false
 
 /***********************************************/
 // Logging
