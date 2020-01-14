@@ -8,6 +8,7 @@ struct CLVLockEntry;
 
 class Row_clvp {
 public:
+	//bool is_retire_on;
 	void init(row_t * row);
 	// [DL_DETECT] txnids are the txn_ids that current txn is waiting for.
     RC lock_get(lock_t type, txn_man * txn);
@@ -16,17 +17,27 @@ public:
     RC lock_retire(txn_man * txn);
 	
 private:
+	#if SPINLOCK
+	pthread_spinlock_t * latch;
+	#else
     pthread_mutex_t * latch;
+    #endif
 	bool blatch;
 	
 	bool 		conflict_lock(lock_t l1, lock_t l2);
 	CLVLockEntry * get_entry();
 	void 		return_entry(CLVLockEntry * entry);
+	void		lock();
+	void		unlock();
 	row_t * _row;
     UInt32 owner_cnt;
     UInt32 waiter_cnt;
     UInt32 retired_cnt; // no need to keep retied cnt
+    #if DEBUG_TMP
+    UInt32 finished_cnt;
+    #endif
     ts_t local_ts;
+    bool retire_on;
 	
 	// owners is a single linked list
 	// waiters is a double linked list 
@@ -39,8 +50,6 @@ private:
 	CLVLockEntry * waiters_head;
 	CLVLockEntry * waiters_tail;
 
-	void clean_aborted_retired();
-	void clean_aborted_owner();
 	CLVLockEntry * rm_if_in_owners(txn_man * txn);
 	bool rm_if_in_retired(txn_man * txn, bool is_abort);
 	bool rm_if_in_waiters(txn_man * txn);
@@ -54,13 +63,7 @@ private:
 	void insert_to_waiters(lock_t type, txn_man * txn);
 	CLVLockEntry * remove_descendants(CLVLockEntry * en);
 	void update_entry(CLVLockEntry * en);
-
-    // debugging method
-    void debug();
-    void print_list(CLVLockEntry * list, CLVLockEntry * tail, int cnt);
-    void assert_notin_list(CLVLockEntry * list, CLVLockEntry * tail, int cnt, txn_man * txn);
-    void assert_in_list(CLVLockEntry * list, CLVLockEntry * tail, int cnt, txn_man * txn);
-    void assert_in_list(CLVLockEntry * list, CLVLockEntry * tail, int cnt, CLVLockEntry * l);
+	void mv_to_retired(CLVLockEntry * en);
 
 };
 

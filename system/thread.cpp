@@ -106,10 +106,6 @@ RC thread_t::run() {
 //#endif
 		m_txn->set_txn_id(get_thd_id() + thd_txn_id * g_thread_cnt);
 		thd_txn_id ++;
-		#if DEBUG_WW || DEBUG_CLV
-			printf("[thread-%lu txn-%lu (%lu)] start running\n", 
-				get_thd_id(), m_txn->get_txn_id(), m_txn->get_ts());
-		#endif
 
 		if ((CC_ALG == HSTORE && !HSTORE_LOCAL_TS)
 				|| CC_ALG == MVCC 
@@ -152,16 +148,6 @@ RC thread_t::run() {
 				part_lock_man.unlock(m_txn, m_query->part_to_access, m_query->part_num);
 #endif
 		}
-
-#if DEBUG_WW || DEBUG_CLV
-        // TODO: set rc to abort if txn's status == abort
-        //rc = m_txn->lock_abort ? Abort : rc;
-	//printf("%d\n", rc);
-	if (rc == Abort)
-		printf("[thread-%lu] finish txn %lu (aborted)\n", get_thd_id(), m_txn->get_txn_id());
-	else if (rc == RCOK)
-        printf("[thread-%lu] finish txn %lu (commited)\n", get_thd_id(), m_txn->get_txn_id());
-#endif
 
 		if (rc == Abort) {
 			uint64_t penalty = 0;

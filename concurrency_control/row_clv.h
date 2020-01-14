@@ -40,6 +40,8 @@ private:
 	bool 		conflict_lock(lock_t l1, lock_t l2);
 	CLVLockEntry * get_entry();
 	void 		return_entry(CLVLockEntry * entry);
+	void		lock();
+	void		unlock();
 	row_t * _row;
     UInt32 owner_cnt;
     UInt32 waiter_cnt;
@@ -61,8 +63,6 @@ private:
 	CLVLockEntry * waiters_head;
 	CLVLockEntry * waiters_tail;
 
-	void clean_aborted_retired();
-	void clean_aborted_owner();
 	CLVLockEntry * rm_if_in_owners(txn_man * txn);
 	bool rm_if_in_retired(txn_man * txn, bool is_abort);
 	bool rm_if_in_waiters(txn_man * txn);
@@ -77,14 +77,6 @@ private:
 	CLVLockEntry * remove_descendants(CLVLockEntry * en);
 	void update_entry(CLVLockEntry * en);
 	void mv_to_retired(CLVLockEntry * en);
-
-    // debugging method
-    void debug();
-    void print_list(CLVLockEntry * list, CLVLockEntry * tail, int cnt);
-    void assert_notin_list(CLVLockEntry * list, CLVLockEntry * tail, int cnt, txn_man * txn);
-    void assert_in_list(CLVLockEntry * list, CLVLockEntry * tail, int cnt, txn_man * txn);
-    void assert_in_list(CLVLockEntry * list, CLVLockEntry * tail, int cnt, CLVLockEntry * l);
-
 };
 
 #endif

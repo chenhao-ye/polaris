@@ -322,9 +322,6 @@ RC txn_man::finish(RC rc) {
 	cleanup(rc);
 #elif CC_ALG == CLV
 	if (rc == RCOK) {
-		#if DEBUG_CLV
-		printf("[txn-%lu] # bariers %d\n", get_txn_id(), commit_barriers);
-		#endif
 		#if DEBUG_PROFILING
 		uint64_t starttime = get_sys_clock();
 		#endif
@@ -336,19 +333,13 @@ RC txn_man::finish(RC rc) {
         if (!ATOM_CAS(status, RUNNING, COMMITED))
             rc = Abort;
 	}
-	
+	#if DYNAMIC_TS
 	if (rc == Abort) {
 	    reassign_ts();
 	} else {
 	    set_ts(0);
-	} 
-
-	#if DEBUG_CLV
-	if (rc == Abort)
-        printf("[txn-%lu] is set to aborted\n", get_txn_id());
-	else if (rc == RCOK)
-	    printf("[txn-%lu] is set to commited\n", get_txn_id());
-    #endif
+	}
+	#endif
 	cleanup(rc);
 #else 
 	cleanup(rc);
