@@ -16,7 +16,7 @@
 // # of transactions to run for warmup
 #define WARMUP						0
 // YCSB or TPCC
-#define WORKLOAD YCSB
+#define WORKLOAD TPCC
 // print the transaction latency distribution
 #define PRT_LAT_DISTR				false
 #define STATS_ENABLE				true
@@ -39,12 +39,12 @@
 /***********************************************/
 // WAIT_DIE, NO_WAIT, DL_DETECT, TIMESTAMP, MVCC, HEKATON, HSTORE, OCC, VLL, TICTOC, SILO
 // TODO TIMESTAMP does not work at this moment
-//#define CC_ALG NO_WAIT
-#define CC_ALG NO_WAIT
+//#define CC_ALG CLV
+#define CC_ALG CLV
 #define ISOLATION_LEVEL 			SERIALIZABLE
 
 // all transactions acquire tuples according to the primary key order.
-#define KEY_ORDER					true//false
+#define KEY_ORDER					false
 // transaction roll back changes after abort
 #define ROLL_BACK					true
 // per-row lock/ts management or central lock/ts management
@@ -100,7 +100,8 @@
 #define DYNAMIC_TS					true
 #define SPINLOCK true
 #define CLV_RETIRE_ON 0
-#define CLV_RETIRE_OFF 16
+#define CLV_RETIRE_OFF 17
+#define PRIORITIZE_HS false
 
 /***********************************************/
 // Logging
@@ -120,17 +121,17 @@
 #define MAX_TUPLE_SIZE				1024 // in bytes
 // ==== [YCSB] ====
 #define INIT_PARALLELISM			40
-#define SYNTH_TABLE_SIZE 1024*1024*20
-#define ZIPF_THETA 0
-#define READ_PERC 				0.5
-#define WRITE_PERC 				0.5
-#define SCAN_PERC 				0
-#define SCAN_LEN				20
+#define SYNTH_TABLE_SIZE 			(1024 * 5)
+#define ZIPF_THETA 					0.9 //0.6
+#define READ_PERC 					0.5
+#define WRITE_PERC 					0.5
+#define SCAN_PERC 					0
+#define SCAN_LEN					20
 #define PART_PER_TXN 				1
 #define PERC_MULTI_PART				1
-#define REQ_PER_QUERY 16
+#define REQ_PER_QUERY				16
 #define FIELD_PER_TUPLE				10
-#define SYNTHETIC_YCSB true
+#define SYNTHETIC_YCSB				true//false
 // ==== [TPCC] ====
 // For large warehouse count, the tables do not fit in memory
 // small tpcc schemas shrink the table size.
@@ -140,7 +141,7 @@
 // are not modeled.
 #define TPCC_ACCESS_ALL 			false 
 #define WH_UPDATE					true
-#define NUM_WH 						1
+#define NUM_WH 1
 //
 enum TPCCTxnType {TPCC_ALL, 
 				TPCC_PAYMENT, 
@@ -187,13 +188,13 @@ extern TestCases					g_test_case;
 #define DEBUG_LOCK					false
 #define DEBUG_TIMESTAMP					false
 #define DEBUG_SYNTH					false
-#define DEBUG_ASSERT					false
-#define DEBUG_CC					false //true
+#define DEBUG_ASSERT					false//true
+#define DEBUG_CC					false
 #define DEBUG_WW                    			false
-#define DEBUG_BENCHMARK					false
-#define DEBUG_CLV                   			false	
-#define DEBUG_TMP					false	
-#define DEBUG_PROFILING false
+#define DEBUG_BENCHMARK             			false
+#define DEBUG_CLV                    			false
+#define DEBUG_TMP					false
+#define DEBUG_PROFILING true
 
 /***********************************************/
 // Constant
@@ -218,7 +219,7 @@ extern TestCases					g_test_case;
 #define VLL							10
 #define HEKATON 					11
 #define WOUND_WAIT                  12
-#define CLV							13
+#define CLV                         13
 //Isolation Levels 
 #define SERIALIZABLE				1
 #define SNAPSHOT					2

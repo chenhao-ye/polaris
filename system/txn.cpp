@@ -122,13 +122,14 @@ void txn_man::cleanup(RC rc) {
 		if (type == WR && rc == Abort)
 			type = XP;
 		if (!orig_r->has_retired())
-			continue
+			continue;
 		if (ROLL_BACK && type == XP) {
 			orig_r->return_row(type, this, accesses[rid]->orig_data, rc);
 		} else {
 			orig_r->return_row(type, this, accesses[rid]->data, rc);
 		}
 		accesses[rid]->data = NULL;
+	}
 	#endif
 
 	// go through accesses and release
