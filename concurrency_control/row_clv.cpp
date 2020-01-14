@@ -307,7 +307,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
 	return rc;
 }
 
-void mv_to_retired(CLVLockEntry * entry) {
+void Row_clv::mv_to_retired(CLVLockEntry * entry) {
 	// 2.1 must clean out retired list before inserting!!
 	//clean_aborted_retired();
 
