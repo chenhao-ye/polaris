@@ -1,4 +1,5 @@
 cp -r config_ycsb_debug.h config.h
+rm debug.out
 
 wl="YCSB"
 alg="CLV"
