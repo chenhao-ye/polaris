@@ -154,7 +154,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 		CLVLockEntry * next = en;
 		while (en) {
 			next = en->next;
-			if (!en->txn->lock_abort && en->finished) {
+			if ((!en->txn->lock_abort) && en->finished) {
 					// mv finished to retired (no changes to prev)			
 					rm_from_owners(en, prev, false);
 					mv_to_retired(en);
@@ -210,9 +210,28 @@ RC Row_clv::lock_retire(txn_man * txn) {
 	uint64_t starttime = get_sys_clock();
 	#endif
 
+#if !DEBUG_TMP
 
-#if DEBUG_TMP
+	if(!retire_on) 
+		return RCOK;
 
+	if (g_central_man)
+		glob_manager->lock_row(_row);
+	else {
+			#if SPINLOCK
+			pthread_spin_lock( latch );
+			#else
+			pthread_mutex_lock( latch );
+			#endif
+	}
+
+	#if DEBUG_PROFILING
+	INC_STATS(txn->get_thd_id(), debug4, get_sys_clock() - starttime);
+	INC_STATS(txn->get_thd_id(), debug9, 1);
+	starttime = get_sys_clock();
+	#endif
+
+#else
 	if (g_central_man)
 		glob_manager->lock_row(_row);
 	else {
@@ -250,29 +269,6 @@ RC Row_clv::lock_retire(txn_man * txn) {
 		}
 		return RCOK;
 	}
-
-#else
-
-	if(!retire_on) 
-		return RCOK;
-	
-
-	if (g_central_man)
-		glob_manager->lock_row(_row);
-	else {
-			#if SPINLOCK
-			pthread_spin_lock( latch );
-			#else
-			pthread_mutex_lock( latch );
-			#endif
-	}
-
-	#if DEBUG_PROFILING
-	INC_STATS(txn->get_thd_id(), debug4, get_sys_clock() - starttime);
-	INC_STATS(txn->get_thd_id(), debug9, 1);
-	starttime = get_sys_clock();
-	#endif
-
 #endif
 
 	RC rc = RCOK;
@@ -634,6 +630,9 @@ CLVLockEntry * Row_clv::get_entry() {
 	entry->delta = false;
 	entry->is_cohead = false;
 	entry->txn = NULL;
+	#if DEBUG_TMP
+	entry->finished = false;
+	#endif
 	return entry;
 }
 
