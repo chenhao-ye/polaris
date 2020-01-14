@@ -15,6 +15,7 @@ struct CLVLockEntry {
 
 class Row_clv {
 public:
+	//bool is_retire_on;
 	void init(row_t * row);
 	// [DL_DETECT] txnids are the txn_ids that current txn is waiting for.
     RC lock_get(lock_t type, txn_man * txn);
@@ -38,6 +39,7 @@ private:
     UInt32 waiter_cnt;
     UInt32 retired_cnt; // no need to keep retied cnt
     ts_t local_ts;
+    bool retire_on;
 	
 	// owners is a single linked list
 	// waiters is a double linked list 
