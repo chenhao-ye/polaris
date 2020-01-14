@@ -123,6 +123,7 @@ void txn_man::cleanup(RC rc) {
 			type = XP;
 		if (!orig_r->has_retired())
 			continue;
+		printf("txn-%lu return row %d/%d\n", get_txn_id(), rid, row_cnt);
 		if (ROLL_BACK && type == XP) {
 			orig_r->return_row(type, this, accesses[rid]->orig_data, rc);
 		} else {
@@ -139,6 +140,7 @@ void txn_man::cleanup(RC rc) {
 		if (!accesses[rid]->data)
 			continue;
 		#endif
+		printf("txn-%lu return row %d/%d\n", get_txn_id(), rid, row_cnt);
 		
 		row_t * orig_r = accesses[rid]->orig_row;
 		access_t type = accesses[rid]->type;
