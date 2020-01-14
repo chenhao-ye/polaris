@@ -156,7 +156,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 			next = en->next;
 			if (!en->txn->lock_abort && en->finished) {
 					// mv finished to retired (no changes to prev)			
-					en = rm_from_owners(en, prev, false);
+					rm_from_owners(en, prev, false);
 					mv_to_retired(en);
 			} else {
 				// skip aborted and not-finished
@@ -548,10 +548,10 @@ Row_clv::rm_from_owners(CLVLockEntry * en, CLVLockEntry * prev, bool destroy) {
 	if (destroy) {
 		// return next entry
 		return_entry(en);
-		return to_return;
+		
 	}
 	// return removed entry
-	return en;
+	return to_return;
 }
 
 CLVLockEntry * 
