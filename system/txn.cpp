@@ -134,8 +134,8 @@ void txn_man::cleanup(RC rc) {
 	// #endif
 
 	// go through accesses and release
-	//for (int rid = row_cnt - 1; rid >= 0; rid --) {
-	for (int rid = 0; rid <= row_cnt - 1; rid ++) {
+	for (int rid = row_cnt - 1; rid >= 0; rid --) {
+	//for (int rid = 0; rid <= row_cnt - 1; rid ++) {
 
 		// #if CC_ALG == CLV && PRIORITIZE_HS
 		// // TODO: IMPROPOER TO USE NULL CHECK FOR RID->DATA
