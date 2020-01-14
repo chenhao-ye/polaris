@@ -89,7 +89,7 @@ public:
 #if CC_ALG == CLV
 	RC retire_row(txn_man * txn);
 	void return_row(access_t type, txn_man * txn, row_t * row, RC rc);
-	bool has_retired() { return this->manager->has_retired();};
+	bool has_retired();
 #endif
 	
   #if CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE

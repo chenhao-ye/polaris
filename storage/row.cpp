@@ -40,6 +40,11 @@ row_t::switch_schema(table_t * host_table) {
 	return RCOK;
 }
 
+bool
+row_t::has_retired() {
+	 return this->manager->has_retired();
+}
+
 void row_t::init_manager(row_t * row) {
 #if CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE
     manager = (Row_lock *) mem_allocator.alloc(sizeof(Row_lock), _part_id);
