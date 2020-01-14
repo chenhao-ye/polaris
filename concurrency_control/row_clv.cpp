@@ -538,10 +538,6 @@ CLVLockEntry *
 Row_clv::rm_from_owners(CLVLockEntry * en, CLVLockEntry * prev, bool destroy) {
 	CLVLockEntry * to_return = en->next;
 	QUEUE_RM(owners, owners_tail, prev, en, owner_cnt);
-	if (destroy) {
-		// return next entry
-		return_entry(en);
-	}
 	#if DEBUG_CLV
 	printf("[row_clv-%lu txn-%lu (%lu)] rm from owners\n", 
 		_row->get_row_id(), en->txn->get_txn_id(), en->txn->get_ts());
@@ -549,8 +545,13 @@ Row_clv::rm_from_owners(CLVLockEntry * en, CLVLockEntry * prev, bool destroy) {
 	#if DEBUG_ASSERT
 	debug();
 	#endif
+	if (destroy) {
+		// return next entry
+		return_entry(en);
+		return to_return;
+	}
 	// return removed entry
-	return to_return;
+	return en;
 }
 
 CLVLockEntry * 
