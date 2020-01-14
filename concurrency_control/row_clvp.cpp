@@ -257,6 +257,8 @@ RC Row_clvp::lock_release(txn_man * txn, RC rc) {
 			#endif
 			return_entry(en);
 			bring_next(NULL);
+		} else {
+			assert(rm_if_in_waiters(txn));
 		}
 	} else if (owner_cnt == 0) {
 		bring_next(NULL);
