@@ -115,32 +115,49 @@ void txn_man::cleanup(RC rc) {
 	return;
 #endif
 
-	// go through accesses and release
+	#if CC_ALG == CLV && PRIORITIZE_HS
 	for (int rid = row_cnt - 1; rid >= 0; rid --) {
 		row_t * orig_r = accesses[rid]->orig_row;
 		access_t type = accesses[rid]->type;
 		if (type == WR && rc == Abort)
 			type = XP;
-
-#if (CC_ALG == NO_WAIT || CC_ALG == DL_DETECT) && ISOLATION_LEVEL == REPEATABLE_READ
-		if (type == RD) {
-			accesses[rid]->data = NULL;
-			continue;
-		}
-#endif
-
-#if CC_ALG == CLV 
-		#if PRIORITIZE_HS
-		if (!orig_r->is_retire_on())
+		if (!orig_r->has_retired())
 			continue
-		#endif
 		if (ROLL_BACK && type == XP) {
 			orig_r->return_row(type, this, accesses[rid]->orig_data, rc);
 		} else {
 			orig_r->return_row(type, this, accesses[rid]->data, rc);
 		}
-#else
+		accesses[rid]->data = NULL;
+	#endif
 
+	// go through accesses and release
+	for (int rid = row_cnt - 1; rid >= 0; rid --) {
+
+		#if CC_ALG == CLV && PRIORITIZE_HS
+		if (!accesses[rid]->data)
+			continue;
+		#endif
+		
+		row_t * orig_r = accesses[rid]->orig_row;
+		access_t type = accesses[rid]->type;
+		if (type == WR && rc == Abort)
+			type = XP;
+
+		#if (CC_ALG == NO_WAIT || CC_ALG == DL_DETECT) && ISOLATION_LEVEL == REPEATABLE_READ
+		if (type == RD) {
+			accesses[rid]->data = NULL;
+			continue;
+		}
+		#endif
+
+		#if CC_ALG == CLV 
+		if (ROLL_BACK && type == XP) {
+			orig_r->return_row(type, this, accesses[rid]->orig_data, rc);
+		} else {
+			orig_r->return_row(type, this, accesses[rid]->data, rc);
+		}
+		#else
 		if (ROLL_BACK && type == XP &&
 					(CC_ALG == DL_DETECT || 
 					CC_ALG == NO_WAIT || 
@@ -151,11 +168,10 @@ void txn_man::cleanup(RC rc) {
 		} else {
 			orig_r->return_row(type, this, accesses[rid]->data);
 		}
-#endif
-
-#if CC_ALG != TICTOC && CC_ALG != SILO
+		#endif
+		#if CC_ALG != TICTOC && CC_ALG != SILO
 		accesses[rid]->data = NULL;
-#endif
+		#endif
 	}
 
 	if (rc == Abort) {
@@ -169,6 +185,7 @@ void txn_man::cleanup(RC rc) {
 			mem_allocator.free(row, sizeof(row));
 		}
 	}
+
 	row_cnt = 0;
 	wr_cnt = 0;
 	insert_cnt = 0;
