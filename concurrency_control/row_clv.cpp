@@ -142,6 +142,30 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	else if ((retired_cnt + owner_cnt) >= CLV_RETIRE_OFF)
 		retire_on = false;
 
+
+	#if DEBUG_TMP
+	if (retire_on) {
+		// move finished txns to retire list
+		CLVLockEntry * en = owners;
+		CLVLockEntry * prev = NULL;
+		CLVLockEntry * next = en;
+		while (en) {
+			next = en->next;
+			if (!en->txn->lock_abort && en->finished) {
+					// mv finished to retired (no changes to prev)			
+					en = rm_from_owners(en, prev, false);
+					mv_to_retired(en);
+			} else {
+				// skip aborted and not-finished
+				if (en->txn->lock_abort)
+					status = WAIT;
+				prev = en;
+			}
+			en = next;
+		}
+	}
+	#endif
+
 	//clean_aborted_retired();
 	if (status == RCOK) {
 		// 3. if brought txn in owner, return acquired lock
@@ -179,11 +203,50 @@ final:
 
 RC Row_clv::lock_retire(txn_man * txn) {
 
-	if(!retire_on)
-		return RCOK;
-
 	#if DEBUG_PROFILING
 	uint64_t starttime = get_sys_clock();
+	#endif
+
+
+	#if DEBUG_TMP
+
+	if (g_central_man)
+		glob_manager->lock_row(_row);
+	else {
+			#if SPINLOCK
+			pthread_spin_lock( latch );
+			#else
+			pthread_mutex_lock( latch );
+			#endif
+	}
+
+	if(!retire_on) {
+
+		// try to set txn's lock entry's to retired
+		CLVLockEntry * en = owners;
+		while(en) {
+			if (en->txn == txn) {
+				en->finished = true;
+				break;
+			}
+			en = en->next;
+		}
+		if (g_central_man)
+			glob_manager->release_row(_row);
+		else {
+				#if SPINLOCK
+				pthread_spin_unlock( latch );
+				#else
+				pthread_mutex_unlock( latch );
+				#endif
+		}
+		return RCOK;
+	}
+
+	#else
+
+	if(!retire_on) 
+		return RCOK;
 	#endif
 
 	if (g_central_man)
@@ -194,7 +257,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
 			#else
 			pthread_mutex_lock( latch );
 			#endif
-		}
+	}
 
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug4, get_sys_clock() - starttime);
@@ -214,40 +277,10 @@ RC Row_clv::lock_retire(txn_man * txn) {
 
 	// 2. if txn not aborted, try to add to retired
 	if (rc != Abort) {
-		// 2.1 must clean out retired list before inserting!!
-		//clean_aborted_retired();
-
-#if DEBUG_ASSERT
-		debug();
-#endif
-		// 2.2 increment barriers if conflicts with tail
-		if (retired_tail) {
-			if (conflict_lock(retired_tail->type, entry->type)) {
-				// default is_cohead = false
-				entry->delta = true;
-				txn->increment_commit_barriers();
-			} else { 
-				entry->is_cohead = retired_tail->is_cohead;
-				if (!entry->is_cohead)
-					txn->increment_commit_barriers();
-			}
-
-		// 2.3 append entry to retired
-		} else {
-			entry->is_cohead = true;
-		}
-		RETIRED_LIST_PUT_TAIL(retired_head, retired_tail, entry);
-		retired_cnt++;
-
-	#if DEBUG_CLV
-		printf("[row_clv-%lu txn-%lu (%lu)] move to retired (type %d), is_cohead=%d, delta=%d\n",
-				_row->get_row_id(), txn->get_txn_id(), txn->get_ts(), entry->type, entry->is_cohead, entry->delta);
-	#endif
-
+		mv_to_retired(entry);
 	}
 
 	// bring next owners from waiters
-	//if (retired_cnt < (g_thread_cnt / 2))
 	bring_next(NULL);
 
 	#if DEBUG_ASSERT
@@ -261,7 +294,6 @@ RC Row_clv::lock_retire(txn_man * txn) {
 	starttime = get_sys_clock();
 	#endif
 
-
 	if (g_central_man)
 		glob_manager->release_row(_row);
 	else {
@@ -273,6 +305,38 @@ RC Row_clv::lock_retire(txn_man * txn) {
 		}
 
 	return rc;
+}
+
+void mv_to_retired(CLVLockEntry * entry) {
+	// 2.1 must clean out retired list before inserting!!
+	//clean_aborted_retired();
+
+	#if DEBUG_ASSERT
+		debug();
+	#endif
+	// 2.2 increment barriers if conflicts with tail
+	if (retired_tail) {
+		if (conflict_lock(retired_tail->type, entry->type)) {
+			// default is_cohead = false
+			entry->delta = true;
+			txn->increment_commit_barriers();
+		} else { 
+			entry->is_cohead = retired_tail->is_cohead;
+			if (!entry->is_cohead)
+				txn->increment_commit_barriers();
+		}
+
+	// 2.3 append entry to retired
+	} else {
+		entry->is_cohead = true;
+	}
+	RETIRED_LIST_PUT_TAIL(retired_head, retired_tail, entry);
+	retired_cnt++;
+
+	#if DEBUG_CLV
+	printf("[row_clv-%lu txn-%lu (%lu)] move to retired (type %d), is_cohead=%d, delta=%d\n",
+				_row->get_row_id(), txn->get_txn_id(), txn->get_ts(), entry->type, entry->is_cohead, entry->delta);
+	#endif
 }
 
 RC Row_clv::lock_release(txn_man * txn, RC rc) {

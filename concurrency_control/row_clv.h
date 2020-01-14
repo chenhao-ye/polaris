@@ -10,6 +10,9 @@ struct CLVLockEntry {
 	txn_man * txn;
 	CLVLockEntry * next;
 	CLVLockEntry * prev;
+	#if DEBUG_TMP
+	bool finished;
+	#endif
 };
 
 
