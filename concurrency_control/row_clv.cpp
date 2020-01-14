@@ -319,11 +319,11 @@ void mv_to_retired(CLVLockEntry * entry) {
 		if (conflict_lock(retired_tail->type, entry->type)) {
 			// default is_cohead = false
 			entry->delta = true;
-			txn->increment_commit_barriers();
+			entry->txn->increment_commit_barriers();
 		} else { 
 			entry->is_cohead = retired_tail->is_cohead;
 			if (!entry->is_cohead)
-				txn->increment_commit_barriers();
+				entry->txn->increment_commit_barriers();
 		}
 
 	// 2.3 append entry to retired
@@ -335,7 +335,8 @@ void mv_to_retired(CLVLockEntry * entry) {
 
 	#if DEBUG_CLV
 	printf("[row_clv-%lu txn-%lu (%lu)] move to retired (type %d), is_cohead=%d, delta=%d\n",
-				_row->get_row_id(), txn->get_txn_id(), txn->get_ts(), entry->type, entry->is_cohead, entry->delta);
+				_row->get_row_id(), entry->txn->get_txn_id(), entry->txn->get_ts(), 
+				entry->type, entry->is_cohead, entry->delta);
 	#endif
 }
 

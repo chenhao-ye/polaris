@@ -73,6 +73,7 @@ private:
 	void insert_to_waiters(lock_t type, txn_man * txn);
 	CLVLockEntry * remove_descendants(CLVLockEntry * en);
 	void update_entry(CLVLockEntry * en);
+	void mv_to_retired(CLVLockEntry * en);
 
     // debugging method
     void debug();
