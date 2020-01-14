@@ -208,7 +208,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
 	#endif
 
 
-	#if DEBUG_TMP
+#if DEBUG_TMP
 
 	if (g_central_man)
 		glob_manager->lock_row(_row);
@@ -219,6 +219,11 @@ RC Row_clv::lock_retire(txn_man * txn) {
 			pthread_mutex_lock( latch );
 			#endif
 	}
+	#if DEBUG_PROFILING
+	INC_STATS(txn->get_thd_id(), debug4, get_sys_clock() - starttime);
+	INC_STATS(txn->get_thd_id(), debug9, 1);
+	starttime = get_sys_clock();
+	#endif
 
 	if(!retire_on) {
 
@@ -243,11 +248,11 @@ RC Row_clv::lock_retire(txn_man * txn) {
 		return RCOK;
 	}
 
-	#else
+#else
 
 	if(!retire_on) 
 		return RCOK;
-	#endif
+	
 
 	if (g_central_man)
 		glob_manager->lock_row(_row);
@@ -264,6 +269,8 @@ RC Row_clv::lock_retire(txn_man * txn) {
 	INC_STATS(txn->get_thd_id(), debug9, 1);
 	starttime = get_sys_clock();
 	#endif
+
+#endif
 
 	RC rc = RCOK;
 
