@@ -306,6 +306,7 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 		en = rm_if_in_owners(txn);
 		if (en) {
 			return_entry(en);
+			bring_next(NULL);
 		} else {
 			if(!rm_if_in_waiters(txn)) {
 #if DEBUG_CLV
@@ -313,6 +314,8 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 #endif
 			}	
 		}
+	} else if (owner_cnt == 0) {
+		bring_next(NULL);
 	}
 
 	#if DEBUG_ASSERT
@@ -323,7 +326,6 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 
 	// WAIT - done releasing with is_abort = true
 	// FINISH - done releasing with is_abort = false
-	bring_next(NULL);
 
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug7, get_sys_clock() - starttime);
