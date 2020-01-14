@@ -31,7 +31,7 @@ void Row_clvp::init(row_t * row) {
 	blatch = false;
 }
 
-void Row_clv::lock() {
+void Row_clvp::lock() {
 	if (g_thread_cnt > 1) {
 		if (g_central_man)
 			glob_manager->lock_row(_row);
@@ -45,7 +45,7 @@ void Row_clv::lock() {
 	}
 }
 
-void Row_clv::unlock() {
+void Row_clvp::unlock() {
 	if (g_thread_cnt > 1) {
 		if (g_central_man)
 			glob_manager->release_row(_row);
@@ -152,7 +152,7 @@ final:
 	return rc;
 }
 
-RC Row_clv::lock_retire(txn_man * txn) {
+RC Row_clvp::lock_retire(txn_man * txn) {
 
 	#if DEBUG_PROFILING
 	uint64_t starttime = get_sys_clock();
@@ -210,7 +210,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
 	return rc;
 }
 
-void Row_clv::mv_to_retired(CLVLockEntry * entry) {
+void Row_clvp::mv_to_retired(CLVLockEntry * entry) {
 	#if DEBUG_TMP
 	finished_cnt--;
 	#endif
@@ -235,7 +235,7 @@ void Row_clv::mv_to_retired(CLVLockEntry * entry) {
 	retired_cnt++;
 }
 
-RC Row_clv::lock_release(txn_man * txn, RC rc) {
+RC Row_clvp::lock_release(txn_man * txn, RC rc) {
 	#if DEBUG_PROFILING
 	uint64_t starttime = get_sys_clock();
 	#endif
@@ -271,7 +271,7 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 }
 
 CLVLockEntry * 
-Row_clv::rm_if_in_owners(txn_man * txn) {
+Row_clvp::rm_if_in_owners(txn_man * txn) {
 	// NOTE: will not destroy entry
 	CLVLockEntry * en = owners;
 	CLVLockEntry * prev = NULL;
@@ -288,7 +288,7 @@ Row_clv::rm_if_in_owners(txn_man * txn) {
 }
 
 bool
-Row_clv::rm_if_in_retired(txn_man * txn, bool is_abort) {
+Row_clvp::rm_if_in_retired(txn_man * txn, bool is_abort) {
 	CLVLockEntry * en = retired_head;
 	while(en) {
 		if (en->txn == txn) {
@@ -306,7 +306,7 @@ Row_clv::rm_if_in_retired(txn_man * txn, bool is_abort) {
 }
 
 bool 
-Row_clv::rm_if_in_waiters(txn_man * txn) {
+Row_clvp::rm_if_in_waiters(txn_man * txn) {
 	CLVLockEntry * en = waiters_head;
 	while(en) {
 		if (en->txn == txn) {
@@ -320,7 +320,7 @@ Row_clv::rm_if_in_waiters(txn_man * txn) {
 }
 
 CLVLockEntry * 
-Row_clv::rm_from_owners(CLVLockEntry * en, CLVLockEntry * prev, bool destroy) {
+Row_clvp::rm_from_owners(CLVLockEntry * en, CLVLockEntry * prev, bool destroy) {
 	CLVLockEntry * to_return = en->next;
 	QUEUE_RM(owners, owners_tail, prev, en, owner_cnt);
 	if (destroy) {
@@ -332,7 +332,7 @@ Row_clv::rm_from_owners(CLVLockEntry * en, CLVLockEntry * prev, bool destroy) {
 }
 
 CLVLockEntry * 
-Row_clv::rm_from_retired(CLVLockEntry * en) {
+Row_clvp::rm_from_retired(CLVLockEntry * en) {
 	CLVLockEntry * to_return = en->next;
 	update_entry(en);
 	LIST_RM(retired_head, retired_tail, en, retired_cnt);
@@ -341,7 +341,7 @@ Row_clv::rm_from_retired(CLVLockEntry * en) {
 }
 
 bool
-Row_clv::bring_next(txn_man * txn) {
+Row_clvp::bring_next(txn_man * txn) {
 	bool has_txn = false;
 	CLVLockEntry * entry;
 	// If any waiter can join the owners, just do it!
@@ -425,7 +425,7 @@ Row_clvp::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * lis
 }
 
 void
-Row_clv::insert_to_waiters(lock_t type, txn_man * txn) {
+Row_clvp::insert_to_waiters(lock_t type, txn_man * txn) {
 	assert(txn->get_ts() != 0);
 	CLVLockEntry * entry = get_entry();
 	entry->txn = txn;
