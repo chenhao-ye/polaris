@@ -399,14 +399,6 @@ void Row_clvp::return_entry(CLVLockEntry * entry) {
 
 
 RC
-Row_clvp::wound_txn(txn_man * txn, CLVLockEntry * en) {
-	if (txn->wound_txn(en->txn) == ERROR)
-		return Abort;
-	return RCOK;
-}
-
-
-RC
 Row_clvp::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list, RC status) {
 	CLVLockEntry * en = list;
 	while (en != NULL) {
@@ -417,8 +409,10 @@ Row_clvp::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * lis
 		// self assigned, if conflicted, assign a number
 		if (status == RCOK && conflict_lock(en->type, type) && (en->txn->get_ts() > txn->get_ts()))
 			status = WAIT;
-		if (status == WAIT && en->txn->get_ts() > ts)
-				wound_txn(txn, en);
+		if (status == WAIT && en->txn->get_ts() > ts) {
+			if (txn->wound_txn(en->txn) == ERROR)
+				return Abort;
+		}
 		en = en->next;
 	}
 	return status;

@@ -430,15 +430,6 @@ void Row_clv::return_entry(CLVLockEntry * entry) {
 	mem_allocator.free(entry, sizeof(CLVLockEntry));
 }
 
-
-RC
-Row_clv::wound_txn(txn_man * txn, CLVLockEntry * en) {
-	if (txn->wound_txn(en->txn) == ERROR)
-		return Abort;
-	return RCOK;
-}
-
-
 RC
 Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list, RC status) {
 	CLVLockEntry * en = list;
@@ -455,8 +446,10 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list
 				 (en->txn->get_ts() > txn->get_ts() || en->txn->get_ts() == 0))
 				status = WAIT;
 			if (status == WAIT) {
-				if (en->txn->get_ts() > ts || en->txn->get_ts() == 0)
-					wound_txn(txn, en);
+				if (en->txn->get_ts() > ts || en->txn->get_ts() == 0) {
+					if (txn->wound_txn(en->txn) == ERROR)
+						return Abort;
+				}
 			}
 		} else {
 			// self unassigned, if not assigned, assign a number;
@@ -466,8 +459,10 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list
 				else 
 					local_ts++;
 			}
-			if (en->txn->get_ts() > txn->get_ts()) 
-				wound_txn(txn, en);
+			if (en->txn->get_ts() > txn->get_ts()) {
+				if (txn->wound_txn(en->txn) == ERROR)
+					return Abort;
+			}
 		}
 		if (!recheck)
 			en = en->next;
