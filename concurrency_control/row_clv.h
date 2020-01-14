@@ -25,9 +25,9 @@ public:
     RC lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt);
     RC lock_release(txn_man * txn, RC rc);
     RC lock_retire(txn_man * txn);
-    bool has_retired() {
-    	return retired_cnt > (g_thread_cnt);
-    };
+    // bool has_retired() {
+    // 	return retired_cnt > (g_thread_cnt);
+    // };
 	
 private:
 	#if SPINLOCK
