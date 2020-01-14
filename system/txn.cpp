@@ -129,7 +129,7 @@ void txn_man::cleanup(RC rc) {
 		} else {
 			orig_r->return_row(type, this, accesses[rid]->data, rc);
 		}
-		accesses[rid]->data = NULL;
+		accesses[rid] = NULL;
 	}
 	#endif
 
@@ -137,7 +137,8 @@ void txn_man::cleanup(RC rc) {
 	for (int rid = row_cnt - 1; rid >= 0; rid --) {
 
 		#if CC_ALG == CLV && PRIORITIZE_HS
-		if (!accesses[rid]->data)
+		// TODO: IMPROPOER TO USE NULL CHECK FOR RID->DATA
+		if (!accesses[rid])
 			continue;
 		#endif
 		//printf("txn-%lu return row %d/%d\n", get_txn_id(), rid, row_cnt);
