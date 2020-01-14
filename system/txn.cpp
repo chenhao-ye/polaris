@@ -120,7 +120,7 @@ void txn_man::cleanup(RC rc) {
 		row_t * orig_r = accesses[rid]->orig_row;
 		access_t type = accesses[rid]->type;
 		if (type == WR && rc == Abort)
-			type = XP;
+			accesses[rid]->type = XP;
 		if (!orig_r->has_retired())
 			continue;
 		//printf("txn-%lu return row %d/%d\n", get_txn_id(), rid, row_cnt);
@@ -145,8 +145,10 @@ void txn_man::cleanup(RC rc) {
 		
 		row_t * orig_r = accesses[rid]->orig_row;
 		access_t type = accesses[rid]->type;
+		#if !(PRIORITIZE_HS && CC_ALG == CLV)
 		if (type == WR && rc == Abort)
 			type = XP;
+		#endif
 
 		#if (CC_ALG == NO_WAIT || CC_ALG == DL_DETECT) && ISOLATION_LEVEL == REPEATABLE_READ
 		if (type == RD) {
