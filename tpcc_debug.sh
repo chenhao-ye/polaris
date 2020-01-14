@@ -12,7 +12,7 @@ alg="CLV"
 on=1
 off=17
 phs="true"
-#phs="false"
+phs="false"
 
 #PRIORITIZE_HS=$phs
 
