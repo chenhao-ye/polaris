@@ -148,7 +148,7 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 	#endif
 
 final:
-	lock();
+	unlock();
 	return rc;
 }
 
