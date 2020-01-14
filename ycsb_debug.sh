@@ -1,7 +1,8 @@
 cp -r config_ycsb_debug.h config.h
 
 wl="YCSB"
-threads=3
+alg="CLV"
+threads=2
 cnt=1 #00 #0000 #00
 penalty=1
 zipf=0

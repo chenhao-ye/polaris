@@ -9,10 +9,10 @@ wh=1
 spin="true"
 pf="true"
 alg="CLV"
-on=0
+on=1
 off=17
 phs="true"
-phs="false"
+#phs="false"
 
 #PRIORITIZE_HS=$phs
 

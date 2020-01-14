@@ -99,9 +99,9 @@
 // [CLV]
 #define DYNAMIC_TS					true
 #define SPINLOCK true
-#define CLV_RETIRE_ON 0
+#define CLV_RETIRE_ON 1
 #define CLV_RETIRE_OFF 17
-#define PRIORITIZE_HS false
+#define PRIORITIZE_HS true
 
 /***********************************************/
 // Logging
