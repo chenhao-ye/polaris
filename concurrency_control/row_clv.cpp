@@ -392,7 +392,7 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 #if DEBUG_CLV
 				printf("[row_clv-%lu txn-%lu (%lu)] cannot find entry when trying to release\n", _row->get_row_id(), txn->get_txn_id(), txn->get_ts()); 
 #endif
-			} else 
+			}
 		}
 	} else if (owner_cnt == 0) {
 		bring_next(NULL);
