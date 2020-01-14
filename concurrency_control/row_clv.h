@@ -23,8 +23,7 @@ public:
     RC lock_release(txn_man * txn, RC rc);
     RC lock_retire(txn_man * txn);
     bool has_retired() {
-    	//return retired_cnt > (g_thread_cnt / 2);
-    	return retire_on;
+    	return retired_cnt > (g_thread_cnt / 4 * 3);
     };
 	
 private:
