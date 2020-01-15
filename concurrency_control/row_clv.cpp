@@ -143,7 +143,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	// turn on retire only when needed
 	if (!retire_on && waiter_cnt >= CLV_RETIRE_ON)
 		retire_on = true;
-	else if ((retired_cnt + owner_cnt) >= CLV_RETIRE_OFF)
+	else if (waiter_cnt <= CLV_RETIRE_OFF)
 		retire_on = false;
 
 	#if DEBUG_TMP
