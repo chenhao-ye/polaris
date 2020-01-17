@@ -75,9 +75,6 @@ uint64_t txn_man::get_thd_id() {
 
 bool txn_man::atomic_set_ts(ts_t ts) {
 	if (ATOM_CAS(timestamp, 0, ts)) {
-		#if DEBUG_CLV
-		printf("[txn-%lu] set ts %lu\n", get_txn_id(), this->timestamp);
-		#endif
 		return true;
 	}
 	return false;
@@ -93,9 +90,6 @@ uint64_t txn_man::set_next_ts(int n) {
 
 void txn_man::reassign_ts() {
 	this->timestamp = h_thd->get_next_n_ts(1);
-	#if DEBUG_CLV
-	printf("[txn-%lu] change ts to %lu for aborted txn\n", get_txn_id(), this->timestamp);
-	#endif
 }
 
 void txn_man::set_ts(ts_t timestamp) {
@@ -115,43 +109,14 @@ void txn_man::cleanup(RC rc) {
 	return;
 #endif
 
-	// #if CC_ALG == CLV && PRIORITIZE_HS
-	// for (int rid = row_cnt - 1; rid >= 0; rid --) {
-	// 	row_t * orig_r = accesses[rid]->orig_row;
-	// 	access_t type = accesses[rid]->type;
-	// 	if (type == WR && rc == Abort)
-	// 		accesses[rid]->type = XP;
-	// 	if (!orig_r->has_retired())
-	// 		continue;
-	// 	//printf("txn-%lu return row %d/%d\n", get_txn_id(), rid, row_cnt);
-	// 	if (ROLL_BACK && type == XP) {
-	// 		orig_r->return_row(type, this, accesses[rid]->orig_data, rc);
-	// 	} else {
-	// 		orig_r->return_row(type, this, accesses[rid]->data, rc);
-	// 	}
-	// 	accesses[rid] = NULL;
-	// }
-	// #endif
-
 	// go through accesses and release
 	#if PRIORITIZE_HS && CC_ALG == CLV
 	for (int rid = 0; rid <= row_cnt - 1; rid ++) {
 	#else
 	for (int rid = row_cnt - 1; rid >= 0; rid --) {
 	#endif
-		// #if CC_ALG == CLV && PRIORITIZE_HS
-		// // TODO: IMPROPOER TO USE NULL CHECK FOR RID->DATA
-		// if (!accesses[rid])
-		// 	continue;
-		// #endif
-		//printf("txn-%lu return row %d/%d\n", get_txn_id(), rid, row_cnt);
-		
 		row_t * orig_r = accesses[rid]->orig_row;
 		access_t type = accesses[rid]->type;
-		// #if !(PRIORITIZE_HS && CC_ALG == CLV)
-		// if (type == WR && rc == Abort)
-		// 	type = XP;
-		// #endif
 
 		#if (CC_ALG == NO_WAIT || CC_ALG == DL_DETECT) && ISOLATION_LEVEL == REPEATABLE_READ
 		if (type == RD) {
@@ -204,6 +169,9 @@ void txn_man::cleanup(RC rc) {
 }
 
 row_t * txn_man::get_row(row_t * row, access_t type) {
+	#if DEBUG_CLV
+	
+	#endif
 	if (CC_ALG == HSTORE)
 		return row;
 	uint64_t starttime = get_sys_clock();
@@ -360,19 +328,12 @@ txn_man::release() {
 void
 txn_man::decrement_commit_barriers() {
 	ATOM_SUB(this->commit_barriers, 1);
-#if DEBUG_CLV
-	printf("[txn-%lu] decrement barrier to %d\n", get_txn_id(), commit_barriers);
-	assert(commit_barriers >= 0);
-#endif
 }
 
 void
 txn_man::increment_commit_barriers() {
 	// not necessarily atomic, called in critical section only
 	ATOM_ADD(this->commit_barriers, 1);
-#if DEBUG_CLV
-	printf("[txn-%lu] increment barrier to %d\n", get_txn_id(), commit_barriers);
-#endif
 }
 
 #if CC_ALG == CLV

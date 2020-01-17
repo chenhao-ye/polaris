@@ -249,9 +249,6 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 			#else
 				return_row(type, txn, NULL);
 			#endif
-			#if DEBUG_CLV
-				//printf("[row-%lu txn-%lu] detected aborted when waiting\n", get_row_id(), txn->get_txn_id());
-			#endif
 			return rc;
 		}
 	}
@@ -317,9 +314,6 @@ void row_t::return_row(access_t type, txn_man * txn, row_t * row, RC rc) {
 	if (ROLL_BACK && type == XP) {// recover from previous writes.
 		this->copy(row);
 	}
-	#if DEBUG_CLV
-		printf("[row-%lu txn-%lu] try to release lock when aborted\n", get_row_id(), txn->get_txn_id());
-	#endif
 	this->manager->lock_release(txn, rc);
 }
 #endif
@@ -337,9 +331,6 @@ void row_t::return_row(access_t type, txn_man * txn, row_t * row) {
 	if (ROLL_BACK && type == XP) {// recover from previous writes.
 		this->copy(row);
 	}
-	#if DEBUG_CLV
-	//	printf("[row-%lu txn-%lu] try to release lock when aborted\n", get_row_id(), txn->get_txn_id());
-	#endif
 	this->manager->lock_release(txn);
 	// TODO: if aborted, also release descendants
 #elif CC_ALG == TIMESTAMP || CC_ALG == MVCC 

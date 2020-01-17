@@ -412,9 +412,6 @@ tpcc_wl::init_permutation(uint64_t * perm_c_id, uint64_t wid) {
 +==================================================================*/
 
 void * tpcc_wl::threadInitWarehouse(void * This) {
-	#if DEBUG_BENCHMARK
-		cout << "debug pt 3" << endl;
-	#endif
 	tpcc_wl * wl = (tpcc_wl *) This;
 	int tid = ATOM_FETCH_ADD(wl->next_tid, 1);
 	uint32_t wid = tid + 1;
