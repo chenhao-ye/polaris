@@ -308,6 +308,9 @@ RC txn_man::finish(RC rc) {
 	    set_ts(0);
 	}
 	#endif
+	#if DEBUG_CLV
+	printf("txn=%lu status=%d\n", txn_id, status);
+	#endif
 	cleanup(rc);
 #else 
 	cleanup(rc);
