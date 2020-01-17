@@ -52,10 +52,10 @@ public:
 	txnid_t 		get_txn_id();
 
 	// [WW, CLV]
-    RC              wound_txn(txn_man * txn);
+    status_t        wound_txn(txn_man * txn);
+    status_t		set_abort();
     void            increment_commit_barriers();
     void			decrement_commit_barriers();
-    void			set_abort();
     bool			atomic_set_ts(ts_t ts);
     ts_t			set_next_ts(int n);
     void			reassign_ts();
@@ -141,21 +141,24 @@ private:
 
 #include "thread.h"
 
-inline RC txn_man::wound_txn(txn_man * txn)
+inline status_t txn_man::wound_txn(txn_man * txn)
 {
 #if CC_ALG == CLV || CC_ALG == WOUND_WAIT
 	if (status != RUNNING)
-		return ERROR;
-	txn->set_abort();
+		return COMMITED;
+	return txn->set_abort();
 #endif
-    return FINISH;
+    return ABORTED;
 }
 
-inline void txn_man::set_abort()
+inline status_t txn_man::set_abort()
 {
 #if CC_ALG == CLV || CC_ALG == WOUND_WAIT
 	if (ATOM_CAS(status, RUNNING, ABORTED)) {
         lock_abort = true;
+        return ABORTED;
+    } else {
+    	return status;
     }
 #endif
 }

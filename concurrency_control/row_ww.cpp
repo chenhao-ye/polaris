@@ -113,7 +113,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 					printf("[row_ww] txn %lu abort txn %lu\n",
 							txn->get_txn_id(), en->txn->get_txn_id());
 					#endif
-					if (txn->wound_txn(en->txn) == ERROR){
+					if (txn->wound_txn(en->txn) == COMMITED){
 						// this txn is wounded by other txns.. 
 						if (owner_cnt == 0)
 							bring_next();

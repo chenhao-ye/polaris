@@ -412,7 +412,7 @@ Row_clvp::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * lis
 		if (status == RCOK && conflict_lock(en->type, type) && (en->txn->get_ts() > txn->get_ts()))
 			status = WAIT;
 		if (status == WAIT && en->txn->get_ts() > ts) {
-			if (txn->wound_txn(en->txn) == ERROR)
+			if (txn->wound_txn(en->txn) == COMMITED)
 				return Abort;
 		}
 		en = en->next;

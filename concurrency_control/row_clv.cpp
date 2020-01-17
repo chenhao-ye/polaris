@@ -143,7 +143,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	// turn on retire only when needed
 	if (!retire_on && waiter_cnt >= CLV_RETIRE_ON)
 		retire_on = true;
-	else if (waiter_cnt <= CLV_RETIRE_OFF)
+	else if (retired_cnt + owner_cnt >= CLV_RETIRE_OFF)
 		retire_on = false;
 
 	#if DEBUG_TMP
@@ -449,7 +449,7 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list
 				status = WAIT;
 			if (status == WAIT) {
 				if (en->txn->get_ts() > ts || en->txn->get_ts() == 0) {
-					if (txn->wound_txn(en->txn) == ERROR)
+					if (txn->wound_txn(en->txn) == COMMITED)
 						return Abort;
 				}
 			}
@@ -462,7 +462,7 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list
 					local_ts++;
 			}
 			if (en->txn->get_ts() > txn->get_ts()) {
-				if (txn->wound_txn(en->txn) == ERROR)
+				if (txn->wound_txn(en->txn) == COMMITED)
 					return Abort;
 			}
 		}
