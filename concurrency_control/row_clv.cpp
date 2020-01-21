@@ -456,6 +456,13 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list
 				#endif
 					if (txn->wound_txn(en->txn) == COMMITED)
 						return Abort;
+				#if DEBUG_PROFILING
+					INC_STATS(txn->get_thd_id(), debug2, 1);
+				#endif
+				} else {
+					#if DEBUG_PROFILING
+					INC_STATS(txn->get_thd_id(), debug9, 1);
+					#endif
 				}
 			}
 		} else {
@@ -474,6 +481,13 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list
 				#endif
 				if (txn->wound_txn(en->txn) == COMMITED)
 					return Abort;
+				#if DEBUG_PROFILING
+					INC_STATS(txn->get_thd_id(), debug2, 1);
+				#endif
+			} else {
+				#if DEBUG_PROFILING
+				INC_STATS(txn->get_thd_id(), debug9, 1);
+				#endif
 			}
 		}
 		if (!recheck)
