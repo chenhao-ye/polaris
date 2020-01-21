@@ -8,7 +8,7 @@
 void table_t::init(Catalog * schema) {
 	this->table_name = schema->table_name;
 	#if DEBUG_PROFILING
-	printf("init table %s\n", table_name);
+	printf("init table %s at %p\n", table_name, this);
 	#endif
 	this->schema = schema;
 }
