@@ -449,9 +449,11 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list
 				status = WAIT;
 			if (status == WAIT) {
 				if (en->txn->get_ts() > ts || en->txn->get_ts() == 0) {
+				#if DEBUG_CLV
 					printf("txn=%lu (%d,ts=%lu) want to wound txn=%lu (%d,ts=%lu) on row=%lu\n", 
 						txn->get_txn_id(), type, ts, en->txn->get_txn_id(), 
 						en->type, en->txn->get_ts(), _row->get_row_id());
+				#endif
 					if (txn->wound_txn(en->txn) == COMMITED)
 						return Abort;
 				}
@@ -465,9 +467,11 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list
 					local_ts++;
 			}
 			if (en->txn->get_ts() > txn->get_ts()) {
+				#if DEBUG_CLV
 				printf("txn=%lu (%d,ts=0) want to wound txn=%lu (%d,ts=%lu) on row=%lu\n", 
 						txn->get_txn_id(), type, en->txn->get_txn_id(), 
 						en->type, en->txn->get_ts(), _row->get_row_id());
+				#endif
 				if (txn->wound_txn(en->txn) == COMMITED)
 					return Abort;
 			}
