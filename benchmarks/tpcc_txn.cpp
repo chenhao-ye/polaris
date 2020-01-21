@@ -92,9 +92,10 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	row_t * r_dist_local;
 	row_t * r_dist = ((row_t *)item->location);
 #if DEBUG_BENCHMARK
-	assert(!has_local_row(r_dist, WR, r_wh, r_wh_type));
+	r_dist_local = get_row(r_dist, RD);
+#else
+	r_dist_local = get_row(r_dist, WR);
 #endif
-    r_dist_local = get_row(r_dist, WR);
     if (r_dist_local == NULL) {
         return finish(Abort);
     }
@@ -187,10 +188,6 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	   	EXEC SQL UPDATE customer SET c_balance = :c_balance, c_data = :c_new_data
    		WHERE c_w_id = :c_w_id AND c_d_id = :c_d_id AND c_id = :c_id;
    	+======================================================================*/
-#if DEBUG_BENCHMARK
-    assert(!has_local_row(r_cust, WR, r_wh, r_wh_type));
-    assert(!has_local_row(r_cust, WR, r_dist, WR));
-#endif
 	row_t * r_cust_local = get_row(r_cust, WR);
 	if (r_cust_local == NULL) {
 		return finish(Abort);
@@ -303,9 +300,6 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 	item = index_read(index, key, wh_to_part(w_id));
 	assert(item != NULL);
 	row_t * r_cust = (row_t *) item->location;
-#if DEBUG_BENCHMARK
-    assert(!has_local_row(r_cust, RD, r_wh, RD));
-#endif
 	row_t * r_cust_local = get_row(r_cust, RD);
 	if (r_cust_local == NULL) {
 		return finish(Abort); 
@@ -334,10 +328,10 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 	assert(item != NULL);
 	row_t * r_dist = ((row_t *)item->location);
 #if DEBUG_BENCHMARK
-    assert(!has_local_row(r_dist, WR, r_wh, RD));
-    assert(!has_local_row(r_dist, WR, r_cust, RD));
-#endif
+	row_t * r_dist_local = get_row(r_dist, RD);
+#else
 	row_t * r_dist_local = get_row(r_dist, WR);
+#endif
 	if (r_dist_local == NULL) {
 		return finish(Abort);
 	}
@@ -431,11 +425,6 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 		index_read(stock_index, stock_key, wh_to_part(ol_supply_w_id), stock_item);
 		assert(item != NULL);
 		row_t * r_stock = ((row_t *)stock_item->location);
-#if DEBUG_BENCHMARK
-        assert(!has_local_row(r_stock, WR, r_wh, RD));
-        assert(!has_local_row(r_stock, WR, r_cust, RD));
-        assert(!has_local_row(r_stock, WR, r_dist, WR));
-#endif
 		row_t * r_stock_local = get_row(r_stock, WR);
 		if (r_stock_local == NULL) {
 			return finish(Abort);

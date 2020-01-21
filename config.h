@@ -99,7 +99,7 @@
 // [CLV]
 #define DYNAMIC_TS true
 #define SPINLOCK true
-#define CLV_RETIRE_ON 1
+#define CLV_RETIRE_ON 0
 #define CLV_RETIRE_OFF 17
 #define PRIORITIZE_HS false
 
@@ -191,7 +191,7 @@ extern TestCases					g_test_case;
 #define DEBUG_ASSERT					false//true
 #define DEBUG_CC					false
 #define DEBUG_WW                    			false
-#define DEBUG_BENCHMARK             			false
+#define DEBUG_BENCHMARK true
 #define DEBUG_CLV false
 #define DEBUG_TMP false
 #define DEBUG_PROFILING true
