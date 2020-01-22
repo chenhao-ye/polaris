@@ -140,6 +140,7 @@
 // Some of the transactions read the data but never use them. 
 // If TPCC_ACCESS_ALL == fales, then these parts of the transactions
 // are not modeled.
+#define REORDER_WH				false
 #define TPCC_ACCESS_ALL 			false 
 #define WH_UPDATE					true
 #define NUM_WH 						1

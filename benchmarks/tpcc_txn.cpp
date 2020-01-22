@@ -53,6 +53,7 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 
 	// TODO for variable length variable (string). Should store the size of 
 	// the variable.
+#if !REORDER_WH
 	key = query->w_id;
 	INDEX * index = _wl->i_warehouse; 
 	item = index_read(index, key, wh_to_part(w_id));
@@ -81,6 +82,7 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 #if CC_ALG == CLV && !MERGE_HS
 	if (retire_row(r_wh) == Abort)
 		return finish(Abort);
+#endif
 #endif
 	/*=====================================================+
 		EXEC SQL UPDATE district SET d_ytd = d_ytd + :h_amount
@@ -259,6 +261,38 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 #endif
 //	insert_row(r_hist, _wl->t_history);
 
+#if REORDER_WH
+	key = query->w_id;
+	INDEX * index = _wl->i_warehouse; 
+	item = index_read(index, key, wh_to_part(w_id));
+	assert(item != NULL);
+	row_t * r_wh = ((row_t *)item->location);
+	access_t r_wh_type;
+	row_t * r_wh_local;
+	if (g_wh_update)
+	    r_wh_type = WR;
+	else
+        r_wh_type = RD;
+    r_wh_local = get_row(r_wh, r_wh_type);
+	if (r_wh_local == NULL) {
+		return finish(Abort);
+	}
+	double w_ytd;
+	
+	r_wh_local->get_value(W_YTD, w_ytd);
+	if (g_wh_update) {
+		r_wh_local->set_value(W_YTD, w_ytd + query->h_amount);
+	}
+	char w_name[11];
+	char * tmp_str = r_wh_local->get_value(W_NAME);
+	memcpy(w_name, tmp_str, 10);
+	w_name[10] = '\0';
+#if CC_ALG == CLV
+	if (retire_row(r_wh) == Abort)
+		return finish(Abort);
+#endif
+#endif
+
 	assert( rc == RCOK );
 	return finish(rc);
 }
@@ -274,6 +308,8 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
     uint64_t d_id = query->d_id;
     uint64_t c_id = query->c_id;
 	uint64_t ol_cnt = query->ol_cnt;
+
+#if !REORDER_WH
 	/*=======================================================================+
 	EXEC SQL SELECT c_discount, c_last, c_credit, w_tax
 		INTO :c_discount, :c_last, :c_credit, :w_tax
@@ -297,6 +333,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 #if CC_ALG == CLV && !MERGE_HS
 	if (retire_row(r_wh) == Abort)
 		return finish(Abort);
+#endif
 #endif
 
 	key = custKey(c_id, d_id, w_id);
@@ -503,6 +540,34 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 #endif		
 //		insert_row(r_ol, _wl->t_orderline);
 	}
+
+#if REORDER_WH
+	/*=======================================================================+
+	EXEC SQL SELECT c_discount, c_last, c_credit, w_tax
+		INTO :c_discount, :c_last, :c_credit, :w_tax
+		FROM customer, warehouse
+		WHERE w_id = :w_id AND c_w_id = w_id AND c_d_id = :d_id AND c_id = :c_id;
+	+========================================================================*/
+	key = w_id;
+	index = _wl->i_warehouse; 
+	item = index_read(index, key, wh_to_part(w_id));
+	assert(item != NULL);
+	row_t * r_wh = ((row_t *)item->location);
+	row_t * r_wh_local = get_row(r_wh, RD);
+	if (r_wh_local == NULL) {
+		return finish(Abort);
+	}
+
+
+	double w_tax;
+	r_wh_local->get_value(W_TAX, w_tax);
+
+#if CC_ALG == CLV &&
+	if (retire_row(r_wh) == Abort)
+		return finish(Abort);
+#endif
+#endif
+	
 	assert( rc == RCOK );
 	return finish(rc);
 }
