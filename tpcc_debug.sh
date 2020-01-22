@@ -19,7 +19,7 @@ phs="false"
 tmp="true"
 tmp="false"
 dynamic="true"
-dynamic="false"
+#dynamic="false"
 debug="false"
 #debug="true"
 nodist="true"
@@ -35,7 +35,7 @@ for perc in 1 0.5
 do
 for i in 1 2 3
 do
-for alg in CLV WOUND_WAIT WAIT_DIE NO_WAIT
+for alg in CLV #WOUND_WAIT WAIT_DIE NO_WAIT
 do
 for threads in 16 8 4 2 1
 do
