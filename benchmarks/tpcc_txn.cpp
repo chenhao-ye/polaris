@@ -106,7 +106,11 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	r_dist_local->get_value(D_YTD, d_ytd);
 	r_dist_local->set_value(D_YTD, d_ytd + query->h_amount);
 	char d_name[11];
+#if REORDER_WH
+	char * tmp_str = r_dist_local->get_value(D_NAME);
+#else
 	tmp_str = r_dist_local->get_value(D_NAME);
+#endif
 	memcpy(d_name, tmp_str, 10);
 	d_name[10] = '\0';
 
@@ -227,6 +231,38 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 //		r_cust->set_value("C_DATA", c_new_data);
 			
 	}
+
+#if REORDER_WH
+	key = query->w_id;
+	INDEX * index = _wl->i_warehouse; 
+	item = index_read(index, key, wh_to_part(w_id));
+	assert(item != NULL);
+	row_t * r_wh = ((row_t *)item->location);
+	access_t r_wh_type;
+	row_t * r_wh_local;
+	if (g_wh_update)
+	    r_wh_type = WR;
+	else
+        r_wh_type = RD;
+    r_wh_local = get_row(r_wh, r_wh_type);
+	if (r_wh_local == NULL) {
+		return finish(Abort);
+	}
+	double w_ytd;
+	
+	r_wh_local->get_value(W_YTD, w_ytd);
+	if (g_wh_update) {
+		r_wh_local->set_value(W_YTD, w_ytd + query->h_amount);
+	}
+	char w_name[11];
+	tmp_str = r_wh_local->get_value(W_NAME);
+	memcpy(w_name, tmp_str, 10);
+	w_name[10] = '\0';
+#if CC_ALG == CLV
+	if (retire_row(r_wh) == Abort)
+		return finish(Abort);
+#endif
+#endif
 	
 	char h_data[25];
 	strncpy(h_data, w_name, 10);
@@ -260,38 +296,6 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 //	r_hist->set_value(H_DATA, h_data);
 #endif
 //	insert_row(r_hist, _wl->t_history);
-
-#if REORDER_WH
-	key = query->w_id;
-	INDEX * index = _wl->i_warehouse; 
-	item = index_read(index, key, wh_to_part(w_id));
-	assert(item != NULL);
-	row_t * r_wh = ((row_t *)item->location);
-	access_t r_wh_type;
-	row_t * r_wh_local;
-	if (g_wh_update)
-	    r_wh_type = WR;
-	else
-        r_wh_type = RD;
-    r_wh_local = get_row(r_wh, r_wh_type);
-	if (r_wh_local == NULL) {
-		return finish(Abort);
-	}
-	double w_ytd;
-	
-	r_wh_local->get_value(W_YTD, w_ytd);
-	if (g_wh_update) {
-		r_wh_local->set_value(W_YTD, w_ytd + query->h_amount);
-	}
-	char w_name[11];
-	char * tmp_str = r_wh_local->get_value(W_NAME);
-	memcpy(w_name, tmp_str, 10);
-	w_name[10] = '\0';
-#if CC_ALG == CLV
-	if (retire_row(r_wh) == Abort)
-		return finish(Abort);
-#endif
-#endif
 
 	assert( rc == RCOK );
 	return finish(rc);
