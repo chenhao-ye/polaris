@@ -237,7 +237,7 @@ void Stats::print() {
 		dl_wait_time / BILLION,
 		total_time_query / BILLION,
 		total_debug1 / BILLION,
-		total_debug2 / BILLION,
+		total_debug2,
 		total_debug3 / BILLION,
 		total_debug4 / BILLION,
 		total_debug5 / BILLION
@@ -245,8 +245,8 @@ void Stats::print() {
 		,total_debug6 / BILLION,
 		total_debug7 / BILLION,
 		total_debug8 / BILLION,
-		total_debug9 / BILLION,
-		total_debug10 / BILLION
+		total_debug9,
+		total_debug10
 		#endif
 	);
 	if (g_prt_lat_distr)

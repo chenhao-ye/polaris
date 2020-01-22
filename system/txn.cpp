@@ -301,17 +301,15 @@ RC txn_man::finish(RC rc) {
         if (!ATOM_CAS(status, RUNNING, COMMITED))
             rc = Abort;
 	}
+	cleanup(rc);
 	#if DYNAMIC_TS
-	if (rc == Abort) {
+	set_ts(0);
+	/*if (rc == Abort) {
 	    reassign_ts();
 	} else {
 	    set_ts(0);
-	}
+	}*/
 	#endif
-	#if DEBUG_CLV
-	printf("txn=%lu status=%d\n", txn_id, status);
-	#endif
-	cleanup(rc);
 #else 
 	cleanup(rc);
 #endif
