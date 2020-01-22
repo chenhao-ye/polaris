@@ -78,7 +78,7 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	char * tmp_str = r_wh_local->get_value(W_NAME);
 	memcpy(w_name, tmp_str, 10);
 	w_name[10] = '\0';
-#if CC_ALG == CLV
+#if CC_ALG == CLV && !MERGE_HS
 	if (retire_row(r_wh) == Abort)
 		return finish(Abort);
 #endif
@@ -109,6 +109,10 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	d_name[10] = '\0';
 
 #if CC_ALG == CLV
+	#if MERGE_HS
+	if (retire_row(r_wh) == Abort)
+		return finish(Abort);
+	#endif
 	if (retire_row(r_dist) == Abort)
 		return finish(Abort);
 #endif
@@ -290,7 +294,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 	double w_tax;
 	r_wh_local->get_value(W_TAX, w_tax);
 
-#if CC_ALG == CLV
+#if CC_ALG == CLV && !MERGE_HS
 	if (retire_row(r_wh) == Abort)
 		return finish(Abort);
 #endif
@@ -311,7 +315,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 	//c_last = r_cust_local->get_value(C_LAST);
 	//c_credit = r_cust_local->get_value(C_CREDIT);
 
-#if CC_ALG == CLV
+#if CC_ALG == CLV && !MERGE_HS
 	if (retire_row(r_cust) == Abort)
 		return finish(Abort);
 #endif
@@ -343,6 +347,12 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 	r_dist_local->set_value(D_NEXT_O_ID, o_id);
 
 #if CC_ALG == CLV
+	#if MERGE_HS
+	if (retire_row(r_wh) == Abort)
+		return finish(Abort);
+	if (retire_row(r_cust) == Abort)
+		return finish(Abort);
+	#endif
 	if (retire_row(r_dist) == Abort)
 		return finish(Abort);
 #endif
