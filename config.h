@@ -97,7 +97,7 @@
 // [VLL] 
 #define TXN_QUEUE_SIZE_LIMIT		THREAD_CNT
 // [CLV]
-#define DYNAMIC_TS true
+#define DYNAMIC_TS false
 #define SPINLOCK true
 #define CLV_RETIRE_ON 0
 #define CLV_RETIRE_OFF 17
@@ -140,6 +140,7 @@
 // Some of the transactions read the data but never use them. 
 // If TPCC_ACCESS_ALL == fales, then these parts of the transactions
 // are not modeled.
+#define REORDER_WH true
 #define TPCC_ACCESS_ALL 			false 
 #define WH_UPDATE					true
 #define NUM_WH 1
