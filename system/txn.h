@@ -161,4 +161,5 @@ inline status_t txn_man::set_abort()
     	return status;
     }
 #endif
+	return ABORTED;
 }

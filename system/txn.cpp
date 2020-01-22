@@ -303,12 +303,12 @@ RC txn_man::finish(RC rc) {
 	}
 	cleanup(rc);
 	#if DYNAMIC_TS
-	set_ts(0);
-	/*if (rc == Abort) {
+	//set_ts(0);
+	if (rc == Abort) {
 	    reassign_ts();
 	} else {
 	    set_ts(0);
-	}*/
+	}
 	#endif
 #else 
 	cleanup(rc);
