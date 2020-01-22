@@ -12,7 +12,7 @@ alg="CLV"
 on=2
 off=17
 phs="true"
-#phs="false"
+phs="false"
 tmp="true"
 tmp="false"
 dynamic="true"
@@ -20,10 +20,12 @@ debug="false"
 #debug="true"
 nodist="true"
 #nodist="false"
+perc=0.5
+perc=1
 
 for threads in 16 8 4 2 1
 do
-timeout 50 python test.py DEBUG_BENCHMARK=$nodist DEBUG_CLV=$debug DYNAMIC_TS=$dynamic DEBUG_TMP=$tmp PRIORITIZE_HS=$phs CLV_RETIRE_ON=$on CLV_RETIRE_OFF=$off DEBUG_PROFILING=$pf SPINLOCK=$spin WORKLOAD=${wl} CC_ALG=$alg THREAD_CNT=$threads MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty NUM_WH=${wh}|& tee -a debug.out
+timeout 50 python test.py PERC_PAYMENT=$perc DEBUG_BENCHMARK=$nodist DEBUG_CLV=$debug DYNAMIC_TS=$dynamic DEBUG_TMP=$tmp PRIORITIZE_HS=$phs CLV_RETIRE_ON=$on CLV_RETIRE_OFF=$off DEBUG_PROFILING=$pf SPINLOCK=$spin WORKLOAD=${wl} CC_ALG=$alg THREAD_CNT=$threads MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty NUM_WH=${wh}|& tee -a debug.out
 done
 
 #timeout 50 python test.py DEBUG_TMP="false" PRIORITIZE_HS=$phs CLV_RETIRE_ON=$on CLV_RETIRE_OFF=$off DEBUG_PROFILING=$pf SPINLOCK=$spin WORKLOAD=${wl} CC_ALG=$alg THREAD_CNT=$threads MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty NUM_WH=${wh}|& tee -a debug.out
