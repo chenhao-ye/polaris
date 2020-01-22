@@ -425,7 +425,11 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 		index_read(stock_index, stock_key, wh_to_part(ol_supply_w_id), stock_item);
 		assert(item != NULL);
 		row_t * r_stock = ((row_t *)stock_item->location);
+#if DEBUG_BENCHMARK
+		row_t * r_stock_local = get_row(r_stock, RD);
+#else
 		row_t * r_stock_local = get_row(r_stock, WR);
+#endif
 		if (r_stock_local == NULL) {
 			return finish(Abort);
 		}

@@ -458,6 +458,7 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list
 						return Abort;
 				#if DEBUG_PROFILING
 					INC_STATS(txn->get_thd_id(), debug2, 1);
+					//printf("wounded at table %p\n", _row->get_table());
 				#endif
 				} else {
 					#if DEBUG_PROFILING
@@ -488,7 +489,6 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list
 			} else {
 				#if DEBUG_PROFILING
 				INC_STATS(txn->get_thd_id(), debug9, 1);
-				//printf("wounded at table %p\n", _row->get_table());
 				#endif
 			}
 		}
