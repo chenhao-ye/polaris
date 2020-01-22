@@ -566,7 +566,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 	double w_tax;
 	r_wh_local->get_value(W_TAX, w_tax);
 
-#if CC_ALG == CLV &&
+#if CC_ALG == CLV
 	if (retire_row(r_wh) == Abort)
 		return finish(Abort);
 #endif
