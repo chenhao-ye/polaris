@@ -12,7 +12,7 @@ alg="CLV"
 alg="WOUND_WAIT"
 alg="WAIT_DIE"
 alg="NO_WAIT"
-on=0
+on=2
 off=17
 phs="true"
 phs="false"
@@ -23,7 +23,7 @@ dynamic="true"
 debug="false"
 #debug="true"
 nodist="true"
-nodist="false"
+#nodist="false"
 perc=0.5
 perc=1
 merge="true"
@@ -31,11 +31,11 @@ merge="false"
 reorder="false"
 reorder="true"
 
-for perc in 1 0.5
+for phs in false
 do
 for i in 1 2 3
 do
-for alg in CLV #WOUND_WAIT WAIT_DIE NO_WAIT
+for alg in WOUND_WAIT WAIT_DIE NO_WAIT
 do
 for threads in 16 8 4 2 1
 do

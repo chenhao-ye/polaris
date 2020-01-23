@@ -258,10 +258,6 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	tmp_str = r_wh_local->get_value(W_NAME);
 	memcpy(w_name, tmp_str, 10);
 	w_name[10] = '\0';
-#if CC_ALG == CLV
-	if (retire_row(r_wh) == Abort)
-		return finish(Abort);
-#endif
 #endif
 	
 	char h_data[25];
@@ -275,6 +271,10 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 #if CC_ALG == CLV
     if (retire_row(r_cust) == Abort)
     	return finish(Abort);
+	#if REORDER_WH 
+	if (retire_row(r_wh) == Abort)
+		return finish(Abort);
+	#endif
 #endif
 	/*=============================================================================+
 	  EXEC SQL INSERT INTO
