@@ -99,7 +99,7 @@
 // [CLV]
 #define DYNAMIC_TS false
 #define SPINLOCK true
-#define CLV_RETIRE_ON 2
+#define CLV_RETIRE_ON 17
 #define CLV_RETIRE_OFF 17
 #define PRIORITIZE_HS false
 #define MERGE_HS false
