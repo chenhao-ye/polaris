@@ -19,7 +19,7 @@ phs="false"
 tmp="true"
 tmp="false"
 dynamic="true"
-#dynamic="false"
+dynamic="false"
 debug="false"
 #debug="true"
 nodist="true"
@@ -31,11 +31,11 @@ merge="false"
 reorder="false"
 reorder="true"
 
-for phs in false
-do
+
+
 for i in 1 2 3
 do
-for alg in WOUND_WAIT WAIT_DIE NO_WAIT
+for alg in CLV #WOUND_WAIT WAIT_DIE NO_WAIT
 do
 for threads in 16 8 4 2 1
 do
@@ -43,6 +43,6 @@ timeout 50 python test.py REORDER_WH=$reorder MERGE_HS=$merge PERC_PAYMENT=$perc
 done
 done
 done
-done
+
 
 #timeout 50 python test.py DEBUG_TMP="false" PRIORITIZE_HS=$phs CLV_RETIRE_ON=$on CLV_RETIRE_OFF=$off DEBUG_PROFILING=$pf SPINLOCK=$spin WORKLOAD=${wl} CC_ALG=$alg THREAD_CNT=$threads MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty NUM_WH=${wh}|& tee -a debug.out
