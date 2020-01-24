@@ -359,15 +359,14 @@ void Row_clvp::return_entry(CLVLockEntry * entry) {
 RC
 Row_clvp::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired, RC status) {
 	CLVLockEntry * en;
+	CLVLockEntry * prev;
 	if (check_retired)
 		en = retired_head;
-	else
+	else {
 		en = owners;
+		prev = NULL;
+	}
 	while (en != NULL) {
-		if (en->txn->status != RUNNING) {
-			en = en->next;
-			continue;
-		}
 		// self assigned, if conflicted, assign a number
 		if (status == RCOK && conflict_lock(en->type, type) && (en->txn->get_ts() > txn->get_ts()))
 			status = WAIT;
@@ -379,8 +378,9 @@ Row_clvp::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired
 			if (check_retired)
 				en = remove_descendants(en);
 			else
-				en = rm_from_owners(en, true);
+				en = rm_from_owners(en, prev, true);
 		} else {
+			prev = en;
 			en = en->next;
 		}
 	}
