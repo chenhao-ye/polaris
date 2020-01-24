@@ -97,7 +97,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	ts_t ts = txn->get_ts();
 	if (ts == 0) {
 		// test if can grab the lock without assigning priority
-		if ((ts == 0) && (waiter_cnt == 0) && 
+		if ((waiter_cnt == 0) && 
 				(retired_cnt == 0 || (!conflict_lock(retired_tail->type, type) && retired_tail->is_cohead)) && 
 				(owner_cnt == 0 || !conflict_lock(owners->type, type)) ) {
 			// add to owners directly
@@ -151,11 +151,8 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 		retire_on = false;
 
 	//clean_aborted_retired();
-	if (status == RCOK) {
-		// 3. if brought txn in owner, return acquired lock
-		if (bring_next(txn))
-			rc = RCOK;
-	}
+	if (bring_next(txn))
+		rc = RCOK;
 
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug3, get_sys_clock() - starttime);
