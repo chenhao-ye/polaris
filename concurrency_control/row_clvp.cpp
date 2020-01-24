@@ -90,7 +90,7 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 
 	// check retired
 	// first check if has conflicts
-	status = wound_conflict(type, txn, txn->get_ts(), retired_head, status);
+	status = wound_conflict(type, txn, txn->get_ts(), true, status);
 	if (status == Abort) {
 		rc = Abort;
 		bring_next(NULL);
@@ -99,7 +99,7 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 	}
 
 	// check owners
-	status = wound_conflict(type, txn, txn->get_ts(), owners, status);
+	status = wound_conflict(type, txn, txn->get_ts(), false, status);
 	if (status == Abort) {
 		rc = Abort;
 		bring_next(NULL);
@@ -357,8 +357,12 @@ void Row_clvp::return_entry(CLVLockEntry * entry) {
 
 
 RC
-Row_clvp::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list, RC status) {
-	CLVLockEntry * en = list;
+Row_clvp::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired, RC status) {
+	CLVLockEntry * en;
+	if (check_retired)
+		en = retired_head;
+	else
+		en = owners;
 	while (en != NULL) {
 		if (en->txn->status != RUNNING) {
 			en = en->next;
@@ -370,8 +374,15 @@ Row_clvp::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * lis
 		if (status == WAIT && en->txn->get_ts() > ts) {
 			if (txn->wound_txn(en->txn) == COMMITED)
 				return Abort;
+			// if wounded, remove descendants
+			// if in retired
+			if (check_retired)
+				en = remove_descendants(en);
+			else
+				en = rm_from_owners(en, true);
+		} else {
+			en = en->next;
 		}
-		en = en->next;
 	}
 	return status;
 }

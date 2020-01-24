@@ -33,9 +33,6 @@ private:
     UInt32 owner_cnt;
     UInt32 waiter_cnt;
     UInt32 retired_cnt; // no need to keep retied cnt
-    #if DEBUG_TMP
-    UInt32 finished_cnt;
-    #endif
     ts_t local_ts;
     bool retire_on;
 	
@@ -58,7 +55,7 @@ private:
 	bool bring_next(txn_man * txn);
 	bool has_conflicts_in_list(CLVLockEntry * list, CLVLockEntry * entry);
 	bool conflict_lock_entry(CLVLockEntry * l1, CLVLockEntry * l2);
-	RC wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * list, RC status);
+	RC wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired, RC status);
 	void insert_to_waiters(CLVLockEntry * entry, lock_t type, txn_man * txn);
 	CLVLockEntry * remove_descendants(CLVLockEntry * en);
 	void update_entry(CLVLockEntry * en);
