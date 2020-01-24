@@ -127,7 +127,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	status = wound_conflict(type, txn, ts, true, status);
 	if (status == Abort) {
 		rc = Abort;
-		// bring_next(NULL, false);
+		bring_next(NULL);
 		return_entry(to_insert);
 		goto final;
 	}
@@ -136,7 +136,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	status = wound_conflict(type, txn, ts, false, status);
 	if (status == Abort) {
 		rc = Abort;
-		// bring_next(NULL, false);
+		bring_next(NULL);
 		return_entry(to_insert);
 		goto final;
 	}
