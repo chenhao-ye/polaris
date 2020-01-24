@@ -411,8 +411,16 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 				status = WAIT;
 			if (status == WAIT) {
 				if (en->txn->get_ts() > ts || en->txn->get_ts() == 0) {
-					if (txn->wound_txn(en->txn) == COMMITED)
+					if (txn->wound_txn(en->txn) == COMMITED) {
+						// rm commited
+						if (en->txn->status == COMMITED) {
+							if (check_retired)
+								en = rm_from_retired(en);
+							else
+								en = rm_from_owners(en, prev, true);
+						}
 						return Abort;
+					}
 					if (check_retired)
 						en = remove_descendants(en);
 					else
@@ -431,8 +439,16 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 					local_ts++;
 			} 
 			if (!recheck && (en->txn->get_ts() > txn->get_ts())) {
-				if (txn->wound_txn(en->txn) == COMMITED)
+				if (txn->wound_txn(en->txn) == COMMITED) {
+					// rm commited
+					if (en->txn->status == COMMITED) {
+						if (check_retired)
+							en = rm_from_retired(en);
+						else
+							en = rm_from_owners(en, prev, true);
+					}
 					return Abort;
+				}
 				if (check_retired)
 					en = remove_descendants(en);
 				else

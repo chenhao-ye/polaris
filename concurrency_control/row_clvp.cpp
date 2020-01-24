@@ -371,8 +371,15 @@ Row_clvp::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired
 		if (status == RCOK && conflict_lock(en->type, type) && (en->txn->get_ts() > txn->get_ts()))
 			status = WAIT;
 		if (status == WAIT && en->txn->get_ts() > ts) {
-			if (txn->wound_txn(en->txn) == COMMITED)
+			if (txn->wound_txn(en->txn) == COMMITED) {
+				if (en->txn->status == COMMITED) {
+					if (check_retired)
+						en = rm_from_retired(en);
+					else
+						en = rm_from_owners(en, prev, true);
+				}
 				return Abort;
+			}
 			// if wounded, remove descendants
 			// if in retired
 			if (check_retired)
