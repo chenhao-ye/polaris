@@ -67,7 +67,8 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn) {
 
 RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) {
 	assert (CC_ALG == CLV);
-	//CLVLockEntry * en;
+	// move malloc out
+	CLVLockEntry * entry = get_entry();
 
 	#if DEBUG_PROFILING
 	uint64_t starttime = get_sys_clock();
@@ -93,6 +94,7 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 	if (status == Abort) {
 		rc = Abort;
 		bring_next(NULL);
+		return_entry(entry);
 		goto final;
 	}
 
@@ -101,11 +103,12 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 	if (status == Abort) {
 		rc = Abort;
 		bring_next(NULL);
+		return_entry(entry);
 		goto final;
 	}
 
 	// 2. insert into waiters and bring in next waiter
-	insert_to_waiters(type, txn);
+	insert_to_waiters(entry, type, txn);
 
 	// turn on retire only when needed
 	if (!retire_on && waiter_cnt >= CLV_RETIRE_ON)
@@ -113,30 +116,6 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 	else if ((retired_cnt + owner_cnt) >= CLV_RETIRE_OFF)
 		retire_on = false;
 
-	#if DEBUG_TMP
-	if (retire_on && finished_cnt > 0) {
-		// move finished txns to retire list
-		CLVLockEntry * en = owners;
-		CLVLockEntry * prev = NULL;
-		CLVLockEntry * next = en;
-		while (en) {
-			next = en->next;
-			if ((!en->txn->lock_abort) && en->finished) {
-					// mv finished to retired (no changes to prev)			
-					rm_from_owners(en, prev, false);
-					mv_to_retired(en);
-			} else {
-				// skip aborted and not-finished
-				if (en->txn->lock_abort)
-					status = WAIT;
-				prev = en;
-			}
-			en = next;
-		}
-	}
-	#endif
-
-	//clean_aborted_retired();
 	if (status == RCOK) {
 		// 3. if brought txn in owner, return acquired lock
 		if (bring_next(txn))
@@ -157,8 +136,6 @@ RC Row_clvp::lock_retire(txn_man * txn) {
 	#if DEBUG_PROFILING
 	uint64_t starttime = get_sys_clock();
 	#endif
-
-#if !DEBUG_TMP
 	if(!retire_on) 
 		return RCOK;
 	lock();
@@ -166,27 +143,6 @@ RC Row_clvp::lock_retire(txn_man * txn) {
 	INC_STATS(txn->get_thd_id(), debug4, get_sys_clock() - starttime);
 	starttime = get_sys_clock();
 	#endif
-#else
-	lock();
-	#if DEBUG_PROFILING
-	INC_STATS(txn->get_thd_id(), debug4, get_sys_clock() - starttime);
-	starttime = get_sys_clock();
-	#endif
-	if(!retire_on) {
-		// try to set txn's lock entry's to retired
-		CLVLockEntry * en = owners;
-		while(en) {
-			if (en->txn == txn) {
-				en->finished = true;
-				finished_cnt++; // increment finished cnt
-				break;
-			}
-			en = en->next;
-		}
-		unlock();
-		return RCOK;
-	}
-#endif
 
 	RC rc = RCOK;
 	// 1. find entry in owner and remove
@@ -421,9 +377,8 @@ Row_clvp::wound_conflict(lock_t type, txn_man * txn, ts_t ts, CLVLockEntry * lis
 }
 
 void
-Row_clvp::insert_to_waiters(lock_t type, txn_man * txn) {
+Row_clvp::insert_to_waiters(CLVLockEntry * entry, lock_t type, txn_man * txn) {
 	assert(txn->get_ts() != 0);
-	CLVLockEntry * entry = get_entry();
 	entry->txn = txn;
 	entry->type = type;
 	CLVLockEntry * en = waiters_head;
