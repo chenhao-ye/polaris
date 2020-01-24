@@ -97,27 +97,27 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	ts_t ts = txn->get_ts();
 	if (ts == 0) {
 		// test if can grab the lock without assigning priority
-		if ((waiter_cnt == 0) && 
+		if ((ts == 0) && (waiter_cnt == 0) && 
 				(retired_cnt == 0 || (!conflict_lock(retired_tail->type, type) && retired_tail->is_cohead)) && 
 				(owner_cnt == 0 || !conflict_lock(owners->type, type)) ) {
-			// add to owners
-			CLVLockEntry * entry = get_entry();
-			entry->type = type;
-			entry->txn = txn;
+			// add to owners directly
+			to_insert->type = type;
+			to_insert->txn = txn;
 			txn->lock_ready = true;
-			QUEUE_PUSH(owners, owners_tail, entry);
+			QUEUE_PUSH(owners, owners_tail, to_insert);
 			owner_cnt++;
 			rc = RCOK;
 			goto final;
 		}
 		// else has to assign a priority and add to waiters first 
+		assert(retired_cnt + owner_cnt != 0);
 		local_ts = txn->set_next_ts(retired_cnt + owner_cnt + 1);
 		if (local_ts != 0) {
-			// if == 0, fail to assign, oops, self has an assigned number anyway
+			// if != 0, already booked n ts. 
 			local_ts = local_ts - (retired_cnt + owner_cnt);
 			assert(txn->get_ts() != local_ts); // make sure did not change pointed addr
 		} else {
-			// if != 0, already booked n ts. 
+			// if == 0, fail to assign, oops, self has an assigned number anyway
 			ts = txn->get_ts();
 		}
 	}
