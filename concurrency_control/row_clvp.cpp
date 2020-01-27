@@ -67,6 +67,7 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn) {
 }
 
 inline void Row_clvp::batch_return(CLVLockEntry * to_return) {
+	CLVLockEntry * en;
 	while (to_return) {
 		en = to_return;
 		to_return = to_return->next;
@@ -129,7 +130,7 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 				bring_next(NULL);
 				unlock();
 				return_entry(entry);
-				batch_return();
+				batch_return(to_return);
 				return rc;
 			}
 			en = remove_descendants(en, &to_return);
@@ -151,7 +152,7 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 				bring_next(NULL);
 				unlock();
 				return_entry(entry);
-				batch_return();
+				batch_return(to_return);
 				return rc;
 			}
 			QUEUE_RM(owners, owners_tail, prev, en, owner_cnt);
