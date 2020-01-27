@@ -93,6 +93,8 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 	if (retired_cnt == 0 && owner_cnt == 0) {
 		entry->type = type;
 		entry->txn = txn;
+		QUEUE_PUSH(owners, owners_tail, to_insert);
+		owner_cnt++;
 		txn->lock_ready = true;
 		rc = RCOK;
 		unlock();
