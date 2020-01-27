@@ -266,7 +266,7 @@ RC Row_clvp::lock_retire(txn_man * txn) {
 
 RC Row_clvp::lock_release(txn_man * txn, RC rc) {
 
-	CLVLockEntry * to_return;
+	CLVLockEntry * to_return = NULL;
 	#if DEBUG_PROFILING
 	uint64_t starttime = get_sys_clock();
 	#endif
