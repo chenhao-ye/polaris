@@ -19,14 +19,14 @@ dynamic="false"
 debug="false"
 #debug="true"
 nodist="true"
-#nodist="false"
+nodist="false"
 perc=0.5
-perc=0
+#perc=0
 #perc=1
 merge="true"
 merge="false"
 reorder="false"
-reorder="true"
+#reorder="true"
 retire="true"
 #retire="false"
 
