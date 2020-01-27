@@ -98,39 +98,39 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 		owner_cnt ++;
 		lock_type = type;
 		txn->lock_ready = true;
-			rc = RCOK;
+		rc = RCOK;
 	} else {
-			en = owners;
-			LockEntry * prev = NULL;
-			while (en != NULL) {
-				if (en->txn->get_ts() > txn->get_ts() && conflict_lock(lock_type, type)) {
-						// step 1 - figure out what need to be done when aborting a txn
-						// ask thread to abort
-					if (txn->wound_txn(en->txn) == COMMITED){
-						// this txn is wounded by other txns.. 
-						if (owner_cnt == 0)
-							bring_next();
-						rc = Abort;
-						goto final;
-					}
-					// remove from owner
-					if (prev)
-							prev->next = en->next;
-					else {
-						if (owners == en)
-							owners = en->next;
-					}
-					// free en
-					return_entry(en);
-					// update count
-					owner_cnt--;
+		en = owners;
+		LockEntry * prev = NULL;
+		while (en != NULL) {
+			if (en->txn->get_ts() > txn->get_ts() && conflict_lock(lock_type, type)) {
+					// step 1 - figure out what need to be done when aborting a txn
+					// ask thread to abort
+				if (txn->wound_txn(en->txn) == COMMITED){
+					// this txn is wounded by other txns.. 
 					if (owner_cnt == 0)
-						lock_type = LOCK_NONE;
-				} else {
-						prev = en;
+						bring_next();
+					rc = Abort;
+					goto final;
 				}
-				en = en->next;
+				// remove from owner
+				if (prev)
+						prev->next = en->next;
+				else {
+					if (owners == en)
+						owners = en->next;
+				}
+				// free en
+				return_entry(en);
+				// update count
+				owner_cnt--;
+				if (owner_cnt == 0)
+					lock_type = LOCK_NONE;
+			} else {
+					prev = en;
 			}
+			en = en->next;
+		}
 
 		// insert to wait list
 		// insert txn to the right position

@@ -89,6 +89,16 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 	RC status = RCOK;
 	ts_t ts = txn->get_ts();
 
+	// check if can grab directly
+	if (retired_cnt == 0 && owner_cnt == 0) {
+		entry->type = entry;
+		entry->txn = txn;
+		txn->lock_ready = true;
+		rc = RCOK;
+		unlock();
+		return rc;
+	}
+
 	// check retired and wound conflicted
 	CLVLockEntry * en;
 	en = retired_head;
