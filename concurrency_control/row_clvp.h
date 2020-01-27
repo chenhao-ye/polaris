@@ -47,10 +47,7 @@ private:
 	CLVLockEntry * waiters_head;
 	CLVLockEntry * waiters_tail;
 
-	CLVLockEntry * rm_if_in_owners(txn_man * txn);
 	bool rm_if_in_retired(txn_man * txn, bool is_abort);
-	CLVLockEntry * rm_if_in_waiters(txn_man * txn);
-	CLVLockEntry * rm_from_owners(CLVLockEntry * en, CLVLockEntry * prev, bool destroy=true);
 	CLVLockEntry * rm_from_retired(CLVLockEntry * en);
 	bool bring_next(txn_man * txn);
 	bool has_conflicts_in_list(CLVLockEntry * list, CLVLockEntry * entry);
@@ -59,7 +56,6 @@ private:
 	void insert_to_waiters(CLVLockEntry * entry, lock_t type, txn_man * txn);
 	CLVLockEntry * remove_descendants(CLVLockEntry * en);
 	void update_entry(CLVLockEntry * en);
-	void mv_to_retired(CLVLockEntry * en);
 
 };
 

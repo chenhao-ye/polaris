@@ -186,17 +186,42 @@ RC Row_clvp::lock_retire(txn_man * txn) {
 
 	RC rc = RCOK;
 	// 1. find entry in owner and remove
-	CLVLockEntry * entry = rm_if_in_owners(txn);
-	if (entry == NULL) {
+	CLVLockEntry * en = owners;
+	CLVLockEntry * prev = NULL;
+	while (en) {
+		if (en->txn == txn)
+			break;
+		prev = en;
+		en = en->next;
+	}
+	if (en) {
+		// rm from owners
+		QUEUE_RM(owners, owners_tail, prev, en, owner_cnt);
+		// try to add to retired
+		if (retired_tail) {
+			if (conflict_lock(retired_tail->type, entry->type)) {
+				// conflict with tail -> increment barrier for sure
+				// default is_cohead = false
+				entry->delta = true;
+				entry->txn->increment_commit_barriers();
+			} else { 
+				// not conflict with tail ->increment if is not head
+				entry->is_cohead = retired_tail->is_cohead;
+				if (!entry->is_cohead)
+					entry->txn->increment_commit_barriers();
+			}
+			RETIRED_LIST_PUT_TAIL(retired_head, retired_tail, entry);
+			retired_cnt++;
+		} else {
+			entry->is_cohead = true;
+		}
+		if (owner_cnt == 0)
+		bring_next(NULL);
+	} else {
 		// may be is aborted
 		assert(txn->status == ABORTED);
 		rc = Abort;
-	} else {
-		// 2. if txn not aborted, try to add to retired
-		mv_to_retired(entry);
 	}
-	if (owner_cnt == 0)
-		bring_next(NULL);
 
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug5, get_sys_clock() - starttime);
@@ -205,28 +230,6 @@ RC Row_clvp::lock_retire(txn_man * txn) {
 
 	unlock();
 	return rc;
-}
-
-inline void Row_clvp::mv_to_retired(CLVLockEntry * entry) {
-	// 2.1 must clean out retired list before inserting!!
-	//clean_aborted_retired();
-	// 2.2 increment barriers if conflicts with tail
-	if (retired_tail) {
-		if (conflict_lock(retired_tail->type, entry->type)) {
-			// default is_cohead = false
-			entry->delta = true;
-			entry->txn->increment_commit_barriers();
-		} else { 
-			entry->is_cohead = retired_tail->is_cohead;
-			if (!entry->is_cohead)
-				entry->txn->increment_commit_barriers();
-		}
-	// 2.3 append entry to retired
-	} else {
-		entry->is_cohead = true;
-	}
-	RETIRED_LIST_PUT_TAIL(retired_head, retired_tail, entry);
-	retired_cnt++;
 }
 
 RC Row_clvp::lock_release(txn_man * txn, RC rc) {
@@ -243,17 +246,33 @@ RC Row_clvp::lock_release(txn_man * txn, RC rc) {
 	// Try to find the entry in the retired
 	if (!rm_if_in_retired(txn, rc == Abort)) {
 		// Try to find the entry in the owners
-		en = rm_if_in_owners(txn);
-		if (en) {
-			bring_next(NULL);
-		} else {
-			en = rm_if_in_waiters(txn);
+		en = owners;
+		CLVLockEntry * prev = NULL;
+		while (en) {
+			if (en->txn == txn)
+				break;
+			prev = en;
+			en = en->next;
 		}
-	} else if (owner_cnt == 0) {
-		bring_next(NULL);
+		if (en) {
+			// found in owner, rm it
+			QUEUE_RM(owners, owners_tail, prev, en, owner_cnt);
+		} else {
+			// not found in owner or retired, try waiters
+			en = waiters_head;
+			while(en) {
+				if (en->txn == txn) {
+					LIST_RM(waiters_head, waiters_tail, en, waiter_cnt);
+					break;
+				}
+				en = en->next;
+			}
+		}
 	}
-	// WAIT - done releasing with is_abort = true
-	// FINISH - done releasing with is_abort = false
+
+	if (owner_cnt == 0)
+		bring_next(NULL);
+
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug7, get_sys_clock() - starttime);
 	#endif
@@ -263,23 +282,6 @@ RC Row_clvp::lock_release(txn_man * txn, RC rc) {
 		return_entry(en);
 
 	return RCOK;
-}
-
-CLVLockEntry * 
-Row_clvp::rm_if_in_owners(txn_man * txn) {
-	// NOTE: will not destroy entry
-	CLVLockEntry * en = owners;
-	CLVLockEntry * prev = NULL;
-	while (en) {
-		if (en->txn == txn)
-			break;
-		prev = en;
-		en = en->next;
-	}
-	if (en) {
-		rm_from_owners(en, prev, false);
-	}
-	return en;
 }
 
 bool
@@ -298,19 +300,6 @@ Row_clvp::rm_if_in_retired(txn_man * txn, bool is_abort) {
 			en = en->next;
 	}
 	return false;
-}
-
-CLVLockEntry *  
-Row_clvp::rm_if_in_waiters(txn_man * txn) {
-	CLVLockEntry * en = waiters_head;
-	while(en) {
-		if (en->txn == txn) {
-			LIST_RM(waiters_head, waiters_tail, en, waiter_cnt);
-			return en;
-		}
-		en = en->next;
-	}
-	return NULL;
 }
 
 inline CLVLockEntry * 
