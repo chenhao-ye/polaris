@@ -49,7 +49,7 @@ private:
 
 	CLVLockEntry * rm_if_in_owners(txn_man * txn);
 	bool rm_if_in_retired(txn_man * txn, bool is_abort);
-	bool rm_if_in_waiters(txn_man * txn);
+	CLVLockEntry * rm_if_in_waiters(txn_man * txn);
 	CLVLockEntry * rm_from_owners(CLVLockEntry * en, CLVLockEntry * prev, bool destroy=true);
 	CLVLockEntry * rm_from_retired(CLVLockEntry * en);
 	bool bring_next(txn_man * txn);
