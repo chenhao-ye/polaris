@@ -1,10 +1,11 @@
 cp -r config_tpcc_debug.h config.h
+rm temp.out
 rm debug.out
 
 wl="TPCC"
 threads=16
 cnt=100000
-penalty=1
+penalty=0 #1
 wh=1
 spin="true"
 pf="true"
