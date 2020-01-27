@@ -79,10 +79,15 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 	starttime = get_sys_clock();
 	#endif
 
+
 	// each thread has at most one owner of a lock
 	assert(owner_cnt <= g_thread_cnt);
 	// each thread has at most one waiter
 	assert(waiter_cnt < g_thread_cnt);
+	
+	// assign a ts if ts == 0
+	if (txn->get_ts() == 0)
+		txn->set_next_ts(1);	
 
 	// 1. set txn to abort in owners and retired
 	RC rc = WAIT;
@@ -190,7 +195,8 @@ RC Row_clvp::lock_retire(txn_man * txn) {
 		// 2. if txn not aborted, try to add to retired
 		mv_to_retired(entry);
 	}
-	bring_next(NULL);
+	if (owner_cnt == 0)
+		bring_next(NULL);
 
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug5, get_sys_clock() - starttime);

@@ -99,10 +99,11 @@
 // [CLV]
 #define DYNAMIC_TS false
 #define SPINLOCK true
-#define CLV_RETIRE_ON 17
+#define CLV_RETIRE_ON 1
 #define CLV_RETIRE_OFF 17
 #define PRIORITIZE_HS false
 #define MERGE_HS false
+#define RETIRE_ON true
 
 /***********************************************/
 // Logging
@@ -154,7 +155,7 @@ enum TPCCTxnType {TPCC_ALL,
 extern TPCCTxnType 					g_tpcc_txn_type;
 
 //#define TXN_TYPE					TPCC_ALL
-#define PERC_PAYMENT 1
+#define PERC_PAYMENT 0
 #define FIRSTNAME_MINLEN 			8
 #define FIRSTNAME_LEN 				16
 #define LASTNAME_LEN 				16
@@ -193,7 +194,7 @@ extern TestCases					g_test_case;
 #define DEBUG_ASSERT					false//true
 #define DEBUG_CC					false
 #define DEBUG_WW                    			false
-#define DEBUG_BENCHMARK false
+#define DEBUG_BENCHMARK true
 #define DEBUG_CLV false
 #define DEBUG_TMP					false
 #define DEBUG_PROFILING true

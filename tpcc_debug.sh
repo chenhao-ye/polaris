@@ -10,7 +10,7 @@ wh=1
 spin="true"
 pf="true"
 alg="CLV"
-on=17
+on=1
 off=17
 phs="true"
 phs="false"
@@ -19,19 +19,20 @@ dynamic="false"
 debug="false"
 #debug="true"
 nodist="true"
-nodist="false"
+#nodist="false"
 perc=0.5
-perc=1
+perc=0
+#perc=1
 merge="true"
 merge="false"
 reorder="false"
 reorder="true"
 retire="true"
-retire="false"
+#retire="false"
 
 
 
-for i in 1 #2 3
+for reorder in true 
 do
 for alg in CLV WOUND_WAIT #WAIT_DIE NO_WAIT
 do

@@ -54,9 +54,9 @@ void txn_man::set_txn_id(txnid_t txn_id) {
 		lock_abort = false;
 		lock_ready = false;
 		status = RUNNING;
-    	#if CC_ALG == CLV
+    		#if CC_ALG == CLV
 		commit_barriers = 0;
-    	#endif
+    		#endif
 	#endif
 	this->txn_id = txn_id;
 }
@@ -293,8 +293,9 @@ RC txn_man::finish(RC rc) {
 		#if DEBUG_PROFILING
 		uint64_t starttime = get_sys_clock();
 		#endif
-        while(commit_barriers > 0 && status == RUNNING)
-            continue;
+        while(commit_barriers > 0 && status == RUNNING) {
+            	continue;
+	}
         #if DEBUG_PROFILING
         	INC_STATS(get_thd_id(), debug8, get_sys_clock() - starttime);
         #endif
@@ -309,6 +310,8 @@ RC txn_man::finish(RC rc) {
 	} else {
 	    set_ts(0);
 	}
+	#else
+	set_ts(0);
 	#endif
 #else 
 	cleanup(rc);

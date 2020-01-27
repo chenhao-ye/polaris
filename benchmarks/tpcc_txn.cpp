@@ -309,8 +309,8 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 	
 	bool remote = query->remote;
 	uint64_t w_id = query->w_id;
-    uint64_t d_id = query->d_id;
-    uint64_t c_id = query->c_id;
+	uint64_t d_id = query->d_id;
+	uint64_t c_id = query->c_id;
 	uint64_t ol_cnt = query->ol_cnt;
 
 #if !REORDER_WH
@@ -451,7 +451,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 		//i_name = r_item_local->get_value(I_NAME);
 		//i_data = r_item_local->get_value(I_DATA);
 
-#if CC_ALG == CLV && RETIRE_ON && RETIRE_ON
+#if CC_ALG == CLV && RETIRE_ON 
 		if (retire_row(r_item) == Abort)
 			return finish(Abort);
 #endif

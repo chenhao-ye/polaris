@@ -400,10 +400,6 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 	bool recheck = false;
 	while (en != NULL) {
 		recheck = false;
-		if (en->txn->status != RUNNING) {
-			en = en->next;
-			continue;
-		}
 		if (ts != 0) {
 			// self assigned, if conflicted, assign a number
 			if (status == RCOK && conflict_lock(en->type, type) && 
