@@ -103,6 +103,7 @@
 #define CLV_RETIRE_OFF              10000
 #define PRIORITIZE_HS				false
 #define MERGE_HS					false
+#define RETIRE_ON 					true
 
 /***********************************************/
 // Logging
