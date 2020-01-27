@@ -54,6 +54,7 @@ private:
 	bool conflict_lock_entry(CLVLockEntry * l1, CLVLockEntry * l2);
 	CLVLockEntry * remove_descendants(CLVLockEntry * en, CLVLockEntry ** to_return);
 	void update_entry(CLVLockEntry * en);
+	void batch_return(CLVLockEntry * en);
 
 };
 

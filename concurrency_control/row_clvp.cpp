@@ -165,7 +165,7 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 	}
 
 	// 2. insert into waiters and bring in next waiter
-	CLVLockEntry * en = waiters_head;
+	en = waiters_head;
 	while (en != NULL) {
 		if (ts < en->txn->get_ts())
 			break;
@@ -197,7 +197,7 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 	#endif
 
 	unlock();
-	batch_return();
+	batch_return(to_return);
 
 	return rc;
 }
@@ -311,7 +311,7 @@ RC Row_clvp::lock_release(txn_man * txn, RC rc) {
 	INC_STATS(txn->get_thd_id(), debug7, get_sys_clock() - starttime);
 	#endif
 	unlock();
-	batch_return();
+	batch_return(to_return);
 	return RCOK;
 }
 
