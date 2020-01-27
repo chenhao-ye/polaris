@@ -150,7 +150,6 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 	INC_STATS(txn->get_thd_id(), debug3, get_sys_clock() - starttime);
 	#endif
 
-final:
 	unlock();
 	return rc;
 }
@@ -242,7 +241,7 @@ RC Row_clvp::lock_release(txn_man * txn, RC rc) {
 	#endif
 	unlock();
 
-	if (en):
+	if (en)
 		return_entry(en);
 
 	return RCOK;
