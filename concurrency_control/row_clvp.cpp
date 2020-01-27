@@ -129,6 +129,7 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 				bring_next(NULL);
 				unlock();
 				return_entry(entry);
+				batch_return();
 				return rc;
 			}
 			en = remove_descendants(en, &to_return);
@@ -303,7 +304,6 @@ RC Row_clvp::lock_release(txn_man * txn, RC rc) {
 			}
 		}
 	}
-
 	if (owner_cnt == 0)
 		bring_next(NULL);
 
@@ -311,10 +311,7 @@ RC Row_clvp::lock_release(txn_man * txn, RC rc) {
 	INC_STATS(txn->get_thd_id(), debug7, get_sys_clock() - starttime);
 	#endif
 	unlock();
-
-	if (en)
-		return_entry(en);
-
+	batch_return();
 	return RCOK;
 }
 
@@ -473,7 +470,8 @@ Row_clvp::remove_descendants(CLVLockEntry * en, CLVLockEntry** to_return) {
 				en->txn->set_abort();
 				// no need to be too complicated (i.e. call function) as the owner will be empty in the end
 				owners = owners->next;
-				return_entry(en);
+				RETURN_PUSH(*to_return, en);
+				//return_entry(en);
 			}
 			owners_tail = NULL;
 			owners = NULL;
