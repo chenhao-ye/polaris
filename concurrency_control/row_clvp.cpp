@@ -186,17 +186,17 @@ RC Row_clvp::lock_retire(txn_man * txn) {
 
 	RC rc = RCOK;
 	// 1. find entry in owner and remove
-	CLVLockEntry * en = owners;
+	CLVLockEntry * entry = owners;
 	CLVLockEntry * prev = NULL;
-	while (en) {
-		if (en->txn == txn)
+	while (entry) {
+		if (entry->txn == txn)
 			break;
-		prev = en;
-		en = en->next;
+		prev = entry;
+		entry = entry->next;
 	}
-	if (en) {
+	if (entry) {
 		// rm from owners
-		QUEUE_RM(owners, owners_tail, prev, en, owner_cnt);
+		QUEUE_RM(owners, owners_tail, prev, entry, owner_cnt);
 		// try to add to retired
 		if (retired_tail) {
 			if (conflict_lock(retired_tail->type, entry->type)) {

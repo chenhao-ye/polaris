@@ -49,6 +49,7 @@ private:
 
 	bool rm_if_in_retired(txn_man * txn, bool is_abort);
 	CLVLockEntry * rm_from_retired(CLVLockEntry * en);
+	CLVLockEntry * rm_from_owners(CLVLockEntry * en, CLVLockEntry * prev, bool destroy);
 	bool bring_next(txn_man * txn);
 	bool has_conflicts_in_list(CLVLockEntry * list, CLVLockEntry * entry);
 	bool conflict_lock_entry(CLVLockEntry * l1, CLVLockEntry * l2);
