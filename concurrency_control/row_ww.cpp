@@ -99,9 +99,6 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 		lock_type = type;
 		txn->lock_ready = true;
 			rc = RCOK;
-		#if DEBUG_WW
-			printf("[row_ww] add txn %lu type %d to owners of row %lu\n", txn->get_txn_id(), type, _row->get_row_id());
-		#endif
 	} else {
 			en = owners;
 			LockEntry * prev = NULL;
@@ -109,10 +106,6 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 				if (en->txn->get_ts() > txn->get_ts() && conflict_lock(lock_type, type)) {
 						// step 1 - figure out what need to be done when aborting a txn
 						// ask thread to abort
-					#if DEBUG_WW
-					printf("[row_ww] txn %lu abort txn %lu\n",
-							txn->get_txn_id(), en->txn->get_txn_id());
-					#endif
 					if (txn->wound_txn(en->txn) == COMMITED){
 						// this txn is wounded by other txns.. 
 						if (owner_cnt == 0)
@@ -120,7 +113,6 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 						rc = Abort;
 						goto final;
 					}
-					
 					// remove from owner
 					if (prev)
 							prev->next = en->next;
@@ -128,6 +120,8 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 						if (owners == en)
 							owners = en->next;
 					}
+					// free en
+					return_entry(en);
 					// update count
 					owner_cnt--;
 					if (owner_cnt == 0)
@@ -156,9 +150,6 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 		waiter_cnt ++;
 		txn->lock_ready = false;
 		rc = WAIT;
-#if DEBUG_WW
-		printf("[row_ww] add txn %lu type %d to waiters of row %lu\n", txn->get_txn_id(), type, _row->get_row_id());
-#endif
 		bring_next();
 
 		// if brought in owner return acquired lock
@@ -168,20 +159,19 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 				rc = RCOK;
 				break;
 			}
-		en = en->next;
+			en = en->next;
 		}
 	}
 final:
 	if (g_central_man)
 		glob_manager->release_row(_row);
-	else
-		{
-			#if SPINLOCK
-			pthread_spin_unlock( latch );
-			#else
-			pthread_mutex_unlock( latch );
-			#endif
-		}
+	else {
+		#if SPINLOCK
+		pthread_spin_unlock( latch );
+		#else
+		pthread_mutex_unlock( latch );
+		#endif
+	}
 
 	return rc;
 }
@@ -228,9 +218,6 @@ RC Row_ww::lock_release(txn_man * txn) {
 		owner_cnt --;
 		if (owner_cnt == 0)
 			lock_type = LOCK_NONE;
-		#if DEBUG_WW
-			printf("[row_ww] rm txn %lu from owners of row %lu\n", txn->get_txn_id(), _row->get_row_id());
-		#endif
 	} else {
 		// Not in owners list, try waiters list.
 		en = waiters_head;
@@ -244,9 +231,6 @@ RC Row_ww::lock_release(txn_man * txn) {
 				waiters_tail = en->prev;
 			return_entry(en);
 			waiter_cnt --;
-		#if DEBUG_WW
-			printf("[row_ww] rm txn %lu from waiters of row %lu\n", txn->get_txn_id(), _row->get_row_id());
-		#endif
 		}
 	}
 
@@ -255,14 +239,13 @@ RC Row_ww::lock_release(txn_man * txn) {
 
 	if (g_central_man)
 		glob_manager->release_row(_row);
-	else
-		{
-			#if SPINLOCK
-			pthread_spin_unlock( latch );
-			#else
-			pthread_mutex_unlock( latch );
-			#endif
-		}
+	else {
+		#if SPINLOCK
+		pthread_spin_unlock( latch );
+		#else
+		pthread_mutex_unlock( latch );
+		#endif
+	}
 
 	return RCOK;
 }
@@ -296,10 +279,7 @@ Row_ww::bring_next() {
 		waiter_cnt --;
 		ASSERT(entry->txn->lock_ready == 0);
 		entry->txn->lock_ready = true;
-	lock_type = entry->type;
-#if DEBUG_WW
-		printf("[row_ww] bring %lu from waiter to owner of row %lu\n", entry->txn->get_txn_id(), _row->get_row_id());
-#endif
+		lock_type = entry->type;
 	}
 		ASSERT((owners == NULL) == (owner_cnt == 0));
 }

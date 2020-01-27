@@ -91,12 +91,12 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 	// check retired
 	// first check if has conflicts
 	status = wound_conflict(type, txn, txn->get_ts(), true, status);
-	if (status == Abort) {
-		rc = Abort;
-		bring_next(NULL);
-		return_entry(entry);
-		goto final;
-	}
+		if (status == Abort) {
+			rc = Abort;
+			bring_next(NULL);
+			return_entry(entry);
+			goto final;
+		}
 
 	// check owners
 	status = wound_conflict(type, txn, txn->get_ts(), false, status);
@@ -106,6 +106,7 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 		return_entry(entry);
 		goto final;
 	}
+	
 
 	// 2. insert into waiters and bring in next waiter
 	insert_to_waiters(entry, type, txn);
@@ -116,11 +117,9 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 	else if ((retired_cnt + owner_cnt) >= CLV_RETIRE_OFF)
 		retire_on = false;
 
-	if (status == RCOK) {
-		// 3. if brought txn in owner, return acquired lock
-		if (bring_next(txn))
-			rc = RCOK;
-	}
+	// 3. if brought txn in owner, return acquired lock
+	if (bring_next(txn))
+		rc = RCOK;
 
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug3, get_sys_clock() - starttime);
@@ -158,6 +157,7 @@ RC Row_clvp::lock_retire(txn_man * txn) {
 	// bring next owners from waiters
 	bring_next(NULL);
 
+
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug5, get_sys_clock() - starttime);
 	starttime = get_sys_clock();
@@ -167,9 +167,6 @@ RC Row_clvp::lock_retire(txn_man * txn) {
 }
 
 void Row_clvp::mv_to_retired(CLVLockEntry * entry) {
-	#if DEBUG_TMP
-	finished_cnt--;
-	#endif
 	// 2.1 must clean out retired list before inserting!!
 	//clean_aborted_retired();
 	// 2.2 increment barriers if conflicts with tail
@@ -356,7 +353,7 @@ void Row_clvp::return_entry(CLVLockEntry * entry) {
 }
 
 
-RC
+inline RC
 Row_clvp::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired, RC status) {
 	CLVLockEntry * en;
 	CLVLockEntry * prev;
@@ -394,7 +391,7 @@ Row_clvp::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired
 	return status;
 }
 
-void
+inline void
 Row_clvp::insert_to_waiters(CLVLockEntry * entry, lock_t type, txn_man * txn) {
 	assert(txn->get_ts() != 0);
 	entry->txn = txn;
