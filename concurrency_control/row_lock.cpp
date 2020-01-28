@@ -35,6 +35,9 @@ RC Row_lock::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 	assert (CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE);
 	RC rc;
 	int part_id =_row->get_part_id();
+	if (CC_ALG != NO_WAIT)
+		LockEntry * entry = get_entry();
+
 	if (g_central_man)
 		glob_manager->lock_row(_row);
 	else 
@@ -84,7 +87,7 @@ RC Row_lock::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 			rc = Abort;
 			goto final;
 		} else if (CC_ALG == DL_DETECT) {
-			LockEntry * entry = get_entry();
+			//LockEntry * entry = get_entry();
 			entry->txn = txn;
 			entry->type = type;
 			LIST_PUT_TAIL(waiters_head, waiters_tail, entry);
@@ -112,7 +115,7 @@ RC Row_lock::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 			if (canwait) {
 				// insert txn to the right position
 				// the waiter list is always in timestamp order
-				LockEntry * entry = get_entry();
+				//LockEntry * entry = get_entry();
 				entry->txn = txn;
 				entry->type = type;
 				en = waiters_head;
@@ -132,7 +135,8 @@ RC Row_lock::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
                 rc = Abort;
         }
 	} else {
-		LockEntry * entry = get_entry();
+		if (CC_ALG == NO_WAIT)
+			LockEntry * entry = get_entry();
 		entry->type = type;
 		entry->txn = txn;
 		STACK_PUSH(owners, entry);
@@ -175,6 +179,10 @@ final:
 			#endif
 		}
 
+	if (rc == Abort && (CC_ALG != NO_WAIT)) {
+		return_entry(entry);
+	}
+
 	return rc;
 }
 
@@ -203,7 +211,6 @@ RC Row_lock::lock_release(txn_man * txn) {
 	if (en) { // find the entry in the owner list
 		if (prev) prev->next = en->next;
 		else owners = en->next;
-		return_entry(en);
 		owner_cnt --;
 		if (owner_cnt == 0)
 			lock_type = LOCK_NONE;
@@ -218,7 +225,6 @@ RC Row_lock::lock_release(txn_man * txn) {
 			waiters_head = en->next;
 		if (en == waiters_tail)
 			waiters_tail = en->prev;
-		return_entry(en);
 		waiter_cnt --;
 	}
 
@@ -252,6 +258,9 @@ RC Row_lock::lock_release(txn_man * txn) {
 			pthread_mutex_unlock( latch );
 			#endif
 		}
+	if (en) {
+		return_entry(en);
+	}
 
 	return RCOK;
 }
