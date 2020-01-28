@@ -20,7 +20,7 @@ void Row_clvp::init(row_t * row) {
 	waiter_cnt = 0;
 	retired_cnt = 0;
 	// local timestamp
-	local_ts = -1;
+	//local_ts = -1;
 
 	#if SPINLOCK
 	latch = new pthread_spinlock_t;
@@ -30,7 +30,7 @@ void Row_clvp::init(row_t * row) {
 	pthread_mutex_init(latch, NULL);
 	#endif
 	blatch = false;
-	retire_on = true;
+	//retire_on = true;
 }
 
 inline void Row_clvp::lock() {
@@ -211,9 +211,9 @@ RC Row_clvp::lock_retire(txn_man * txn) {
 	#if DEBUG_CLV
 	printf("retire row thd=%lu, txn=%lu row=%lu success=%d\n", txn->get_thd_id(), txn->get_txn_id(), _row->get_row_id(), retire_on);
 	#endif
-	if(!retire_on) {
+	/*if(!retire_on) {
 		return RCOK;
-	}
+	}*/
 	lock();
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug4, get_sys_clock() - starttime);

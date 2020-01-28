@@ -35,9 +35,9 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn) {
 RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) {
 	assert (CC_ALG == WOUND_WAIT);
 	RC rc;
+	LockEntry * entry = get_entry();
 	LockEntry * en;
-	// get part id
-	//int part_id =_row->get_part_id();
+	LockEntry * to_return = NULL;
 
 	#if DEBUG_PROFILING
 	uint64_t starttime = get_sys_clock();
@@ -66,29 +66,6 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 	// each thread has at most one waiter
 	assert(waiter_cnt < g_thread_cnt);
 
-#if DEBUG_ASSERT
-	if (owners != NULL)
-		assert(lock_type == owners->type); 
-	else 
-		assert(lock_type == LOCK_NONE);
-	en = owners;
-	UInt32 cnt = 0;
-	while (en) {
-		assert(en->txn->get_thd_id() != txn->get_thd_id());
-		cnt ++;
-		en = en->next;
-	}
-	assert(cnt == owner_cnt);
-	en = waiters_head;
-	cnt = 0;
-	while (en) {
-		cnt ++;
-		en = en->next;
-	}
-	assert(cnt == waiter_cnt);
-#endif
-
-	
 	if (owner_cnt == 0) {
 			// if owner is empty, grab the lock
 		LockEntry * entry = get_entry();
@@ -104,13 +81,13 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 		LockEntry * prev = NULL;
 		while (en != NULL) {
 			if (en->txn->get_ts() > txn->get_ts() && conflict_lock(lock_type, type)) {
-					// step 1 - figure out what need to be done when aborting a txn
-					// ask thread to abort
+				// step 1 - figure out what need to be done when aborting a txn
 				if (txn->wound_txn(en->txn) == COMMITED){
 					// this txn is wounded by other txns.. 
 					if (owner_cnt == 0)
 						bring_next();
 					rc = Abort;
+					RETURN_PUSH(to_return, entry); // abort self, need to free preallocated entry
 					goto final;
 				}
 				// remove from owner
@@ -121,7 +98,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 						owners = en->next;
 				}
 				// free en
-				return_entry(en);
+				RETURN_PUSH(to_return, en);
 				// update count
 				owner_cnt--;
 				if (owner_cnt == 0)
@@ -132,10 +109,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 			en = en->next;
 		}
 
-		// insert to wait list
-		// insert txn to the right position
-		// the waiter list is always in timestamp order
-		LockEntry * entry = get_entry();
+		// insert to wait list, the waiter list is always in timestamp order
 		entry->txn = txn;
 		entry->type = type;
 		en = waiters_head;
@@ -162,6 +136,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 			en = en->next;
 		}
 	}
+
 final:
 	if (g_central_man)
 		glob_manager->release_row(_row);
@@ -172,7 +147,11 @@ final:
 		pthread_mutex_unlock( latch );
 		#endif
 	}
-
+	while (to_return) {
+		en = to_return;
+		to_return = to_return->next;
+		return_entry(en);
+	}
 	return rc;
 }
 
@@ -214,7 +193,6 @@ RC Row_ww::lock_release(txn_man * txn) {
 			if (owners == en)
 				owners = en->next;
 		}
-		return_entry(en);
 		owner_cnt --;
 		if (owner_cnt == 0)
 			lock_type = LOCK_NONE;
@@ -229,7 +207,6 @@ RC Row_ww::lock_release(txn_man * txn) {
 				waiters_head = en->next;
 			if (en == waiters_tail)
 				waiters_tail = en->prev;
-			return_entry(en);
 			waiter_cnt --;
 		}
 	}
@@ -245,6 +222,10 @@ RC Row_ww::lock_release(txn_man * txn) {
 		#else
 		pthread_mutex_unlock( latch );
 		#endif
+	}
+
+	if (en) {
+		return_entry(en);
 	}
 
 	return RCOK;
