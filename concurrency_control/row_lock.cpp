@@ -35,8 +35,10 @@ RC Row_lock::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 	assert (CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE);
 	RC rc;
 	int part_id =_row->get_part_id();
+
+	LockEntry * entry;
 	if (CC_ALG != NO_WAIT)
-		LockEntry * entry = get_entry();
+		 entry = get_entry();
 
 	if (g_central_man)
 		glob_manager->lock_row(_row);
@@ -136,7 +138,7 @@ RC Row_lock::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
         }
 	} else {
 		if (CC_ALG == NO_WAIT)
-			LockEntry * entry = get_entry();
+			entry = get_entry();
 		entry->type = type;
 		entry->txn = txn;
 		STACK_PUSH(owners, entry);
