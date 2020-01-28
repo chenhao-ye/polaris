@@ -170,6 +170,9 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 		rc = this->manager->lock_get(lt, txn);
 	}
 #endif
+	#if DEBUG_CLV
+	printf("get row thd=%lu, txn=%lu row=%lu type=%d, rc=%d\n", txn->get_thd_id(), txn->get_txn_id(), get_row_id(), type, rc);
+	#endif
 
 	if (rc == RCOK) {
 		#if CC_ALG == WOUND_WAIT || CC_ALG == CLV
@@ -239,6 +242,7 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 		if (txn->lock_ready) {
 			endtime = get_sys_clock();
 			INC_TMP_STATS(thd_id, time_wait, endtime - starttime);
+			//printf("increament %lu for thd=%lu\n", endtime-starttime, thd_id);
 			rc = RCOK;
 		} 
 		else if (txn->lock_abort) {

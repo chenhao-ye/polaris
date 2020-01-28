@@ -169,9 +169,6 @@ void txn_man::cleanup(RC rc) {
 }
 
 row_t * txn_man::get_row(row_t * row, access_t type) {
-	#if DEBUG_CLV
-	printf("txn=%lu row=%lu type=%d\n", txn_id, row->get_row_id(), type);
-	#endif
 	if (CC_ALG == HSTORE)
 		return row;
 	uint64_t starttime = get_sys_clock();

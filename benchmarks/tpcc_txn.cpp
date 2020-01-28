@@ -62,10 +62,10 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	access_t r_wh_type;
 	row_t * r_wh_local;
 	if (g_wh_update)
-	    r_wh_type = WR;
+		r_wh_type = WR;
 	else
-        r_wh_type = RD;
-    r_wh_local = get_row(r_wh, r_wh_type);
+        	r_wh_type = RD;
+    	r_wh_local = get_row(r_wh, r_wh_type);
 	if (r_wh_local == NULL) {
 		return finish(Abort);
 	}
@@ -79,7 +79,7 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	char * tmp_str = r_wh_local->get_value(W_NAME);
 	memcpy(w_name, tmp_str, 10);
 	w_name[10] = '\0';
-#if CC_ALG == CLV && RETIRE_ON && !MERGE_HS
+#if CC_ALG == CLV && RETIRE_ON
 	if (retire_row(r_wh) == Abort)
 		return finish(Abort);
 #endif
@@ -98,9 +98,11 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 #else
 	r_dist_local = get_row(r_dist, WR);
 #endif
-    if (r_dist_local == NULL) {
-        return finish(Abort);
-    }
+	// DEBUGGING INFO: NEED TO CLEAN!!!
+	//sleep(1);
+    	if (r_dist_local == NULL) {
+        	return finish(Abort);
+    	}
 
 	double d_ytd;
 	r_dist_local->get_value(D_YTD, d_ytd);
@@ -115,10 +117,6 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	d_name[10] = '\0';
 
 #if CC_ALG == CLV && RETIRE_ON
-	#if MERGE_HS
-	if (retire_row(r_wh) == Abort)
-		return finish(Abort);
-	#endif
 	if (retire_row(r_dist) == Abort)
 		return finish(Abort);
 #endif
@@ -198,7 +196,11 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	   	EXEC SQL UPDATE customer SET c_balance = :c_balance, c_data = :c_new_data
    		WHERE c_w_id = :c_w_id AND c_d_id = :c_d_id AND c_id = :c_id;
    	+======================================================================*/
+	#if DEBUG_BENCHMARK
+	row_t * r_cust_local = get_row(r_cust, RD);
+	#else
 	row_t * r_cust_local = get_row(r_cust, WR);
+	#endif
 	if (r_cust_local == NULL) {
 		return finish(Abort);
 	}
@@ -212,6 +214,11 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	r_cust_local->set_value(C_YTD_PAYMENT, c_ytd_payment + query->h_amount);
 	r_cust_local->get_value(C_PAYMENT_CNT, c_payment_cnt);
 	r_cust_local->set_value(C_PAYMENT_CNT, c_payment_cnt + 1);
+
+	#if CC_ALG == CLV && RETIRE_ON
+    	if (retire_row(r_cust) == Abort)
+    		return finish(Abort);
+	#endif
 
 	char * c_credit = r_cust_local->get_value(C_CREDIT);
 
@@ -244,7 +251,7 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	    r_wh_type = WR;
 	else
         r_wh_type = RD;
-    r_wh_local = get_row(r_wh, r_wh_type);
+    	r_wh_local = get_row(r_wh, r_wh_type);
 	if (r_wh_local == NULL) {
 		return finish(Abort);
 	}
@@ -254,12 +261,17 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	if (g_wh_update) {
 		r_wh_local->set_value(W_YTD, w_ytd + query->h_amount);
 	}
+
+#if CC_ALG == CLV && RETIRE_ON
+	if (retire_row(r_wh) == Abort)
+		return finish(Abort);
+#endif
 	char w_name[11];
 	tmp_str = r_wh_local->get_value(W_NAME);
 	memcpy(w_name, tmp_str, 10);
 	w_name[10] = '\0';
-#endif
 	
+#endif
 	char h_data[25];
 	strncpy(h_data, w_name, 10);
 	int length = strlen(h_data);
@@ -268,14 +280,6 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	strncpy(&h_data[length + 4], d_name, 10);
 	h_data[length+14] = '\0';
 
-#if CC_ALG == CLV && RETIRE_ON
-    if (retire_row(r_cust) == Abort)
-    	return finish(Abort);
-	#if REORDER_WH 
-	if (retire_row(r_wh) == Abort)
-		return finish(Abort);
-	#endif
-#endif
 	/*=============================================================================+
 	  EXEC SQL INSERT INTO
 	  history (h_c_d_id, h_c_w_id, h_c_id, h_d_id, h_w_id, h_date, h_amount, h_data)
@@ -334,7 +338,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 	double w_tax;
 	r_wh_local->get_value(W_TAX, w_tax);
 
-#if CC_ALG == CLV && RETIRE_ON && !MERGE_HS
+#if CC_ALG == CLV && RETIRE_ON 
 	if (retire_row(r_wh) == Abort)
 		return finish(Abort);
 #endif
@@ -356,7 +360,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 	//c_last = r_cust_local->get_value(C_LAST);
 	//c_credit = r_cust_local->get_value(C_CREDIT);
 
-#if CC_ALG == CLV && RETIRE_ON && !MERGE_HS
+#if CC_ALG == CLV && RETIRE_ON 
 	if (retire_row(r_cust) == Abort)
 		return finish(Abort);
 #endif
@@ -388,12 +392,6 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 	r_dist_local->set_value(D_NEXT_O_ID, o_id);
 
 #if CC_ALG == CLV && RETIRE_ON
-	#if MERGE_HS
-	if (retire_row(r_wh) == Abort)
-		return finish(Abort);
-	if (retire_row(r_cust) == Abort)
-		return finish(Abort);
-	#endif
 	if (retire_row(r_dist) == Abort)
 		return finish(Abort);
 #endif

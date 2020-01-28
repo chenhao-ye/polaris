@@ -30,6 +30,7 @@ void Row_clvp::init(row_t * row) {
 	pthread_mutex_init(latch, NULL);
 	#endif
 	blatch = false;
+	retire_on = true;
 }
 
 inline void Row_clvp::lock() {
@@ -103,8 +104,7 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 		txn->set_next_ts(1);	
 
 	// 1. set txn to abort in owners and retired
-	RC rc = WAIT;
-	RC status = RCOK;
+	RC rc = RCOK;
 	ts_t ts = txn->get_ts();
 
 	// check if can grab directly
@@ -112,7 +112,6 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 		QUEUE_PUSH(owners, owners_tail, entry);
 		owner_cnt++;
 		txn->lock_ready = true;
-		rc = RCOK;
 		unlock();
 		return rc;
 	}
@@ -122,9 +121,9 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 	en = retired_head;
 	while (en != NULL) {
 		// self assigned, if conflicted, assign a number
-		if (status == RCOK && conflict_lock(en->type, type) && (en->txn->get_ts() > ts))
-			status = WAIT;
-		if (status == WAIT && en->txn->get_ts() > ts) {
+		if (rc == RCOK && conflict_lock(en->type, type) && (en->txn->get_ts() > ts))
+			rc = WAIT;
+		if (rc == WAIT && en->txn->get_ts() > ts) {
 			if (txn->wound_txn(en->txn) == COMMITED) {
 				rc = Abort;
 				bring_next(NULL);
@@ -144,9 +143,9 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 	en = owners;
 	while (en != NULL) {
 		// self assigned, if conflicted, assign a number
-		if (status == RCOK && conflict_lock(en->type, type) && (en->txn->get_ts() > ts))
-			status = WAIT;
-		if (status == WAIT && en->txn->get_ts() > ts) {
+		if (rc == RCOK && conflict_lock(en->type, type) && (en->txn->get_ts() > ts))
+			rc = WAIT;
+		if (rc == WAIT && en->txn->get_ts() > ts) {
 			if (txn->wound_txn(en->txn) == COMMITED) {
 				rc = Abort;
 				bring_next(NULL);
@@ -180,13 +179,14 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 		LIST_PUT_TAIL(waiters_head, waiters_tail, entry);
 	}
 	waiter_cnt ++;
+	rc = WAIT;
 
 	// 3. turn on retire only when needed
-	if (!retire_on && waiter_cnt >= CLV_RETIRE_ON)
+	/*if (!retire_on && waiter_cnt >= CLV_RETIRE_ON)
 		retire_on = true;
 	else if ((retired_cnt + owner_cnt) >= CLV_RETIRE_OFF)
 		retire_on = false;
-
+	*/
 	// 4. if brought txn in owner, return acquired lock
 	if (bring_next(txn))
 		rc = RCOK;
@@ -208,8 +208,12 @@ RC Row_clvp::lock_retire(txn_man * txn) {
 	#if DEBUG_PROFILING
 	uint64_t starttime = get_sys_clock();
 	#endif
-	if(!retire_on) 
+	#if DEBUG_CLV
+	printf("retire row thd=%lu, txn=%lu row=%lu success=%d\n", txn->get_thd_id(), txn->get_txn_id(), _row->get_row_id(), retire_on);
+	#endif
+	if(!retire_on) {
 		return RCOK;
+	}
 	lock();
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug4, get_sys_clock() - starttime);
@@ -247,13 +251,13 @@ RC Row_clvp::lock_retire(txn_man * txn) {
 		} else {
 			entry->is_cohead = true;
 		}
-		if (owner_cnt == 0)
-		bring_next(NULL);
 	} else {
 		// may be is aborted
 		assert(txn->status == ABORTED);
 		rc = Abort;
 	}
+	if (owner_cnt == 0)
+		bring_next(NULL);
 
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug5, get_sys_clock() - starttime);
@@ -352,7 +356,7 @@ Row_clvp::bring_next(txn_man * txn) {
 	CLVLockEntry * entry;
 	// If any waiter can join the owners, just do it!
 	while (waiters_head) {
-		if ((owners == NULL) || (!conflict_lock(owners->type, waiters_head->type))) {
+		if ((owner_cnt == 0) || (!conflict_lock(owners->type, waiters_head->type))) {
 			LIST_GET_HEAD(waiters_head, waiters_tail, entry);
 			waiter_cnt --;
 			// add to onwers
@@ -362,6 +366,9 @@ Row_clvp::bring_next(txn_man * txn) {
 			if (txn == entry->txn) {
 				has_txn = true;
 			}
+			#if DEBUG_CLV
+			printf("bring to owner thd=%lu, txn=%lu row=%lu\n", entry->txn->get_thd_id(), entry->txn->get_txn_id(), _row->get_row_id() );
+			#endif
 		} else
 			break;
 	}
@@ -393,9 +400,6 @@ CLVLockEntry * Row_clvp::get_entry() {
 	entry->delta = false;
 	entry->is_cohead = false;
 	entry->txn = NULL;
-	#if DEBUG_TMP
-	entry->finished = false;
-	#endif
 	return entry;
 }
 
@@ -403,51 +407,9 @@ void Row_clvp::return_entry(CLVLockEntry * entry) {
 	mem_allocator.free(entry, sizeof(CLVLockEntry));
 }
 
-
-/*
-inline RC
-Row_clvp::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired, RC status) {
-	CLVLockEntry * en;
-	CLVLockEntry * prev;
-	if (check_retired)
-		en = retired_head;
-	else {
-		en = owners;
-		prev = NULL;
-	}
-	while (en != NULL) {
-		// self assigned, if conflicted, assign a number
-		if (status == RCOK && conflict_lock(en->type, type) && (en->txn->get_ts() > txn->get_ts()))
-			status = WAIT;
-		if (status == WAIT && en->txn->get_ts() > ts) {
-			if (txn->wound_txn(en->txn) == COMMITED) {
-				// if (en->txn->status == COMMITED) {
-				// 	if (check_retired)
-				// 		en = rm_from_retired(en);
-				// 	else
-				// 		en = rm_from_owners(en, prev, true);
-				// }
-				return Abort;
-			}
-			// if wounded, remove descendants
-			// if in retired
-			if (check_retired)
-				en = remove_descendants(en);
-			else
-				en = rm_from_owners(en, prev, true);
-		} else {
-			prev = en;
-			en = en->next;
-		}
-	}
-	return status;
-}
-*/
-
 CLVLockEntry * 
 Row_clvp::remove_descendants(CLVLockEntry * en, CLVLockEntry** to_return) {
 	assert(en != NULL);
-	// CLVLockEntry * to_destroy = NULL;
 	CLVLockEntry * prev = en->prev;
 	// 1. remove self, set iterator to next entry
 	lock_t type = en->type;
@@ -456,7 +418,6 @@ Row_clvp::remove_descendants(CLVLockEntry * en, CLVLockEntry** to_return) {
 	LIST_RM(retired_head, retired_tail, en, retired_cnt);
 	RETURN_PUSH(*to_return, en);
 	en = en->next;
-	//en = rm_from_retired(en);
 	// 2. remove next conflict till end
 	// 2.1 find next conflict
 	while(en && (!conflict_lock(type, en->type))) {
@@ -472,7 +433,6 @@ Row_clvp::remove_descendants(CLVLockEntry * en, CLVLockEntry** to_return) {
 				// no need to be too complicated (i.e. call function) as the owner will be empty in the end
 				owners = owners->next;
 				RETURN_PUSH(*to_return, en);
-				//return_entry(en);
 			}
 			owners_tail = NULL;
 			owners = NULL;
@@ -483,11 +443,9 @@ Row_clvp::remove_descendants(CLVLockEntry * en, CLVLockEntry** to_return) {
 		LIST_RM_SINCE(retired_head, retired_tail, en);
 		while(en) {
 			RETURN_PUSH(*to_return, en);
-			// to_destroy = en;
 			en->txn->set_abort();
 			retired_cnt--;
 			en = en->next;
-			// return_entry(to_destroy);
 		}
 	}
 	if (prev)

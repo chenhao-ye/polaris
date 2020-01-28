@@ -99,7 +99,7 @@
 // [CLV]
 #define DYNAMIC_TS false
 #define SPINLOCK true
-#define CLV_RETIRE_ON 1
+#define CLV_RETIRE_ON 10
 #define CLV_RETIRE_OFF 17
 #define PRIORITIZE_HS false
 #define MERGE_HS false
@@ -141,7 +141,7 @@
 // Some of the transactions read the data but never use them. 
 // If TPCC_ACCESS_ALL == fales, then these parts of the transactions
 // are not modeled.
-#define REORDER_WH true
+#define REORDER_WH false
 #define TPCC_ACCESS_ALL 			false 
 #define WH_UPDATE					true
 #define NUM_WH 1
@@ -155,7 +155,7 @@ enum TPCCTxnType {TPCC_ALL,
 extern TPCCTxnType 					g_tpcc_txn_type;
 
 //#define TXN_TYPE					TPCC_ALL
-#define PERC_PAYMENT 0.5
+#define PERC_PAYMENT 1
 #define FIRSTNAME_MINLEN 			8
 #define FIRSTNAME_LEN 				16
 #define LASTNAME_LEN 				16
