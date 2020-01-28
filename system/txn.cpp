@@ -278,12 +278,6 @@ RC txn_man::finish(RC rc) {
         if (!ATOM_CAS(status, RUNNING, COMMITED))
             rc = Abort;
 	}
-	#if DEBUG_WW
-    if (rc == Abort)
-        printf("[txn-%lu] is set to aborted\n", get_txn_id());
-    else if (rc == RCOK)
-    printf("[txn-%lu] is set to commited\n", get_txn_id());
-	#endif
 	cleanup(rc);
 #elif CC_ALG == CLV
 	if (rc == RCOK) {
@@ -300,15 +294,13 @@ RC txn_man::finish(RC rc) {
             rc = Abort;
 	}
 	cleanup(rc);
+
+	if (rc != Abort)
+		set_ts(0);
 	#if DYNAMIC_TS
-	//set_ts(0);
-	if (rc == Abort) {
-	    reassign_ts();
-	} else {
-	    set_ts(0);
+	else {
+	    reassign_ts(); 
 	}
-	#else
-	set_ts(0);
 	#endif
 #else 
 	cleanup(rc);
