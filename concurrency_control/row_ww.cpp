@@ -66,29 +66,6 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 	// each thread has at most one waiter
 	assert(waiter_cnt < g_thread_cnt);
 
-#if DEBUG_ASSERT
-	if (owners != NULL)
-		assert(lock_type == owners->type); 
-	else 
-		assert(lock_type == LOCK_NONE);
-	en = owners;
-	UInt32 cnt = 0;
-	while (en) {
-		assert(en->txn->get_thd_id() != txn->get_thd_id());
-		cnt ++;
-		en = en->next;
-	}
-	assert(cnt == owner_cnt);
-	en = waiters_head;
-	cnt = 0;
-	while (en) {
-		cnt ++;
-		en = en->next;
-	}
-	assert(cnt == waiter_cnt);
-#endif
-
-	
 	if (owner_cnt == 0) {
 			// if owner is empty, grab the lock
 		LockEntry * entry = get_entry();

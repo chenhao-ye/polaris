@@ -18,11 +18,11 @@ dynamic="true"
 dynamic="false"
 debug="false"
 #debug="true"
-bench="true"
 bench="false"
+#bench="true"
 #perc=0.5
-#perc=0
 perc=1
+#perc=1
 merge="true"
 merge="false"
 reorder="false"
@@ -32,7 +32,7 @@ retire="true"
 
 
 
-for alg in CLV WOUND_WAIT #WAIT_DIE NO_WAIT
+for alg in CLV #WOUND_WAIT #WAIT_DIE NO_WAIT
 do
 #alg="WOUND_WAIT"
 timeout 90 python test.py RETIRE_ON=$retire REORDER_WH=$reorder MERGE_HS=$merge PERC_PAYMENT=$perc DEBUG_BENCHMARK=$bench DEBUG_CLV=$debug DYNAMIC_TS=$dynamic PRIORITIZE_HS=$phs CLV_RETIRE_ON=$on CLV_RETIRE_OFF=$off DEBUG_PROFILING=$pf SPINLOCK=$spin WORKLOAD=${wl} CC_ALG=$alg THREAD_CNT=$threads MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty NUM_WH=${wh}|& tee -a debug.out
