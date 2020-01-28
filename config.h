@@ -39,8 +39,8 @@
 /***********************************************/
 // WAIT_DIE, NO_WAIT, DL_DETECT, TIMESTAMP, MVCC, HEKATON, HSTORE, OCC, VLL, TICTOC, SILO
 // TODO TIMESTAMP does not work at this moment
-//#define CC_ALG WOUND_WAIT
-#define CC_ALG WOUND_WAIT
+//#define CC_ALG CLV
+#define CC_ALG CLV
 #define ISOLATION_LEVEL 			SERIALIZABLE
 
 // all transactions acquire tuples according to the primary key order.
@@ -99,7 +99,7 @@
 // [CLV]
 #define DYNAMIC_TS false
 #define SPINLOCK true
-#define CLV_RETIRE_ON 10
+#define CLV_RETIRE_ON 0
 #define CLV_RETIRE_OFF 17
 #define PRIORITIZE_HS				false
 #define MERGE_HS					false
@@ -155,7 +155,7 @@ enum TPCCTxnType {TPCC_ALL,
 extern TPCCTxnType 					g_tpcc_txn_type;
 
 //#define TXN_TYPE					TPCC_ALL
-#define PERC_PAYMENT 0.5
+#define PERC_PAYMENT 0
 #define FIRSTNAME_MINLEN 			8
 #define FIRSTNAME_LEN 				16
 #define LASTNAME_LEN 				16

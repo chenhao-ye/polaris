@@ -30,11 +30,11 @@ private:
 	void		lock();
 	void		unlock();
 	row_t * _row;
-    UInt32 owner_cnt;
-    UInt32 waiter_cnt;
-    UInt32 retired_cnt; // no need to keep retied cnt
-    ts_t local_ts;
-    bool retire_on;
+    	UInt32 owner_cnt;
+    	UInt32 waiter_cnt;
+   	UInt32 retired_cnt; // no need to keep retied cnt
+    	//ts_t local_ts;
+    	//bool retire_on;
 	
 	// owners is a single linked list
 	// waiters is a double linked list 
