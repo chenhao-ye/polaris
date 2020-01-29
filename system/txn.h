@@ -52,8 +52,19 @@ public:
 	txnid_t 		get_txn_id();
 
 	// [WW, CLV]
-    status_t        wound_txn(txn_man * txn);
-    status_t		set_abort();
+    	status_t        wound_txn(txn_man * txn);
+    	status_t		set_abort()
+{
+#if CC_ALG == CLV || CC_ALG == WOUND_WAIT
+	if (ATOM_CAS(status, RUNNING, ABORTED)) {
+        	lock_abort = true;
+       		return ABORTED;
+    	} else {
+    		return status;
+    	}
+#endif
+	return ABORTED;
+};
     void            increment_commit_barriers();
     void			decrement_commit_barriers();
     bool			atomic_set_ts(ts_t ts);
@@ -151,15 +162,4 @@ inline status_t txn_man::wound_txn(txn_man * txn)
     return ABORTED;
 }
 
-inline status_t txn_man::set_abort()
-{
-#if CC_ALG == CLV || CC_ALG == WOUND_WAIT
-	if (ATOM_CAS(status, RUNNING, ABORTED)) {
-        lock_abort = true;
-        return ABORTED;
-    } else {
-    	return status;
-    }
-#endif
-	return ABORTED;
-}
+//status_t txn_man::set_abort()

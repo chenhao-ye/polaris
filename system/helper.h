@@ -104,7 +104,7 @@
 	if (en->prev) en->prev->next = en->next; \
 	else if (head == en) {	head = en->next; } \
 	if (tail == en)	{ tail = en->prev; } \
-	cnt-=1; }
+	cnt--; }
 
 #define LIST_RM_SINCE(head, tail, en) { \
 	if (en->prev) en->prev->next = NULL; \

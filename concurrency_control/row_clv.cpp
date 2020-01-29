@@ -18,9 +18,6 @@ void Row_clv::init(row_t * row) {
 	owner_cnt = 0;
 	waiter_cnt = 0;
 	retired_cnt = 0;
-	#if DEBUG_TMP
-	finished_cnt = 0;
-	#endif
 	// a switch for retire
 	retire_on = false;
 	// local timestamp
@@ -199,9 +196,6 @@ RC Row_clv::lock_retire(txn_man * txn) {
 }
 
 void Row_clv::mv_to_retired(CLVLockEntry * entry) {
-	#if DEBUG_TMP
-	finished_cnt--;
-	#endif
 	// 2.1 must clean out retired list before inserting!!
 	//clean_aborted_retired();
 	// 2.2 increment barriers if conflicts with tail
@@ -239,10 +233,6 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 		// Try to find the entry in the owners
 		en = rm_if_in_owners(txn);
 		if (en) {
-			#if DEBUG_TMP
-			if (en->finished)
-				finished_cnt--;
-			#endif
 			return_entry(en);
 			bring_next(NULL);
 		} else {
@@ -377,9 +367,6 @@ CLVLockEntry * Row_clv::get_entry() {
 	entry->delta = false;
 	entry->is_cohead = false;
 	entry->txn = NULL;
-	#if DEBUG_TMP
-	entry->finished = false;
-	#endif
 	return entry;
 }
 
