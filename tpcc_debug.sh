@@ -3,9 +3,9 @@ rm temp.out
 rm debug.out
 
 wl="TPCC"
-threads=16 #16
+threads=16 
 cnt=100000
-penalty=0 #1
+penalty=0 
 wh=1
 spin="true"
 pf="true"
