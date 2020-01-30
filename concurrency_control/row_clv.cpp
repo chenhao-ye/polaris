@@ -69,7 +69,7 @@ void Row_clv::unlock() {
 	}
 }
 
-inline void Row_clvp::reset_entry(CLVLockEntry * entry) {
+inline void Row_clv::reset_entry(CLVLockEntry * entry) {
 	entry->txn = NULL;
 	entry->type = LOCK_NONE;
 	entry->prev = NULL;
@@ -121,7 +121,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 			to_insert->type = type;
 			to_insert->txn = txn;
 			txn->lock_ready = true;
-			RETIRED_LIST_PUT_TAIL(owners, owners_tail, entry);
+			RETIRED_LIST_PUT_TAIL(owners, owners_tail, to_insert);
 			owner_cnt++;
 			rc = RCOK;
 			goto final;
@@ -286,7 +286,6 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 	starttime = get_sys_clock();
 	#endif
 
-	CLVLockEntry * en;
 	// Try to find the entry in the retired
 	if (!rm_if_in_retired(txn, rc == Abort)) {
 		// Try to find the entry in the owners
