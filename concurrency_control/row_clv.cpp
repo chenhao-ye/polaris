@@ -155,9 +155,6 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	if (status == Abort) {
 		rc = Abort;
 		bring_next(NULL);
-		#if DEBUG_TMP
-		reset_entry(to_insert);
-		#endif
 		unlock();
 		return rc;
 		#if !DEBUG_TMP
@@ -170,9 +167,6 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	if (status == Abort) {
 		rc = Abort;
 		bring_next(NULL);
-		#if DEBUG_TMP
-		reset_entry(to_insert);
-		#endif
 		unlock();
 		return rc;
 		#if !DEBUG_TMP
@@ -404,30 +398,6 @@ Row_clv::rm_if_in_retired(txn_man * txn, bool is_abort) {
 	}
 	return false;
 	#endif
-}
-
-bool 
-Row_clv::rm_if_in_waiters(txn_man * txn) {
-	CLVLockEntry * en = waiters_head;
-	while(en) {
-		if (en->txn == txn) {
-			LIST_RM(waiters_head, waiters_tail, en, waiter_cnt);
-			return_entry(en);
-			return true;
-		}
-		en = en->next;
-	}
-	return false;
-}
-
-
-CLVLockEntry * 
-Row_clv::rm_from_retired(CLVLockEntry * en) {
-	CLVLockEntry * to_return = en->next;
-	update_entry(en);
-	LIST_RM(retired_head, retired_tail, en, retired_cnt);
-	return_entry(en);
-	return to_return;
 }
 
 bool
