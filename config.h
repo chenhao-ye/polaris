@@ -102,7 +102,7 @@
 #define CLV_RETIRE_ON 1
 #define CLV_RETIRE_OFF              10000
 #define PRIORITIZE_HS				false
-#define MERGE_HS false
+#define MERGE_HS					false
 #define RETIRE_ON true
 
 /***********************************************/
@@ -144,7 +144,7 @@
 #define REORDER_WH false
 #define TPCC_ACCESS_ALL 			false 
 #define WH_UPDATE					true
-#define NUM_WH 1
+#define NUM_WH 16
 //
 enum TPCCTxnType {TPCC_ALL, 
 				TPCC_PAYMENT, 
@@ -155,7 +155,7 @@ enum TPCCTxnType {TPCC_ALL,
 extern TPCCTxnType 					g_tpcc_txn_type;
 
 //#define TXN_TYPE					TPCC_ALL
-#define PERC_PAYMENT 0.5
+#define PERC_PAYMENT 1
 #define FIRSTNAME_MINLEN 			8
 #define FIRSTNAME_LEN 				16
 #define LASTNAME_LEN 				16
@@ -196,7 +196,7 @@ extern TestCases					g_test_case;
 #define DEBUG_WW                    			false
 #define DEBUG_BENCHMARK false
 #define DEBUG_CLV false
-#define DEBUG_TMP true
+#define DEBUG_TMP false
 #define DEBUG_PROFILING true
 
 /***********************************************/

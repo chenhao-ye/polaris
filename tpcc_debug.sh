@@ -3,6 +3,7 @@ rm temp.out
 rm debug.out
 
 bench="false"
+#bench="true"
 reorder="false"
 wl="TPCC"
 threads=16 

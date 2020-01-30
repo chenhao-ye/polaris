@@ -41,6 +41,7 @@ void Row_clv::init(row_t * row) {
 	#endif
 }
 
+inline
 void Row_clv::lock() {
 	if (g_thread_cnt > 1) {
 		if (g_central_man)
@@ -55,6 +56,7 @@ void Row_clv::lock() {
 	}
 }
 
+inline
 void Row_clv::unlock() {
 	if (g_thread_cnt > 1) {
 		if (g_central_man)
@@ -363,7 +365,7 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 	return RCOK;
 }
 
-bool
+inline bool
 Row_clv::rm_if_in_retired(txn_man * txn, bool is_abort) {
 	#if DEBUG_TMP
 	CLVLockEntry * en = vec[txn->get_thd_id()%g_thread_cnt];
@@ -400,7 +402,7 @@ Row_clv::rm_if_in_retired(txn_man * txn, bool is_abort) {
 	#endif
 }
 
-bool
+inline bool
 Row_clv::bring_next(txn_man * txn) {
 	bool has_txn = false;
 	CLVLockEntry * entry;
@@ -460,7 +462,7 @@ void Row_clv::return_entry(CLVLockEntry * entry) {
 	mem_allocator.free(entry, sizeof(CLVLockEntry));
 }
 
-RC
+inline RC
 Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired, RC status) {
 	CLVLockEntry * en;
 	CLVLockEntry * to_reset;
@@ -531,7 +533,7 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 	return status;
 }
 
-void
+inline void
 Row_clv::insert_to_waiters(CLVLockEntry * entry, lock_t type, txn_man * txn) {
 	assert(txn->get_ts() != 0);
 	entry->txn = txn;
@@ -555,7 +557,7 @@ Row_clv::insert_to_waiters(CLVLockEntry * entry, lock_t type, txn_man * txn) {
 }
 
 
-CLVLockEntry * 
+inline CLVLockEntry * 
 Row_clv::remove_descendants(CLVLockEntry * en) {
 	assert(en != NULL);
 	CLVLockEntry * next = NULL;
@@ -618,7 +620,7 @@ Row_clv::remove_descendants(CLVLockEntry * en) {
 }
 
 
-void
+inline void
 Row_clv::update_entry(CLVLockEntry * en) {
 	CLVLockEntry * entry;
 	if (en->prev) {
