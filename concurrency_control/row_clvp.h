@@ -51,13 +51,13 @@ private:
 	CLVLockEntry * waiters_head;
 	CLVLockEntry * waiters_tail;
 
-	bool rm_if_in_retired(txn_man * txn, bool is_abort, CLVLockEntry ** to_return);
+	bool rm_if_in_retired(txn_man * txn, bool is_abort);
 	bool bring_next(txn_man * txn);
 	bool has_conflicts_in_list(CLVLockEntry * list, CLVLockEntry * entry);
 	bool conflict_lock_entry(CLVLockEntry * l1, CLVLockEntry * l2);
-	CLVLockEntry * remove_descendants(CLVLockEntry * en, CLVLockEntry ** to_return);
+	CLVLockEntry * remove_descendants(CLVLockEntry * en);
 	void update_entry(CLVLockEntry * en);
-	void batch_return(CLVLockEntry * en);
+	// void batch_return(CLVLockEntry * en);
 
 };
 
