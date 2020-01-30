@@ -405,6 +405,9 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 					prev = en;
 					en = en->next;
 				}
+			} else {
+				prev = en;
+				en = en->next;
 			}
 		} else {
 			// self unassigned, if not assigned, assign a number;
