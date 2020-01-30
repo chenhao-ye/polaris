@@ -97,12 +97,12 @@
 // [VLL] 
 #define TXN_QUEUE_SIZE_LIMIT		THREAD_CNT
 // [CLV]
-#define DYNAMIC_TS false
+#define DYNAMIC_TS true
 #define SPINLOCK true
 #define CLV_RETIRE_ON 1
 #define CLV_RETIRE_OFF              10000
 #define PRIORITIZE_HS				false
-#define MERGE_HS					false
+#define MERGE_HS false
 #define RETIRE_ON true
 
 /***********************************************/
@@ -155,7 +155,7 @@ enum TPCCTxnType {TPCC_ALL,
 extern TPCCTxnType 					g_tpcc_txn_type;
 
 //#define TXN_TYPE					TPCC_ALL
-#define PERC_PAYMENT 1
+#define PERC_PAYMENT 0.5
 #define FIRSTNAME_MINLEN 			8
 #define FIRSTNAME_LEN 				16
 #define LASTNAME_LEN 				16
