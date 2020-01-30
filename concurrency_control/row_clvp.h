@@ -11,16 +11,16 @@ public:
 	void init(row_t * row);
 	// [DL_DETECT] txnids are the txn_ids that current txn is waiting for.
 	RC lock_get(lock_t type, txn_man * txn);
-    	RC lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt);
-    	RC lock_release(txn_man * txn, RC rc);
-    	RC lock_retire(txn_man * txn);
+	RC lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt);
+	RC lock_release(txn_man * txn, RC rc);
+	RC lock_retire(txn_man * txn);
 	
 private:
 	#if SPINLOCK
 	pthread_spinlock_t * latch;
 	#else
-    	pthread_mutex_t * latch;
-   	#endif
+		pthread_mutex_t * latch;
+	#endif
 	
 	bool blatch;
 	
@@ -30,14 +30,12 @@ private:
 	void		lock();
 	void		unlock();
 	row_t * _row;
-    	UInt32 owner_cnt;
-    	UInt32 waiter_cnt;
-   	UInt32 retired_cnt; // no need to keep retied cnt
-    	//ts_t local_ts;
-    	bool retire_on;
+	UInt32 owner_cnt;
+	UInt32 waiter_cnt;
+	UInt32 retired_cnt; // no need to keep retied cnt
+	bool retire_on;
 
 	#if DEBUG_TMP	
-	//std::vector<CLVLockEntry *> vec;
 	CLVLockEntry ** vec;
 	#endif
 	void reset_entry(CLVLockEntry * entry);
@@ -54,7 +52,6 @@ private:
 	CLVLockEntry * waiters_tail;
 
 	bool rm_if_in_retired(txn_man * txn, bool is_abort, CLVLockEntry ** to_return);
-	// CLVLockEntry * rm_from_retired(CLVLockEntry * en);
 	bool bring_next(txn_man * txn);
 	bool has_conflicts_in_list(CLVLockEntry * list, CLVLockEntry * entry);
 	bool conflict_lock_entry(CLVLockEntry * l1, CLVLockEntry * l2);
