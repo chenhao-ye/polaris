@@ -11,7 +11,7 @@ struct CLVLockEntry {
 	CLVLockEntry * next;
 	CLVLockEntry * prev;
 	#if DEBUG_TMP
-	bool finished;
+	loc_t loc;
 	#endif
 };
 
@@ -43,14 +43,11 @@ private:
 	void		lock();
 	void		unlock();
 	row_t * _row;
-    UInt32 owner_cnt;
-    UInt32 waiter_cnt;
-    UInt32 retired_cnt; // no need to keep retied cnt
-    #if DEBUG_TMP
-    UInt32 finished_cnt;
-    #endif
-    ts_t local_ts;
-    bool retire_on;
+	UInt32 owner_cnt;
+    	UInt32 waiter_cnt;
+    	UInt32 retired_cnt; // no need to keep retied cnt
+    	ts_t local_ts;
+   	 bool retire_on;
 	
 	// owners is a single linked list
 	// waiters is a double linked list 
