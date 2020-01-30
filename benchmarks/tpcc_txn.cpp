@@ -116,11 +116,7 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	memcpy(d_name, tmp_str, 10);
 	d_name[10] = '\0';
 
-#if CC_ALG == CLV && RETIRE_ON
-	#if MERGE_HS
-	if (retire_row(r_wh) == Abort)
-		return finish(Abort);
-	#endif
+#if CC_ALG == CLV && RETIRE_ON && !MERGE_HS
 	if (retire_row(r_dist) == Abort)
 		return finish(Abort);
 #endif
@@ -266,7 +262,7 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 		r_wh_local->set_value(W_YTD, w_ytd + query->h_amount);
 	}
 
-#if CC_ALG == CLV && RETIRE_ON
+#if CC_ALG == CLV && RETIRE_ON && !MERGE_HS
 	if (retire_row(r_wh) == Abort)
 		return finish(Abort);
 #endif
