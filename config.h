@@ -144,7 +144,7 @@
 #define REORDER_WH false
 #define TPCC_ACCESS_ALL 			false 
 #define WH_UPDATE					true
-#define NUM_WH 1
+#define NUM_WH 16
 //
 enum TPCCTxnType {TPCC_ALL, 
 				TPCC_PAYMENT, 
@@ -196,7 +196,7 @@ extern TestCases					g_test_case;
 #define DEBUG_WW                    			false
 #define DEBUG_BENCHMARK false
 #define DEBUG_CLV false
-#define DEBUG_TMP true
+#define DEBUG_TMP false
 #define DEBUG_PROFILING true
 
 /***********************************************/
