@@ -49,6 +49,7 @@
 }
 
 #define QUEUE_PUSH(head, tail, entry) { \
+	entry->next = NULL;\
 	if (head == NULL) {	head = entry;	tail = entry; }\
 	else {	tail->next = entry; 	tail = entry; } }
 

@@ -3,7 +3,7 @@ rm temp.out
 rm debug.out
 
 wl="TPCC"
-threads=16
+threads=16 #16
 cnt=100000
 penalty=0 #1
 wh=1
@@ -12,14 +12,15 @@ pf="true"
 #pf="false"
 dynamic="false"
 debug="false"
+#debug="true"
 bench="false"
 reorder="false"
 retire="true"
 perc=0.5
-perc=0
+#perc=1
 alg="CLV"
 tmp="true"
-on=8
+on=1
 #tmp="false"
 
 timeout 30 python test.py CLV_RETIRE_ON=$on DEBUG_TMP=$tmp RETIRE_ON=$retire REORDER_WH=$reorder PERC_PAYMENT=$perc DEBUG_BENCHMARK=$bench DEBUG_CLV=$debug DYNAMIC_TS=$dynamic DEBUG_PROFILING=$pf SPINLOCK=$spin WORKLOAD=${wl} CC_ALG=$alg THREAD_CNT=$threads MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty NUM_WH=${wh}|& tee -a debug.out
