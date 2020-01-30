@@ -97,12 +97,12 @@
 // [VLL] 
 #define TXN_QUEUE_SIZE_LIMIT		THREAD_CNT
 // [CLV]
-#define DYNAMIC_TS false
+#define DYNAMIC_TS true
 #define SPINLOCK true
 #define CLV_RETIRE_ON 1
 #define CLV_RETIRE_OFF              10000
 #define PRIORITIZE_HS				false
-#define MERGE_HS					false
+#define MERGE_HS false
 #define RETIRE_ON true
 
 /***********************************************/
@@ -196,7 +196,7 @@ extern TestCases					g_test_case;
 #define DEBUG_WW                    			false
 #define DEBUG_BENCHMARK false
 #define DEBUG_CLV false
-#define DEBUG_TMP false
+#define DEBUG_TMP true
 #define DEBUG_PROFILING true
 
 /***********************************************/
