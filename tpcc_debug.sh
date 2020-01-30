@@ -2,6 +2,8 @@ cp -r config_tpcc_debug.h config.h
 rm temp.out
 rm debug.out
 
+bench="false"
+reorder="false"
 wl="TPCC"
 threads=16 
 cnt=100000
@@ -11,17 +13,13 @@ spin="true"
 pf="true"
 #pf="false"
 dynamic="false"
+dynamic="true"
 debug="false"
-#debug="true"
-bench="false"
-reorder="false"
 retire="true"
 perc=0.5
-perc=1
 alg="CLV"
 tmp="true"
-on=1
-#tmp="false"
+on=4
 
 timeout 30 python test.py CLV_RETIRE_ON=$on DEBUG_TMP=$tmp RETIRE_ON=$retire REORDER_WH=$reorder PERC_PAYMENT=$perc DEBUG_BENCHMARK=$bench DEBUG_CLV=$debug DYNAMIC_TS=$dynamic DEBUG_PROFILING=$pf SPINLOCK=$spin WORKLOAD=${wl} CC_ALG=$alg THREAD_CNT=$threads MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty NUM_WH=${wh}|& tee -a debug.out
 

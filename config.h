@@ -97,7 +97,7 @@
 // [VLL] 
 #define TXN_QUEUE_SIZE_LIMIT		THREAD_CNT
 // [CLV]
-#define DYNAMIC_TS false
+#define DYNAMIC_TS true
 #define SPINLOCK true
 #define CLV_RETIRE_ON 1
 #define CLV_RETIRE_OFF              10000
