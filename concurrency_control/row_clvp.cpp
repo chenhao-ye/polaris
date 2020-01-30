@@ -432,7 +432,7 @@ Row_clvp::rm_if_in_retired(txn_man * txn, bool is_abort) {
 		}
 		return true;
 	}
-	return true;
+	return false;
 	#else
 	CLVLockEntry * en = retired_head;
 	while(en) {
