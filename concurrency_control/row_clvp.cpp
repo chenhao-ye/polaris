@@ -245,8 +245,10 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 	#endif
 
 	// 3. turn on retire only when needed
+	#if THREAD_CNT > 1
 	if (!retire_on && (waiter_cnt >= CLV_RETIRE_ON))
 		retire_on = true;
+	#endif
 
 	// 4. if brought txn in owner, return acquired lock
 	if (bring_next(txn)) {

@@ -1,28 +1,47 @@
 cp -r config_tpcc_debug.h config.h
+rm temp.out
+rm debug.out
 
 wl="TPCC"
-threads=20
+threads=16 
 cnt=100000
-penalty=1
+penalty=0 
 wh=1
 spin="true"
 pf="true"
+#pf="false"
+dynamic="false"
+debug="false"
+#debug="true"
+bench="false"
+reorder="false"
+retire="true"
+perc=0.5
+#perc=1
+alg="CLV"
+tmp="true"
 on=1
-off=17
+#tmp="false"
+
+#timeout 30 python test.py CLV_RETIRE_ON=$on DEBUG_TMP=$tmp RETIRE_ON=$retire REORDER_WH=$reorder PERC_PAYMENT=$perc DEBUG_BENCHMARK=$bench DEBUG_CLV=$debug DYNAMIC_TS=$dynamic DEBUG_PROFILING=$pf SPINLOCK=$spin WORKLOAD=${wl} CC_ALG=$alg THREAD_CNT=$threads MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty NUM_WH=${wh}|& tee -a debug.out
 
 
-#for i in {1..3}
-#do
-for alg in "CLV" #"WOUND_WAIT" "WAIT_DIE" "NO_WAIT" 
+for i in 0 1 2
 do
-for wh in 16 8 4 2 1
+for tmp in true false 
 do
-for cnt in 100000
+for threads in 1 2 4 8 16
 do
-for threads in 16 8 4 2 1
+for wh in 1 2 4 8 16
 do
-	timeout 100 python test.py CLV_RETIRE_ON=$on CLV_RETIRE_OFF=$off DEBUG_PROFILING=$pf SPINLOCK=$spin WORKLOAD=${wl} CC_ALG=$alg THREAD_CNT=$threads MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty NUM_WH=${wh}|& tee -a debug.out
-#done
+for perc in 0 0.5 1
+do
+for alg in CLV #SILO WOUND_WAIT WAIT_DIE NO_WAIT
+do
+timeout 30 python test.py CLV_RETIRE_ON=$on DEBUG_TMP=$tmp RETIRE_ON=$retire REORDER_WH=$reorder PERC_PAYMENT=$perc DEBUG_BENCHMARK=$bench DEBUG_CLV=$debug DYNAMIC_TS=$dynamic DEBUG_PROFILING=$pf SPINLOCK=$spin WORKLOAD=${wl} CC_ALG=$alg THREAD_CNT=$threads MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty NUM_WH=${wh}|& tee -a debug.out
+#timeout 50 python test.py RETIRE_ON=$retire REORDER_WH=$reorder PERC_PAYMENT=$perc DEBUG_BENCHMARK=$bench DEBUG_CLV=$debug DYNAMIC_TS=$dynamic DEBUG_PROFILING=$pf SPINLOCK=$spin WORKLOAD=${wl} CC_ALG=$alg THREAD_CNT=$threads MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty NUM_WH=${wh}|& tee -a debug.out
+done
+done
 done
 done
 done
