@@ -35,8 +35,7 @@ void Row_clv::init(row_t * row) {
 	#if DEBUG_TMP
 	vec = (CLVLockEntry **) mem_allocator.alloc(sizeof(CLVLockEntry *) * g_thread_cnt, _row->get_part_id());
 	for (size_t i = 0; i < g_thread_cnt; i++) {
-		vec[i] = (CLVLockEntry *) mem_allocator.alloc(sizeof(CLVLockEntry), _row->get_part_id());
-		reset_entry(vec[i]);
+		vec[i] = NULL;
 	}
 	#endif
 }
@@ -92,9 +91,13 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn) {
 RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) {
 	assert (CC_ALG == CLV);
 
-	#if !DEBUG_TMP
-	CLVLockEntry * to_insert = get_entry();
+	CLVLockEntry * to_insert; 
+	#if DEBUG_TMP
+	uint64_t idx = txn->get_thd_id()%g_thread_cnt;
+	to_insert = vec[idx]; 
+	if (!to_insert)
 	#endif
+		to_insert = get_entry();
 
 	#if DEBUG_PROFILING
 	uint64_t starttime = get_sys_clock();
@@ -111,7 +114,8 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	assert(waiter_cnt < g_thread_cnt);
 
 	#if DEBUG_TMP
-	CLVLockEntry * to_insert = vec[txn->get_thd_id()%g_thread_cnt];
+	if (!vec[idx])
+		vec[idx] = to_insert;
 	reset_entry(to_insert);
 	#endif
 
