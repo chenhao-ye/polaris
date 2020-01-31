@@ -91,8 +91,8 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn) {
 RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) {
 	assert (CC_ALG == CLV);
 
-	#if DELAY_ACQUIRE > 0
-	if (retired_cnt > 8 && owner_cnt != 0)
+	#if DELAY_ACQUIRE > 0 && (DELAY_THRESHOLD < THREAD_CNT)
+	if ((retired_cnt > DELAY_THRESHOLD) && owner_cnt != 0)
 		usleep(DELAY_ACQUIRE/10000);
 	#endif
 

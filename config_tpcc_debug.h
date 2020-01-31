@@ -105,6 +105,7 @@
 #define MERGE_HS					false
 #define RETIRE_ON 					true
 #define DELAY_ACQUIRE				0
+#define DELAY_THRESHOLD				5
 
 /***********************************************/
 // Logging
