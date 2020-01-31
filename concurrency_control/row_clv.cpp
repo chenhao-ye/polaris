@@ -91,6 +91,11 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn) {
 RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) {
 	assert (CC_ALG == CLV);
 
+	#if DELAY_ACQUIRE > 0
+	if (retired_cnt > 8 && owner_cnt != 0)
+		usleep(DELAY_ACQUIRE/10000);
+	#endif
+
 	CLVLockEntry * to_insert; 
 	#if DEBUG_TMP
 	uint64_t idx = txn->get_thd_id()%g_thread_cnt;
@@ -160,7 +165,8 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	status = wound_conflict(type, txn, ts, true, status);
 	if (status == Abort) {
 		rc = Abort;
-		bring_next(NULL);
+		if (owner_cnt == 0)
+			bring_next(NULL);
 		unlock();
 		return rc;
 		#if !DEBUG_TMP
@@ -172,7 +178,8 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	status = wound_conflict(type, txn, ts, false, status);
 	if (status == Abort) {
 		rc = Abort;
-		bring_next(NULL);
+		if (owner_cnt == 0)
+			bring_next(NULL);
 		unlock();
 		return rc;
 		#if !DEBUG_TMP

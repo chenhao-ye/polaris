@@ -104,6 +104,7 @@
 #define PRIORITIZE_HS				false
 #define MERGE_HS					false
 #define RETIRE_ON 					true
+#define DELAY_ACQUIRE				0
 
 /***********************************************/
 // Logging
