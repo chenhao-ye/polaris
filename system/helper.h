@@ -43,9 +43,10 @@
 /************************************************/
 // QUEUE helper (push & pop)
 /************************************************/
-#define RETURN_PUSH(head, entry) { \
+#define WOUND_PUSH(head, entry) { \
 	if (head == NULL) { head = entry; entry->next = NULL;} \
 	else { entry->next = head; head = entry;} \
+	entry->loc = LOC_NONE; \
 }
 
 #define QUEUE_PUSH(head, tail, entry) { \

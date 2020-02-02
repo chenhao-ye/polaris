@@ -97,6 +97,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	#endif
 
 	CLVLockEntry * to_insert; 
+
 	#if DEBUG_TMP
 	uint64_t idx = txn->get_thd_id()%g_thread_cnt;
 	to_insert = vec[idx]; 
@@ -327,10 +328,10 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 		rm_if_in_retired(txn, rc == Abort);
 	} else if (en->loc == OWNERS) {
 		LIST_RM(owners, owners_tail, en, owner_cnt);
-		reset_entry(en);
+		en->loc = LOC_NONE;
 	} else if (en->loc == WAITERS) {
 		LIST_RM(waiters_head, waiters_tail, en, waiter_cnt);
-		reset_entry(en);
+		en->loc = LOC_NONE;
 	}
 	#else
 	CLVLockEntry * en = NULL;
@@ -389,7 +390,7 @@ Row_clv::rm_if_in_retired(txn_man * txn, bool is_abort) {
 			assert(txn->status == COMMITED);
 			update_entry(en);
 			LIST_RM(retired_head, retired_tail, en, retired_cnt);
-			reset_entry(en);
+			en->loc = LOC_NONE;
 		}
 		return true;
 	}
@@ -473,6 +474,25 @@ void Row_clv::return_entry(CLVLockEntry * entry) {
 	mem_allocator.free(entry, sizeof(CLVLockEntry));
 }
 
+inline bool 
+Row_clv::wound_txn(CLVLockEntry * en, txn_man * txn) {
+	if (txn->status == ABORTED)
+		return false;
+	if (en->txn->set_abort == COMMITED)
+		return false;
+	if (check_retired)
+		en = remove_descendants(en);
+	else {
+		LIST_RM(owners, owners_tail, en, owner_cnt);
+		#if DEBUG_TMP
+		en->loc = LOC_NONE;
+		#else
+		return_entry(en);
+		#endif
+	}
+	return true;
+}
+
 inline RC
 Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired, RC status) {
 	CLVLockEntry * en;
@@ -491,21 +511,10 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 				status = WAIT;
 			if (status == WAIT) {
 				if (en->txn->get_ts() > ts || en->txn->get_ts() == 0) {
-					if (txn->wound_txn(en->txn) == COMMITED) {
+					to_reset = en;
+					en = en->next;
+					if (!wound_txn(to_reset))
 						return Abort;
-					}
-					if (check_retired)
-						en = remove_descendants(en);
-					else {
-						to_reset = en;
-						LIST_RM(owners, owners_tail, en, owner_cnt);
-						en = en->next;
-						#if DEBUG_TMP
-						reset_entry(to_reset);
-						#else
-						return_entry(to_reset);
-						#endif
-					}
 				} else {
 					en = en->next;
 				}
@@ -521,21 +530,10 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 					local_ts++;
 			} 
 			if (!recheck && (en->txn->get_ts() > txn->get_ts())) {
-				if (txn->wound_txn(en->txn) == COMMITED) {
+				to_reset = en;
+				en = en->next;
+				if (!wound_txn(to_reset))
 					return Abort;
-				}
-				if (check_retired)
-					en = remove_descendants(en);
-				else {
-					to_reset = en;
-					LIST_RM(owners, owners_tail, en, owner_cnt);
-					en = en->next;
-					#if DEBUG_TMP
-					reset_entry(to_reset);
-					#else
-					return_entry(to_reset);
-					#endif
-				}
 			} else {
 				en = en->next;
 			}
@@ -582,7 +580,7 @@ Row_clv::remove_descendants(CLVLockEntry * en) {
 	#if !DEBUG_TMP
 	return_entry(en);
 	#else
-	reset_entry(en);
+	en->loc = LOC_NONE;
 	#endif
 	en = next;
 	// 2. remove next conflict till end
@@ -602,7 +600,7 @@ Row_clv::remove_descendants(CLVLockEntry * en) {
 				#if !DEBUG_TMP
 				return_entry(en);
 				#else
-				reset_entry(en);
+				en->loc = LOC_NONE;
 				#endif
 			}
 			owners_tail = NULL;
@@ -619,7 +617,7 @@ Row_clv::remove_descendants(CLVLockEntry * en) {
 			#if !DEBUG_TMP
 			return_entry(en);
 			#else
-			reset_entry(en);
+			en->loc = LOC_NONE;
 			#endif
 			en = next;
 		}
