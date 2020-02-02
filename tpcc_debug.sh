@@ -2,14 +2,15 @@ cp -r config_tpcc_debug.h config.h
 rm temp.out
 rm debug.out
 
+merge="false"
 bench="false"
-#bench="true"
+reorder="true"
 reorder="false"
 wl="TPCC"
 threads=16 
 cnt=100000
 penalty=0 
-wh=16
+wh=1
 spin="true"
 pf="true"
 #pf="false"
@@ -20,13 +21,13 @@ retire="true"
 perc=0.5
 alg="CLV"
 tmp="true"
-#tmp="false"
+tmp="false"
 on=1
-merge="true"
-merge="false"
-delay=0 #10
-dt=8
+delay=10
+#delay=0
+dt=4
 #alg="WOUND_WAIT"
+#batch_return="true"
 
 timeout 30 python test.py DELAY_THRESHOLD=$dt DELAY_ACQUIRE=$delay MERGE_HS=$merge CLV_RETIRE_ON=$on DEBUG_TMP=$tmp RETIRE_ON=$retire REORDER_WH=$reorder PERC_PAYMENT=$perc DEBUG_BENCHMARK=$bench DEBUG_CLV=$debug DYNAMIC_TS=$dynamic DEBUG_PROFILING=$pf SPINLOCK=$spin WORKLOAD=${wl} CC_ALG=$alg THREAD_CNT=$threads MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty NUM_WH=${wh}|& tee -a debug.out
 

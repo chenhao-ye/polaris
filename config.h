@@ -102,10 +102,11 @@
 #define CLV_RETIRE_ON 1
 #define CLV_RETIRE_OFF              10000
 #define PRIORITIZE_HS				false
-#define MERGE_HS false
+#define MERGE_HS					false
 #define RETIRE_ON true
 #define DELAY_ACQUIRE 0
-#define DELAY_THRESHOLD 8
+#define DELAY_THRESHOLD 4
+#define BTACH_RETURN_ENTRY			false
 
 /***********************************************/
 // Logging
@@ -146,7 +147,7 @@
 #define REORDER_WH false
 #define TPCC_ACCESS_ALL 			false 
 #define WH_UPDATE					true
-#define NUM_WH 16
+#define NUM_WH 1
 //
 enum TPCCTxnType {TPCC_ALL, 
 				TPCC_PAYMENT, 
@@ -197,7 +198,7 @@ extern TestCases					g_test_case;
 #define DEBUG_CC					false
 #define DEBUG_WW                    			false
 #define DEBUG_BENCHMARK false
-#define DEBUG_CLV false
+#define DEBUG_CLV                    			false
 #define DEBUG_TMP true
 #define DEBUG_PROFILING true
 

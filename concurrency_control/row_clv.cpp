@@ -114,7 +114,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	assert (CC_ALG == CLV);
 
 	#if (THREAD_CNT > 1) && (DELAY_ACQUIRE > 0) && (DELAY_THRESHOLD < THREAD_CNT)
-	if ((retired_cnt > DELAY_THRESHOLD) && owner_cnt != 0)
+	if (( (int) retired_cnt > max(DELAY_THRESHOLD, THREAD_CNT / 2)) && owner_cnt != 0)
 		usleep(DELAY_ACQUIRE);
 	#endif
 
@@ -189,7 +189,11 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 
 	// 2. wound conflicts
 	// 2.1 check retired
+	#if BATCH_RETURN_ENTRY
 	status = wound_conflict(type, txn, ts, true, status, to_return);
+	#else
+	status = wound_conflict(type, txn, ts, true, status);
+	#endif
 	if (status == Abort) {
 		rc = Abort;
 		if (owner_cnt == 0)
@@ -205,7 +209,11 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	}
 
 	// 2.2 check owners
+	#if BATCH_RETURN_ENTRY
 	status = wound_conflict(type, txn, ts, false, status, to_return);
+	#else
+	status = wound_conflict(type, txn, ts, false, status);
+	#endif
 	if (status == Abort) {
 		rc = Abort;
 		if (owner_cnt == 0)
@@ -366,9 +374,9 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 	if (en->loc == LOC_NONE) {// already aborted
 	} else if (en->loc == RETIRED) {
 		#if BATCH_RETURN_ENTRY
-		rm_if_in_retired(txn, rc == Abort, to_return)
+		rm_if_in_retired(txn, rc == Abort, to_return);
 		#else
-		rm_if_in_retired(txn, rc == Abort)
+		rm_if_in_retired(txn, rc == Abort);
 		#endif
 	} else if (en->loc == OWNERS) {
 		LIST_RM(owners, owners_tail, en, owner_cnt);
@@ -565,9 +573,13 @@ inline bool Row_clv::wound_txn(CLVLockEntry * en, txn_man * txn, bool check_reti
 		return false;
 	if (en->txn->set_abort() == COMMITED)
 		return false;
-	if (check_retired)
+	if (check_retired) {
+		#if BATCH_RETURN_ENTRY 
 		en = remove_descendants(en, to_return);
-	else {
+		#else
+		en = remove_descendants(en);
+		#endif
+	} else {
 		LIST_RM(owners, owners_tail, en, owner_cnt);
 		#if DEBUG_TMP
 		en->loc = LOC_NONE;
@@ -585,7 +597,11 @@ inline bool Row_clv::wound_txn(CLVLockEntry * en, txn_man * txn, bool check_reti
 }
 
 inline RC
+#if BATCH_RETURN_ENTRY
 Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired, RC status, CLVLockEntry *& to_return) {
+#else
+Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired, RC status) {
+#endif
 	CLVLockEntry * en;
 	CLVLockEntry * to_reset;
 	if (check_retired)
@@ -688,6 +704,7 @@ Row_clv::insert_to_waiters(CLVLockEntry * entry, lock_t type, txn_man * txn) {
 inline CLVLockEntry * 
 Row_clv::remove_descendants(CLVLockEntry * en, CLVLockEntry *& to_return) {
 #else
+inline CLVLockEntry *
 Row_clv::remove_descendants(CLVLockEntry * en) {
 #endif
 	assert(en != NULL);
