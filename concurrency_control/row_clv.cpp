@@ -93,7 +93,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 
 	#if DELAY_ACQUIRE > 0 && (DELAY_THRESHOLD < THREAD_CNT)
 	if ((retired_cnt > DELAY_THRESHOLD) && owner_cnt != 0)
-		usleep(DELAY_ACQUIRE/10000);
+		usleep(DELAY_ACQUIRE);
 	#endif
 
 	CLVLockEntry * to_insert; 
