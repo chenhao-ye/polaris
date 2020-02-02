@@ -104,8 +104,8 @@
 #define PRIORITIZE_HS				false
 #define MERGE_HS false
 #define RETIRE_ON true
-#define DELAY_ACQUIRE 10
-#define DELAY_THRESHOLD 4
+#define DELAY_ACQUIRE 0
+#define DELAY_THRESHOLD 8
 
 /***********************************************/
 // Logging
@@ -146,7 +146,7 @@
 #define REORDER_WH false
 #define TPCC_ACCESS_ALL 			false 
 #define WH_UPDATE					true
-#define NUM_WH 1
+#define NUM_WH 16
 //
 enum TPCCTxnType {TPCC_ALL, 
 				TPCC_PAYMENT, 

@@ -9,7 +9,7 @@ wl="TPCC"
 threads=16 
 cnt=100000
 penalty=0 
-wh=1
+wh=16
 spin="true"
 pf="true"
 #pf="false"
@@ -24,7 +24,7 @@ tmp="true"
 on=1
 merge="true"
 merge="false"
-delay=10
+delay=0 #10
 dt=8
 #alg="WOUND_WAIT"
 
