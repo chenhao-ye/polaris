@@ -119,7 +119,9 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	#endif
 
 	CLVLockEntry * to_insert; 
+	#if BATCH_RETURN_ENTRY
 	CLVLockEntry * to_return = NULL; 
+	#endif
 
 	#if DEBUG_TMP
 	uint64_t idx = txn->get_thd_id()%g_thread_cnt;
@@ -196,6 +198,9 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 		return rc;
 		#if !DEBUG_TMP
 		return_entry(to_insert);
+		#if BATCH_RETURN_ENTRY
+		return_batch(to_return);
+		#endif
 		#endif
 	}
 
@@ -209,6 +214,9 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 		return rc;
 		#if !DEBUG_TMP
 		return_entry(to_insert);
+		#if BATCH_RETURN_ENTRY
+		return_batch(to_return);
+		#endif
 		#endif
 	}
 
@@ -250,11 +258,12 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug3, get_sys_clock() - starttime);
 	#endif
+	unlock();
 	#if !DEBUG_TMP
+	#if BATCH_RETURN_ENTRY
 	batch_return(to_return);
 	#endif
-
-	unlock();
+	#endif
 	return rc;
 }
 
@@ -337,7 +346,10 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 	if (vec[txn->get_thd_id()%g_thread_cnt]->loc == LOC_NONE)
 		return RCOK;
 	#endif
+
+	#if BATCH_RETURN_ENTRY
 	CLVLockEntry * to_return = NULL;
+	#endif
 
 	#if DEBUG_PROFILING
 	uint64_t starttime = get_sys_clock();
@@ -353,7 +365,11 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 	CLVLockEntry * en = vec[txn->get_thd_id()%g_thread_cnt];
 	if (en->loc == LOC_NONE) {// already aborted
 	} else if (en->loc == RETIRED) {
-		rm_if_in_retired(txn, rc == Abort, to_return);
+		#if BATCH_RETURN_ENTRY
+		rm_if_in_retired(txn, rc == Abort, to_return)
+		#else
+		rm_if_in_retired(txn, rc == Abort)
+		#endif
 	} else if (en->loc == OWNERS) {
 		LIST_RM(owners, owners_tail, en, owner_cnt);
 		en->loc = LOC_NONE;
@@ -368,7 +384,11 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 	#else
 	CLVLockEntry * en = NULL;
 	// Try to find the entry in the retired
+	#if BATCH_RETURN_ENTRY
 	if (!rm_if_in_retired(txn, rc == Abort, to_return)) {
+	#else
+	if (!rm_if_in_retired(txn, rc == Abort)) {
+	#endif
 		// Try to find the entry in the owners
 		en = owners;
 		while (en) {
@@ -379,14 +399,18 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 		if (en) {
 			// rm from owners
 			LIST_RM(owners, owners_tail, en, owner_cnt);
+			#if BATCH_RETURN_ENTRY
 			RETURN_PUSH(to_return, en);
+			#endif
 		} else {
 			// not found in owner or retired, try waiters
 			en = waiters_head;
 			while(en) {
 				if (en->txn == txn) {
 					LIST_RM(waiters_head, waiters_tail, en, waiter_cnt);
+					#if BATCH_RETURN_ENTRY
 					RETURN_PUSH(to_return, en);
+					#endif
 					break;
 				}
 				en = en->next;
@@ -405,20 +429,33 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 	#endif
 	unlock();
 	#if !DEBUG_TMP
+	#if BATCH_RETURN_ENTRY
 	batch_return(to_return);
+	#else
+	if (en)
+		return_entry(en);
+	#endif
 	#endif
 	return RCOK;
 }
 
-inline bool
-Row_clv::rm_if_in_retired(txn_man * txn, bool is_abort, CLVLockEntry *& to_return) {
+#if BATCH_RETURN_ENTRY
+inline bool Row_clv::rm_if_in_retired(txn_man * txn, bool is_abort, CLVLockEntry *& to_return) {
+#else
+inline bool Row_clv::rm_if_in_retired(txn_man * txn, bool is_abort) {
+#endif
 	#if DEBUG_TMP
 	CLVLockEntry * en = vec[txn->get_thd_id()%g_thread_cnt];
 	if (en->loc != RETIRED)
 		return false;
 	else {
-		if (is_abort) 
+		if (is_abort) {
+			#if BATCH_RETURN_ENTRY
 			en = remove_descendants(en, to_return);
+			#else
+			en = remove_descendants(en);
+			#endif
+		}
 		else {
 			assert(txn->status == COMMITED);
 			update_entry(en);
@@ -434,13 +471,20 @@ Row_clv::rm_if_in_retired(txn_man * txn, bool is_abort, CLVLockEntry *& to_retur
 	while(en) {
 		if (en->txn == txn) {
 			if (is_abort) {
+				#if BATCH_RETURN_ENTRY
 				en = remove_descendants(en, to_return);
+				#else
+				en = remove_descendants(en);
+				#endif
 			} else {
 				assert(txn->status == COMMITED);
 				update_entry(en);
 				LIST_RM(retired_head, retired_tail, en, retired_cnt);
-				//return_entry(en);
+				#if BATCH_RETURN_ENTRY
 				RETURN_PUSH(to_return, en);
+				#else
+				return_entry(en);
+				#endif
 			}
 			return true;
 		} else 
@@ -511,8 +555,12 @@ void Row_clv::return_entry(CLVLockEntry * entry) {
 	mem_allocator.free(entry, sizeof(CLVLockEntry));
 }
 
-inline bool 
-Row_clv::wound_txn(CLVLockEntry * en, txn_man * txn, bool check_retired, CLVLockEntry *& to_return) {
+#if BATCH_RETURN_ENTRY
+inline bool Row_clv::wound_txn(CLVLockEntry * en, txn_man * txn, bool check_retired, CLVLockEntry *& to_return) {
+#else
+inline bool Row_clv::wound_txn(CLVLockEntry * en, txn_man * txn, bool check_retired) {
+#endif
+
 	if (txn->status == ABORTED)
 		return false;
 	if (en->txn->set_abort() == COMMITED)
@@ -526,9 +574,11 @@ Row_clv::wound_txn(CLVLockEntry * en, txn_man * txn, bool check_retired, CLVLock
 		en->next = NULL;
 		en->prev = NULL;
 		#else
-		//return_entry(en);
+		#if BATCH_RETURN_ENTRY
 		RETURN_PUSH(to_return, en);
-		//to_return = &en;
+		#else
+		return_entry(en);
+		#endif
 		#endif
 	}
 	return true;
@@ -557,7 +607,11 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 				if (en->txn->get_ts() > ts || en->txn->get_ts() == 0) {
 					to_reset = en;
 					en = en->prev;
+					#if BATCH_RETURN_ENTRY
 					if (!wound_txn(to_reset, txn, check_retired, to_return))
+					#else
+					if (!wound_txn(to_reset, txn, check_retired))
+					#endif
 						return Abort;
 					if (en)
 						en = en->next;
@@ -584,7 +638,11 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 			if (!recheck && (en->txn->get_ts() > txn->get_ts())) {
 				to_reset = en;
 				en = en->prev;
+				#if BATCH_RETURN_ENTRY
 				if (!wound_txn(to_reset, txn, check_retired, to_return))
+				#else
+				if (!wound_txn(to_reset, txn, check_retired))
+				#endif
 					return Abort;
 				if (en)
 					en = en->next;
@@ -626,8 +684,12 @@ Row_clv::insert_to_waiters(CLVLockEntry * entry, lock_t type, txn_man * txn) {
 }
 
 
+#if BATCH_RETURN_ENTRY
 inline CLVLockEntry * 
 Row_clv::remove_descendants(CLVLockEntry * en, CLVLockEntry *& to_return) {
+#else
+Row_clv::remove_descendants(CLVLockEntry * en) {
+#endif
 	assert(en != NULL);
 	CLVLockEntry * next = NULL;
 	CLVLockEntry * prev = en->prev;
@@ -638,8 +700,11 @@ Row_clv::remove_descendants(CLVLockEntry * en, CLVLockEntry *& to_return) {
 	//update_entry(en); // no need to update as any non-cohead needs to be aborted, coheads will not be aborted
 	LIST_RM(retired_head, retired_tail, en, retired_cnt);
 	#if !DEBUG_TMP
-	//return_entry(en);
+	#if BATCH_RETURN_ENTRY
 	RETURN_PUSH(to_return, en);
+	#else 
+	return_entry(en);
+	#endif
 	#else
 	en->loc = LOC_NONE;
 	en->next = NULL;
@@ -661,9 +726,11 @@ Row_clv::remove_descendants(CLVLockEntry * en, CLVLockEntry *& to_return) {
 				owners = owners->next;
 				en->txn->set_abort();
 				#if !DEBUG_TMP
-				//return_entry(en);
+				#if BATCH_RETURN_ENTRY
 				RETURN_PUSH(to_return, en);
-				en->wounded = true;
+				#else 
+				return_entry(en);
+				#endif
 				#else
 				en->loc = LOC_NONE;
 				en->next = NULL;
@@ -682,9 +749,11 @@ Row_clv::remove_descendants(CLVLockEntry * en, CLVLockEntry *& to_return) {
 			en->txn->set_abort();
 			retired_cnt--;
 			#if !DEBUG_TMP
-			//return_entry(en);
+			#if BATCH_RETURN_ENTRY
 			RETURN_PUSH(to_return, en);
-			en->wounded = true;
+			#else 
+			return_entry(en);
+			#endif
 			#else
 			en->loc = LOC_NONE;
 			en->next = NULL;
