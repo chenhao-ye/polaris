@@ -24,7 +24,7 @@ tmp="true"
 on=1
 merge="true"
 merge="false"
-delay=0 #10
+delay=10
 dt=8
 #alg="WOUND_WAIT"
 

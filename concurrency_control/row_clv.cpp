@@ -70,6 +70,28 @@ void Row_clv::unlock() {
 	}
 }
 
+inline void Row_clv::batch_return(CLVLockEntry * to_return) {
+	CLVLockEntry * en;
+	while (to_return) {
+		en = to_return;
+		to_return = to_return->next;
+		return_entry(en);
+	}
+}
+
+inline void Row_clv::batch_wound(CLVLockEntry * to_wound) {
+	CLVLockEntry * en;
+	while (to_wound) {
+		en = to_wound;
+		to_wound = to_wound->next;
+		if (en->wounded) {
+			assert(en->txn->status != COMMITED);
+			en->txn->set_abort();
+		}
+		return_entry(en);
+	}
+}
+
 inline void Row_clv::reset_entry(CLVLockEntry * entry) {
 	entry->txn = NULL;
 	entry->type = LOCK_NONE;
@@ -91,12 +113,13 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn) {
 RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) {
 	assert (CC_ALG == CLV);
 
-	#if DELAY_ACQUIRE > 0 && (DELAY_THRESHOLD < THREAD_CNT)
+	#if (THREAD_CNT > 1) && (DELAY_ACQUIRE > 0) && (DELAY_THRESHOLD < THREAD_CNT)
 	if ((retired_cnt > DELAY_THRESHOLD) && owner_cnt != 0)
 		usleep(DELAY_ACQUIRE);
 	#endif
 
 	CLVLockEntry * to_insert; 
+	CLVLockEntry * to_return = NULL; 
 
 	#if DEBUG_TMP
 	uint64_t idx = txn->get_thd_id()%g_thread_cnt;
@@ -164,7 +187,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 
 	// 2. wound conflicts
 	// 2.1 check retired
-	status = wound_conflict(type, txn, ts, true, status);
+	status = wound_conflict(type, txn, ts, true, status, to_return);
 	if (status == Abort) {
 		rc = Abort;
 		if (owner_cnt == 0)
@@ -177,7 +200,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	}
 
 	// 2.2 check owners
-	status = wound_conflict(type, txn, ts, false, status);
+	status = wound_conflict(type, txn, ts, false, status, to_return);
 	if (status == Abort) {
 		rc = Abort;
 		if (owner_cnt == 0)
@@ -226,6 +249,9 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug3, get_sys_clock() - starttime);
+	#endif
+	#if !DEBUG_TMP
+	batch_return(to_return);
 	#endif
 
 	unlock();
@@ -290,7 +316,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
 		#endif
 	} else {
 		// may be is aborted
-		assert(txn->status == ABORTED);
+		//assert(txn->status == ABORTED);
 		rc = Abort;
 	}
 	if (owner_cnt == 0)
@@ -311,6 +337,7 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 	if (vec[txn->get_thd_id()%g_thread_cnt]->loc == LOC_NONE)
 		return RCOK;
 	#endif
+	CLVLockEntry * to_return = NULL;
 
 	#if DEBUG_PROFILING
 	uint64_t starttime = get_sys_clock();
@@ -326,7 +353,7 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 	CLVLockEntry * en = vec[txn->get_thd_id()%g_thread_cnt];
 	if (en->loc == LOC_NONE) {// already aborted
 	} else if (en->loc == RETIRED) {
-		rm_if_in_retired(txn, rc == Abort);
+		rm_if_in_retired(txn, rc == Abort, to_return);
 	} else if (en->loc == OWNERS) {
 		LIST_RM(owners, owners_tail, en, owner_cnt);
 		en->loc = LOC_NONE;
@@ -341,7 +368,7 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 	#else
 	CLVLockEntry * en = NULL;
 	// Try to find the entry in the retired
-	if (!rm_if_in_retired(txn, rc == Abort)) {
+	if (!rm_if_in_retired(txn, rc == Abort, to_return)) {
 		// Try to find the entry in the owners
 		en = owners;
 		while (en) {
@@ -352,12 +379,14 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 		if (en) {
 			// rm from owners
 			LIST_RM(owners, owners_tail, en, owner_cnt);
+			RETURN_PUSH(to_return, en);
 		} else {
 			// not found in owner or retired, try waiters
 			en = waiters_head;
 			while(en) {
 				if (en->txn == txn) {
 					LIST_RM(waiters_head, waiters_tail, en, waiter_cnt);
+					RETURN_PUSH(to_return, en);
 					break;
 				}
 				en = en->next;
@@ -376,21 +405,20 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 	#endif
 	unlock();
 	#if !DEBUG_TMP
-	if (en)
-		return_entry(en);
+	batch_return(to_return);
 	#endif
 	return RCOK;
 }
 
 inline bool
-Row_clv::rm_if_in_retired(txn_man * txn, bool is_abort) {
+Row_clv::rm_if_in_retired(txn_man * txn, bool is_abort, CLVLockEntry *& to_return) {
 	#if DEBUG_TMP
 	CLVLockEntry * en = vec[txn->get_thd_id()%g_thread_cnt];
 	if (en->loc != RETIRED)
 		return false;
 	else {
 		if (is_abort) 
-			en = remove_descendants(en);
+			en = remove_descendants(en, to_return);
 		else {
 			assert(txn->status == COMMITED);
 			update_entry(en);
@@ -406,12 +434,13 @@ Row_clv::rm_if_in_retired(txn_man * txn, bool is_abort) {
 	while(en) {
 		if (en->txn == txn) {
 			if (is_abort) {
-				en = remove_descendants(en);
+				en = remove_descendants(en, to_return);
 			} else {
 				assert(txn->status == COMMITED);
 				update_entry(en);
 				LIST_RM(retired_head, retired_tail, en, retired_cnt);
-				return_entry(en);
+				//return_entry(en);
+				RETURN_PUSH(to_return, en);
 			}
 			return true;
 		} else 
@@ -474,6 +503,7 @@ CLVLockEntry * Row_clv::get_entry() {
 	entry->delta = false;
 	entry->is_cohead = false;
 	entry->txn = NULL;
+	entry->wounded = false;
 	return entry;
 }
 
@@ -482,13 +512,13 @@ void Row_clv::return_entry(CLVLockEntry * entry) {
 }
 
 inline bool 
-Row_clv::wound_txn(CLVLockEntry * en, txn_man * txn, bool check_retired) {
+Row_clv::wound_txn(CLVLockEntry * en, txn_man * txn, bool check_retired, CLVLockEntry *& to_return) {
 	if (txn->status == ABORTED)
 		return false;
 	if (en->txn->set_abort() == COMMITED)
 		return false;
 	if (check_retired)
-		en = remove_descendants(en);
+		en = remove_descendants(en, to_return);
 	else {
 		LIST_RM(owners, owners_tail, en, owner_cnt);
 		#if DEBUG_TMP
@@ -496,14 +526,16 @@ Row_clv::wound_txn(CLVLockEntry * en, txn_man * txn, bool check_retired) {
 		en->next = NULL;
 		en->prev = NULL;
 		#else
-		return_entry(en);
+		//return_entry(en);
+		RETURN_PUSH(to_return, en);
+		//to_return = &en;
 		#endif
 	}
 	return true;
 }
 
 inline RC
-Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired, RC status) {
+Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired, RC status, CLVLockEntry *& to_return) {
 	CLVLockEntry * en;
 	CLVLockEntry * to_reset;
 	if (check_retired)
@@ -513,7 +545,9 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 	bool recheck = false;
 	while (en) {
 		recheck = false;
+		#if DEBUG_TMP
 		assert(en->loc != LOC_NONE);
+		#endif
 		if (ts != 0) {
 			// self assigned, if conflicted, assign a number
 			if (status == RCOK && conflict_lock(en->type, type) && 
@@ -523,7 +557,7 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 				if (en->txn->get_ts() > ts || en->txn->get_ts() == 0) {
 					to_reset = en;
 					en = en->prev;
-					if (!wound_txn(to_reset, txn, check_retired))
+					if (!wound_txn(to_reset, txn, check_retired, to_return))
 						return Abort;
 					if (en)
 						en = en->next;
@@ -550,7 +584,7 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 			if (!recheck && (en->txn->get_ts() > txn->get_ts())) {
 				to_reset = en;
 				en = en->prev;
-				if (!wound_txn(to_reset, txn, check_retired))
+				if (!wound_txn(to_reset, txn, check_retired, to_return))
 					return Abort;
 				if (en)
 					en = en->next;
@@ -593,7 +627,7 @@ Row_clv::insert_to_waiters(CLVLockEntry * entry, lock_t type, txn_man * txn) {
 
 
 inline CLVLockEntry * 
-Row_clv::remove_descendants(CLVLockEntry * en) {
+Row_clv::remove_descendants(CLVLockEntry * en, CLVLockEntry *& to_return) {
 	assert(en != NULL);
 	CLVLockEntry * next = NULL;
 	CLVLockEntry * prev = en->prev;
@@ -604,7 +638,8 @@ Row_clv::remove_descendants(CLVLockEntry * en) {
 	//update_entry(en); // no need to update as any non-cohead needs to be aborted, coheads will not be aborted
 	LIST_RM(retired_head, retired_tail, en, retired_cnt);
 	#if !DEBUG_TMP
-	return_entry(en);
+	//return_entry(en);
+	RETURN_PUSH(to_return, en);
 	#else
 	en->loc = LOC_NONE;
 	en->next = NULL;
@@ -622,11 +657,13 @@ Row_clv::remove_descendants(CLVLockEntry * en) {
 			// clean owners
 			while(owners) {
 				en = owners;
-				en->txn->set_abort();
 				// no need to be too complicated (i.e. call function) as the owner will be empty in the end
 				owners = owners->next;
+				en->txn->set_abort();
 				#if !DEBUG_TMP
-				return_entry(en);
+				//return_entry(en);
+				RETURN_PUSH(to_return, en);
+				en->wounded = true;
 				#else
 				en->loc = LOC_NONE;
 				en->next = NULL;
@@ -645,7 +682,9 @@ Row_clv::remove_descendants(CLVLockEntry * en) {
 			en->txn->set_abort();
 			retired_cnt--;
 			#if !DEBUG_TMP
-			return_entry(en);
+			//return_entry(en);
+			RETURN_PUSH(to_return, en);
+			en->wounded = true;
 			#else
 			en->loc = LOC_NONE;
 			en->next = NULL;
