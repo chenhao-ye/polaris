@@ -118,6 +118,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	assert(owner_cnt <= g_thread_cnt);
 	// each thread has at most one waiter
 	assert(waiter_cnt < g_thread_cnt);
+	assert(retired_cnt < g_thread_cnt);
 
 	#if DEBUG_TMP
 	if (!vec[idx])
@@ -282,7 +283,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
 		RETIRED_LIST_PUT_TAIL(retired_head, retired_tail, entry);
 		retired_cnt++;
 		#if DEBUG_CLV
-		printf("retire row thd=%lu, txn=%lu row=%lu\n", txn->get_thd_id(), txn->get_txn_id(), _row->get_row_id());
+		printf("retire thd=%lu, txn=%lu row=%p, cnt=%d\n", txn->get_thd_id(), txn->get_txn_id(), _row, retired_cnt);
 		#endif
 		#if DEBUG_TMP
 		entry->loc = RETIRED;
@@ -329,9 +330,13 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 	} else if (en->loc == OWNERS) {
 		LIST_RM(owners, owners_tail, en, owner_cnt);
 		en->loc = LOC_NONE;
+		en->next = NULL;
+		en->prev = NULL;
 	} else if (en->loc == WAITERS) {
 		LIST_RM(waiters_head, waiters_tail, en, waiter_cnt);
 		en->loc = LOC_NONE;
+		en->next = NULL;
+		en->prev = NULL;
 	}
 	#else
 	CLVLockEntry * en = NULL;
@@ -391,6 +396,8 @@ Row_clv::rm_if_in_retired(txn_man * txn, bool is_abort) {
 			update_entry(en);
 			LIST_RM(retired_head, retired_tail, en, retired_cnt);
 			en->loc = LOC_NONE;
+			en->next = NULL;
+			en->prev = NULL;
 		}
 		return true;
 	}
@@ -475,10 +482,10 @@ void Row_clv::return_entry(CLVLockEntry * entry) {
 }
 
 inline bool 
-Row_clv::wound_txn(CLVLockEntry * en, txn_man * txn) {
+Row_clv::wound_txn(CLVLockEntry * en, txn_man * txn, bool check_retired) {
 	if (txn->status == ABORTED)
 		return false;
-	if (en->txn->set_abort == COMMITED)
+	if (en->txn->set_abort() == COMMITED)
 		return false;
 	if (check_retired)
 		en = remove_descendants(en);
@@ -486,6 +493,8 @@ Row_clv::wound_txn(CLVLockEntry * en, txn_man * txn) {
 		LIST_RM(owners, owners_tail, en, owner_cnt);
 		#if DEBUG_TMP
 		en->loc = LOC_NONE;
+		en->next = NULL;
+		en->prev = NULL;
 		#else
 		return_entry(en);
 		#endif
@@ -504,6 +513,7 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 	bool recheck = false;
 	while (en) {
 		recheck = false;
+		assert(en->loc != LOC_NONE);
 		if (ts != 0) {
 			// self assigned, if conflicted, assign a number
 			if (status == RCOK && conflict_lock(en->type, type) && 
@@ -512,9 +522,17 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 			if (status == WAIT) {
 				if (en->txn->get_ts() > ts || en->txn->get_ts() == 0) {
 					to_reset = en;
-					en = en->next;
-					if (!wound_txn(to_reset))
+					en = en->prev;
+					if (!wound_txn(to_reset, txn, check_retired))
 						return Abort;
+					if (en)
+						en = en->next;
+					else {
+						if (check_retired)
+							en = retired_head;
+						else
+							en = owners;
+					}	
 				} else {
 					en = en->next;
 				}
@@ -531,9 +549,17 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 			} 
 			if (!recheck && (en->txn->get_ts() > txn->get_ts())) {
 				to_reset = en;
-				en = en->next;
-				if (!wound_txn(to_reset))
+				en = en->prev;
+				if (!wound_txn(to_reset, txn, check_retired))
 					return Abort;
+				if (en)
+					en = en->next;
+				else {
+					if (check_retired)
+						en = retired_head;
+					else
+						en = owners;
+				}	
 			} else {
 				en = en->next;
 			}
@@ -575,12 +601,14 @@ Row_clv::remove_descendants(CLVLockEntry * en) {
 	lock_t type = en->type;
 	bool conflict_with_owners = conflict_lock_entry(en, owners);
 	next = en->next;
-	update_entry(en);
+	//update_entry(en); // no need to update as any non-cohead needs to be aborted, coheads will not be aborted
 	LIST_RM(retired_head, retired_tail, en, retired_cnt);
 	#if !DEBUG_TMP
 	return_entry(en);
 	#else
 	en->loc = LOC_NONE;
+	en->next = NULL;
+	en->prev = NULL;
 	#endif
 	en = next;
 	// 2. remove next conflict till end
@@ -601,6 +629,8 @@ Row_clv::remove_descendants(CLVLockEntry * en) {
 				return_entry(en);
 				#else
 				en->loc = LOC_NONE;
+				en->next = NULL;
+				en->prev = NULL;
 				#endif
 			}
 			owners_tail = NULL;
@@ -618,10 +648,13 @@ Row_clv::remove_descendants(CLVLockEntry * en) {
 			return_entry(en);
 			#else
 			en->loc = LOC_NONE;
+			en->next = NULL;
+			en->prev = NULL;
 			#endif
 			en = next;
 		}
 	}
+	assert(!retired_head || retired_head->is_cohead);
 	if (prev)
 		return prev->next;
 	else

@@ -72,6 +72,7 @@ private:
 	void insert_to_waiters(CLVLockEntry * entry, lock_t type, txn_man * txn);
 	CLVLockEntry * remove_descendants(CLVLockEntry * en);
 	void update_entry(CLVLockEntry * en);
+	bool wound_txn(CLVLockEntry*, txn_man*, bool);
 };
 
 #endif
