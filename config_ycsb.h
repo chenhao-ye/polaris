@@ -4,7 +4,7 @@
 /***********************************************/
 // Simulation + Hardware
 /***********************************************/
-#define THREAD_CNT 16
+#define THREAD_CNT					10
 #define PART_CNT					1 
 // each transaction only accesses 1 virtual partition. But the lock/ts manager and index are not aware of such partitioning. VIRTUAL_PART_CNT describes the request distribution and is only used to generate queries. For HSTORE, VIRTUAL_PART_CNT should be the same as PART_CNT.
 #define VIRTUAL_PART_CNT			1
@@ -39,18 +39,18 @@
 /***********************************************/
 // WAIT_DIE, NO_WAIT, DL_DETECT, TIMESTAMP, MVCC, HEKATON, HSTORE, OCC, VLL, TICTOC, SILO
 // TODO TIMESTAMP does not work at this moment
-//#define CC_ALG WAIT_DIE
-#define CC_ALG WAIT_DIE
+//#define CC_ALG WOUND_WAIT
+#define CC_ALG WOUND_WAIT
 #define ISOLATION_LEVEL 			SERIALIZABLE
 
 // all transactions acquire tuples according to the primary key order.
-#define KEY_ORDER					true//false
+#define KEY_ORDER					false
 // transaction roll back changes after abort
 #define ROLL_BACK					true
 // per-row lock/ts management or central lock/ts management
 #define CENTRAL_MAN					false
 #define BUCKET_CNT					31
-#define ABORT_PENALTY 0
+#define ABORT_PENALTY 				1000 //100000
 #define ABORT_BUFFER_SIZE			1 //10
 #define ABORT_BUFFER_ENABLE			true
 // [ INDEX ]
@@ -97,11 +97,11 @@
 // [VLL] 
 #define TXN_QUEUE_SIZE_LIMIT		THREAD_CNT
 // [CLV]
-#define DYNAMIC_TS true
-#define SPINLOCK true
-#define CLV_RETIRE_ON 1
+#define DYNAMIC_TS					true
+#define SPINLOCK					false
+#define CLV_RETIRE_ON				0
 #define CLV_RETIRE_OFF              10000
-#define PRIORITIZE_HS false
+#define PRIORITIZE_HS				false
 #define DELAY_ACQUIRE				0
 #define DELAY_THRESHOLD				4
 #define BTACH_RETURN_ENTRY			false
@@ -119,28 +119,23 @@
 // max number of rows touched per transaction
 #define MAX_ROW_PER_TXN				64
 #define QUERY_INTVL 				1UL
-#define MAX_TXN_PER_PART 100000
+#define MAX_TXN_PER_PART 			100
 #define FIRST_PART_LOCAL 			true
 #define MAX_TUPLE_SIZE				1024 // in bytes
 // ==== [YCSB] ====
 #define INIT_PARALLELISM			40
-#define SYNTH_TABLE_SIZE 1024*1024*20
-#define ZIPF_THETA 0
-#define READ_PERC 1
-#define WRITE_PERC 				1
+#define SYNTH_TABLE_SIZE 			(1024 * 5)
+#define ZIPF_THETA 				0.6
+#define READ_PERC 				0.5
+#define WRITE_PERC 				0.5
 #define SCAN_PERC 				0
 #define SCAN_LEN				20
 #define PART_PER_TXN 				1
 #define PERC_MULTI_PART				1
-#define REQ_PER_QUERY 16
+#define REQ_PER_QUERY				16
 #define FIELD_PER_TUPLE				10
-// ==== [YCSB-synthetic] ====
-#define SYNTHETIC_YCSB true
-#define POS_HS BOT
-#define NUM_HS 1
-#define FIRST_HS WR
-#define SECOND_HS				WR
-
+#define SYNTHETIC_YCSB				false
+#define NUM_HS					0	
 // ==== [TPCC] ====
 // For large warehouse count, the tables do not fit in memory
 // small tpcc schemas shrink the table size.
@@ -202,8 +197,8 @@ extern TestCases					g_test_case;
 #define DEBUG_WW                    			false
 #define DEBUG_BENCHMARK					false
 #define DEBUG_CLV                   			false	
-#define DEBUG_TMP false
-#define DEBUG_PROFILING true
+#define DEBUG_TMP					false	
+#define DEBUG_PROFILING					false	
 
 /***********************************************/
 // Constant
@@ -238,12 +233,5 @@ extern TestCases					g_test_case;
 #define TS_CAS						2
 #define TS_HW						3
 #define TS_CLOCK					4
-// Synthetic YCSB - HOTSPOT POSITION
-#define TOP						1
-#define MID						2
-#define BOT						3
-#define TM						4
-#define MB						5
-
 
 #endif

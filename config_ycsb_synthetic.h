@@ -102,6 +102,9 @@
 #define CLV_RETIRE_ON				0
 #define CLV_RETIRE_OFF              10000
 #define PRIORITIZE_HS				false
+#define DELAY_ACQUIRE				0
+#define DELAY_THRESHOLD				4
+#define BTACH_RETURN_ENTRY			false
 
 /***********************************************/
 // Logging
@@ -124,14 +127,20 @@
 #define SYNTH_TABLE_SIZE 			(1024 * 5)
 #define ZIPF_THETA 				0.6
 #define READ_PERC 				0.5
-#define WRITE_PERC 				0.5
+#define WRITE_PERC 				1
 #define SCAN_PERC 				0
 #define SCAN_LEN				20
 #define PART_PER_TXN 				1
 #define PERC_MULTI_PART				1
 #define REQ_PER_QUERY				16
 #define FIELD_PER_TUPLE				10
+// ==== [YCSB-synthetic] ====
 #define SYNTHETIC_YCSB				true
+#define POS_HS					TOP
+#define NUM_HS					1	
+#define FIRST_HS				WR
+#define SECOND_HS				WR
+
 // ==== [TPCC] ====
 // For large warehouse count, the tables do not fit in memory
 // small tpcc schemas shrink the table size.
@@ -194,7 +203,7 @@ extern TestCases					g_test_case;
 #define DEBUG_BENCHMARK					false
 #define DEBUG_CLV                   			false	
 #define DEBUG_TMP					false	
-#define DEBUG_PROFILING				true
+#define DEBUG_PROFILING					false	
 
 /***********************************************/
 // Constant
@@ -229,5 +238,12 @@ extern TestCases					g_test_case;
 #define TS_CAS						2
 #define TS_HW						3
 #define TS_CLOCK					4
+// Synthetic YCSB - HOTSPOT POSITION
+#define TOP						1
+#define MID						2
+#define BOT						3
+#define TM						4
+#define MB						5
+
 
 #endif

@@ -42,7 +42,9 @@ double ycsb_query::zeta(uint64_t n, double theta) {
 }
 
 uint64_t ycsb_query::zipf(uint64_t n, double theta) {
+	#if !SYNTHETIC_YCSB
 	assert(this->the_n == n);
+	#endif
 	assert(theta == g_zipf_theta);
 	double alpha = 1 / (1 - theta);
 	double zetan = denom;
@@ -58,7 +60,11 @@ uint64_t ycsb_query::zipf(uint64_t n, double theta) {
 
 uint64_t ycsb_query::get_new_row() {
 	uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
+	#if SYNTHETIC_YCSB
+	uint64_t row_id = zipf(table_size - NUM_HS - 1, g_zipf_theta);
+	#else
 	uint64_t row_id = zipf(table_size - 1, g_zipf_theta);
+	#endif
 	assert(row_id < table_size);
 	return row_id;
 }
@@ -96,6 +102,9 @@ void ycsb_query::gen_requests(uint64_t thd_id, workload * h_wl) {
 			part_to_access[0] = rint64 % g_part_cnt;
 	}
 
+#if SYNTHETIC_YCSB
+uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
+#endif
 	int rid = 0;
 	for (UInt32 tmp = 0; tmp < g_req_per_query; tmp ++) {		
 		ycsb_request * req = &requests[rid];
@@ -105,12 +114,50 @@ void ycsb_query::gen_requests(uint64_t thd_id, workload * h_wl) {
 			part_to_access[ ith ];
 		uint64_t row_id; 
 #if SYNTHETIC_YCSB
+		assert(part_id == 0);
+#if NUM_HS == 1
+#if POS_HS == TOP 
 		if (tmp == 0) {
 			// insert hotpost at the beginning
-			req->rtype = WR;
-			row_id = 0;
-
+			req->rtype = FIRST_HS;
+			row_id = table_size - 1;
 		} else {
+#elif POS_HS == MID
+		if (tmp == (g_req_per_query / 2)) {
+			// insert hotpost at the beginning
+			req->rtype = FIRST_HS;
+			row_id = table_size - 1;
+		} else {
+#elif POS_HS == BOT 
+		if (tmp == (g_req_per_query - 1)) {
+			// insert hotpost at the beginning
+			req->rtype = FIRST_HS;
+			row_id = table_size - 1;
+		} else {
+#endif
+#elif NUM_HS == 2
+#if POS_HS == TM
+		if (tmp == 0) {
+			// insert hotpost at the beginning
+			req->rtype = FIRST_HS;
+			row_id = table_size - 1;
+		} else if (tmp == (g_req_per_query / 2)) {
+			req->rtype = SECOND_HS;
+			row_id = table_size - 2;
+		}
+#elif POS_HS == MB
+		if (tmp == (g_req_per_query / 2)) {
+			// insert hotpost at the bottom
+			req->rtype = FIRST_HS;
+			row_id = table_size - 1;
+		} else if (tmp == (g_req_per_query - 1)) {
+			req->rtype = SECOND_HS;
+			row_id = table_size - 2;
+		}
+#else
+		assert(false);
+#endif
+#endif
 #endif
 		double r;
 		// get a random number r to determine read/write ratio
@@ -161,16 +208,44 @@ void ycsb_query::gen_requests(uint64_t thd_id, workload * h_wl) {
 	request_cnt = rid;
 
 	// Sort the requests in key order.
+#if NUM_HS > 0
+	// works only for g_virtual_part_cnt = 1
+	uint64_t upper = (table_size - NUM_HS - 1) * g_virtual_part_cnt;
+	int a;
+	int b;
+#endif
 	if (g_key_order) {
-		for (int i = request_cnt - 1; i > 0; i--) 
-			for (int j = 0; j < i; j ++)
-				if (requests[j].key > requests[j + 1].key) {
-					ycsb_request tmp = requests[j];
-					requests[j] = requests[j + 1];
-					requests[j + 1] = tmp;
+		for (int i = request_cnt - 1; i > 0; i--) {
+			for (int j = 0; j < i; j ++) {
+				a = j;
+				b = j+1;
+#if NUM_HS > 0
+				if (requests[j].key > upper) {
+					if (j != 0)
+						a = j - 1;
+					else
+						continue;
+				} 
+				if (requests[j+1].key > upper) {
+					if (j + 1 != i)
+						b = j + 1;
+					else
+						continue;
 				}
+#endif
+				if (requests[a].key > requests[b].key) {
+					ycsb_request tmp = requests[a];
+					requests[a] = requests[b];
+					requests[b] = tmp;
+				}
+			}
+		}
 		part_num = 0;
 		for (UInt32 i = 0; i < request_cnt - 1; i++) {
+#if NUM_HS > 0
+			if (requests[i].key > upper || (requests[i + 1].key > upper))
+				continue;
+#endif
 			assert(requests[i].key < requests[i + 1].key);
 			//printf("thread-%lu request[%d] %lu\n", thd_id, i, requests[i].key);
 		}
