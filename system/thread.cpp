@@ -59,7 +59,6 @@ RC thread_t::run() {
 	UInt64 txn_cnt = 0;
 
 	while (true) {
-		starttime = get_sys_clock();
 		if (WORKLOAD != TEST) {
 			int trial = 0;
 			if (_abort_buffer_enable) {
@@ -85,6 +84,7 @@ RC thread_t::run() {
 						usleep(min_ready_time - curr_time);
 					}
 					else if (m_query == NULL) {
+						starttime = get_sys_clock();
 						m_query = query_queue->get_next_query( _thd_id );
 #if CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT 
 						m_txn->set_ts(get_next_ts());
@@ -96,6 +96,7 @@ RC thread_t::run() {
 						break;
 				}
 			} else {
+				starttime = get_sys_clock();
 				if (rc == RCOK)
 					m_query = query_queue->get_next_query( _thd_id );
 			}

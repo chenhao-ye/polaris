@@ -251,6 +251,9 @@ txn_man::index_read(INDEX * index, idx_key_t key, int part_id, itemid_t *& item)
 }
 
 RC txn_man::finish(RC rc) {
+#if THINKTIME > 0
+	usleep(THINKTIME);
+#endif
 #if CC_ALG == HSTORE
 	return RCOK;
 #endif

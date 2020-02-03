@@ -116,6 +116,7 @@
 /***********************************************/
 // Benchmark
 /***********************************************/
+#define THINKTIME				0
 // max number of rows touched per transaction
 #define MAX_ROW_PER_TXN				64
 #define QUERY_INTVL 				1UL
