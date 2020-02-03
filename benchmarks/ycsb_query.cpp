@@ -144,7 +144,7 @@ uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 		} else if (tmp == (g_req_per_query / 2)) {
 			req->rtype = SECOND_HS;
 			row_id = table_size - 2;
-		}
+		} else {
 #elif POS_HS == MB
 		if (tmp == (g_req_per_query / 2)) {
 			// insert hotpost at the bottom
@@ -153,7 +153,7 @@ uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 		} else if (tmp == (g_req_per_query - 1)) {
 			req->rtype = SECOND_HS;
 			row_id = table_size - 2;
-		}
+		} else { 
 #else
 		assert(false);
 #endif
