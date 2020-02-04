@@ -137,7 +137,8 @@
 #define PERC_MULTI_PART				1
 #define REQ_PER_QUERY				16
 #define FIELD_PER_TUPLE				10
-#define SYNTHETIC_YCSB				true//false
+#define SYNTHETIC_YCSB				false
+#define NUM_HS					0
 // ==== [TPCC] ====
 // For large warehouse count, the tables do not fit in memory
 // small tpcc schemas shrink the table size.

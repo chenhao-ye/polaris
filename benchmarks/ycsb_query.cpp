@@ -208,11 +208,11 @@ uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 	request_cnt = rid;
 
 	// Sort the requests in key order.
+	int a;
+	int b;
 #if NUM_HS > 0
 	// works only for g_virtual_part_cnt = 1
 	uint64_t upper = (table_size - NUM_HS - 1) * g_virtual_part_cnt;
-	int a;
-	int b;
 #endif
 	if (g_key_order) {
 		for (int i = request_cnt - 1; i > 0; i--) {

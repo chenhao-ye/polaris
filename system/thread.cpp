@@ -54,11 +54,11 @@ RC thread_t::run() {
 	glob_manager->set_txn_man(m_txn);
 
 	base_query * m_query = NULL;
-	curr_query = NULL;
 	uint64_t thd_txn_id = 0;
 	UInt64 txn_cnt = 0;
 
 	while (true) {
+		ts_t starttime = get_sys_clock();
 		if (WORKLOAD != TEST) {
 			int trial = 0;
 			if (_abort_buffer_enable) {
@@ -140,7 +140,6 @@ RC thread_t::run() {
 				rc = runTest(m_txn);
 			else {
 			    rc = m_txn->run_txn(m_query);
-				curr_query = m_query;
 			}
 #endif
 #if CC_ALG == HSTORE

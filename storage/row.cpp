@@ -164,21 +164,15 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 	int txncnt; 
 	rc = this->manager->lock_get(lt, txn, txnids, txncnt);	
 #else
-	if (txn->lock_abort) {
+	#if (CC_ALG == CLV) || (CC_ALG == WOUND_WAIT)
+	if (txn->lock_abort) 
 		return Abort;
-	} else {
-	#if DEBUG_CLV
-	printf("try to get row thd=%lu, txn=%lu row=%lu type=%d\n", txn->get_thd_id(), txn->get_txn_id(), get_row_id(), type);
 	#endif
-		rc = this->manager->lock_get(lt, txn);
-	}
+	rc = this->manager->lock_get(lt, txn);
 #endif
-	#if DEBUG_CLV
-	printf("get row thd=%lu, txn=%lu row=%lu type=%d, rc=%d\n", txn->get_thd_id(), txn->get_txn_id(), get_row_id(), type, rc);
-	#endif
 
 	if (rc == RCOK) {
-		#if CC_ALG == WOUND_WAIT || CC_ALG == CLV
+		#if (CC_ALG == WOUND_WAIT) || (CC_ALG == CLV)
 		if(txn->lock_abort) {
 			rc = Abort;
 			#if CC_ALG == CLV
@@ -189,8 +183,11 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 			return rc;
 		}
 		#endif		
+		row = this;
 	} else if (rc == Abort) {
+		#if (CC_ALG == CLV)  || (CC_ALG == WOUND_WAIT)
 		return rc;
+		#endif
 	}
 	else if (rc == WAIT) {
 		ASSERT(CC_ALG == WAIT_DIE || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT || CC_ALG == CLV);
@@ -200,6 +197,10 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 		bool dep_added = false;
 		#endif
 		uint64_t endtime;
+
+		#if (CC_ALG != WOUND_WAIT) && (CC_ALG != CLV)
+		txn->lock_abort = false;
+		#endif
 		INC_STATS(txn->get_thd_id(), wait_cnt, 1);
 		while (!txn->lock_ready && !txn->lock_abort) 
 		{
@@ -243,9 +244,6 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 		}
 	
 		if (txn->lock_ready) {
-			endtime = get_sys_clock();
-			INC_TMP_STATS(thd_id, time_wait, endtime - starttime);
-			//printf("increament %lu for thd=%lu\n", endtime-starttime, thd_id);
 			rc = RCOK;
 		} 
 		else if (txn->lock_abort) {
@@ -256,11 +254,14 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 			#else
 				return_row(type, txn, NULL);
 			#endif
+			#if (CC_ALG == WOUND_WAIT) || (CC_ALG == CLV) 
 			return rc;
+			#endif
 		}
+		endtime = get_sys_clock();
+		INC_TMP_STATS(thd_id, time_wait, endtime - starttime);
+		row = this;
 	}
-	row = this;
-	assert(rc != Abort);
 	return rc;
 
 #elif CC_ALG == TIMESTAMP || CC_ALG == MVCC || CC_ALG == HEKATON 
