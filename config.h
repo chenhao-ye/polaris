@@ -4,7 +4,7 @@
 /***********************************************/
 // Simulation + Hardware
 /***********************************************/
-#define THREAD_CNT 16
+#define THREAD_CNT 4
 #define PART_CNT					1 
 // each transaction only accesses 1 virtual partition. But the lock/ts manager and index are not aware of such partitioning. VIRTUAL_PART_CNT describes the request distribution and is only used to generate queries. For HSTORE, VIRTUAL_PART_CNT should be the same as PART_CNT.
 #define VIRTUAL_PART_CNT			1
@@ -39,8 +39,8 @@
 /***********************************************/
 // WAIT_DIE, NO_WAIT, DL_DETECT, TIMESTAMP, MVCC, HEKATON, HSTORE, OCC, VLL, TICTOC, SILO
 // TODO TIMESTAMP does not work at this moment
-//#define CC_ALG SILO
-#define CC_ALG SILO
+//#define CC_ALG WAIT_DIE
+#define CC_ALG WAIT_DIE
 #define ISOLATION_LEVEL 			SERIALIZABLE
 
 // all transactions acquire tuples according to the primary key order.
@@ -51,7 +51,7 @@
 #define CENTRAL_MAN					false
 #define BUCKET_CNT					31
 #define ABORT_PENALTY 100000
-#define ABORT_BUFFER_SIZE 1
+#define ABORT_BUFFER_SIZE			1 //10
 #define ABORT_BUFFER_ENABLE			true
 // [ INDEX ]
 #define ENABLE_LATCH				false
@@ -102,9 +102,9 @@
 #define CLV_RETIRE_ON 1
 #define CLV_RETIRE_OFF              10000
 #define PRIORITIZE_HS				false
-#define MERGE_HS false
+#define MERGE_HS					false
 #define RETIRE_ON true
-#define DELAY_ACQUIRE 10
+#define DELAY_ACQUIRE 0
 #define DELAY_THRESHOLD 4
 #define BTACH_RETURN_ENTRY			false
 
@@ -200,8 +200,8 @@ extern TestCases					g_test_case;
 #define DEBUG_CC					false
 #define DEBUG_WW                    			false
 #define DEBUG_BENCHMARK false
-#define DEBUG_CLV false
-#define DEBUG_TMP false
+#define DEBUG_CLV                    			false
+#define DEBUG_TMP true
 #define DEBUG_PROFILING true
 
 /***********************************************/
