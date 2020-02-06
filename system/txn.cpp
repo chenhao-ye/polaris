@@ -302,7 +302,8 @@ RC txn_man::finish(RC rc) {
 		set_ts(0);
 	#if DYNAMIC_TS
 	else {
-	    reassign_ts(); 
+		set_ts(0);
+	    	//reassign_ts(); 
 	}
 	#endif
 #else 
