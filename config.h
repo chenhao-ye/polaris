@@ -4,7 +4,7 @@
 /***********************************************/
 // Simulation + Hardware
 /***********************************************/
-#define THREAD_CNT 4
+#define THREAD_CNT 16
 #define PART_CNT					1 
 // each transaction only accesses 1 virtual partition. But the lock/ts manager and index are not aware of such partitioning. VIRTUAL_PART_CNT describes the request distribution and is only used to generate queries. For HSTORE, VIRTUAL_PART_CNT should be the same as PART_CNT.
 #define VIRTUAL_PART_CNT			1
@@ -50,7 +50,7 @@
 // per-row lock/ts management or central lock/ts management
 #define CENTRAL_MAN					false
 #define BUCKET_CNT					31
-#define ABORT_PENALTY 0
+#define ABORT_PENALTY 50000
 #define ABORT_BUFFER_SIZE			1 //10
 #define ABORT_BUFFER_ENABLE			true
 // [ INDEX ]

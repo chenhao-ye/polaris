@@ -28,9 +28,9 @@ fhs="WR"
 shs="WR"
 think=0
 
-for penalty in 100000 50000 10000 0
+for penalty in 50000
 do
-for threads in 16 8 4 #2 #2 4 8 16
+for threads in 1 2 4 8 16
 do
 for pos in TM MB #TOP MID BOT 
 do

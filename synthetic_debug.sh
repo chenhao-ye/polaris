@@ -22,8 +22,7 @@ shs="WR"
 read_ratio=1
 phs="true"
 phs="false"
-alg="SILO"
-think=50
+think=0
 
 
 timeout 50 python test.py THINKING_TIME=$think PRIORITIZE_HS=$phs READ_PERC=1 NUM_HS=$hs FIRST_HS=$fhs POS_HS=$pos DEBUG_TMP="false" DYNAMIC_TS=$dynamic CLV_RETIRE_ON=$on SPINLOCK=$spin REQ_PER_QUERY=$req DEBUG_PROFILING=$profile SYNTH_TABLE_SIZE=${table_size} WORKLOAD=${wl} CC_ALG=$alg THREAD_CNT=$threads MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty ZIPF_THETA=$zipf SYNTHETIC_YCSB=$synthetic  |& tee -a debug.out
