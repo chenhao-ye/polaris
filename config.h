@@ -16,7 +16,7 @@
 // # of transactions to run for warmup
 #define WARMUP						0
 // YCSB or TPCC
-#define WORKLOAD YCSB
+#define WORKLOAD TPCC
 // print the transaction latency distribution
 #define PRT_LAT_DISTR				false
 #define STATS_ENABLE				true
@@ -39,18 +39,18 @@
 /***********************************************/
 // WAIT_DIE, NO_WAIT, DL_DETECT, TIMESTAMP, MVCC, HEKATON, HSTORE, OCC, VLL, TICTOC, SILO
 // TODO TIMESTAMP does not work at this moment
-//#define CC_ALG WAIT_DIE
-#define CC_ALG WAIT_DIE
+//#define CC_ALG NO_WAIT
+#define CC_ALG NO_WAIT
 #define ISOLATION_LEVEL 			SERIALIZABLE
 
 // all transactions acquire tuples according to the primary key order.
-#define KEY_ORDER					true//false
+#define KEY_ORDER					false
 // transaction roll back changes after abort
 #define ROLL_BACK					true
 // per-row lock/ts management or central lock/ts management
 #define CENTRAL_MAN					false
 #define BUCKET_CNT					31
-#define ABORT_PENALTY 50000
+#define ABORT_PENALTY 10000
 #define ABORT_BUFFER_SIZE			1 //10
 #define ABORT_BUFFER_ENABLE			true
 // [ INDEX ]
@@ -101,9 +101,11 @@
 #define SPINLOCK true
 #define CLV_RETIRE_ON 1
 #define CLV_RETIRE_OFF              10000
-#define PRIORITIZE_HS false
-#define DELAY_ACQUIRE				0
-#define DELAY_THRESHOLD				4
+#define PRIORITIZE_HS				false
+#define MERGE_HS					false
+#define RETIRE_ON true
+#define DELAY_ACQUIRE 0
+#define DELAY_THRESHOLD 4
 #define BTACH_RETURN_ENTRY			false
 
 /***********************************************/
@@ -116,7 +118,7 @@
 /***********************************************/
 // Benchmark
 /***********************************************/
-#define THINKTIME 0
+#define THINKTIME				0
 // max number of rows touched per transaction
 #define MAX_ROW_PER_TXN				64
 #define QUERY_INTVL 				1UL
@@ -125,23 +127,18 @@
 #define MAX_TUPLE_SIZE				1024 // in bytes
 // ==== [YCSB] ====
 #define INIT_PARALLELISM			40
-#define SYNTH_TABLE_SIZE 1024*1024*20
-#define ZIPF_THETA 0
-#define READ_PERC 1
-#define WRITE_PERC 				1
-#define SCAN_PERC 				0
-#define SCAN_LEN				20
+#define SYNTH_TABLE_SIZE 			(1024 * 5)
+#define ZIPF_THETA 					0.9 //0.6
+#define READ_PERC 					0.5
+#define WRITE_PERC 					0.5
+#define SCAN_PERC 					0
+#define SCAN_LEN					20
 #define PART_PER_TXN 				1
 #define PERC_MULTI_PART				1
-#define REQ_PER_QUERY 16
+#define REQ_PER_QUERY				16
 #define FIELD_PER_TUPLE				10
-// ==== [YCSB-synthetic] ====
-#define SYNTHETIC_YCSB true
-#define POS_HS MB
-#define NUM_HS 2
-#define FIRST_HS WR
-#define SECOND_HS				WR
-
+#define SYNTHETIC_YCSB				false
+#define NUM_HS					0
 // ==== [TPCC] ====
 // For large warehouse count, the tables do not fit in memory
 // small tpcc schemas shrink the table size.
@@ -149,9 +146,10 @@
 // Some of the transactions read the data but never use them. 
 // If TPCC_ACCESS_ALL == fales, then these parts of the transactions
 // are not modeled.
+#define REORDER_WH false
 #define TPCC_ACCESS_ALL 			false 
 #define WH_UPDATE					true
-#define NUM_WH 						1
+#define NUM_WH 16
 //
 enum TPCCTxnType {TPCC_ALL, 
 				TPCC_PAYMENT, 
@@ -162,7 +160,7 @@ enum TPCCTxnType {TPCC_ALL,
 extern TPCCTxnType 					g_tpcc_txn_type;
 
 //#define TXN_TYPE					TPCC_ALL
-#define PERC_PAYMENT 				0.5
+#define PERC_PAYMENT 0.5
 #define FIRSTNAME_MINLEN 			8
 #define FIRSTNAME_LEN 				16
 #define LASTNAME_LEN 				16
@@ -198,11 +196,11 @@ extern TestCases					g_test_case;
 #define DEBUG_LOCK					false
 #define DEBUG_TIMESTAMP					false
 #define DEBUG_SYNTH					false
-#define DEBUG_ASSERT					false
-#define DEBUG_CC					false //true
+#define DEBUG_ASSERT					false//true
+#define DEBUG_CC					false
 #define DEBUG_WW                    			false
-#define DEBUG_BENCHMARK					false
-#define DEBUG_CLV                   			false	
+#define DEBUG_BENCHMARK false
+#define DEBUG_CLV                    			false
 #define DEBUG_TMP false
 #define DEBUG_PROFILING true
 
@@ -229,7 +227,7 @@ extern TestCases					g_test_case;
 #define VLL							10
 #define HEKATON 					11
 #define WOUND_WAIT                  12
-#define CLV							13
+#define CLV                         13
 //Isolation Levels 
 #define SERIALIZABLE				1
 #define SNAPSHOT					2
@@ -239,12 +237,5 @@ extern TestCases					g_test_case;
 #define TS_CAS						2
 #define TS_HW						3
 #define TS_CLOCK					4
-// Synthetic YCSB - HOTSPOT POSITION
-#define TOP						1
-#define MID						2
-#define BOT						3
-#define TM						4
-#define MB						5
-
 
 #endif

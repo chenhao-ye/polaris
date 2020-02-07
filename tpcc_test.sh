@@ -30,7 +30,7 @@ for threads in 1 2 4 8 16
 do
 for wh in 1 2 4 8 16
 do
-for alg in CLV #SILO WOUND_WAIT WAIT_DIE NO_WAIT
+for alg in SILO WOUND_WAIT WAIT_DIE NO_WAIT
 do
 timeout 60 python test.py DELAY_THRESHOLD=$dt DELAY_ACQUIRE=$delay CLV_RETIRE_ON=$on DEBUG_TMP=$tmp RETIRE_ON=$retire REORDER_WH=$reorder PERC_PAYMENT=$perc DEBUG_BENCHMARK=$bench DYNAMIC_TS=$dynamic DEBUG_PROFILING=$pf SPINLOCK=$spin WORKLOAD=${wl} CC_ALG=$alg THREAD_CNT=$threads MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty NUM_WH=${wh}|& tee -a debug.out
 #timeout 50 python test.py RETIRE_ON=$retire REORDER_WH=$reorder PERC_PAYMENT=$perc DEBUG_BENCHMARK=$bench DEBUG_CLV=$debug DYNAMIC_TS=$dynamic DEBUG_PROFILING=$pf SPINLOCK=$spin WORKLOAD=${wl} CC_ALG=$alg THREAD_CNT=$threads MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty NUM_WH=${wh}|& tee -a debug.out
