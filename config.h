@@ -137,8 +137,8 @@
 #define FIELD_PER_TUPLE				10
 // ==== [YCSB-synthetic] ====
 #define SYNTHETIC_YCSB true
-#define POS_HS MB
-#define NUM_HS 2
+#define POS_HS BOT
+#define NUM_HS 1
 #define FIRST_HS WR
 #define SECOND_HS				WR
 

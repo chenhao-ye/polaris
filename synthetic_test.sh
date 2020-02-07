@@ -18,11 +18,11 @@ read_ratio=1
 phs="true"
 phs="false"
 
-#hs=1
+hs=1
 #pos="TOP"
 #pos="MID"
 #pos="BOT"
-hs=2
+#hs=2
 #pos="TM"
 fhs="WR"
 shs="WR"
@@ -32,7 +32,7 @@ for penalty in 50000
 do
 for threads in 1 2 4 8 16
 do
-for pos in TM MB #TOP MID BOT 
+for pos in TOP MID BOT 
 do
 for alg in CLV SILO WOUND_WAIT WAIT_DIE
 do
