@@ -2,20 +2,20 @@ cp -r config_ycsb_synthetic.h config.h
 rm debug.out
 
 wl="YCSB"
-alg=WAIT_DIE
-threads=64
+alg="CLV"
+threads=16
 cnt=100000
 penalty=50000
 zipf=0
-synthetic=true
+synthetic="true"
 table_size="1024*1024*20"
 profile="true"
-req=64
+req=16
 spin="true"
 on=1
 dynamic="true"
-hs=2
-pos=TM
+hs=1
+pos="TOP"
 fhs="WR"
 shs="WR"
 read_ratio=1
