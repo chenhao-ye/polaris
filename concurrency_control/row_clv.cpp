@@ -707,7 +707,7 @@ Row_clv::remove_descendants(CLVLockEntry * en, CLVLockEntry *& to_return) {
 inline CLVLockEntry *
 Row_clv::remove_descendants(CLVLockEntry * en) {
 #endif
-	int abort_cnt = 1;
+        uint32_t abort_cnt = 1;
 	assert(en != NULL);
 	CLVLockEntry * next = NULL;
 	CLVLockEntry * prev = en->prev;
