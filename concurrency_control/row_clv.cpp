@@ -707,6 +707,7 @@ Row_clv::remove_descendants(CLVLockEntry * en, CLVLockEntry *& to_return) {
 inline CLVLockEntry *
 Row_clv::remove_descendants(CLVLockEntry * en) {
 #endif
+	int abort_cnt = 1;
 	assert(en != NULL);
 	CLVLockEntry * next = NULL;
 	CLVLockEntry * prev = en->prev;
@@ -742,6 +743,7 @@ Row_clv::remove_descendants(CLVLockEntry * en) {
 				// no need to be too complicated (i.e. call function) as the owner will be empty in the end
 				owners = owners->next;
 				en->txn->set_abort();
+				abort_cnt++;
 				#if !DEBUG_TMP
 				#if BATCH_RETURN_ENTRY
 				RETURN_PUSH(to_return, en);
@@ -764,6 +766,7 @@ Row_clv::remove_descendants(CLVLockEntry * en) {
 		while(en) {
 			next = en->next;
 			en->txn->set_abort();
+			abort_cnt++;
 			retired_cnt--;
 			#if !DEBUG_TMP
 			#if BATCH_RETURN_ENTRY
@@ -780,6 +783,13 @@ Row_clv::remove_descendants(CLVLockEntry * en) {
 		}
 	}
 	assert(!retired_head || retired_head->is_cohead);
+	#if DEBUG_PROFILING
+	// debug9: sum of all lengths of chains; debug 10: time of cascading aborts; debug2: max chain
+	INC_STATS(0, debug9, abort_cnt);
+	INC_STATS(0, debug2, 1);
+	if (abort_cnt > stats._stats[0]->debug10)
+		stats._stats[0]->debug10 = abort_cnt;
+	#endif
 	if (prev)
 		return prev->next;
 	else
