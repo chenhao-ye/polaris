@@ -104,7 +104,7 @@
 #define PRIORITIZE_HS				false
 #define DELAY_ACQUIRE				0
 #define DELAY_THRESHOLD				4
-#define BTACH_RETURN_ENTRY			false
+#define BATCH_RETURN_ENTRY			false
 
 /***********************************************/
 // Logging

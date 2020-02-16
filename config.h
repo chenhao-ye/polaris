@@ -4,7 +4,7 @@
 /***********************************************/
 // Simulation + Hardware
 /***********************************************/
-#define THREAD_CNT 16
+#define THREAD_CNT 4
 #define PART_CNT					1 
 // each transaction only accesses 1 virtual partition. But the lock/ts manager and index are not aware of such partitioning. VIRTUAL_PART_CNT describes the request distribution and is only used to generate queries. For HSTORE, VIRTUAL_PART_CNT should be the same as PART_CNT.
 #define VIRTUAL_PART_CNT			1
@@ -39,8 +39,8 @@
 /***********************************************/
 // WAIT_DIE, NO_WAIT, DL_DETECT, TIMESTAMP, MVCC, HEKATON, HSTORE, OCC, VLL, TICTOC, SILO
 // TODO TIMESTAMP does not work at this moment
-//#define CC_ALG SILO
-#define CC_ALG SILO
+//#define CC_ALG WOUND_WAIT
+#define CC_ALG WOUND_WAIT
 #define ISOLATION_LEVEL 			SERIALIZABLE
 
 // all transactions acquire tuples according to the primary key order.
@@ -104,7 +104,7 @@
 #define PRIORITIZE_HS false
 #define DELAY_ACQUIRE				0
 #define DELAY_THRESHOLD				4
-#define BTACH_RETURN_ENTRY			false
+#define BATCH_RETURN_ENTRY			false
 
 /***********************************************/
 // Logging
@@ -127,13 +127,13 @@
 #define INIT_PARALLELISM			40
 #define SYNTH_TABLE_SIZE 1024*1024*20
 #define ZIPF_THETA 0.9
-#define READ_PERC 0
+#define READ_PERC 0.5
 #define WRITE_PERC 				1
 #define SCAN_PERC 				0
 #define SCAN_LEN				20
 #define PART_PER_TXN 				1
 #define PERC_MULTI_PART				1
-#define REQ_PER_QUERY 64
+#define REQ_PER_QUERY 16
 #define FIELD_PER_TUPLE				10
 // ==== [YCSB-synthetic] ====
 #define SYNTHETIC_YCSB false

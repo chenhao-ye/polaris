@@ -3,15 +3,15 @@ rm debug.out
 
 wl="YCSB"
 alg=CLV
-alg="SILO"
-threads=16
+alg=WOUND_WAIT
+threads=4
 cnt=10000 #0000
 penalty=50000
 zipf=0.9
 synthetic=false
 table_size="1024*1024*20"
 profile="true"
-req=64
+req=16
 spin="true"
 on=1
 dynamic="true"
@@ -19,7 +19,7 @@ hs=0
 pos=TOP
 fhs="WR"
 shs="WR"
-read_ratio=0
+read_ratio=0.5
 phs="false"
 think=0
 ordered="false"

@@ -87,18 +87,26 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 					if (owner_cnt == 0)
 						bring_next();
 					rc = Abort;
+					#if BATCH_RETURN_ENTRY
 					RETURN_PUSH(to_return, entry); // abort self, need to free preallocated entry
+					#else
+					return_entry(entry);
+					#endif
 					goto final;
 				}
 				// remove from owner
 				if (prev)
-						prev->next = en->next;
+					prev->next = en->next;
 				else {
 					if (owners == en)
 						owners = en->next;
 				}
 				// free en
+				#if BATCH_RETURN_ENTRY
 				RETURN_PUSH(to_return, en);
+				#else
+				to_return = en;
+				#endif
 				// update count
 				owner_cnt--;
 				if (owner_cnt == 0)
@@ -107,6 +115,12 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 					prev = en;
 			}
 			en = en->next;
+			#if !BATCH_RETURN_ENTRY
+			if (to_return) {
+				return_entry(to_return);
+				to_return = NULL;
+			}
+			#endif
 		}
 
 		// insert to wait list, the waiter list is always in timestamp order
@@ -147,11 +161,13 @@ final:
 		pthread_mutex_unlock( latch );
 		#endif
 	}
+	#if BATCH_RETURN_ENTRY
 	while (to_return) {
 		en = to_return;
 		to_return = to_return->next;
 		return_entry(en);
 	}
+	#endif
 	return rc;
 }
 
@@ -253,7 +269,7 @@ void
 Row_ww::bring_next() {
 		LockEntry * entry;
 	// If any waiter can join the owners, just do it!
-	while (waiters_head && (owners == NULL || !conflict_lock(owners->type, waiters_head->type) )) {
+	while (waiters_head && (owner_cnt == 0 || !conflict_lock(owners->type, waiters_head->type) )) {
 		LIST_GET_HEAD(waiters_head, waiters_tail, entry);
 		STACK_PUSH(owners, entry);
 		owner_cnt ++;
