@@ -307,6 +307,14 @@ RC Row_clv::lock_retire(txn_man * txn) {
 		LIST_RM(owners, owners_tail, entry, owner_cnt);
 		entry->next=NULL;
 		entry->prev=NULL;
+		// assign a ts if not yet
+		
+		// debug tmp
+		//assert(entry->txn->get_ts() != 0);
+		if (retired_tail) {
+			assert(entry->txn->get_ts() > retired_tail->txn->get_ts());
+			assert(entry->txn->get_ts() > retired_head->txn->get_ts());
+		}
 		// try to add to retired
 		if (retired_tail) {
 			if (conflict_lock(retired_tail->type, entry->type)) {
@@ -458,6 +466,7 @@ inline bool Row_clv::rm_if_in_retired(txn_man * txn, bool is_abort) {
 		return false;
 	else {
 		if (is_abort) {
+			en->txn->lock_abort = true;
 			#if BATCH_RETURN_ENTRY
 			en = remove_descendants(en, to_return);
 			#else
@@ -479,6 +488,7 @@ inline bool Row_clv::rm_if_in_retired(txn_man * txn, bool is_abort) {
 	while(en) {
 		if (en->txn == txn) {
 			if (is_abort) {
+				en->txn->lock_abort = true;
 				#if BATCH_RETURN_ENTRY
 				en = remove_descendants(en, to_return);
 				#else
@@ -509,6 +519,11 @@ Row_clv::bring_next(txn_man * txn) {
 	// If any waiter can join the owners, just do it!
 	while (waiters_head) {
 		if ((owner_cnt == 0) || (!conflict_lock(owners->type, waiters_head->type))) {
+			//debug tmp
+			assert(waiters_head->txn->get_ts() != 0);
+			if (retired_tail)
+				assert(waiters_head->txn->get_ts() > retired_tail->txn->get_ts());
+
 			LIST_GET_HEAD(waiters_head, waiters_tail, entry);
 			waiter_cnt --;
 			// add to onwers
@@ -571,7 +586,7 @@ inline bool Row_clv::wound_txn(CLVLockEntry * en, txn_man * txn, bool check_reti
 
 	if (txn->status == ABORTED)
 		return false;
-	if (en->txn->set_abort() == COMMITED)
+	if (en->txn->set_abort() != ABORTED)
 		return false;
 	if (check_retired) {
 		#if BATCH_RETURN_ENTRY 
@@ -609,26 +624,36 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 	else
 		en = owners;
 	bool recheck = false;
+	int checked_cnt = 0;
 	while (en) {
+		checked_cnt++;
 		recheck = false;
 		#if DEBUG_TMP
 		assert(en->loc != LOC_NONE);
 		#endif
 		if (ts != 0) {
+			ts_t en_ts = en->txn->get_ts();
+			/*
+			if (check_retired)
+				printf("status=%d ts=%lu checking [%d/%d]txn=%lu(%lu)\n", status, ts, checked_cnt, retired_cnt, en->txn->get_txn_id(), en_ts);
+			*/
 			// self assigned, if conflicted, assign a number
 			if (status == RCOK && conflict_lock(en->type, type) && 
-				 (en->txn->get_ts() > txn->get_ts() || en->txn->get_ts() == 0))
+				 ((en_ts > txn->get_ts()) || (en_ts == 0))) {
 				status = WAIT;
+			}
 			if (status == WAIT) {
-				if (en->txn->get_ts() > ts || en->txn->get_ts() == 0) {
+				if ((en_ts > ts) || (en_ts == 0)) {
 					to_reset = en;
 					en = en->prev;
+					txn_man * tmp_txn = to_reset->txn;
 					#if BATCH_RETURN_ENTRY
 					if (!wound_txn(to_reset, txn, check_retired, to_return))
 					#else
 					if (!wound_txn(to_reset, txn, check_retired))
 					#endif
 						return Abort;
+					assert(tmp_txn->status != COMMITED);
 					if (en)
 						en = en->next;
 					else {
@@ -646,6 +671,11 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 		} else {
 			// self unassigned, if not assigned, assign a number;
 			if (en->txn->get_ts() == 0) {
+				// if already commited, abort self
+				if (en->txn->status == COMMITED) {
+					en = en->next;
+					continue;
+				}
 				if (!en->txn->atomic_set_ts(local_ts)) // it has a ts already
 					recheck = true;
 				else 
@@ -660,6 +690,7 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 				if (!wound_txn(to_reset, txn, check_retired))
 				#endif
 					return Abort;
+				// if has previous
 				if (en)
 					en = en->next;
 				else {
@@ -669,9 +700,18 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 						en = owners;
 				}	
 			} else {
-				en = en->next;
+				if (!recheck)
+					en = en->next;
+				else
+					checked_cnt--;
 			}
 		}
+	}
+	assert(txn->get_ts() != 0);
+	if (retired_head && (type == LOCK_EX)) {
+		if (txn->get_ts() <= retired_head->txn->get_ts() )
+			printf("ts=%lu, txn-ts=%lu, head(%lu)-ts=%lu\n", ts, txn->get_ts(), retired_head->txn->get_txn_id(), retired_head->txn->get_ts());
+		assert(txn->get_ts() > retired_tail->txn->get_ts());
 	}
 	return status;
 }
@@ -743,6 +783,8 @@ Row_clv::remove_descendants(CLVLockEntry * en) {
 				// no need to be too complicated (i.e. call function) as the owner will be empty in the end
 				owners = owners->next;
 				en->txn->set_abort();
+				//debug
+				//assert(en->txn->status != COMMITED);
 				abort_cnt++;
 				#if !DEBUG_TMP
 				#if BATCH_RETURN_ENTRY
@@ -766,6 +808,8 @@ Row_clv::remove_descendants(CLVLockEntry * en) {
 		while(en) {
 			next = en->next;
 			en->txn->set_abort();
+			//debug
+			//assert(en->txn->status != COMMITED);
 			abort_cnt++;
 			retired_cnt--;
 			#if !DEBUG_TMP

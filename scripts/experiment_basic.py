@@ -28,8 +28,8 @@ class Experiment(object):
     def __init__(self):
         # config something
         #self.exp_name = 'clv_onehotspot_50000penalty'
-        self.exp_name = 'no_hotspot'
-        self.exp_name = 'two_hotspot'
+        #self.exp_name = 'no_hotspot'
+        self.exp_name = 'zipfian_notordered'
         self.home_dir = '/users/kanwu/'
         self.res_dir = self.home_dir + 'results/' + self.exp_name
         self.tmp_dir = '/dev/shm/'
@@ -48,16 +48,21 @@ class Experiment(object):
         config = {
           #'alg': ['NO_WAIT'],     #'mmap' 'libaio'
           'alg': ['NO_WAIT', 'CLV', 'SILO', 'WOUND_WAIT', 'WAIT_DIE'],     #CLV SILO WOUND_WAIT WAIT_DIE
-          'threads': [1, 2, 4, 8, 16, 32, 64],
-          'txn_len': [4, 16, 64],    # number of requests in the txn
+          #'threads': [1, 2, 4, 8, 16, 32, 64],
+          'threads': [1, 2, 4, 8, 16, 32],
+          #'threads': [1],
+          #'txn_len': [4, 16, 64],    # number of requests in the txn
+          'txn_len': [16],    # number of requests in the txn
           #'num_hs' : [1], # 0, 1, 2
-          'num_hs' : [2],
+          'num_hs' : [0],
           #'pos_hs' : ['TOP', 'MID', 'BOT'], # this is only for one hotspot
-          #'pos_hs' : ['TOP'],
+          'pos_hs' : ['TOP'],
           #'pos_hs' : ['TM', "MB"],
-          'pos_hs' : ['TM'],
-          #'synthetic': ['false'],  # true is for synthetic workloads
-          'synthetic': ['true'],  # true is for synthetic workloads
+          'synthetic': ['false'],  # true is for synthetic workloads
+          #'zipfian' : [0, 0.1, 0.3, 0.5, 0.7, 0.9],   
+          'zipfian' : [0, 0.5, 0.9],   
+          #'read_ratio' : [0, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0],
+          'read_ratio' : [0, 0.5, 0.9],
         }
 
         # handle
@@ -104,6 +109,12 @@ class Experiment(object):
                     continue
                 if 'synthetic=' in line:
                     output_file.write('synthetic=' + str(config['synthetic']) + '\n')
+                    continue
+                if 'zipf=' in line:
+                    output_file.write('zipf=' + str(config['zipfian']) + '\n')
+                    continue
+                if 'read_ratio=' in line:
+                    output_file.write('read_ratio=' + str(config['read_ratio']) + '\n')
                     continue
                 output_file.write(line)
 

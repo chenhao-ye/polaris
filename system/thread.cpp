@@ -88,8 +88,6 @@ RC thread_t::run() {
 						m_query = query_queue->get_next_query( _thd_id );
 #if CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT 
 						m_txn->set_ts(get_next_ts());
-#elif CC_ALG == CLV
-						m_txn->set_ts(0);
 #endif
 					}
 					if (m_query != NULL)
@@ -107,6 +105,9 @@ RC thread_t::run() {
 //#if CC_ALG == VLL
 //		_wl->get_txn_man(m_txn, this);
 //#endif
+#if CC_ALG == CLV
+		m_txn->set_ts(0);
+#endif
 		m_txn->set_txn_id(get_thd_id() + thd_txn_id * g_thread_cnt);
 		thd_txn_id ++;
 
