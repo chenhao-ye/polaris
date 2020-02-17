@@ -511,11 +511,6 @@ Row_clv::bring_next(txn_man * txn) {
 	// If any waiter can join the owners, just do it!
 	while (waiters_head) {
 		if ((owner_cnt == 0) || (!conflict_lock(owners->type, waiters_head->type))) {
-			//debug tmp
-			/*
-			if (retired_tail)
-				assert(waiters_head->txn->get_ts() > retired_tail->txn->get_ts() || (!conflict_lock_entry(retired_tail, waiters_head)));
-			*/
 			LIST_GET_HEAD(waiters_head, waiters_tail, entry);
 			waiter_cnt --;
 			// add to onwers
@@ -625,10 +620,9 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 		#endif
 		if (ts != 0) {
 			ts_t en_ts = en->txn->get_ts();
-
 			// self assigned, if conflicted, assign a number
 			if (status == RCOK && conflict_lock(en->type, type) && 
-				 ((en_ts > txn->get_ts()) || (en_ts == 0)))
+				 ((en_ts > txn->get_ts()) || (en_ts == 0))) {
 				status = WAIT;
 			}
 			if (status == WAIT) {
