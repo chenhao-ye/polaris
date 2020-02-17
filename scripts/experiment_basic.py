@@ -29,7 +29,7 @@ class Experiment(object):
         # config something
         #self.exp_name = 'clv_onehotspot_50000penalty'
         #self.exp_name = 'no_hotspot'
-        self.exp_name = 'zipfian_new_pass'
+        self.exp_name = 'zipfian_ww_starvation'
         self.home_dir = '/users/kanwu/'
         self.res_dir = self.home_dir + 'results/' + self.exp_name
         self.tmp_dir = '/dev/shm/'
@@ -46,9 +46,9 @@ class Experiment(object):
 
         # experiment config
         config = {
-          #'alg': ['CLV', 'SILO'],     #'mmap' 'libaio'
+          'alg': ['WOUND_WAIT'],     #'mmap' 'libaio'
           #'alg': ['NO_WAIT', 'CLV', 'SILO', 'WOUND_WAIT', 'WAIT_DIE'],     #CLV SILO WOUND_WAIT WAIT_DIE
-          'alg': ['NO_WAIT', 'CLV', 'SILO', 'WAIT_DIE'],     #CLV SILO WOUND_WAIT WAIT_DIE
+          #'alg': ['NO_WAIT', 'CLV', 'SILO', 'WAIT_DIE'],     #CLV SILO WOUND_WAIT WAIT_DIE
           #'threads': [1, 2, 4, 8, 16, 32, 64],
           'threads': [1, 2, 4, 8, 16, 32],
           #'threads': [16],
@@ -64,7 +64,7 @@ class Experiment(object):
           'zipfian' : [0, 0.7, 0.9, 0.99],   
           #'read_ratio' : [0, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0],
           #'read_ratio' : [0, 0.5, 0.9],
-          'read_ratio' : [0.5, 0.9],
+          'read_ratio' : [0, 0.5, 0.9],
         }
 
         # handle

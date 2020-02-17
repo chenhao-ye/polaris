@@ -5,7 +5,8 @@ import sys
 check_dir = sys.argv[1]
 
 
-print 'alg threads txn_len num_hs pos_hs synthetic zipfian read_ratio throughput debug2 debug9 debug10 abort_cnt txn_cnt'
+#print 'alg threads txn_len num_hs pos_hs synthetic zipfian read_ratio throughput debug2 debug9 debug10 abort_cnt txn_cnt'
+print 'alg threads txn_len num_hs pos_hs synthetic throughput debug2 debug9 debug10 abort_cnt txn_cnt'
 
 results = []
 
@@ -22,7 +23,8 @@ for subdir in os.listdir(check_dir):
        if each_file == 'config.json':
            with open(check_dir + '/' + subdir + '/' + each_file, 'r')  as config_file:
                dict_from_file = eval(config_file.read())
-               res1 = dict_from_file['alg'] + ' ' + str(dict_from_file['threads']) + ' ' + str(dict_from_file['txn_len']) + ' ' + str(dict_from_file['num_hs']) + ' ' + dict_from_file['pos_hs'] + ' ' +  str(dict_from_file['synthetic']) + ' ' + str(dict_from_file['zipfian']) + ' ' + str(dict_from_file['read_ratio']) + ' '
+               #res1 = dict_from_file['alg'] + ' ' + str(dict_from_file['threads']) + ' ' + str(dict_from_file['txn_len']) + ' ' + str(dict_from_file['num_hs']) + ' ' + dict_from_file['pos_hs'] + ' ' +  str(dict_from_file['synthetic']) + ' ' + str(dict_from_file['zipfian']) + ' ' + str(dict_from_file['read_ratio']) + ' '
+               res1 = dict_from_file['alg'] + ' ' + str(dict_from_file['threads']) + ' ' + str(dict_from_file['txn_len']) + ' ' + str(dict_from_file['num_hs']) + ' ' + dict_from_file['pos_hs'] + ' ' +  str(dict_from_file['synthetic']) + ' ' 
                if (dict_from_file['alg'] != 'CLV'):
                    jump = False
        if each_file == 'stats.json':
