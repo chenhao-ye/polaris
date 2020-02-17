@@ -307,14 +307,6 @@ RC Row_clv::lock_retire(txn_man * txn) {
 		LIST_RM(owners, owners_tail, entry, owner_cnt);
 		entry->next=NULL;
 		entry->prev=NULL;
-		// assign a ts if not yet
-		
-		// debug tmp
-		//assert(entry->txn->get_ts() != 0);
-		if (retired_tail) {
-			assert(entry->txn->get_ts() > retired_tail->txn->get_ts());
-			assert(entry->txn->get_ts() > retired_head->txn->get_ts());
-		}
 		// try to add to retired
 		if (retired_tail) {
 			if (conflict_lock(retired_tail->type, entry->type)) {
@@ -520,10 +512,10 @@ Row_clv::bring_next(txn_man * txn) {
 	while (waiters_head) {
 		if ((owner_cnt == 0) || (!conflict_lock(owners->type, waiters_head->type))) {
 			//debug tmp
-			assert(waiters_head->txn->get_ts() != 0);
+			/*
 			if (retired_tail)
-				assert(waiters_head->txn->get_ts() > retired_tail->txn->get_ts());
-
+				assert(waiters_head->txn->get_ts() > retired_tail->txn->get_ts() || (!conflict_lock_entry(retired_tail, waiters_head)));
+			*/
 			LIST_GET_HEAD(waiters_head, waiters_tail, entry);
 			waiter_cnt --;
 			// add to onwers
@@ -708,11 +700,13 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 		}
 	}
 	assert(txn->get_ts() != 0);
+	/*
 	if (retired_head && (type == LOCK_EX)) {
 		if (txn->get_ts() <= retired_head->txn->get_ts() )
 			printf("ts=%lu, txn-ts=%lu, head(%lu)-ts=%lu\n", ts, txn->get_ts(), retired_head->txn->get_txn_id(), retired_head->txn->get_ts());
 		assert(txn->get_ts() > retired_tail->txn->get_ts());
 	}
+	*/
 	return status;
 }
 

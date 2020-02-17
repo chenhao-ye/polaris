@@ -5,7 +5,7 @@ import sys
 check_dir = sys.argv[1]
 
 
-print 'alg threads txn_len num_hs pos_hs synthetic zipfian read_ratio throughput'
+print 'alg threads txn_len num_hs pos_hs synthetic zipfian read_ratio throughput debug2 debug9 debug10 abort_cnt txn_cnt'
 
 results = []
 
@@ -17,6 +17,7 @@ for subdir in os.listdir(check_dir):
     res2 = ''
     res3 = ''
     jump = False
+    #print subdir
     for each_file in os.listdir(check_dir + '/' + subdir):
        if each_file == 'config.json':
            with open(check_dir + '/' + subdir + '/' + each_file, 'r')  as config_file:
