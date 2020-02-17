@@ -4,7 +4,7 @@
 /***********************************************/
 // Simulation + Hardware
 /***********************************************/
-#define THREAD_CNT 16
+#define THREAD_CNT 4
 #define PART_CNT					1 
 // each transaction only accesses 1 virtual partition. But the lock/ts manager and index are not aware of such partitioning. VIRTUAL_PART_CNT describes the request distribution and is only used to generate queries. For HSTORE, VIRTUAL_PART_CNT should be the same as PART_CNT.
 #define VIRTUAL_PART_CNT			1
@@ -39,12 +39,12 @@
 /***********************************************/
 // WAIT_DIE, NO_WAIT, DL_DETECT, TIMESTAMP, MVCC, HEKATON, HSTORE, OCC, VLL, TICTOC, SILO
 // TODO TIMESTAMP does not work at this moment
-//#define CC_ALG NO_WAIT
-#define CC_ALG NO_WAIT
+//#define CC_ALG WOUND_WAIT
+#define CC_ALG WOUND_WAIT
 #define ISOLATION_LEVEL 			SERIALIZABLE
 
 // all transactions acquire tuples according to the primary key order.
-#define KEY_ORDER					true//false
+#define KEY_ORDER false
 // transaction roll back changes after abort
 #define ROLL_BACK					true
 // per-row lock/ts management or central lock/ts management
@@ -104,7 +104,7 @@
 #define PRIORITIZE_HS false
 #define DELAY_ACQUIRE				0
 #define DELAY_THRESHOLD				4
-#define BTACH_RETURN_ENTRY			false
+#define BATCH_RETURN_ENTRY			false
 
 /***********************************************/
 // Logging
@@ -116,18 +116,18 @@
 /***********************************************/
 // Benchmark
 /***********************************************/
-#define THINKTIME 0
+#define THINKTIME				0
 // max number of rows touched per transaction
 #define MAX_ROW_PER_TXN				64
 #define QUERY_INTVL 				1UL
-#define MAX_TXN_PER_PART 100000
+#define MAX_TXN_PER_PART 10000
 #define FIRST_PART_LOCAL 			true
 #define MAX_TUPLE_SIZE				1024 // in bytes
 // ==== [YCSB] ====
 #define INIT_PARALLELISM			40
 #define SYNTH_TABLE_SIZE 1024*1024*20
-#define ZIPF_THETA 0
-#define READ_PERC 1
+#define ZIPF_THETA 0.9
+#define READ_PERC 0.5
 #define WRITE_PERC 				1
 #define SCAN_PERC 				0
 #define SCAN_LEN				20
@@ -136,9 +136,9 @@
 #define REQ_PER_QUERY 16
 #define FIELD_PER_TUPLE				10
 // ==== [YCSB-synthetic] ====
-#define SYNTHETIC_YCSB true
-#define POS_HS BOT
-#define NUM_HS 1
+#define SYNTHETIC_YCSB false
+#define POS_HS TOP
+#define NUM_HS 0
 #define FIRST_HS WR
 #define SECOND_HS				WR
 

@@ -297,7 +297,6 @@ RC txn_man::finish(RC rc) {
             rc = Abort;
 	}
 	cleanup(rc);
-	#endif
 #else 
 	cleanup(rc);
 #endif

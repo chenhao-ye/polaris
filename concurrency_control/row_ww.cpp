@@ -96,7 +96,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 				}
 				// remove from owner
 				if (prev)
-						prev->next = en->next;
+					prev->next = en->next;
 				else {
 					if (owners == en)
 						owners = en->next;
@@ -161,7 +161,8 @@ final:
 		pthread_mutex_unlock( latch );
 		#endif
 	}
-	#if !BATCH_RETURN_ENTRY
+
+	#if BATCH_RETURN_ENTRY
 	while (to_return) {
 		en = to_return;
 		to_return = to_return->next;
@@ -269,7 +270,7 @@ void
 Row_ww::bring_next() {
 		LockEntry * entry;
 	// If any waiter can join the owners, just do it!
-	while (waiters_head && (owners == NULL || !conflict_lock(owners->type, waiters_head->type) )) {
+	while (waiters_head && (owner_cnt == 0 || !conflict_lock(owners->type, waiters_head->type) )) {
 		LIST_GET_HEAD(waiters_head, waiters_tail, entry);
 		STACK_PUSH(owners, entry);
 		owner_cnt ++;
