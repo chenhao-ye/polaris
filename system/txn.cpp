@@ -297,13 +297,6 @@ RC txn_man::finish(RC rc) {
             rc = Abort;
 	}
 	cleanup(rc);
-
-	#if DYNAMIC_TS
-	/*
-	if (rc == Abort)
-		reassign_ts();
-	*/
-	#endif
 #else 
 	cleanup(rc);
 #endif

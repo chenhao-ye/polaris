@@ -86,7 +86,7 @@ RC thread_t::run() {
 					else if (m_query == NULL) {
 						starttime = get_sys_clock();
 						m_query = query_queue->get_next_query( _thd_id );
-#if CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT 
+#if CC_ALG == WAIT_DIE || (CC_ALG == WOUND_WAIT && WW_STARV_FREE)
 						m_txn->set_ts(get_next_ts());
 #endif
 					}
@@ -105,7 +105,10 @@ RC thread_t::run() {
 //#if CC_ALG == VLL
 //		_wl->get_txn_man(m_txn, this);
 //#endif
-#if CC_ALG == CLV
+
+#if (CC_ALG == WOUND_WAIT) && !WW_STARV_FREE
+		m_txn->set_ts(get_next_ts());
+#elif (CC_ALG == CLV)
 		m_txn->set_ts(0);
 #endif
 		m_txn->set_txn_id(get_thd_id() + thd_txn_id * g_thread_cnt);
