@@ -144,33 +144,41 @@ uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 		assert(false);
 #endif
 #elif NUM_HS == 2
+		uint64_t hs1_row_id = table_size - 1;
+		uint64_t hs2_row_id = table_size - 2;
+		double flip;
+		drand48_r(&_query_thd->buffer, &flip);
+		if (flip < FLIP_RATIO) {
+			hs1_row_id = table_size - 2;
+			hs2_row_id = table_size - 1;
+		}
 #if POS_HS == TM
 		if (tmp == 0) {
 			// insert hotpost at the beginning
 			req->rtype = FIRST_HS;
-			row_id = table_size - 1;
+			row_id = hs1_row_id;
 		} else if (tmp == (g_req_per_query / 2)) {
 			req->rtype = SECOND_HS;
-			row_id = table_size - 2;
+			row_id = hs2_row_id;
 		} else {
 #elif POS_HS == MB
 		if (tmp == (g_req_per_query / 2)) {
 			// insert hotpost at the bottom
 			req->rtype = FIRST_HS;
-			row_id = table_size - 1;
+			row_id = hs1_row_id;
 		} else if (tmp == (g_req_per_query - 1)) {
 			req->rtype = SECOND_HS;
-			row_id = table_size - 2;
+			row_id = hs2_row_id;
 		} else { 
 #elif POS_HS == SPECIFIED
 		UInt32 hs2_idx = (UInt32) min((int)g_req_per_query-1, max(1, (int) floor(g_req_per_query * SPECIFIED_RATIO)));
 		if (tmp == 0) {
 			// insert hotpost at the beginning
 			req->rtype = FIRST_HS;
-			row_id = table_size - 1;
+			row_id = hs1_row_id;
 		} else if (tmp == hs2_idx) {
 			req->rtype = SECOND_HS;
-			row_id = table_size - 2;
+			row_id = hs2_row_id;
 		} else {
 #else
 		assert(false);
