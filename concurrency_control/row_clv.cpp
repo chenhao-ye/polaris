@@ -458,6 +458,7 @@ inline bool Row_clv::rm_if_in_retired(txn_man * txn, bool is_abort) {
 		return false;
 	else {
 		if (is_abort) {
+			en->txn->lock_abort = true;
 			#if BATCH_RETURN_ENTRY
 			en = remove_descendants(en, to_return);
 			#else
@@ -479,6 +480,7 @@ inline bool Row_clv::rm_if_in_retired(txn_man * txn, bool is_abort) {
 	while(en) {
 		if (en->txn == txn) {
 			if (is_abort) {
+				en->txn->lock_abort = true;
 				#if BATCH_RETURN_ENTRY
 				en = remove_descendants(en, to_return);
 				#else
@@ -615,12 +617,13 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 		assert(en->loc != LOC_NONE);
 		#endif
 		if (ts != 0) {
+			ts_t en_ts = en->txn->get_ts();
 			// self assigned, if conflicted, assign a number
 			if (status == RCOK && conflict_lock(en->type, type) && 
-				 (en->txn->get_ts() > txn->get_ts() || en->txn->get_ts() == 0))
+				 ((en_ts > txn->get_ts()) || (en_ts == 0)))
 				status = WAIT;
 			if (status == WAIT) {
-				if (en->txn->get_ts() > ts || en->txn->get_ts() == 0) {
+				if ((en_ts > ts) || (en_ts == 0)) {
 					to_reset = en;
 					en = en->prev;
 					#if BATCH_RETURN_ENTRY
@@ -644,6 +647,11 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 				en = en->next;
 			}
 		} else {
+			// if already commited, abort self
+			if (en->txn->status == COMMITED) {
+					en = en->next;
+					continue;
+			}
 			// self unassigned, if not assigned, assign a number;
 			if (en->txn->get_ts() == 0) {
 				if (!en->txn->atomic_set_ts(local_ts)) // it has a ts already
@@ -669,7 +677,10 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 						en = owners;
 				}	
 			} else {
-				en = en->next;
+				if (!recheck)
+					en = en->next;
+				else
+					checked_cnt--;
 			}
 		}
 	}
@@ -707,7 +718,7 @@ Row_clv::remove_descendants(CLVLockEntry * en, CLVLockEntry *& to_return) {
 inline CLVLockEntry *
 Row_clv::remove_descendants(CLVLockEntry * en) {
 #endif
-	int abort_cnt = 1;
+	uint32_t abort_cnt = 1;
 	assert(en != NULL);
 	CLVLockEntry * next = NULL;
 	CLVLockEntry * prev = en->prev;

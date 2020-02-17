@@ -104,7 +104,9 @@
 #define PRIORITIZE_HS				false
 #define DELAY_ACQUIRE				0
 #define DELAY_THRESHOLD				4
-#define BTACH_RETURN_ENTRY			false
+#define BATCH_RETURN_ENTRY			false
+// [WW]
+#define WW_STARV_FREE               true
 
 /***********************************************/
 // Logging
@@ -141,6 +143,7 @@
 #define NUM_HS					1	
 #define FIRST_HS				WR
 #define SECOND_HS				WR
+#define SPECIFIED_RATIO         0.5
 
 // ==== [TPCC] ====
 // For large warehouse count, the tables do not fit in memory
@@ -245,6 +248,7 @@ extern TestCases					g_test_case;
 #define BOT						3
 #define TM						4
 #define MB						5
+#define SPECIFIED               6
 
 
 #endif
