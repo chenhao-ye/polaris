@@ -27,9 +27,8 @@ GB = 1024 * MB
 class Experiment(object):
     def __init__(self):
         # config something
-        #self.exp_name = 'clv_onehotspot_50000penalty'
-        #self.exp_name = 'no_hotspot'
-        self.exp_name = 'two_hotspots_distance'
+        self.exp_name = 'onehotspot_distance'
+        #self.exp_name = 'zipfian_ww_starvation'
         self.home_dir = '/users/kanwu/'
         self.res_dir = self.home_dir + 'results/' + self.exp_name
         self.tmp_dir = '/dev/shm/'
@@ -46,22 +45,26 @@ class Experiment(object):
 
         # experiment config
         config = {
-          #'alg': ['CLV'],     #'mmap' 'libaio'
-          'alg': ['NO_WAIT', 'CLV', 'SILO', 'WOUND_WAIT', 'WAIT_DIE'],     #CLV SILO WOUND_WAIT WAIT_DIE
+          'alg': ['CLV'],     #'mmap' 'libaio'
+          #'alg': ['NO_WAIT', 'CLV', 'SILO', 'WOUND_WAIT', 'WAIT_DIE'],     #CLV SILO WOUND_WAIT WAIT_DIE
+          #'alg': ['NO_WAIT', 'CLV', 'SILO', 'WAIT_DIE'],     #CLV SILO WOUND_WAIT WAIT_DIE
           #'threads': [1, 2, 4, 8, 16, 32, 64],
-          'threads': [1, 2, 4, 8, 16, 32],
-          #'threads': [16],
+          #'threads': [1, 2, 4, 8, 16, 32],
+          'threads': [64],
           #'txn_len': [4, 16, 64],    # number of requests in the txn
-          'txn_len': [16, 64],    # number of requests in the txn
-          #'num_hs' : [1], # 0, 1, 2
-          'num_hs' : [2],
+          'txn_len': [16],    # number of requests in the txn
+          'num_hs' : [1], # 0, 1, 2
+          #'num_hs' : [0],
           #'pos_hs' : ['TOP', 'MID', 'BOT'], # this is only for one hotspot
           'pos_hs' : ['SPECIFIED'],
-          'specified': [0.1, 0.3, 0.5, 0.7, 0.9],  # the position of the second hotspot
+          #'specified': [0.1, 0.3, 0.5, 0.7, 0.9],  # the position of the second hotspot
+          'specified': [0.1, 0.9],  # the position of the second hotspot
           #'pos_hs' : ['TM', "MB"],
           'synthetic': ['true'],  # true is for synthetic workloads
           #'zipfian' : [0, 0.1, 0.3, 0.5, 0.7, 0.9],   
           'zipfian' : [0],   
+          #'read_ratio' : [0, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0],
+          #'read_ratio' : [0, 0.5, 0.9],
           'read_ratio' : [1],
         }
 
@@ -101,7 +104,7 @@ class Experiment(object):
                 if 'req=' in line:
                     output_file.write('req=' + str(config['txn_len']) + '\n')
                     continue
-                if 'num_hs=0' in line:
+                if 'num_hs=' in line:
                     output_file.write('num_hs=' + str(config['num_hs']) + '\n')
                     continue
                 if 'pos=' in line:

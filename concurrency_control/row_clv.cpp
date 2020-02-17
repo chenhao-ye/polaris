@@ -737,7 +737,10 @@ Row_clv::remove_descendants(CLVLockEntry * en, CLVLockEntry *& to_return) {
 inline CLVLockEntry *
 Row_clv::remove_descendants(CLVLockEntry * en) {
 #endif
+	#if DEBUG_PROFILING
 	uint32_t abort_cnt = 1;
+	uint32_t abort_try = 1;
+	#endif
 	assert(en != NULL);
 	CLVLockEntry * next = NULL;
 	CLVLockEntry * prev = en->prev;
@@ -772,10 +775,13 @@ Row_clv::remove_descendants(CLVLockEntry * en) {
 				en = owners;
 				// no need to be too complicated (i.e. call function) as the owner will be empty in the end
 				owners = owners->next;
-				en->txn->set_abort();
-				//debug
-				//assert(en->txn->status != COMMITED);
-				abort_cnt++;
+				#if DEBUG_PROFILING
+				abort_try++;
+				if (en->txn->status == ABORTED)
+					abort_cnt++;
+				else
+				#endif
+					en->txn->set_abort();
 				#if !DEBUG_TMP
 				#if BATCH_RETURN_ENTRY
 				RETURN_PUSH(to_return, en);
@@ -797,10 +803,13 @@ Row_clv::remove_descendants(CLVLockEntry * en) {
 		LIST_RM_SINCE(retired_head, retired_tail, en);
 		while(en) {
 			next = en->next;
-			en->txn->set_abort();
-			//debug
-			//assert(en->txn->status != COMMITED);
-			abort_cnt++;
+			#if DEBUG_PROFILING
+			abort_try++;
+			if (en->txn->status == ABORTED)
+				abort_cnt++;
+			else
+			#endif
+				en->txn->set_abort();
 			retired_cnt--;
 			#if !DEBUG_TMP
 			#if BATCH_RETURN_ENTRY
@@ -819,10 +828,16 @@ Row_clv::remove_descendants(CLVLockEntry * en) {
 	assert(!retired_head || retired_head->is_cohead);
 	#if DEBUG_PROFILING
 	// debug9: sum of all lengths of chains; debug 10: time of cascading aborts; debug2: max chain
-	INC_STATS(0, debug9, abort_cnt);
-	INC_STATS(0, debug2, 1);
-	if (abort_cnt > stats._stats[0]->debug10)
-		stats._stats[0]->debug10 = abort_cnt;
+	if (abort_cnt > 1) {
+		INC_STATS(0, debug2, 1);
+		INC_STATS(0, debug9, abort_cnt); // out of all aborts, how many are cascading aborts (have >= 1 dependency)
+	}
+	// max length of aborts
+	if (abort_cnt > stats._stats[0]->debug11)
+		stats._stats[0]->debug11 = abort_cnt;
+	// max length of depedency
+	if (abort_try > stats._stats[0]->debug10)
+		stats._stats[0]->debug10 = abort_try;
 	#endif
 	if (prev)
 		return prev->next;

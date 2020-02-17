@@ -103,8 +103,8 @@ class Experiment(object):
                 if 'req=' in line:
                     output_file.write('req=' + str(config['txn_len']) + '\n')
                     continue
-                if 'hs=1' in line:
-                    output_file.write('hs=' + str(config['num_hs']) + '\n')
+                if 'num_hs=' in line:
+                    output_file.write('num_hs=' + str(config['num_hs']) + '\n')
                     continue
                 if 'pos=' in line:
                     output_file.write('pos=' + str(config['pos_hs']) + '\n')

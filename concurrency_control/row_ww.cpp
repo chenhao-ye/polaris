@@ -38,8 +38,9 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 	LockEntry * entry = get_entry();
 	LockEntry * en;
 	LockEntry * to_return = NULL;
-
 	#if DEBUG_PROFILING
+	uint32_t abort_cnt = 0;
+	uint32_t abort_try = 0;
 	uint64_t starttime = get_sys_clock();
 	#endif
 
@@ -58,7 +59,6 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug1, get_sys_clock() - starttime);
-	INC_STATS(txn->get_thd_id(), debug10, 1);
 	#endif
 
 	// each thread has at most one owner of a lock
@@ -82,8 +82,9 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 		while (en != NULL) {
 			if (en->txn->get_ts() > txn->get_ts() && conflict_lock(lock_type, type)) {
 				// step 1 - figure out what need to be done when aborting a txn
+				bool already_aborted = (en->txn->status == ABORTED);
 				if (txn->wound_txn(en->txn) == COMMITED){
-					// this txn is wounded by other txns.. 
+					// curr txn is wounded by other txns.. 
 					if (owner_cnt == 0)
 						bring_next();
 					rc = Abort;
@@ -94,6 +95,11 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 					#endif
 					goto final;
 				}
+				#if DEBUG_PROFILING
+				abort_try++;
+				if (!already_aborted)
+					abort_cnt++; 
+				#endif
 				// remove from owner
 				if (prev)
 					prev->next = en->next;
@@ -122,6 +128,14 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 			}
 			#endif
 		}
+		#if DEBUG_PROFILING
+		// max abort chain
+		if (abort_cnt > stats._stats[0]->debug10)
+                	stats._stats[0]->debug10 = abort_try;
+		// max length of aborts
+        	if (abort_cnt > stats._stats[0]->debug11)
+                	stats._stats[0]->debug11 = abort_cnt;
+		#endif
 
 		// insert to wait list, the waiter list is always in timestamp order
 		entry->txn = txn;

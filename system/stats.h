@@ -28,6 +28,7 @@ public:
 	uint64_t debug8;
 	uint64_t debug9;
 	uint64_t debug10;
+	uint64_t debug11;
 	#endif
 	
 	uint64_t latency;
