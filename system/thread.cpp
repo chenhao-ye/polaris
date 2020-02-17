@@ -110,6 +110,8 @@ RC thread_t::run() {
 		m_txn->set_ts(get_next_ts());
 #elif (CC_ALG == CLV)
 		m_txn->set_ts(0);
+#elif (CC_ALG == WOUND_WAIT) && !WW_STARV_FREE
+		m_txn->set_ts(get_next_ts());
 #endif
 		m_txn->set_txn_id(get_thd_id() + thd_txn_id * g_thread_cnt);
 		thd_txn_id ++;

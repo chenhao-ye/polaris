@@ -106,8 +106,7 @@
 #define DELAY_THRESHOLD				4
 #define BATCH_RETURN_ENTRY			false
 // [WW]
-#define WW_STARV_FREE               true
-
+#define WW_STARV_FREE				true
 
 /***********************************************/
 // Logging

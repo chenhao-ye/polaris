@@ -157,13 +157,13 @@ uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 			row_id = table_size - 2;
 		} else { 
 #elif POS_HS == SPECIFIED
-		UInt32 hs2_idx = (UInt32) max(1, floor(g_req_per_query * SPECIFIED_RATIO));
+		UInt32 hs2_idx = (UInt32) max(1, (int) floor(g_req_per_query * SPECIFIED_RATIO));
 		if (tmp == 0) {
 			// insert hotpost at the beginning
 			req->rtype = FIRST_HS;
 			row_id = table_size - 1;
 		} else if (tmp == hs2_idx) {
-			eq->rtype = SECOND_HS;
+			req->rtype = SECOND_HS;
 			row_id = table_size - 2;
 		} else {
 #else
