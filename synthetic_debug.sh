@@ -2,23 +2,24 @@ cp -r config_ycsb_synthetic.h config.h
 rm debug.out
 
 wl="YCSB"
-alg=WOUND_WAIT
-threads=32
+alg=CLV
+threads=16
 cnt=100000 #0000
 penalty=50000
-zipf=0.99
-synthetic=false
+zipf=0
+synthetic=true
 table_size="1024*1024*20"
 profile="true"
 req=16
 spin="true"
 on=1
 dynamic="true"
-hs=0
-pos=TOP
+hs=2
+pos="SPECIFIED"
+specified=0.2
 fhs="WR"
 shs="WR"
-read_ratio=0.9
+read_ratio=1
 phs="false"
 think=0
 ordered="false"
