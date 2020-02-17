@@ -105,6 +105,8 @@
 #define DELAY_ACQUIRE				0
 #define DELAY_THRESHOLD				4
 #define BATCH_RETURN_ENTRY			false
+// [WW]
+#define WW_STARV_FREE               true
 
 /***********************************************/
 // Logging

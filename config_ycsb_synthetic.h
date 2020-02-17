@@ -143,6 +143,7 @@
 #define NUM_HS					1	
 #define FIRST_HS				WR
 #define SECOND_HS				WR
+#define SPECIFIED_RATIO         0.5
 
 // ==== [TPCC] ====
 // For large warehouse count, the tables do not fit in memory
@@ -247,6 +248,7 @@ extern TestCases					g_test_case;
 #define BOT						3
 #define TM						4
 #define MB						5
+#define SPECIFIED               6
 
 
 #endif

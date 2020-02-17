@@ -107,6 +107,9 @@
 #define DELAY_ACQUIRE				0
 #define DELAY_THRESHOLD				4
 #define BATCH_RETURN_ENTRY			false
+// [WW]
+#define WW_STARV_FREE               true
+
 
 /***********************************************/
 // Logging
@@ -137,8 +140,13 @@
 #define PERC_MULTI_PART				1
 #define REQ_PER_QUERY				16
 #define FIELD_PER_TUPLE				10
-#define SYNTHETIC_YCSB				false
-#define NUM_HS					0
+// ==== [YCSB-synthetic] ====
+#define SYNTHETIC_YCSB              true
+#define POS_HS                  TOP
+#define NUM_HS                  1   
+#define FIRST_HS                WR
+#define SECOND_HS               WR
+
 // ==== [TPCC] ====
 // For large warehouse count, the tables do not fit in memory
 // small tpcc schemas shrink the table size.
@@ -237,5 +245,11 @@ extern TestCases					g_test_case;
 #define TS_CAS						2
 #define TS_HW						3
 #define TS_CLOCK					4
+// Synthetic YCSB - HOTSPOT POSITION
+#define TOP                     1
+#define MID                     2
+#define BOT                     3
+#define TM                      4
+#define MB                      5
 
 #endif

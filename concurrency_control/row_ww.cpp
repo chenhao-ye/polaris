@@ -161,6 +161,7 @@ final:
 		pthread_mutex_unlock( latch );
 		#endif
 	}
+
 	#if BATCH_RETURN_ENTRY
 	while (to_return) {
 		en = to_return;
