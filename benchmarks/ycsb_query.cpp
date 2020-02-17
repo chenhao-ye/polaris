@@ -134,6 +134,12 @@ uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 			req->rtype = FIRST_HS;
 			row_id = table_size - 1;
 		} else {
+#elif POS_HS == SPECIFIED
+		UInt32 hs_idx = (UInt32) max(1, (int) floor(g_req_per_query * SPECIFIED_RATIO));
+		if (tmp == hs_idx) {
+			req->rtype = FIRST_HS;
+                        row_id = table_size - 1;
+		} else {
 #else
 		assert(false);
 #endif
