@@ -3,6 +3,7 @@
 **.out
 **.swp
 **.swo
+outputs/*.json
 config.h
 rundb
 cmake-build-debug
