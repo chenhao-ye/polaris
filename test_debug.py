@@ -38,7 +38,7 @@ def run(test = '', job=None):
 		app_flags = "-Ar -t1"
 	if test == 'conflict':
 		app_flags = "-Ac -t4"
-	os.system("./rundb %s | tee temp.out" % app_flags)
+	os.system("./rundb %s" % app_flags)
 	
 
 def compile_and_run(job) :
@@ -55,7 +55,6 @@ def parse_output(job):
 				job[key] = val
 			break
 	output.close()
-	os.system("rm -f temp.out")
 	return job
 
 if __name__ == "__main__":
@@ -73,12 +72,8 @@ if __name__ == "__main__":
 		key = item.split("=")[0]
 		value = item.split("=")[1]
 		job[key] = value
-
+	print(json.dumps(job)+"\n")
 	compile_and_run(job)
-	job = parse_output(job)
-	stats = open("outputs/stats.json", 'a+')
-	stats.write(json.dumps(job)+"\n")
-	stats.close()
 
 	
 
