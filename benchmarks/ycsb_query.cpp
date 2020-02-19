@@ -183,6 +183,25 @@ uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 #else
 		assert(false);
 #endif
+#elif NUM_HS == 3
+		uint64_t hs1_row_id = table_size - 1;
+		uint64_t hs2_row_id = table_size - 2;
+		double flip;
+		drand48_r(&_query_thd->buffer, &flip);
+		if (flip < FLIP_RATIO) {
+			hs1_row_id = table_size - 2;
+			hs2_row_id = table_size - 1;
+		}
+		if (tmp == (g_req_per_query-1)) {
+              		req->rtype = FIRST_HS;
+			row_id = hs2_row_id;
+                } else if (tmp == (g_req_per_query - 2)) {
+              		req->rtype = FIRST_HS;
+			row_id = hs1_row_id;
+                } else if (tmp == (g_req_per_query - 3)) {
+              		req->rtype = FIRST_HS;
+                        row_id = table_size - 3;
+		} else {
 #endif
 #endif
 		double r;
