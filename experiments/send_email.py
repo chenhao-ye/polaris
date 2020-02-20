@@ -8,7 +8,7 @@ def send_email(msg):
     smtpObj.ehlo()
     smtpObj.starttls()
     smtpObj.login('experiments.guo@gmail.com',password)
-    smtpObj.sendmail('experiments.guo@gmail.com','scarlet0619@icloud.com',"Subject: {} is done!".format(msg))
+    smtpObj.sendmail('experiments.guo@gmail.com','zguo74@wisc.edu',"Subject: {} is done!".format(msg))
     smtpObj.quit()
 
 if __name__ == "__main__":
