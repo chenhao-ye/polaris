@@ -145,6 +145,7 @@
 #define SECOND_HS				WR
 #define SPECIFIED_RATIO         0.5
 #define FLIP_RATIO		0.5
+#define FIXED_HS				0
 
 // ==== [TPCC] ====
 // For large warehouse count, the tables do not fit in memory
