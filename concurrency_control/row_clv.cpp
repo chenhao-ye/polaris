@@ -250,18 +250,58 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	waiter_cnt ++;
 	txn->lock_ready = false;
 
-	// turn on retire only when needed
-	#if THREAD_CNT > 1
-	if (!retire_on && waiter_cnt >= CLV_RETIRE_ON)
-		retire_on = true;
-	#endif
-
+	// bring next available to owner in case both are read
 	if (bring_next(txn)) {
 		rc = RCOK;
 		#if DEBUG_TMP
 		to_insert->loc = OWNERS;
 		#endif
 	}
+
+	// turn on retire only when needed
+	#if THREAD_CNT > 1
+	if (!retire_on && waiter_cnt >= CLV_RETIRE_ON)
+		retire_on = true;
+	#endif
+
+	#if !RETIRE_READ
+	if (retire_on && owners && (owners->type == LOCK_SH)) {
+		// if retire turned on and share lock is the owner
+                // move to retired
+                CLVLockEntry * to_retire = NULL;
+                while (owners) {
+                        to_retire = owners;
+                        LIST_RM(owners, owners_tail, to_retire, owner_cnt);
+                        to_retire->next=NULL;
+                        to_retire->prev=NULL;
+                        // try to add to retired
+                        if (retired_tail) {
+                                if (conflict_lock(retired_tail->type, to_retire->type)) {
+                                        // conflict with tail -> increment barrier for sure
+                                        // default is_cohead = false
+                                        to_retire->delta = true;
+                                        to_retire->txn->increment_commit_barriers();
+                                } else {
+                                        // not conflict with tail ->increment if is not head
+                                        to_retire->is_cohead = retired_tail->is_cohead;
+                                        if (!to_retire->is_cohead)
+                                                to_retire->txn->increment_commit_barriers();
+                                }
+                        } else {
+                                to_retire->is_cohead = true;
+                        }
+                        RETIRED_LIST_PUT_TAIL(retired_head, retired_tail, to_retire);
+                        retired_cnt++;
+                }
+                if (bring_next(txn)) {
+                        rc = RCOK;
+                        #if DEBUG_TMP
+                        to_insert->loc = OWNERS;
+                        #endif
+                }
+
+	}
+	#endif
 
 	#if DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug3, get_sys_clock() - starttime);

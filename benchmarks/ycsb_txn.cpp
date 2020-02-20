@@ -79,7 +79,11 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 			if (req->rtype == RD || req->rtype == WR || iteration == req->scan_len)
 				finish_req = true;
 #if CC_ALG == CLV
+#if RETIRE_READ
 			if (finish_req) {
+#else
+			if (finish_req && (req->rtype == WR)) {
+#endif
 				if (retire_row(row) == Abort)
                 			return finish(Abort);
 			}
