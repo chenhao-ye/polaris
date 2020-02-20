@@ -35,7 +35,7 @@ for i in 0 1 2 3 4
 do
 for alg in CLV WOUND_WAIT NO_WAIT SILO WAIT_DIE
 do
-for zipf in 0.5 0.7 0.9
+for zipf in 1.1
 do
 for read_ratio in 0.1 0.5 0.9
 do
@@ -45,4 +45,5 @@ done
 done
 done
 
-python send_email.py ycsb_test
+cd experiments
+python3 send_email.py ycsb_test
