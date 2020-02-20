@@ -788,6 +788,26 @@ Row_clv::remove_descendants(CLVLockEntry * en) {
 	lock_t type = en->type;
 	bool conflict_with_owners = conflict_lock_entry(en, owners);
 	next = en->next;
+	if (type == LOCK_SH) {
+		// update entry and no need to remove descendants!
+		update_entry(en);
+		LIST_RM(retired_head, retired_tail, en, retired_cnt);
+		#if !DEBUG_TMP
+        	#if BATCH_RETURN_ENTRY
+        	RETURN_PUSH(to_return, en);
+        	#else
+        	return_entry(en);
+        	#endif
+        	#else
+        	en->loc = LOC_NONE;
+        	en->next = NULL;
+        	en->prev = NULL;
+        	#endif
+		if (prev)
+			return prev->next;
+		else
+			return retired_head;
+	}
 	//update_entry(en); // no need to update as any non-cohead needs to be aborted, coheads will not be aborted
 	LIST_RM(retired_head, retired_tail, en, retired_cnt);
 	#if !DEBUG_TMP

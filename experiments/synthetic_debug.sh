@@ -13,7 +13,7 @@ retire_read="false"
 
 # workload
 wl="YCSB"
-req=16
+req=64
 synthetic=false #true
 zipf=0.9 #0
 num_hs=0 #2
@@ -22,13 +22,13 @@ specified=0.9
 fixed=1
 fhs="WR"
 shs="WR"
-read_ratio=0.5 #1
+read_ratio=0.1 #.9 #1
 ordered="false"
 flip=0
 table_size="1024*1024*10"
 
 # other
-threads=16
+threads=32
 profile="true"
 cnt=100000 
 penalty=50000
