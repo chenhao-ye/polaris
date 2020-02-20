@@ -18,7 +18,6 @@ synthetic=true
 zipf=0
 num_hs=1
 pos=SPECIFIED
-pos=TOP
 specified=0
 fixed=1
 fhs="WR"
