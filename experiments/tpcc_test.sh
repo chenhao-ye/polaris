@@ -8,7 +8,7 @@ spin="true"
 ww_starv_free="false"
 # [CLV]
 dynamic="true"
-on=1
+on=0
 retire_read="false"
 retire="true"
 # [CLV] lock optimization
@@ -31,7 +31,7 @@ profile="true"
 cnt=100000
 penalty=50000 
 
-for alg in CLV WOUND_WAIT SILO WAIT_DIE NO_WAIT
+for alg in CLV #WOUND_WAIT SILO WAIT_DIE NO_WAIT
 do
 for i in 0 1 2 3 4
 do
@@ -46,4 +46,4 @@ done
 done
 
 cd experiments/
-python3 send_email.py tpcc-node2
+python3 send_email.py tpcc-node1
