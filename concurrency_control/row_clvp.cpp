@@ -249,7 +249,7 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 		txn->lock_ready = false; // wait in waiters
 
 	// 4. turn on retire only when needed
-	#if THREAD_CNT > 1
+	#if THREAD_CNT > 1 && RETIRE_ON
 	if (!retire_on && (waiter_cnt >= CLV_RETIRE_ON))
 		retire_on = true;
 	#endif

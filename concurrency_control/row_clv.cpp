@@ -22,6 +22,7 @@ void Row_clv::init(row_t * row) {
 	retire_on = false;
 	// local timestamp
 	local_ts = -1;
+	txn_ts = 0;
 
 #if SPINLOCK
 	latch = new pthread_spinlock_t;
@@ -157,6 +158,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	// if unassigned, grab or assign the largest possible number
 	local_ts = -1;
 	ts_t ts = txn->get_ts();
+	txn_ts = ts;
 	if (ts == 0) {
 		// test if can grab the lock without assigning priority
 		if ((waiter_cnt == 0) && 
@@ -176,14 +178,29 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 		}
 		// else has to assign a priority and add to waiters first 
 		assert(retired_cnt + owner_cnt != 0);
-		local_ts = txn->set_next_ts(retired_cnt + owner_cnt + 1);
+		// heuristic to batch assign ts: 
+		//int batch_n_ts = retired_cnt + owner_cnt + 1;
+		
+		int batch_n_ts = 1;
+		if ( waiter_cnt == 0 ) {
+			if (retired_tail && (retired_tail->txn->get_ts() == 0)) {
+				batch_n_ts += retired_cnt;
+			} 
+			if (owners_tail && (owners_tail->txn->get_ts() == 0)) {
+				batch_n_ts += owner_cnt;	
+			}
+		} 
+		//local_ts = txn->set_next_ts(retired_cnt + owner_cnt + 1);
+		local_ts = txn->set_next_ts(batch_n_ts);
 		if (local_ts != 0) {
+			txn_ts = local_ts;
 			// if != 0, already booked n ts. 
 			local_ts = local_ts - (retired_cnt + owner_cnt);
-			assert(txn->get_ts() != local_ts); // make sure did not change pointed addr
+			//assert(txn->get_ts() != local_ts); // make sure did not change pointed addr
 		} else {
 			// if == 0, fail to assign, oops, self has an assigned number anyway
 			ts = txn->get_ts();
+			txn_ts = ts;
 		}
 	}
 
@@ -233,7 +250,8 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	to_insert->type = type;
 	CLVLockEntry * en = waiters_head;
 	while (en != NULL) {
-		if (txn->get_ts() < en->txn->get_ts())
+		//if (txn->get_ts() < en->txn->get_ts())
+		if (txn_ts < en->txn->get_ts())
 			break;
 		en = en->next;
 	}
@@ -259,7 +277,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	}
 
 	// turn on retire only when needed
-	#if THREAD_CNT > 1
+	#if THREAD_CNT > 1 && (RETIRE_ON)
 	if (!retire_on && waiter_cnt >= CLV_RETIRE_ON)
 		retire_on = true;
 	#endif
@@ -658,25 +676,26 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 		#if DEBUG_TMP
 		assert(en->loc != LOC_NONE);
 		#endif
+		ts_t en_ts = en->txn->get_ts();
 		if (ts != 0) {
-			ts_t en_ts = en->txn->get_ts();
 			// self assigned, if conflicted, assign a number
+			//if (status == RCOK && conflict_lock(en->type, type) && 
+			//	 ((en_ts > txn->get_ts()) || (en_ts == 0))) {
 			if (status == RCOK && conflict_lock(en->type, type) && 
-				 ((en_ts > txn->get_ts()) || (en_ts == 0))) {
+				 ((en_ts > txn_ts) || (en_ts == 0))) {
 				status = WAIT;
 			}
 			if (status == WAIT) {
 				if ((en_ts > ts) || (en_ts == 0)) {
 					to_reset = en;
 					en = en->prev;
-					txn_man * tmp_txn = to_reset->txn;
+					//txn_man * tmp_txn = to_reset->txn;
 					#if BATCH_RETURN_ENTRY
 					if (!wound_txn(to_reset, txn, check_retired, to_return))
 					#else
 					if (!wound_txn(to_reset, txn, check_retired))
 					#endif
 						return Abort;
-					assert(tmp_txn->status != COMMITED);
 					if (en)
 						en = en->next;
 					else {
@@ -698,18 +717,21 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 					continue;
 			}
 			// self unassigned, if not assigned, assign a number;
-			if (en->txn->get_ts() == 0) {
+			if (en_ts == 0) {
 				// if already commited, abort self
 				if (en->txn->status == COMMITED) {
 					en = en->next;
 					continue;
 				}
-				if (!en->txn->atomic_set_ts(local_ts)) // it has a ts already
+				if (!en->txn->atomic_set_ts(local_ts)) { // it has a ts already
 					recheck = true;
-				else 
+				} else {
+					en_ts = local_ts;
 					local_ts++;
+				}
 			} 
-			if (!recheck && (en->txn->get_ts() > txn->get_ts())) {
+			//if (!recheck && (en->txn->get_ts() > txn->get_ts())) {
+			if (!recheck && (en_ts > txn_ts)) {
 				to_reset = en;
 				en = en->prev;
 				#if BATCH_RETURN_ENTRY
@@ -735,7 +757,6 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 			}
 		}
 	}
-	assert(txn->get_ts() != 0);
 	/*
 	if (retired_head && (type == LOCK_EX)) {
 		if (txn->get_ts() <= retired_head->txn->get_ts() )
