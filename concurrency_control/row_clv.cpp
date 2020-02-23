@@ -19,7 +19,10 @@ void Row_clv::init(row_t * row) {
 	waiter_cnt = 0;
 	retired_cnt = 0;
 	// a switch for retire
-	retire_on = false;
+	retire_on = true;
+	// track retire cnt of most recent 5 retires
+	retired_history = 0;
+	retired_history_cnt = 0;
 	// local timestamp
 	local_ts = -1;
 	txn_ts = 0;
@@ -32,7 +35,6 @@ void Row_clv::init(row_t * row) {
 	pthread_mutex_init(latch, NULL);
 #endif
 	blatch = false;
-	retire_on = false;
 	#if DEBUG_TMP
 	vec = (CLVLockEntry **) mem_allocator.alloc(sizeof(CLVLockEntry *) * g_thread_cnt, _row->get_part_id());
 	for (size_t i = 0; i < g_thread_cnt; i++) {
@@ -277,10 +279,17 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	}
 
 	// turn on retire only when needed
+	/*
 	#if THREAD_CNT > 1 && (RETIRE_ON)
 	if (!retire_on && waiter_cnt >= CLV_RETIRE_ON)
 		retire_on = true;
 	#endif
+	*/
+	if ( retire_on && (retired_history_cnt > 3) && (round(retired_history / retired_history_cnt) <= CLV_RETIRE_ON) ) {
+		retire_on = false;
+		retired_history = 0;
+		retired_history_cnt = 0;
+	} 
 
 	#if !RETIRE_READ
 	if (retire_on && owners && (owners->type == LOCK_SH)) {
@@ -335,6 +344,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 
 RC Row_clv::lock_retire(txn_man * txn) {
 
+
 	#if DEBUG_PROFILING
 	uint64_t starttime = get_sys_clock();
 	#endif
@@ -381,11 +391,13 @@ RC Row_clv::lock_retire(txn_man * txn) {
 		} else {
 			entry->is_cohead = true;
 		}
+
+		// optimization: turn off retire when retire list is always empty
+		retired_history += retired_cnt;
+		retired_history_cnt++;
+
 		RETIRED_LIST_PUT_TAIL(retired_head, retired_tail, entry);
 		retired_cnt++;
-		#if DEBUG_CLV
-		printf("retire thd=%lu, txn=%lu row=%p, cnt=%d\n", txn->get_thd_id(), txn->get_txn_id(), _row, retired_cnt);
-		#endif
 		#if DEBUG_TMP
 		entry->loc = RETIRED;
 		#endif

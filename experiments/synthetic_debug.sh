@@ -13,7 +13,7 @@ dynamic="true"
 on=0
 retire_read="false"
 retire="true"
-retire="false"
+#retire="false"
 
 # workload
 wl="YCSB"

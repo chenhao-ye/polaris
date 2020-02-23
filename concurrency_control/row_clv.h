@@ -50,6 +50,8 @@ private:
 	ts_t local_ts;
 	ts_t txn_ts;
 	bool retire_on;
+	UInt32 retired_history;
+	UInt32 retired_history_cnt;
 
 	#if DEBUG_TMP	
 	CLVLockEntry ** vec;
