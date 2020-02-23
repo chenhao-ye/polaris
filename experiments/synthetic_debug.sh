@@ -3,7 +3,7 @@ cp -r config_ycsb_synthetic.h config.h
 
 # algorithm
 alg=CLV
-alg=WOUND_WAIT
+#alg=WOUND_WAIT
 spin="true"
 # [WW]
 ww_starv_free="false"
@@ -12,7 +12,7 @@ dynamic="true"
 on=0
 retire_read="false"
 retire="true"
-retire_off_opt="true"
+retire_off_opt="false"
 #retire="false"
 
 # workload

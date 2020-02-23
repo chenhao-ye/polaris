@@ -33,7 +33,7 @@ profile="true"
 cnt=100000 
 penalty=50000
 
-retire_off_opt="true"
+retire_off_opt="false"
 for fixed in 1 0
 do
 for i in 0 1 2 3 4

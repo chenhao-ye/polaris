@@ -19,7 +19,11 @@ void Row_clv::init(row_t * row) {
 	waiter_cnt = 0;
 	retired_cnt = 0;
 	// a switch for retire
+	#if THREAD_CNT == 1
+	retire_on = false;
+	#else
 	retire_on = true;
+	#endif
 	// track retire cnt of most recent 5 retires
 	#if CLV_RETIRE_OFF
 	retired_history = 0;
