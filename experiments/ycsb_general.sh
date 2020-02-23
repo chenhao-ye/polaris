@@ -37,11 +37,11 @@ for i in 0 1 2 3 4
 do
 for alg in CLV #WOUND_WAIT NO_WAIT SILO WAIT_DIE
 do
-for zipf in 0.5 0.7 0.9
+for zipf in 0.5 0.9
 do
-for read_ratio in 0.1 0.3 0.5 0.7 0.9
+for read_ratio in 0.1 0.5 0.9
 do
-for threads in 16
+for threads in 1 2 4 8 16 32
 do
 for req in 16 #32 64
 do
@@ -53,11 +53,11 @@ done
 done
 done
 
-cd outputs
+cd outputs/
 python3 collect_stats.py
-mv stats.csv ycsb/ycsb_clv_test.csv
-mv stats.json ycsb/ycsb_clv_test.json
+mv stats.csv ycsb/ycsb_clv_general.csv
+mv stats.json ycsb/ycsb_clv_general.json
 cd ..
 
 cd experiments
-python3 send_email.py ycsb_test
+python3 send_email.py ycsb_general
