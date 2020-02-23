@@ -38,7 +38,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 	LockEntry * entry = get_entry();
 	LockEntry * en;
 	LockEntry * to_return = NULL;
-	#if DEBUG_PROFILING
+	#if DEBUG_PROFILING && CLV_DEBUG_PROFILING
 	uint32_t abort_cnt = 0;
 	uint32_t abort_try = 0;
 	uint64_t starttime = get_sys_clock();
@@ -57,7 +57,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 		}
 	}
 
-	#if DEBUG_PROFILING
+	#if DEBUG_PROFILING && CLV_DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug1, get_sys_clock() - starttime);
 	#endif
 
@@ -82,7 +82,9 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 		while (en != NULL) {
 			if (en->txn->get_ts() > txn->get_ts() && conflict_lock(lock_type, type)) {
 				// step 1 - figure out what need to be done when aborting a txn
+				#if DEBUG_PROFILING && CLV_DEBUG_PROFILING
 				bool already_aborted = (en->txn->status == ABORTED);
+				#endif
 				if (txn->wound_txn(en->txn) == COMMITED){
 					// curr txn is wounded by other txns.. 
 					if (owner_cnt == 0)
@@ -95,7 +97,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 					#endif
 					goto final;
 				}
-				#if DEBUG_PROFILING
+				#if DEBUG_PROFILING && CLV_DEBUG_PROFILING
 				abort_try++;
 				if (!already_aborted)
 					abort_cnt++; 
@@ -128,13 +130,13 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 			}
 			#endif
 		}
-		#if DEBUG_PROFILING
+		#if DEBUG_PROFILING && CLV_DEBUG_PROFILING
 		// max abort chain
-		if (abort_cnt > stats._stats[0]->debug10)
-                	stats._stats[0]->debug10 = abort_try;
+		if (abort_cnt > stats._stats[txn->get_thd_id()]->debug10)
+                	stats._stats[txn->get_thd_id()]->debug10 = abort_try;
 		// max length of aborts
-        	if (abort_cnt > stats._stats[0]->debug11)
-                	stats._stats[0]->debug11 = abort_cnt;
+        	if (abort_cnt > stats._stats[txn->get_thd_id()]->debug11)
+                	stats._stats[txn->get_thd_id()]->debug11 = abort_cnt;
 		#endif
 
 		// insert to wait list, the waiter list is always in timestamp order
@@ -189,7 +191,7 @@ final:
 
 RC Row_ww::lock_release(txn_man * txn) {
 
-	#if DEBUG_PROFILING
+	#if DEBUG_PROFILING && CLV_DEBUG_PROFILING
 	uint64_t starttime = get_sys_clock();
 	#endif
 
@@ -205,7 +207,7 @@ RC Row_ww::lock_release(txn_man * txn) {
 		}
 	}
 
-	#if DEBUG_PROFILING
+	#if DEBUG_PROFILING && CLV_DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug6, get_sys_clock() - starttime);
 	#endif
 

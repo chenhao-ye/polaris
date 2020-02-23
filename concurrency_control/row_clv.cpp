@@ -21,8 +21,10 @@ void Row_clv::init(row_t * row) {
 	// a switch for retire
 	retire_on = true;
 	// track retire cnt of most recent 5 retires
+	#if CLV_RETIRE_OFF
 	retired_history = 0;
 	retired_history_cnt = 0;
+	#endif
 	// local timestamp
 	local_ts = -1;
 	txn_ts = 0;
@@ -133,11 +135,11 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	#endif
 		to_insert = get_entry();
 
-	#if DEBUG_PROFILING
+	#if DEBUG_PROFILING && CLV_DEBUG_PROFILING
 	uint64_t starttime = get_sys_clock();
 	#endif
 	lock();
-	#if DEBUG_PROFILING
+	#if DEBUG_PROFILING && CLV_DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug1, get_sys_clock() - starttime);
 	starttime = get_sys_clock();
 	#endif
@@ -285,11 +287,13 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 		retire_on = true;
 	#endif
 	*/
+	#if CLV_RETIRE_OFF
 	if ( retire_on && (retired_history_cnt > 3) && (round(retired_history / retired_history_cnt) <= CLV_RETIRE_ON) ) {
 		retire_on = false;
 		retired_history = 0;
 		retired_history_cnt = 0;
 	} 
+	#endif
 
 	#if !RETIRE_READ
 	if (retire_on && owners && (owners->type == LOCK_SH)) {
@@ -330,7 +334,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	}
 	#endif
 
-	#if DEBUG_PROFILING
+	#if DEBUG_PROFILING && CLV_DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug3, get_sys_clock() - starttime);
 	#endif
 	unlock();
@@ -345,14 +349,14 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 RC Row_clv::lock_retire(txn_man * txn) {
 
 
-	#if DEBUG_PROFILING
+	#if DEBUG_PROFILING && CLV_DEBUG_PROFILING
 	uint64_t starttime = get_sys_clock();
 	#endif
 	if(!retire_on) {
 		return RCOK;
 	}
 	lock();
-	#if DEBUG_PROFILING
+	#if DEBUG_PROFILING && CLV_DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug4, get_sys_clock() - starttime);
 	starttime = get_sys_clock();
 	#endif
@@ -392,9 +396,11 @@ RC Row_clv::lock_retire(txn_man * txn) {
 			entry->is_cohead = true;
 		}
 
+		#if CLV_RETIRE_OFF
 		// optimization: turn off retire when retire list is always empty
 		retired_history += retired_cnt;
 		retired_history_cnt++;
+		#endif
 
 		RETIRED_LIST_PUT_TAIL(retired_head, retired_tail, entry);
 		retired_cnt++;
@@ -409,7 +415,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
 	if (owner_cnt == 0)
 		bring_next(NULL);
 
-	#if DEBUG_PROFILING
+	#if DEBUG_PROFILING && CLV_DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug5, get_sys_clock() - starttime);
 	starttime = get_sys_clock();
 	#endif
@@ -429,11 +435,11 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 	CLVLockEntry * to_return = NULL;
 	#endif
 
-	#if DEBUG_PROFILING
+	#if DEBUG_PROFILING && CLV_DEBUG_PROFILING
 	uint64_t starttime = get_sys_clock();
 	#endif
 	lock();
-	#if DEBUG_PROFILING
+	#if DEBUG_PROFILING && CLV_DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug6, get_sys_clock() - starttime);
 	starttime = get_sys_clock();
 	#endif
@@ -502,7 +508,7 @@ RC Row_clv::lock_release(txn_man * txn, RC rc) {
 	}
 	// WAIT - done releasing with is_abort = true
 	// FINISH - done releasing with is_abort = false
-	#if DEBUG_PROFILING
+	#if DEBUG_PROFILING && CLV_DEBUG_PROFILING
 	INC_STATS(txn->get_thd_id(), debug7, get_sys_clock() - starttime);
 	#endif
 	unlock();
@@ -530,9 +536,9 @@ inline bool Row_clv::rm_if_in_retired(txn_man * txn, bool is_abort) {
 		if (is_abort) {
 			en->txn->lock_abort = true;
 			#if BATCH_RETURN_ENTRY
-			en = remove_descendants(en, to_return);
+			en = remove_descendants(en, to_return, txn);
 			#else
-			en = remove_descendants(en);
+			en = remove_descendants(en, txn);
 			#endif
 		}
 		else {
@@ -552,9 +558,9 @@ inline bool Row_clv::rm_if_in_retired(txn_man * txn, bool is_abort) {
 			if (is_abort) {
 				en->txn->lock_abort = true;
 				#if BATCH_RETURN_ENTRY
-				en = remove_descendants(en, to_return);
+				en = remove_descendants(en, to_return, txn);
 				#else
-				en = remove_descendants(en);
+				en = remove_descendants(en, txn);
 				#endif
 			} else {
 				assert(txn->status == COMMITED);
@@ -647,9 +653,9 @@ inline bool Row_clv::wound_txn(CLVLockEntry * en, txn_man * txn, bool check_reti
 		return false;
 	if (check_retired) {
 		#if BATCH_RETURN_ENTRY 
-		en = remove_descendants(en, to_return);
+		en = remove_descendants(en, to_return, txn);
 		#else
-		en = remove_descendants(en);
+		en = remove_descendants(en, txn);
 		#endif
 	} else {
 		LIST_RM(owners, owners_tail, en, owner_cnt);
@@ -805,12 +811,12 @@ Row_clv::insert_to_waiters(CLVLockEntry * entry, lock_t type, txn_man * txn) {
 
 #if BATCH_RETURN_ENTRY
 inline CLVLockEntry * 
-Row_clv::remove_descendants(CLVLockEntry * en, CLVLockEntry *& to_return) {
+Row_clv::remove_descendants(CLVLockEntry * en, CLVLockEntry *& to_return, txn_man * txn) {
 #else
 inline CLVLockEntry *
-Row_clv::remove_descendants(CLVLockEntry * en) {
+Row_clv::remove_descendants(CLVLockEntry * en, txn_man * txn) {
 #endif
-	#if DEBUG_PROFILING
+	#if DEBUG_PROFILING && CLV_DEBUG_PROFILING
 	uint32_t abort_cnt = 1;
 	uint32_t abort_try = 1;
 	#endif
@@ -868,7 +874,7 @@ Row_clv::remove_descendants(CLVLockEntry * en) {
 				en = owners;
 				// no need to be too complicated (i.e. call function) as the owner will be empty in the end
 				owners = owners->next;
-				#if DEBUG_PROFILING
+				#if DEBUG_PROFILING && CLV_DEBUG_PROFILING
 				abort_try++;
 				if (en->txn->status == ABORTED)
 					abort_cnt++;
@@ -896,7 +902,7 @@ Row_clv::remove_descendants(CLVLockEntry * en) {
 		LIST_RM_SINCE(retired_head, retired_tail, en);
 		while(en) {
 			next = en->next;
-			#if DEBUG_PROFILING
+			#if DEBUG_PROFILING && CLV_DEBUG_PROFILING
 			abort_try++;
 			if (en->txn->status == ABORTED)
 				abort_cnt++;
@@ -919,18 +925,18 @@ Row_clv::remove_descendants(CLVLockEntry * en) {
 		}
 	}
 	assert(!retired_head || retired_head->is_cohead);
-	#if DEBUG_PROFILING
+	#if DEBUG_PROFILING && CLV_DEBUG_PROFILING
 	// debug9: sum of all lengths of chains; debug 10: time of cascading aborts; debug2: max chain
 	if (abort_cnt > 1) {
 		INC_STATS(0, debug2, 1);
 		INC_STATS(0, debug9, abort_cnt); // out of all aborts, how many are cascading aborts (have >= 1 dependency)
 	}
 	// max length of aborts
-	if (abort_cnt > stats._stats[0]->debug11)
-		stats._stats[0]->debug11 = abort_cnt;
+	if (abort_cnt > stats._stats[txn->get_thd_id()]->debug11)
+		stats._stats[txn->get_thd_id()]->debug11 = abort_cnt;
 	// max length of depedency
-	if (abort_try > stats._stats[0]->debug10)
-		stats._stats[0]->debug10 = abort_try;
+	if (abort_try > stats._stats[txn->get_thd_id()]->debug10)
+		stats._stats[txn->get_thd_id()]->debug10 = abort_try;
 	#endif
 	if (prev)
 		return prev->next;

@@ -100,7 +100,7 @@
 #define DYNAMIC_TS					true
 #define SPINLOCK					false
 #define CLV_RETIRE_ON				0
-#define CLV_RETIRE_OFF              10000
+#define CLV_RETIRE_OFF              		false
 #define PRIORITIZE_HS				false
 #define DELAY_ACQUIRE				0
 #define DELAY_THRESHOLD				4

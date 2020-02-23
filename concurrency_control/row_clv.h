@@ -80,12 +80,12 @@ private:
 	bool rm_if_in_retired(txn_man * txn, bool is_abort, CLVLockEntry *& to_return);
 	RC wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired, RC status, CLVLockEntry *& to_return);
 	bool wound_txn(CLVLockEntry* en, txn_man* txn, bool check_retired, CLVLockEntry *& to_return);
-	CLVLockEntry * remove_descendants(CLVLockEntry * en, CLVLockEntry *& to_return);
+	CLVLockEntry * remove_descendants(CLVLockEntry * en, CLVLockEntry *& to_return, txn_man * txn);
 	#else
 	bool rm_if_in_retired(txn_man * txn, bool is_abort);
 	RC wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired, RC status);
 	bool wound_txn(CLVLockEntry* en, txn_man* txn, bool check_retired);
-	CLVLockEntry * remove_descendants(CLVLockEntry * en);
+	CLVLockEntry * remove_descendants(CLVLockEntry * en, txn_man * txn);
 	#endif
 };
 
