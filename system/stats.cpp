@@ -153,8 +153,8 @@ void Stats::print() {
 		total_debug8 += _stats[tid]->debug8;
 		total_debug9 += _stats[tid]->debug9 / total_debug2;
 		//total_debug10 += _stats[tid]->debug10;
-		total_debug10 = _stats[0]->debug10;
-		total_debug11 = _stats[0]->debug11;
+		total_debug10 = max(_stats[tid]->debug10, total_debug10);
+		total_debug11 = max(_stats[tid]->debug11, total_debug11);
 		#endif
 		total_time_index += _stats[tid]->time_index;
 		total_time_abort += _stats[tid]->time_abort;
