@@ -33,11 +33,13 @@ cnt=100000
 penalty=50000
 
 retire_off_opt="false"
+for retire_off_opt in true false
+do
 for i in 0 1 2 3 4
 do
 for alg in CLV #WOUND_WAIT NO_WAIT SILO WAIT_DIE
 do
-for zipf in 0.5 0.7 0.9
+for zipf in 0.5 0.7 0.9 1.1
 do
 for read_ratio in 0.1 0.3 0.5 0.7 0.9
 do
@@ -52,11 +54,12 @@ done
 done
 done
 done
+done
 
 cd outputs
 python3 collect_stats.py
 mv stats.csv ycsb/ycsb_clv_test.csv
-mv stats.json ycsb/ycsb_clv_test.json
+mv stats.json ycsb_clv_test.json
 cd ..
 
 cd experiments
