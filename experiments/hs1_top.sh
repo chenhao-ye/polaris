@@ -35,6 +35,8 @@ penalty=50000
 
 retire_off_opt="true"
 # figure 4: normalized throughput with optimal case, varying requests
+for retire_off_opt in true false
+do
 for i in 0 1 2 3 4
 do
 for alg in CLV #WOUND_WAIT WAIT_DIE NO_WAIT SILO
@@ -48,5 +50,12 @@ done
 done
 done
 done
+done
 
-python experiments/send_email.py node2_hs1
+cd outputs/
+python3 collect_stats.py
+mv stats.csv hs1_top/hs1_top.csv
+mv stats.json hs1_top_clv.json
+cd ..
+
+python experiments/send_email.py node0_hs1
