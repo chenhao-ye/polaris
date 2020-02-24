@@ -32,6 +32,8 @@ cnt=100000
 penalty=50000 
 
 retire_off_opt="true"
+for retire_off_opt in true false
+do
 for alg in CLV #WOUND_WAIT SILO WAIT_DIE NO_WAIT
 do
 for i in 0 1 2 3 4
@@ -45,6 +47,13 @@ done
 done
 done
 done
+done
+
+cd outputs/
+python3 collect_stats.py
+mv stats.csv tpcc/tpcc.csv
+mv stats.json tpcc_clv.json
+cd ..
 
 cd experiments/
-python3 send_email.py tpcc-node1
+python3 send_email.py tpcc-node2
