@@ -148,11 +148,13 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	starttime = get_sys_clock();
 	#endif
 
+	/*
 	// each thread has at most one owner of a lock
 	assert(owner_cnt <= g_thread_cnt);
 	// each thread has at most one waiter
 	assert(waiter_cnt < g_thread_cnt);
 	assert(retired_cnt < g_thread_cnt);
+	*/
 
 	#if DEBUG_TMP
 	if (!vec[idx])
@@ -185,7 +187,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 			return RCOK;
 		}
 		// else has to assign a priority and add to waiters first 
-		assert(retired_cnt + owner_cnt != 0);
+		// assert(retired_cnt + owner_cnt != 0);
 		// heuristic to batch assign ts: 
 		//int batch_n_ts = retired_cnt + owner_cnt + 1;
 		
@@ -194,16 +196,14 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 			if (retired_tail && (retired_tail->txn->get_ts() == 0)) {
 				batch_n_ts += retired_cnt;
 			} 
-			if (owners_tail && (owners_tail->txn->get_ts() == 0)) {
-				batch_n_ts += owner_cnt;	
-			}
+			batch_n_ts += owner_cnt;	
 		} 
 		//local_ts = txn->set_next_ts(retired_cnt + owner_cnt + 1);
 		local_ts = txn->set_next_ts(batch_n_ts);
 		if (local_ts != 0) {
-			txn_ts = local_ts;
 			// if != 0, already booked n ts. 
-			local_ts = local_ts - (retired_cnt + owner_cnt);
+			txn_ts = local_ts;
+			local_ts = local_ts - batch_n_ts + 1;
 			//assert(txn->get_ts() != local_ts); // make sure did not change pointed addr
 		} else {
 			// if == 0, fail to assign, oops, self has an assigned number anyway
@@ -300,7 +300,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	#endif
 
 	#if !RETIRE_READ
-	if (retire_on && owners && (owners->type == LOCK_SH)) {
+	if (retire_on && owners && (waiter_cnt > 0) && (owners->type == LOCK_SH)) {
 		// if retire turned on and share lock is the owner
                 // move to retired
                 CLVLockEntry * to_retire = NULL;
@@ -309,6 +309,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
                         LIST_RM(owners, owners_tail, to_retire, owner_cnt);
                         to_retire->next=NULL;
                         to_retire->prev=NULL;
+			//assert(to_retire->txn->get_ts() != 0);
                         // try to add to retired
                         if (retired_tail) {
                                 if (conflict_lock(retired_tail->type, to_retire->type)) {
@@ -328,7 +329,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
                         RETIRED_LIST_PUT_TAIL(retired_head, retired_tail, to_retire);
                         retired_cnt++;
                 }
-                if (bring_next(txn)) {
+                if (owner_cnt == 0 && bring_next(txn)) {
                         rc = RCOK;
                         #if DEBUG_TMP
                         to_insert->loc = OWNERS;
@@ -383,6 +384,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
 		LIST_RM(owners, owners_tail, entry, owner_cnt);
 		entry->next=NULL;
 		entry->prev=NULL;
+		//assert(entry->txn->get_ts() != 0);
 		// try to add to retired
 		if (retired_tail) {
 			if (conflict_lock(retired_tail->type, entry->type)) {
@@ -745,6 +747,7 @@ Row_clv::wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired,
 					en = en->next;
 					continue;
 				}
+				assert(local_ts < txn_ts);
 				if (!en->txn->atomic_set_ts(local_ts)) { // it has a ts already
 					recheck = true;
 				} else {
