@@ -44,7 +44,7 @@
 #define ISOLATION_LEVEL 			SERIALIZABLE
 
 // all transactions acquire tuples according to the primary key order.
-#define KEY_ORDER					true//false
+#define KEY_ORDER					false
 // transaction roll back changes after abort
 #define ROLL_BACK					true
 // per-row lock/ts management or central lock/ts management
