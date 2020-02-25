@@ -159,7 +159,7 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 		if (waiter_cnt > 0)
 			retire_switch--;
 		else
-			retire_switch = min(CLV_RETIRE_ON, retire_switch+1);
+			retire_switch = min((int)round(g_thread_cnt / 4), retire_switch+1);
 		if  (retire_switch == 0) {
 			//printf("turn retire back on, # waiters=%d!\n", waiter_cnt);
 			retire_switch = CLV_RETIRE_OFF;
@@ -367,7 +367,7 @@ RC Row_clv::lock_retire(txn_man * txn) {
 		//printf("turn retire off, set retire switch from %d to %d!\n", retire_switch, CLV_RETIRE_ON);
 		#if CLV_RETIRE_ON > 0
 		// if will turn back on
-		retire_switch = CLV_RETIRE_ON;
+		retire_switch = (int) round(g_thread_cnt / 4);
 		#endif
 		retire_on = false;
 	}
