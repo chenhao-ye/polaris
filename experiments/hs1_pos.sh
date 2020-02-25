@@ -9,6 +9,7 @@ ww_starv_free="false"
 # [CLV]
 dynamic="true"
 on=0
+off=0
 retire_read="false"
 
 # workload
@@ -33,10 +34,8 @@ profile="true"
 cnt=100000 
 penalty=50000
 
-retire_off_opt="true"
 # figure 4: normalized throughput with optimal case, varying requests
-for retire_off_opt in true false
-do
+dynamic=false
 for i in 0 1 2 3 4
 do
 for alg in CLV #WOUND_WAIT
@@ -47,8 +46,7 @@ for threads in 16
 do
 for req in 16
 do
-timeout 600 python test.py CLV_RETIRE_OFF=${retire_off_opt} RETIRE_READ=${retire_read} FIXED_HS=${fixed} FLIP_RATIO=${flip} SPECIFIED_RATIO=${specified} WW_STARV_FREE=${ww_starv_free} KEY_ORDER=$ordered READ_PERC=${read_ratio} NUM_HS=${num_hs} FIRST_HS=$fhs POS_HS=$pos DEBUG_TMP="false" DYNAMIC_TS=$dynamic CLV_RETIRE_ON=$on SPINLOCK=$spin REQ_PER_QUERY=$req DEBUG_PROFILING=$profile SYNTH_TABLE_SIZE=${table_size} WORKLOAD=${wl} CC_ALG=$alg THREAD_CNT=$threads MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty ZIPF_THETA=$zipf SYNTHETIC_YCSB=$synthetic 
-done
+timeout 600 python test.py CLV_RETIRE_OFF=${off} RETIRE_READ=${retire_read} FIXED_HS=${fixed} FLIP_RATIO=${flip} SPECIFIED_RATIO=${specified} WW_STARV_FREE=${ww_starv_free} KEY_ORDER=$ordered READ_PERC=${read_ratio} NUM_HS=${num_hs} FIRST_HS=$fhs POS_HS=$pos DEBUG_TMP="false" DYNAMIC_TS=$dynamic CLV_RETIRE_ON=$on SPINLOCK=$spin REQ_PER_QUERY=$req DEBUG_PROFILING=$profile SYNTH_TABLE_SIZE=${table_size} WORKLOAD=${wl} CC_ALG=$alg THREAD_CNT=$threads MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty ZIPF_THETA=$zipf SYNTHETIC_YCSB=$synthetic 
 done
 done
 done
@@ -57,8 +55,8 @@ done
 
 cd outputs/
 python3 collect_stats.py
-mv stats.csv hs1_pos/hs1_pos.csv
-mv stats.json hs1_pos_clv.json
+mv stats.csv hs1_pos/hs1_pos_pt.csv
+mv stats.json hs1_pos_pt.json
 cd ..
 
 python experiments/send_email.py node_0_hs1_pos

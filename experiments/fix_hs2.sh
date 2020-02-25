@@ -33,7 +33,7 @@ profile="true"
 cnt=100000 
 penalty=50000
 
-retire_off_opt="true"
+retire_off_opt=50
 for retire_off_opt in true false
 do
 for fixed in 1 0
@@ -59,8 +59,8 @@ done
 
 cd outputs/
 python3 collect_stats.py
-mv stats.csv hs2_fixed/hs2_clv.csv
-mv stats.json hs2_clv.json
+mv stats.csv hs2_fixed/hs2_clv_auto.csv
+mv stats.json hs2_clv_auto.json
 rm stats.json
 cd ..
 

@@ -25,9 +25,8 @@ void Row_clv::init(row_t * row) {
 	retire_on = true;
 	#endif
 	// track retire cnt of most recent 5 retires
-	#if CLV_RETIRE_OFF
-	retired_history = 0;
-	retired_history_cnt = 0;
+	#if CLV_RETIRE_OFF > 0
+	retire_switch = CLV_RETIRE_OFF;
 	#endif
 	// local timestamp
 	local_ts = -1;
@@ -148,18 +147,25 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 	starttime = get_sys_clock();
 	#endif
 
-	/*
-	// each thread has at most one owner of a lock
-	assert(owner_cnt <= g_thread_cnt);
-	// each thread has at most one waiter
-	assert(waiter_cnt < g_thread_cnt);
-	assert(retired_cnt < g_thread_cnt);
-	*/
-
 	#if DEBUG_TMP
 	if (!vec[idx])
 		vec[idx] = to_insert;
 	reset_entry(to_insert);
+	#endif
+
+	#if CLV_RETIRE_ON > 0
+	// will turn back on at some time point
+	if (!retire_on) {
+		if (waiter_cnt > 0)
+			retire_switch--;
+		else
+			retire_switch = min((int)round(g_thread_cnt / 4), retire_switch+1);
+		if  (retire_switch == 0) {
+			//printf("turn retire back on, # waiters=%d!\n", waiter_cnt);
+			retire_switch = CLV_RETIRE_OFF;
+			retire_on = true;
+		}
+	}
 	#endif
 
 	// 1. set txn to abort in owners and retired
@@ -284,20 +290,6 @@ RC Row_clv::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt)
 		#endif
 	}
 
-	// turn on retire only when needed
-	/*
-	#if THREAD_CNT > 1 && (RETIRE_ON)
-	if (!retire_on && waiter_cnt >= CLV_RETIRE_ON)
-		retire_on = true;
-	#endif
-	*/
-	#if CLV_RETIRE_OFF
-	if ( retire_on && (retired_history_cnt > 3) && (round(retired_history / retired_history_cnt) <= CLV_RETIRE_ON) ) {
-		retire_on = false;
-		retired_history = 0;
-		retired_history_cnt = 0;
-	} 
-	#endif
 
 	#if !RETIRE_READ
 	if (retire_on && owners && (waiter_cnt > 0) && (owners->type == LOCK_SH)) {
@@ -366,6 +358,21 @@ RC Row_clv::lock_retire(txn_man * txn) {
 	starttime = get_sys_clock();
 	#endif
 
+	#if CLV_RETIRE_OFF > 0
+	if (retired_cnt > 0)
+		retire_switch = min(CLV_RETIRE_OFF, retire_switch + 1);
+	else
+		retire_switch--;
+	if (retire_switch == 0) {
+		//printf("turn retire off, set retire switch from %d to %d!\n", retire_switch, CLV_RETIRE_ON);
+		#if CLV_RETIRE_ON > 0
+		// if will turn back on
+		retire_switch = (int) round(g_thread_cnt / 4);
+		#endif
+		retire_on = false;
+	}
+	#endif
+
 	RC rc = RCOK;
 	// 1. find entry in owner and remove
 	#if !DEBUG_TMP
@@ -401,12 +408,6 @@ RC Row_clv::lock_retire(txn_man * txn) {
 		} else {
 			entry->is_cohead = true;
 		}
-
-		#if CLV_RETIRE_OFF
-		// optimization: turn off retire when retire list is always empty
-		retired_history += retired_cnt;
-		retired_history_cnt++;
-		#endif
 
 		RETIRED_LIST_PUT_TAIL(retired_head, retired_tail, entry);
 		retired_cnt++;
