@@ -30,7 +30,11 @@ void Row_clvp::init(row_t * row) {
 	pthread_mutex_init(latch, NULL);
 	#endif
 	blatch = false;
+	#if THREAD_CNT == 1
 	retire_on = false;
+	#else
+	retire_on = true;
+	#endif
 	#if DEBUG_TMP
 	vec = (CLVLockEntry **) mem_allocator.alloc(sizeof(CLVLockEntry *) * g_thread_cnt, _row->get_part_id());
 	for (size_t i = 0; i < g_thread_cnt; i++) {
@@ -249,14 +253,15 @@ RC Row_clvp::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt
 		txn->lock_ready = false; // wait in waiters
 
 	// 4. turn on retire only when needed
-	#if THREAD_CNT > 1 && RETIRE_ON
+	/*#if THREAD_CNT > 1 && RETIRE_ON
 	if (!retire_on && (waiter_cnt >= CLV_RETIRE_ON))
 		retire_on = true;
 	#endif
+	*/
 
 	// 5. move reads to retired if RETIRE_READ=false
 	#if !RETIRE_READ
-	if (retire_on && owners && (owners->type == LOCK_SH)) {
+	if (retire_on && owners && (waiter_cnt > 0) && (owners->type == LOCK_SH)) {
 		// if retire turned on and share lock is the owner
                 // move to retired
                 CLVLockEntry * to_retire = NULL;
