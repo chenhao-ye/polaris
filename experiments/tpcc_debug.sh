@@ -8,12 +8,11 @@ spin="true"
 ww_starv_free="false"
 # [CLV]
 dynamic="true"
-on=1
-retire_read="false"
 retire="true"
 # [CLV] lock optimization
-# delay=0
-# dt=4
+retire_read="false"
+on=0
+off=0
 
 ## workload
 wl="TPCC"
@@ -26,7 +25,7 @@ bench="false" # if true, turn all get row to read only
 # merge="false" # no longer supported
 
 #other
-threads=16 
+threads=8 
 profile="true"
 cnt=100000
 penalty=50000 
