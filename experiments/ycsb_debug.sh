@@ -1,5 +1,5 @@
 cd ../
-cp -r config-ycsb-synthetic-std.h config.h
+cp -r config-ycsb-std.h config.h
 
 # algorithm
 alg=WOUND_WAIT
@@ -14,10 +14,10 @@ cs_pf="false"
 # workload
 wl="YCSB"
 req=16
-synthetic=true
+synthetic=false
 zipf=0
-num_hs=1
-pos=SPECIFIED
+num_hs=0
+pos=TOP
 specified=0
 fixed=1
 fhs="WR"
@@ -30,21 +30,10 @@ table_size="1024*1024*20"
 # other
 threads=16
 profile="true"
-cnt=100000 
+cnt=100000
 penalty=50000
 
-# figure 4: normalized throughput with optimal case, varying requests
-for i in 0 1 2 3 4
-do
-for alg in BAMBOO #WOUND_WAIT
-do
-for specified in 0 0.25 0.5 0.75 1
-do
-for threads in 16
-do
-for req in 16
-do
-timeout 100 python test.py CC_ALG=${alg} SPINLOCK=${spin}
+timeout 10 python test_debug.py CC_ALG=${alg} SPINLOCK=${spin}
     WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=${dynamic} RETIRE_ON={retire_on}
     DEBUG_CS_PROFILING=${cs_pf} WORKLOAD=${wl} REQ_PER_QUERY=$req
     SYNTHETIC_YCSB=$synthetic ZIPF_THETA=$zipf NUM_HS=${num_hs} POS_HS=$pos
@@ -52,16 +41,12 @@ timeout 100 python test.py CC_ALG=${alg} SPINLOCK=${spin}
     SECOND_HS=$shs READ_PERC=${read_ratio} KEY_ORDER=$ordered
     FLIP_RATIO=${flip} SYNTH_TABLE_SIZE=${table_size} THREAD_CNT=$threads
     DEBUG_PROFILING=$profile MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty
-done
-done
-done
-done
-done
 
 cd outputs/
 python3 collect_stats.py
-mv stats.csv hs1_pos.csv
-mv stats.json hs1_pos.json
+mv stats.csv ycsb/ycsb.csv
+mv stats.json ycsb.json
 cd ..
 
-python experiments/send_email.py node_0_hs1_pos
+cd experiments
+python3 send_email.py ycsb

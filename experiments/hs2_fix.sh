@@ -16,9 +16,9 @@ wl="YCSB"
 req=16
 synthetic=true
 zipf=0
-num_hs=1
+num_hs=2
 pos=SPECIFIED
-specified=0
+specified=0.9
 fixed=1
 fhs="WR"
 shs="WR"
@@ -33,16 +33,17 @@ profile="true"
 cnt=100000 
 penalty=50000
 
-# figure 4: normalized throughput with optimal case, varying requests
+for fixed in 1 0
+do
 for i in 0 1 2 3 4
 do
 for alg in BAMBOO #WOUND_WAIT
 do
 for specified in 0 0.25 0.5 0.75 1
 do
-for threads in 16
+for threads in 16 #32
 do
-for req in 16
+for req in 16 #32
 do
 timeout 100 python test.py CC_ALG=${alg} SPINLOCK=${spin}
     WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=${dynamic} RETIRE_ON={retire_on}
@@ -57,11 +58,13 @@ done
 done
 done
 done
+done
 
 cd outputs/
 python3 collect_stats.py
-mv stats.csv hs1_pos.csv
-mv stats.json hs1_pos.json
+mv stats.csv hs2.csv
+mv stats.json hs2.json
+rm stats.json
 cd ..
 
-python experiments/send_email.py node_0_hs1_pos
+python experiments/send_email.py fix_hs2
