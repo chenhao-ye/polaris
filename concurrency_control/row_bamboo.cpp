@@ -98,7 +98,6 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txnc
       // add to owners directly
       to_insert->type = type;
       to_insert->txn = txn;
-      to_insert->is_cohead = true;
       txn->lock_ready = true;
       RETIRED_LIST_PUT_TAIL(owners, owners_tail, to_insert);
       owner_cnt++;
@@ -246,10 +245,22 @@ RC Row_bamboo::lock_retire(txn_man * txn) {
     entry->next = NULL;
     entry->prev = NULL;
     //assert(entry->txn->get_ts() != 0);
-    // check if empty, and self is not co-head, decrement barrier
-    if (retired_cnt == 0 && (!entry->is_cohead))
-      entry->txn->decrement_commit_barriers();
     // try to add to retired
+    if (retired_tail) {
+      if (conflict_lock(retired_tail->type, entry->type)) {
+        // conflict with tail -> increment barrier for sure
+        // default is_cohead = false
+        entry->delta = true;
+        entry->txn->increment_commit_barriers();
+      } else {
+        // not conflict with tail ->increment if is not head
+        entry->is_cohead = retired_tail->is_cohead;
+        if (!entry->is_cohead)
+          entry->txn->increment_commit_barriers();
+      }
+    } else {
+      entry->is_cohead = true;
+    }
     RETIRED_LIST_PUT_TAIL(retired_head, retired_tail, entry);
     retired_cnt++;
   } else {
@@ -352,22 +363,6 @@ Row_bamboo::bring_next(txn_man * txn) {
       entry->txn->lock_ready = true;
       if (txn == entry->txn) {
         has_txn = true;
-      }
-      // increment barrier if conflicted with any
-      if (retired_tail) {
-        if (conflict_lock(retired_tail->type, entry->type)) {
-          // conflict with tail -> increment barrier for sure
-          // default is_cohead = false
-          entry->delta = true;
-          entry->txn->increment_commit_barriers();
-        } else {
-          // not conflict with tail ->increment if is not head
-          entry->is_cohead = retired_tail->is_cohead;
-          if (!entry->is_cohead)
-            entry->txn->increment_commit_barriers();
-        }
-      } else {
-        entry->is_cohead = true;
       }
     } else
       break;
