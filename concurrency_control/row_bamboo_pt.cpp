@@ -15,7 +15,6 @@ void Row_bamboo_pt::init(row_t * row) {
   // retired is a linked list, the next of tail is the head of owners
   retired_head = NULL;
   retired_tail = NULL;
-
   owner_cnt = 0;
   waiter_cnt = 0;
   retired_cnt = 0;
@@ -177,7 +176,7 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &t
     txn->lock_ready = false; // wait in waiters
 
   // 5. move reads to retired if RETIRE_READ=false
-  if (retire_on && owners && (waiter_cnt > 0) && (owners->type == LOCK_SH)) {
+  if (owners && (waiter_cnt > 0) && (owners->type == LOCK_SH)) {
     // if retire turned on and share lock is the owner
     // move to retired
     BBLockEntry * to_retire = NULL;

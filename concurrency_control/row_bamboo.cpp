@@ -18,8 +18,6 @@ void Row_bamboo::init(row_t * row) {
   owner_cnt = 0;
   waiter_cnt = 0;
   retired_cnt = 0;
-  // a switch for retire
-  retire_on = true;
   // local timestamp
   local_ts = -1;
   txn_ts = 0;
@@ -181,7 +179,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txnc
   }
 
   // 4. retire read directly
-  if (retire_on && owners && (waiter_cnt > 0) && (owners->type == LOCK_SH)) {
+  if (owners && (waiter_cnt > 0) && (owners->type == LOCK_SH)) {
     // if retire turned on and share lock is the owner
     // move to retired
     BBLockEntry * to_retire = NULL;
