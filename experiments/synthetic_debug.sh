@@ -2,7 +2,7 @@ cd ../
 cp -r config-ycsb-synthetic-std.h config.h
 
 # algorithm
-alg=WOUND_WAIT
+alg=BAMBOO
 spin="true"
 # [WW]
 ww_starv_free="false"
