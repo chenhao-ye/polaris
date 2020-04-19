@@ -317,7 +317,7 @@ RC Row_bamboo_pt::lock_release(txn_man * txn, RC rc) {
   if (owner_cnt == 0)
     bring_next(NULL);
 
-#if DEBUG_PROFILING
+#if DEBUG_CS_PROFILING
   INC_STATS(txn->get_thd_id(), debug7, get_sys_clock() - starttime);
 #endif
   unlock();

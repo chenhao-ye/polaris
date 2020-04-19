@@ -22,11 +22,8 @@ profile="true"
 cnt=100000
 penalty=50000
 
-timeout 30 python test.py CC_ALG=$alg SPINLOCK=$spin
-WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=$dynamic RETIRE_ON=$retire
-DEBUG_CS_PROFILING=${cs_pf} WORKLOAD=${wl} NUM_WH=${wh} PERC_PAYMENT=$perc
-THREAD_CNT=$threads DEBUG_PROFILING=${profile} MAX_TXN_PER_PART=$cnt
-ABORT_PENALTY=$penalty
+timeout 30 python test.py CC_ALG=$alg SPINLOCK=$spin WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=$dynamic RETIRE_ON=$retire DEBUG_CS_PROFILING=${cs_pf} WORKLOAD=${wl} NUM_WH=${wh} PERC_PAYMENT=$perc THREAD_CNT=$threads DEBUG_PROFILING=${profile} MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty
+#
 
 cd outputs/
 python3 collect_stats.py
