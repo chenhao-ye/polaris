@@ -2,7 +2,7 @@ cp -r config_ycsb_synthetic.h config.h
 rm debug.out
 
 wl="YCSB"
-alg="CLV"
+alg="BAMBOO"
 threads=16
 cnt=100000
 penalty=50000

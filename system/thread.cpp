@@ -108,7 +108,7 @@ RC thread_t::run() {
 
 #if (CC_ALG == WOUND_WAIT) && !WW_STARV_FREE
 		m_txn->set_ts(get_next_ts());
-#elif (CC_ALG == CLV)
+#elif (CC_ALG == BAMBOO)
 		m_txn->set_ts(0);
 #elif (CC_ALG == WOUND_WAIT) && !WW_STARV_FREE
 		m_txn->set_ts(get_next_ts());

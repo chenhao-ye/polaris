@@ -32,8 +32,8 @@ class Row_tictoc;
 class Row_silo;
 class Row_vll;
 class Row_ww;
-class Row_clv;
-class Row_clvp;
+class Row_bamboo;
+class Row_bamboo_pt;
 
 class row_t
 {
@@ -86,7 +86,7 @@ public:
 	RC get_row(access_t type, txn_man * txn, row_t *& row);
 	void return_row(access_t type, txn_man * txn, row_t * row);
 	
-#if CC_ALG == CLV
+#if CC_ALG == BAMBOO
 	RC retire_row(txn_man * txn);
 	void return_row(access_t type, txn_man * txn, row_t * row, RC rc);
 	// bool has_retired();
@@ -110,11 +110,11 @@ public:
   	Row_vll * manager;
   #elif CC_ALG == WOUND_WAIT
   	Row_ww * manager;
-  #elif CC_ALG == CLV
+  #elif CC_ALG == BAMBOO
   	#if DYNAMIC_TS
-	Row_clv * manager;
+	Row_bamboo * manager;
   	#else
-	Row_clvp * manager;
+	Row_bamboo_pt * manager;
   	#endif
   #endif
 	char * data;

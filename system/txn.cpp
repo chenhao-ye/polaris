@@ -18,7 +18,7 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 	lock_ready = false;
 	lock_abort = false;
 	timestamp = 0;
-#if CC_ALG == CLV
+#if CC_ALG == BAMBOO
     commit_barriers = 0;
 #endif
 	ready_part = 0;
@@ -50,11 +50,11 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 }
 
 void txn_man::set_txn_id(txnid_t txn_id) {
-	#if CC_ALG == WOUND_WAIT || CC_ALG == CLV
+	#if CC_ALG == WOUND_WAIT || CC_ALG == BAMBOO
 		lock_abort = false;
 		lock_ready = false;
 		status = RUNNING;
-    		#if CC_ALG == CLV
+    		#if CC_ALG == BAMBOO
 		commit_barriers = 0;
     		#endif
 	#endif
@@ -110,7 +110,7 @@ void txn_man::cleanup(RC rc) {
 #endif
 
 	// go through accesses and release
-	#if PRIORITIZE_HS && CC_ALG == CLV
+	#if PRIORITIZE_HS && CC_ALG == BAMBOO
 	for (int rid = 0; rid <= row_cnt - 1; rid ++) {
 	#else
 	for (int rid = row_cnt - 1; rid >= 0; rid --) {
@@ -125,7 +125,7 @@ void txn_man::cleanup(RC rc) {
 		}
 		#endif
 
-		#if CC_ALG == CLV 
+		#if CC_ALG == BAMBOO 
 		if (ROLL_BACK && type == XP) {
 			orig_r->return_row(type, this, accesses[rid]->orig_data, rc);
 		} else {
@@ -181,7 +181,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
 		access->data->init(MAX_TUPLE_SIZE);
 		access->orig_data = (row_t *) _mm_malloc(sizeof(row_t), 64);
 		access->orig_data->init(MAX_TUPLE_SIZE);
-#elif (CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT || CC_ALG == CLV)
+#elif (CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT || CC_ALG == BAMBOO)
 		access->orig_data = (row_t *) _mm_malloc(sizeof(row_t), 64);
 		access->orig_data->init(MAX_TUPLE_SIZE);
 #endif
@@ -206,7 +206,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
 	accesses[row_cnt]->history_entry = history_entry;
 #endif
 
-#if ROLL_BACK && (CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT || CC_ALG == CLV)
+#if ROLL_BACK && (CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT || CC_ALG == BAMBOO)
 	if (type == WR) {
 		accesses[row_cnt]->orig_data->table = row->get_table();
 		accesses[row_cnt]->orig_data->copy(row);
@@ -282,7 +282,7 @@ RC txn_man::finish(RC rc) {
             rc = Abort;
 	}
 	cleanup(rc);
-#elif CC_ALG == CLV
+#elif CC_ALG == BAMBOO
 	if (rc == RCOK) {
 		#if DEBUG_PROFILING
 		uint64_t starttime = get_sys_clock();
@@ -324,7 +324,7 @@ txn_man::increment_commit_barriers() {
 	ATOM_ADD(this->commit_barriers, 1);
 }
 
-#if CC_ALG == CLV
+#if CC_ALG == BAMBOO
 RC
 txn_man::retire_row(row_t * row){
     return row->retire_row(this);

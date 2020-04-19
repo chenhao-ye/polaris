@@ -6,7 +6,7 @@ alg=WOUND_WAIT
 spin="true"
 # [WW]
 ww_starv_free="false"
-# [CLV]
+# [BAMBOO]
 dynamic="true"
 on=1
 retire_read="false"
@@ -34,7 +34,7 @@ penalty=50000
 
 for i in 0 1 2 3 4
 do
-for alg in CLV #WOUND_WAIT NO_WAIT SILO WAIT_DIE
+for alg in BAMBOO #WOUND_WAIT NO_WAIT SILO WAIT_DIE
 do
 for zipf in 0.5 0.7 0.9
 do

@@ -53,7 +53,6 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 
 	// TODO for variable length variable (string). Should store the size of 
 	// the variable.
-#if !REORDER_WH
 	key = query->w_id;
 	INDEX * index = _wl->i_warehouse; 
 	item = index_read(index, key, wh_to_part(w_id));
@@ -79,17 +78,11 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	char * tmp_str = r_wh_local->get_value(W_NAME);
 	memcpy(w_name, tmp_str, 10);
 	w_name[10] = '\0';
-#if CC_ALG == CLV && RETIRE_ON && !MERGE_HS
-	#if !RETIRE_READ
+#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
 	if (r_wh_type != RD) {
 		if (retire_row(r_wh) == Abort)
 			return finish(Abort);
 	}
-	#else
-	if (retire_row(r_wh) == Abort)
-		return finish(Abort);
-	#endif
-#endif
 #endif
 	/*=====================================================+
 		EXEC SQL UPDATE district SET d_ytd = d_ytd + :h_amount
@@ -100,12 +93,7 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	assert(item != NULL);
 	row_t * r_dist_local;
 	row_t * r_dist = ((row_t *)item->location);
-#if DEBUG_BENCHMARK
-	r_dist_local = get_row(r_dist, RD);
-#else
 	r_dist_local = get_row(r_dist, WR);
-#endif
-	// DEBUGGING INFO: NEED TO CLEAN!!!
 	//sleep(1);
     	if (r_dist_local == NULL) {
         	return finish(Abort);
@@ -115,19 +103,14 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	r_dist_local->get_value(D_YTD, d_ytd);
 	r_dist_local->set_value(D_YTD, d_ytd + query->h_amount);
 	char d_name[11];
-#if REORDER_WH
-	char * tmp_str = r_dist_local->get_value(D_NAME);
-#else
+
 	tmp_str = r_dist_local->get_value(D_NAME);
-#endif
 	memcpy(d_name, tmp_str, 10);
 	d_name[10] = '\0';
 
-#if CC_ALG == CLV && RETIRE_ON && !MERGE_HS
-	#if (!DEBUG_BENCHMARK) || RETIRE_READ
+#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
 	if (retire_row(r_dist) == Abort)
 		return finish(Abort);
-	#endif
 #endif
 
 	/*====================================================================+
@@ -205,11 +188,7 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	   	EXEC SQL UPDATE customer SET c_balance = :c_balance, c_data = :c_new_data
    		WHERE c_w_id = :c_w_id AND c_d_id = :c_d_id AND c_id = :c_id;
    	+======================================================================*/
-	#if DEBUG_BENCHMARK
-	row_t * r_cust_local = get_row(r_cust, RD);
-	#else
 	row_t * r_cust_local = get_row(r_cust, WR);
-	#endif
 	if (r_cust_local == NULL) {
 		return finish(Abort);
 	}
@@ -224,11 +203,9 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	r_cust_local->get_value(C_PAYMENT_CNT, c_payment_cnt);
 	r_cust_local->set_value(C_PAYMENT_CNT, c_payment_cnt + 1);
 
-	#if CC_ALG == CLV && RETIRE_ON
-	#if (!DEBUG_BENCHMARK) || RETIRE_READ
+	#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
     	if (retire_row(r_cust) == Abort)
     		return finish(Abort);
-	#endif
 	#endif
 
 	char * c_credit = r_cust_local->get_value(C_CREDIT);
@@ -273,7 +250,7 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 		r_wh_local->set_value(W_YTD, w_ytd + query->h_amount);
 	}
 
-#if CC_ALG == CLV && RETIRE_ON && !MERGE_HS
+#if CC_ALG == BAMBOO && RETIRE_ON && !MERGE_HS
 	#if !RETIRE_READ
 	if (r_wh_type != RD) {
 		if (retire_row(r_wh) == Abort)
@@ -355,7 +332,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 	double w_tax;
 	r_wh_local->get_value(W_TAX, w_tax);
 
-#if CC_ALG == CLV && RETIRE_ON && !MERGE_HS && RETIRE_READ
+#if CC_ALG == BAMBOO && RETIRE_ON && !MERGE_HS && RETIRE_READ
 	if (retire_row(r_wh) == Abort)
 		return finish(Abort);
 #endif
@@ -377,7 +354,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 	//c_last = r_cust_local->get_value(C_LAST);
 	//c_credit = r_cust_local->get_value(C_CREDIT);
 
-#if CC_ALG == CLV && RETIRE_ON && !MERGE_HS && RETIRE_READ
+#if CC_ALG == BAMBOO && RETIRE_ON && !MERGE_HS && RETIRE_READ
 	if (retire_row(r_cust) == Abort)
 		return finish(Abort);
 #endif
@@ -393,11 +370,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 	item = index_read(_wl->i_district, key, wh_to_part(w_id));
 	assert(item != NULL);
 	row_t * r_dist = ((row_t *)item->location);
-#if DEBUG_BENCHMARK
-	row_t * r_dist_local = get_row(r_dist, RD);
-#else
 	row_t * r_dist_local = get_row(r_dist, WR);
-#endif
 	if (r_dist_local == NULL) {
 		return finish(Abort);
 	}
@@ -408,17 +381,9 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 	o_id ++;
 	r_dist_local->set_value(D_NEXT_O_ID, o_id);
 
-#if CC_ALG == CLV && RETIRE_ON
-	#if MERGE_HS && RETIRE_READ
-	if (retire_row(r_wh) == Abort)
-		return finish(Abort);
-	if (retire_row(r_cust) == Abort)
-		return finish(Abort);
-	#endif
-	#if (!DEBUG_BENCHAMRK) || RETIRE_READ
+#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
 	if (retire_row(r_dist) == Abort)
 		return finish(Abort);
-	#endif
 #endif
 
 	/*========================================================================================+
@@ -474,7 +439,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 		//i_name = r_item_local->get_value(I_NAME);
 		//i_data = r_item_local->get_value(I_DATA);
 
-#if CC_ALG == CLV && RETIRE_ON && RETIRE_READ
+#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
 		if (retire_row(r_item) == Abort)
 			return finish(Abort);
 #endif
@@ -499,11 +464,8 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 		index_read(stock_index, stock_key, wh_to_part(ol_supply_w_id), stock_item);
 		assert(item != NULL);
 		row_t * r_stock = ((row_t *)stock_item->location);
-#if DEBUG_BENCHMARK
-		row_t * r_stock_local = get_row(r_stock, RD);
-#else
 		row_t * r_stock_local = get_row(r_stock, WR);
-#endif
+
 		if (r_stock_local == NULL) {
 			return finish(Abort);
 		}
@@ -535,11 +497,9 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 		}
 		r_stock_local->set_value(S_QUANTITY, &quantity);
 
-#if CC_ALG == CLV && RETIRE_ON
-		#if (!DEBUG_BENCHAMRK) || RETIRE_READ
+#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
 		if (retire_row(r_stock) == Abort)
 			return finish(Abort);
-		#endif
 #endif
 
 		/*====================================================+
@@ -569,33 +529,6 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 #endif		
 //		insert_row(r_ol, _wl->t_orderline);
 	}
-
-#if REORDER_WH
-	/*=======================================================================+
-	EXEC SQL SELECT c_discount, c_last, c_credit, w_tax
-		INTO :c_discount, :c_last, :c_credit, :w_tax
-		FROM customer, warehouse
-		WHERE w_id = :w_id AND c_w_id = w_id AND c_d_id = :d_id AND c_id = :c_id;
-	+========================================================================*/
-	key = w_id;
-	index = _wl->i_warehouse; 
-	item = index_read(index, key, wh_to_part(w_id));
-	assert(item != NULL);
-	row_t * r_wh = ((row_t *)item->location);
-	row_t * r_wh_local = get_row(r_wh, RD);
-	if (r_wh_local == NULL) {
-		return finish(Abort);
-	}
-
-
-	double w_tax;
-	r_wh_local->get_value(W_TAX, w_tax);
-
-#if CC_ALG == CLV && RETIRE_ON && RETIRE_READ
-	if (retire_row(r_wh) == Abort)
-		return finish(Abort);
-#endif
-#endif
 	
 	assert( rc == RCOK );
 	return finish(rc);

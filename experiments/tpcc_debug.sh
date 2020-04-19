@@ -2,14 +2,14 @@ cd ../
 cp -r config_tpcc_debug.h config.h
 
 ## algorithm
-alg=CLV
+alg=BAMBOO
 spin="true"
 # [WW]
 ww_starv_free="false"
-# [CLV]
+# [BAMBOO]
 dynamic="true"
 retire="true"
-# [CLV] lock optimization
+# [BAMBOO] lock optimization
 retire_read="false"
 on=0
 off=0

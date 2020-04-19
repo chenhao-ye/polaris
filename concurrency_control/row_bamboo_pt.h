@@ -1,13 +1,12 @@
-#ifndef ROW_CLVP_H
-#define ROW_CLVP_H
+#ifndef ROW_BAMBOO_PT_H
+#define ROW_BAMBOO_PT_H
 
-#include "row_clv.h"
+#include "row_bamboo.h"
 
-struct CLVLockEntry;
+struct BBLockEntry;
 
-class Row_clvp {
+class Row_bamboo_pt {
 public:
-	//bool is_retire_on;
 	void init(row_t * row);
 	// [DL_DETECT] txnids are the txn_ids that current txn is waiting for.
 	RC lock_get(lock_t type, txn_man * txn);
@@ -25,8 +24,8 @@ private:
 	bool blatch;
 	
 	bool 		conflict_lock(lock_t l1, lock_t l2);
-	CLVLockEntry * get_entry();
-	void 		return_entry(CLVLockEntry * entry);
+	BBLockEntry * get_entry();
+	void 		return_entry(BBLockEntry * entry);
 	void		lock();
 	void		unlock();
 	row_t * _row;
@@ -34,31 +33,24 @@ private:
 	UInt32 waiter_cnt;
 	UInt32 retired_cnt; // no need to keep retied cnt
 	bool retire_on;
-
-	#if DEBUG_TMP	
-	CLVLockEntry ** vec;
-	#endif
-	void reset_entry(CLVLockEntry * entry);
 	
 	// owners is a single linked list
 	// waiters is a double linked list 
 	// [waiters] head is the oldest txn, tail is the youngest txn. 
 	//   So new txns are inserted into the tail.
-	CLVLockEntry * owners;
-	CLVLockEntry * owners_tail;
-	CLVLockEntry * retired_head;
-	CLVLockEntry * retired_tail;
-	CLVLockEntry * waiters_head;
-	CLVLockEntry * waiters_tail;
+	BBLockEntry * owners;
+	BBLockEntry * owners_tail;
+	BBLockEntry * retired_head;
+	BBLockEntry * retired_tail;
+	BBLockEntry * waiters_head;
+	BBLockEntry * waiters_tail;
 
 	bool rm_if_in_retired(txn_man * txn, bool is_abort);
 	bool bring_next(txn_man * txn);
-	bool has_conflicts_in_list(CLVLockEntry * list, CLVLockEntry * entry);
-	bool conflict_lock_entry(CLVLockEntry * l1, CLVLockEntry * l2);
-	CLVLockEntry * remove_descendants(CLVLockEntry * en);
-	void update_entry(CLVLockEntry * en);
-	// void batch_return(CLVLockEntry * en);
-
+	bool has_conflicts_in_list(BBLockEntry * list, BBLockEntry * entry);
+	bool conflict_lock_entry(BBLockEntry * l1, BBLockEntry * l2);
+	BBLockEntry * remove_descendants(BBLockEntry * en);
+	void update_entry(BBLockEntry * en);
 };
 
 #endif

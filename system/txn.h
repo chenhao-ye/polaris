@@ -51,11 +51,11 @@ public:
 	void 			set_txn_id(txnid_t txn_id);
 	txnid_t 		get_txn_id();
 
-	// [WW, CLV]
+	// [WW, BAMBOO]
     	status_t        wound_txn(txn_man * txn);
     	status_t		set_abort()
 {
-#if CC_ALG == CLV || CC_ALG == WOUND_WAIT
+#if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT
 	if (ATOM_CAS(status, RUNNING, ABORTED)) {
         	lock_abort = true;
        		return ABORTED;
@@ -80,10 +80,10 @@ public:
 #if CC_ALG == HEKATON
 	void * volatile history_entry;
 #endif
-	// [DL_DETECT, NO_WAIT, WAIT_DIE, WOUND_WAIT, CLV]
+	// [DL_DETECT, NO_WAIT, WAIT_DIE, WOUND_WAIT, BAMBOO]
 	bool volatile 	lock_ready;
 	bool volatile 	lock_abort; // forces another waiting txn to abort.
-    // [CLV]
+    // [BAMBOO]
     status_t        status; // RUNNING, COMMITED, ABORTED
 	// [TIMESTAMP, MVCC]
 	bool volatile 	ts_ready; 
@@ -115,8 +115,8 @@ public:
 	void 			index_read(INDEX * index, idx_key_t key, int part_id, itemid_t *& item);
 	row_t * 		get_row(row_t * row, access_t type);
 
-	// For CLV
-#if CC_ALG == CLV
+	// For BAMBOO
+#if CC_ALG == BAMBOO
     RC              retire_row(row_t * row);
 #endif
     void			lock_ts();
@@ -154,7 +154,7 @@ private:
 
 inline status_t txn_man::wound_txn(txn_man * txn)
 {
-#if CC_ALG == CLV || CC_ALG == WOUND_WAIT
+#if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT
 	if (status != RUNNING)
 		return COMMITED;
 	return txn->set_abort();

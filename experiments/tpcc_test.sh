@@ -2,16 +2,16 @@ cd ../
 cp -r config_tpcc_debug.h config.h
 
 ## algorithm
-alg=CLV
+alg=BAMBOO
 spin="true"
 # [WW]
 ww_starv_free="false"
-# [CLV]
+# [BAMBOO]
 dynamic="true"
 on=0
 retire_read="false"
 retire="true"
-# [CLV] lock optimization
+# [BAMBOO] lock optimization
 # delay=0
 # dt=4
 
@@ -34,7 +34,7 @@ penalty=50000
 retire_off_opt="true"
 for retire_off_opt in true false
 do
-for alg in CLV #WOUND_WAIT SILO WAIT_DIE NO_WAIT
+for alg in BAMBOO #WOUND_WAIT SILO WAIT_DIE NO_WAIT
 do
 for i in 0 1 2 3 4
 do

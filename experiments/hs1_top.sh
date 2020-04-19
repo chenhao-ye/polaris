@@ -6,7 +6,7 @@ alg=WOUND_WAIT
 spin="true"
 # [WW]
 ww_starv_free="false"
-# [CLV]
+# [BAMBOO]
 dynamic="true"
 on=0
 retire_read="false"
@@ -39,7 +39,7 @@ for retire_off_opt in true false
 do
 for i in 0 1 2 3 4
 do
-for alg in CLV #WOUND_WAIT WAIT_DIE NO_WAIT SILO
+for alg in BAMBOO #WOUND_WAIT WAIT_DIE NO_WAIT SILO
 do
 for threads in 1 2 4 8 16 32
 do

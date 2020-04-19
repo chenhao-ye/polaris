@@ -2,12 +2,12 @@ cd ../
 cp -r config_ycsb_synthetic.h config.h
 
 # algorithm
-alg=CLV
+alg=BAMBOO
 #alg=WOUND_WAIT
 spin="true"
 # [WW]
 ww_starv_free="false"
-# [CLV]
+# [BAMBOO]
 dynamic="true"
 retire="true"
 retire_read="false"

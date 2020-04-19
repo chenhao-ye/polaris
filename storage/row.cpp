@@ -13,8 +13,8 @@
 #include "row_silo.h"
 #include "row_vll.h"
 #include "row_ww.h"
-#include "row_clv.h"
-#include "row_clvp.h"
+#include "row_bamboo.h"
+#include "row_bamboo_pt.h"
 #include "mem_alloc.h"
 #include "manager.h"
 
@@ -64,11 +64,11 @@ void row_t::init_manager(row_t * row) {
     manager = (Row_vll *) mem_allocator.alloc(sizeof(Row_vll), _part_id);
 #elif CC_ALG == WOUND_WAIT
     manager = (Row_ww *) mem_allocator.alloc(sizeof(Row_ww), _part_id);
-#elif CC_ALG == CLV
+#elif CC_ALG == BAMBOO
     #if DYNAMIC_TS
-    manager = (Row_clv *) mem_allocator.alloc(sizeof(Row_clv), _part_id);
+    manager = (Row_bamboo *) mem_allocator.alloc(sizeof(Row_bamboo), _part_id);
     #else
-    manager = (Row_clvp *) mem_allocator.alloc(sizeof(Row_clvp), _part_id);
+    manager = (Row_bamboo_pt *) mem_allocator.alloc(sizeof(Row_bamboo_pt), _part_id);
     #endif
 #endif
 
@@ -148,7 +148,7 @@ void row_t::free_row() {
 	free(data);
 }
 
-#if CC_ALG == CLV
+#if CC_ALG == BAMBOO
 RC row_t::retire_row(txn_man * txn) {
     return this->manager->lock_retire(txn);
 }
@@ -156,7 +156,7 @@ RC row_t::retire_row(txn_man * txn) {
 
 RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 	RC rc = RCOK;
-#if CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT || CC_ALG == CLV
+#if CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT || CC_ALG == BAMBOO
 	uint64_t thd_id = txn->get_thd_id();
 	lock_t lt = (type == RD || type == SCAN)? LOCK_SH : LOCK_EX;
 #if CC_ALG == DL_DETECT
@@ -164,7 +164,7 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 	int txncnt; 
 	rc = this->manager->lock_get(lt, txn, txnids, txncnt);	
 #else
-	#if (CC_ALG == CLV) || (CC_ALG == WOUND_WAIT)
+	#if (CC_ALG == BAMBOO) || (CC_ALG == WOUND_WAIT)
 	if (txn->lock_abort) 
 		return Abort;
 	#endif
@@ -172,10 +172,10 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 #endif
 
 	if (rc == RCOK) {
-		#if (CC_ALG == WOUND_WAIT) || (CC_ALG == CLV)
+		#if (CC_ALG == WOUND_WAIT) || (CC_ALG == BAMBOO)
 		if(txn->lock_abort) {
 			rc = Abort;
-			#if CC_ALG == CLV
+			#if CC_ALG == BAMBOO
 				return_row(type, txn, NULL, Abort);
 			#else
 				return_row(type, txn, NULL);
@@ -185,12 +185,12 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 		#endif		
 		row = this;
 	} else if (rc == Abort) {
-		#if (CC_ALG == CLV)  || (CC_ALG == WOUND_WAIT)
+		#if (CC_ALG == BAMBOO)  || (CC_ALG == WOUND_WAIT)
 		return rc;
 		#endif
 	}
 	else if (rc == WAIT) {
-		ASSERT(CC_ALG == WAIT_DIE || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT || CC_ALG == CLV);
+		ASSERT(CC_ALG == WAIT_DIE || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT || CC_ALG == BAMBOO);
 
 		uint64_t starttime = get_sys_clock();
 		#if CC_ALG == DL_DETECT	
@@ -198,13 +198,13 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 		#endif
 		uint64_t endtime;
 
-		#if (CC_ALG != WOUND_WAIT) && (CC_ALG != CLV)
+		#if (CC_ALG != WOUND_WAIT) && (CC_ALG != BAMBOO)
 		txn->lock_abort = false;
 		#endif
 		INC_STATS(txn->get_thd_id(), wait_cnt, 1);
 		while (!txn->lock_ready && !txn->lock_abort) 
 		{
-			#if CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT || CC_ALG == CLV
+			#if CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT || CC_ALG == BAMBOO
 			continue;
 			#elif CC_ALG == DL_DETECT	
 			uint64_t last_detect = starttime;
@@ -249,12 +249,12 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 		else if (txn->lock_abort) {
 			// check if txn is aborted
 			rc = Abort;
-			#if CC_ALG == CLV
+			#if CC_ALG == BAMBOO
 				return_row(type, txn, NULL, Abort);
 			#else
 				return_row(type, txn, NULL);
 			#endif
-			#if (CC_ALG == WOUND_WAIT) || (CC_ALG == CLV) 
+			#if (CC_ALG == WOUND_WAIT) || (CC_ALG == BAMBOO) 
 			return rc;
 			#endif
 		}
@@ -316,7 +316,7 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 #endif
 }
 
-#if CC_ALG == CLV
+#if CC_ALG == BAMBOO
 void row_t::return_row(access_t type, txn_man * txn, row_t * row, RC rc) {	
 	assert (row == NULL || row == this || type == XP);
 	if (ROLL_BACK && type == XP) {// recover from previous writes.
