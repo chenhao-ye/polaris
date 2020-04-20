@@ -224,7 +224,9 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
       rc = RCOK;
     } else if (txn->lock_abort) {
       // only possible for wound-wait based algs.
-      // check if txn is aborted, if aborted, entry should be removed already.
+      // check if txn is aborted, if aborted due to conflicts on this or other
+      // try to release lock
+      return_row(type, txn, NULL, Abort);
       return Abort;
     }
     endtime = get_sys_clock();
@@ -308,7 +310,7 @@ void row_t::return_row(access_t type, txn_man * txn, row_t * row) {
   // make committed writes globally visible
   if (type == WR) // must be commited, aborted write will be XP
     this->copy(row);
-  this->manager->lock_release(txn);
+  RC rc = this->manager->lock_release(txn);
 #elif CC_ALG == WAIT_DIE || (CC_ALG == NO_WAIT) || (CC_ALG == DL_DETECT)
   assert (row == NULL || row == this || type == XP);
   if (type == XP) {// recover from previous writes.

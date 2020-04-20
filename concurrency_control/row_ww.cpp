@@ -176,7 +176,6 @@ RC Row_ww::lock_release(txn_man * txn) {
 #if DEBUG_CS_PROFILING
   uint64_t starttime = get_sys_clock();
 #endif
-
   if (g_thread_cnt > 1) {
     if (g_central_man)
       glob_manager->lock_row(_row);
@@ -188,10 +187,11 @@ RC Row_ww::lock_release(txn_man * txn) {
 #endif
     }
   }
-
 #if DEBUG_CS_PROFILING
   INC_STATS(txn->get_thd_id(), debug6, get_sys_clock() - starttime);
 #endif
+
+  RC rc = Abort;
 
   // Try to find the entry in the owners
   LockEntry * en = owners;
@@ -202,6 +202,7 @@ RC Row_ww::lock_release(txn_man * txn) {
     en = en->next;
   }
   if (en) { // find the entry in the owner list
+    rc = RCOK;
     if (prev)
       prev->next = en->next;
     else{
@@ -217,6 +218,7 @@ RC Row_ww::lock_release(txn_man * txn) {
     while (en != NULL && en->txn != txn)
       en = en->next;
     if (en) {
+      rc = RCOK;
       LIST_REMOVE(en);
       if (en == waiters_head)
         waiters_head = en->next;
@@ -238,12 +240,9 @@ RC Row_ww::lock_release(txn_man * txn) {
     pthread_mutex_unlock( latch );
 #endif
   }
-
-  if (en) {
+  if (en)
     return_entry(en);
-  }
-
-  return RCOK;
+  return rc;
 }
 
 bool Row_ww::conflict_lock(lock_t l1, lock_t l2) {

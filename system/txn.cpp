@@ -111,11 +111,14 @@ void txn_man::cleanup(RC rc) {
 
   // go through accesses and release
   for (int rid = row_cnt - 1; rid >= 0; rid --) {
+#if (CC_ALG == WOUND_WAIT) || (CC_ALG == BAMBOO)
+    if (accesses[rid]->orig_row == NULL)
+      continue;
+#endif
     row_t * orig_r = accesses[rid]->orig_row;
     access_t type = accesses[rid]->type;
     if (type == WR && rc == Abort)
       type = XP;
-
 #if (CC_ALG == NO_WAIT || CC_ALG == DL_DETECT) && ISOLATION_LEVEL == REPEATABLE_READ
     if (type == RD) {
 			accesses[rid]->data = NULL;
@@ -200,6 +203,9 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
 #endif
 
   if (rc == Abort) {
+#if (CC_ALG == WOUND_WAIT) || (CC_ALG == BAMBOO)
+    accesses[row_cnt]->orig_row = NULL;
+#endif
     return NULL;
   }
   accesses[row_cnt]->type = type;
