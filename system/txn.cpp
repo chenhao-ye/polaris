@@ -144,7 +144,7 @@ void txn_man::cleanup(RC rc) {
 		}
 #endif
 
-#if CC_ALG != TICTOC && CC_ALG != SILO
+#if CC_ALG != TICTOC && (CC_ALG != SILO) && (CC_ALG != WOUND_WAIT) && (CC_ALG!= BAMBOO)
     accesses[rid]->data = NULL;
 #endif
   }
