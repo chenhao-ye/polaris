@@ -40,10 +40,6 @@ row_t::switch_schema(table_t * host_table) {
   return RCOK;
 }
 
-// bool
-// row_t::has_retired() {
-// 	 return this->manager->has_retired();
-// }
 
 void row_t::init_manager(row_t * row) {
 #if CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE
@@ -175,11 +171,7 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 #if (CC_ALG == WOUND_WAIT) || (CC_ALG == BAMBOO)
     if(txn->lock_abort) {
       rc = Abort;
-#if CC_ALG == BAMBOO
       return_row(type, txn, NULL, Abort);
-#else
-      return_row(type, txn, NULL);
-#endif
       return rc;
     }
 #endif
@@ -188,16 +180,13 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 #if (CC_ALG == BAMBOO)  || (CC_ALG == WOUND_WAIT)
     return rc;
 #endif
-  }
-  else if (rc == WAIT) {
+  } else if (rc == WAIT) {
     ASSERT(CC_ALG == WAIT_DIE || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT || CC_ALG == BAMBOO);
-
     uint64_t starttime = get_sys_clock();
 #if CC_ALG == DL_DETECT
     bool dep_added = false;
 #endif
     uint64_t endtime;
-
 #if (CC_ALG != WOUND_WAIT) && (CC_ALG != BAMBOO)
     txn->lock_abort = false;
 #endif
@@ -242,19 +231,14 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 				PAUSE
 #endif
     }
-
     if (txn->lock_ready) {
       rc = RCOK;
     }
     else if (txn->lock_abort) {
       // check if txn is aborted
       rc = Abort;
-#if CC_ALG == BAMBOO
+#if (CC_ALG == BAMBOO)  || (CC_ALG == WOUND_WAIT)
       return_row(type, txn, NULL, Abort);
-#else
-      return_row(type, txn, NULL);
-#endif
-#if (CC_ALG == WOUND_WAIT) || (CC_ALG == BAMBOO)
       return rc;
 #endif
     }
@@ -316,15 +300,16 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 #endif
 }
 
-#if CC_ALG == BAMBOO
 void row_t::return_row(access_t type, txn_man * txn, row_t * row, RC rc) {
-  assert (row == NULL || row == this || type == XP);
-  if (ROLL_BACK && type == XP) {// recover from previous writes.
+  // make committed writes globally visible
+  if (rc != Abort && (type == WR))
     this->copy(row);
-  }
+#if CC_ALG == BAMBOO
   this->manager->lock_release(txn, rc);
-}
+#else
+  this->manager->lock_release(txn);
 #endif
+}
 
 // the "row" is the row read out in get_row(). 
 // For locking based CC_ALG, the "row" is the same as "this". 
