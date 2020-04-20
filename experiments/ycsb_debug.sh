@@ -1,8 +1,7 @@
-cd ../
 cp -r config-ycsb-std.h config.h
 
 # algorithm
-alg=BAMBOO
+alg=WOUND_WAIT
 spin="true"
 # [WW]
 ww_starv_free="false"
@@ -15,7 +14,7 @@ cs_pf="false"
 wl="YCSB"
 req=16
 synthetic=false
-zipf=0.9
+zipf=1.2
 num_hs=0
 pos=TOP
 specified=0
@@ -25,7 +24,7 @@ shs="WR"
 read_ratio=0.1
 ordered="false"
 flip=0
-table_size="1024*1024*20"
+table_size="1024*10"
 
 # other
 threads=16
