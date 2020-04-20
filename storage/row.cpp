@@ -223,12 +223,9 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
     if (txn->lock_ready) {
       rc = RCOK;
     } else if (txn->lock_abort) {
-      // check if txn is aborted
-      rc = Abort;
-      #if (CC_ALG == BAMBOO)  || (CC_ALG == WOUND_WAIT)
-      return_row(type, txn, NULL, Abort);
-      return rc;
-      #endif
+      // only possible for wound-wait based algs.
+      // check if txn is aborted, if aborted, entry should be removed already.
+      return Abort;
     }
     endtime = get_sys_clock();
     INC_TMP_STATS(thd_id, time_wait, endtime - starttime);
