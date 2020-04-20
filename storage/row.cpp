@@ -166,20 +166,9 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 #endif
   rc = this->manager->lock_get(lt, txn);
 #endif
-
   if (rc == RCOK) {
-#if (CC_ALG == WOUND_WAIT) || (CC_ALG == BAMBOO)
-    if(txn->lock_abort) {
-      rc = Abort;
-      return_row(type, txn, NULL, Abort);
-      return rc;
-    }
-#endif
     row = this;
   } else if (rc == Abort) {
-#if (CC_ALG == BAMBOO)  || (CC_ALG == WOUND_WAIT)
-    return rc;
-#endif
   } else if (rc == WAIT) {
     ASSERT(CC_ALG == WAIT_DIE || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT || CC_ALG == BAMBOO);
     uint64_t starttime = get_sys_clock();
@@ -233,8 +222,7 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
     }
     if (txn->lock_ready) {
       rc = RCOK;
-    }
-    else if (txn->lock_abort) {
+    } else if (txn->lock_abort) {
       // check if txn is aborted
       rc = Abort;
 #if (CC_ALG == BAMBOO)  || (CC_ALG == WOUND_WAIT)

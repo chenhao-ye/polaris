@@ -135,8 +135,7 @@ void txn_man::cleanup(RC rc) {
     if (ROLL_BACK && type == XP &&
 					(CC_ALG == DL_DETECT || 
 					CC_ALG == NO_WAIT || 
-					CC_ALG == WAIT_DIE ||
-					CC_ALG == WOUND_WAIT))
+					CC_ALG == WAIT_DIE))
 		{
 			orig_r->return_row(type, this, accesses[rid]->orig_data);
 		} else {
