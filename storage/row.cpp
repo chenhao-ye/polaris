@@ -155,36 +155,36 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 #if CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT || CC_ALG == BAMBOO
   uint64_t thd_id = txn->get_thd_id();
   lock_t lt = (type == RD || type == SCAN)? LOCK_SH : LOCK_EX;
-#if CC_ALG == DL_DETECT
+  #if CC_ALG == DL_DETECT
   uint64_t * txnids;
 	int txncnt; 
 	rc = this->manager->lock_get(lt, txn, txnids, txncnt);
-#else
-#if (CC_ALG == BAMBOO) || (CC_ALG == WOUND_WAIT)
+  #else
+  #if (CC_ALG == BAMBOO) || (CC_ALG == WOUND_WAIT)
   if (txn->lock_abort)
     return Abort;
-#endif
+  #endif
   rc = this->manager->lock_get(lt, txn);
-#endif
+  #endif
   if (rc == RCOK) {
     row = this;
   } else if (rc == Abort) {
   } else if (rc == WAIT) {
     ASSERT(CC_ALG == WAIT_DIE || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT || CC_ALG == BAMBOO);
     uint64_t starttime = get_sys_clock();
-#if CC_ALG == DL_DETECT
+    #if CC_ALG == DL_DETECT
     bool dep_added = false;
-#endif
+    #endif
     uint64_t endtime;
-#if (CC_ALG != WOUND_WAIT) && (CC_ALG != BAMBOO)
+    #if (CC_ALG != WOUND_WAIT) && (CC_ALG != BAMBOO)
     txn->lock_abort = false;
-#endif
+    #endif
     INC_STATS(txn->get_thd_id(), wait_cnt, 1);
     while (!txn->lock_ready && !txn->lock_abort)
     {
-#if CC_ALG == WAIT_DIE || CC_ALG == WOUND_WAIT || CC_ALG == BAMBOO
+    #if CC_ALG == WAIT_DIE || (CC_ALG == WOUND_WAIT) || (CC_ALG == BAMBOO)
       continue;
-#elif CC_ALG == DL_DETECT
+    #elif CC_ALG == DL_DETECT
       uint64_t last_detect = starttime;
 			uint64_t last_try = starttime;
 
@@ -218,17 +218,17 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 				}
 			} else 
 				PAUSE
-#endif
+    #endif
     }
     if (txn->lock_ready) {
       rc = RCOK;
     } else if (txn->lock_abort) {
       // check if txn is aborted
       rc = Abort;
-#if (CC_ALG == BAMBOO)  || (CC_ALG == WOUND_WAIT)
+      #if (CC_ALG == BAMBOO)  || (CC_ALG == WOUND_WAIT)
       return_row(type, txn, NULL, Abort);
       return rc;
-#endif
+      #endif
     }
     endtime = get_sys_clock();
     INC_TMP_STATS(thd_id, time_wait, endtime - starttime);

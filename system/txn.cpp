@@ -194,7 +194,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
     num_accesses_alloc++;
   }
 #if (CC_ALG == WOUND_WAIT || (CC_ALG == BAMBOO))
-  rc = row->get_row(type, this, accesses[row_cnt]->orig_row);
+  rc = row->get_row(type, this, accesses[row_cnt]->orig_data);
 #else
   rc = row->get_row(type, this, accesses[ row_cnt ]->data);
 #endif
