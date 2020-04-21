@@ -310,7 +310,7 @@ void row_t::return_row(access_t type, txn_man * txn, row_t * row) {
   // make committed writes globally visible
   if (type == WR) // must be commited, aborted write will be XP
     this->copy(row);
-  RC rc = this->manager->lock_release(txn);
+  this->manager->lock_release(txn);
 #elif CC_ALG == WAIT_DIE || (CC_ALG == NO_WAIT) || (CC_ALG == DL_DETECT)
   assert (row == NULL || row == this || type == XP);
   if (type == XP) {// recover from previous writes.

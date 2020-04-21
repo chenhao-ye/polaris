@@ -125,7 +125,7 @@
 #define SYNTH_TABLE_SIZE 			(1024 * 5)
 #define ZIPF_THETA 					0.9
 #define READ_PERC 					1
-#define WRITE_PERC 					0
+#define WRITE_PERC 					1  // if want no scan, write + read >= 1
 #define SCAN_PERC 					0
 #define SCAN_LEN					20
 #define PART_PER_TXN 				1

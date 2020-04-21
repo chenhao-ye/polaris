@@ -47,8 +47,6 @@ RC ycsb_txn_man::run_txn(base_query * query) {
             row_t * row = ((row_t *)m_item->location);
             row_t * row_local;
             access_t type = req->rtype;
-            //printf("txn %lu try to get row %lu\n", get_txn_id(), row->get_row_id());
-
             row_local = get_row(row, type);
             if (row_local == NULL) {
                 rc = Abort;
@@ -68,7 +66,11 @@ RC ycsb_txn_man::run_txn(base_query * query) {
                     assert(req->rtype == WR);
 //					for (int fid = 0; fid < schema->get_field_cnt(); fid++) {
                         int fid = 0;
+#if (CC_ALG == BAMBOO) || (CC_ALG == WOUND_WAIT)
+                        char * data = row_local->get_data();
+#else
                         char * data = row->get_data();
+#endif
                         *(uint64_t *)(&data[fid * 10]) = 0;
 //					}
                 } 
