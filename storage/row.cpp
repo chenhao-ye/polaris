@@ -234,8 +234,10 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
       // only possible for wound-wait based algs.
       // check if txn is aborted, if aborted due to conflicts on this or other
       // try to release lock
+#if (CC_ALG == WOUND_WAIT) || (CC_ALG == BAMBOO)
       return_row(type, txn, NULL, Abort);
       return Abort;
+#endif
     }
     endtime = get_sys_clock();
     INC_TMP_STATS(thd_id, time_wait, endtime - starttime);
