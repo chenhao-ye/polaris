@@ -150,7 +150,11 @@ RC row_t::retire_row(txn_man * txn) {
 }
 #endif
 
+#if CC_ALG == BAMBOO
+RC row_t::get_row(access_t type, txn_man * txn, Access * access) {
+#else
 RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
+#endif
   RC rc = RCOK;
 #if CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT || CC_ALG == BAMBOO
   uint64_t thd_id = txn->get_thd_id();
@@ -160,15 +164,19 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 	int txncnt; 
 	rc = this->manager->lock_get(lt, txn, txnids, txncnt);
   #else
-  #if (CC_ALG == BAMBOO) || (CC_ALG == WOUND_WAIT)
+  #if CC_ALG == BAMBOO
   if (txn->lock_abort)
     return Abort;
-  #endif
+  rc = this->manager->lock_get(lt, txn, access);
+  #elif CC_ALG == WOUND_WAIT
+  if (txn->lock_abort)
+    return Abort;
   rc = this->manager->lock_get(lt, txn);
   #endif
+  #endif
   if (rc == RCOK) {
-    row = this;
   } else if (rc == Abort) {
+    return rc;
   } else if (rc == WAIT) {
     ASSERT(CC_ALG == WAIT_DIE || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT || CC_ALG == BAMBOO);
     uint64_t starttime = get_sys_clock();
@@ -231,8 +239,10 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
     }
     endtime = get_sys_clock();
     INC_TMP_STATS(thd_id, time_wait, endtime - starttime);
-    row = this;
   }
+#if CC_ALG != BAMBOO
+  row = this;
+#endif
   return rc;
 
 #elif CC_ALG == TIMESTAMP || CC_ALG == MVCC || CC_ALG == HEKATON
@@ -288,12 +298,13 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 }
 
 void row_t::return_row(access_t type, txn_man * txn, row_t * row, RC rc) {
+#if CC_ALG == BAMBOO
+  // all writes are retired! and globally visible already in cs.
+  this->manager->lock_release(txn, rc);
+#else
   // make committed writes globally visible
   if (rc != Abort && (type == WR))
     this->copy(row);
-#if CC_ALG == BAMBOO
-  this->manager->lock_release(txn, rc);
-#else
   this->manager->lock_release(txn);
 #endif
 }

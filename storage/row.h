@@ -20,6 +20,7 @@
 		value = *(type *)&data[pos];\
 	}
 
+class Access;
 class table_t;
 class Catalog;
 class txn_man;
@@ -83,12 +84,15 @@ public:
 	void free_row();
 
 	// for concurrency control. can be lock, timestamp etc.
+#if CC_ALG == BAMBOO
+    RC retire_row(txn_man * txn);
+    RC get_row(access_t type, txn_man * txn, Access * row);
+#else
 	RC get_row(access_t type, txn_man * txn, row_t *& row);
+#endif
 	void return_row(access_t type, txn_man * txn, row_t * row);
 	
-#if CC_ALG == BAMBOO
-	RC retire_row(txn_man * txn);
-#endif
+
 
   void return_row(access_t type, txn_man * txn, row_t * row, RC rc);
 	

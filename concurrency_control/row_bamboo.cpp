@@ -21,6 +21,8 @@ void Row_bamboo::init(row_t * row) {
   // local timestamp
   local_ts = -1;
   txn_ts = 0;
+  // record first conflicting write to rollback
+  fcw = NULL:
 
 #if SPINLOCK
   latch = new pthread_spinlock_t;
@@ -63,16 +65,18 @@ void Row_bamboo::unlock() {
 }
 
 
-RC Row_bamboo::lock_get(lock_t type, txn_man * txn) {
+RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
   uint64_t *txnids = NULL;
   int txncnt = 0;
-  return lock_get(type, txn, txnids, txncnt);
+  return lock_get(type, txn, txnids, txncnt, access);
 }
 
-RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) {
+RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
+&txncnt, Access * access) {
   assert (CC_ALG == BAMBOO);
   BBLockEntry * to_insert;
   to_insert = get_entry();
+  to_insert->access = access;
 
 #if DEBUG_CS_PROFILING
   uint64_t starttime = get_sys_clock();
@@ -132,6 +136,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txnc
 
   // 2. wound conflicts
   // 2.1 check retired
+  fcw = NULL;
   status = wound_conflict(type, txn, ts, true, status);
   if (status == Abort) {
     rc = Abort;
@@ -263,6 +268,9 @@ RC Row_bamboo::lock_retire(txn_man * txn) {
     }
     RETIRED_LIST_PUT_TAIL(retired_head, retired_tail, entry);
     retired_cnt++;
+    // make dirty data globally visible
+    if (entry->type == EX)
+      entry->access->orig_row->copy(entry->access->data);
   } else {
     // may be is aborted
     //assert(txn->status == ABORTED);
@@ -312,8 +320,10 @@ RC Row_bamboo::lock_release(txn_man * txn, RC rc) {
         en = en->next;
       }
     }
+    // not found in retired, need to make globally visible if rc = commit
+    if (en && (rc == Commit))
+      en->access->orig_row->copy(en->access->data);
   }
-
   if (owner_cnt == 0) {
     bring_next(NULL);
   }
@@ -329,11 +339,13 @@ RC Row_bamboo::lock_release(txn_man * txn, RC rc) {
 }
 
 inline bool Row_bamboo::rm_if_in_retired(txn_man * txn, bool is_abort) {
+  fcw = NULL;
   BBLockEntry * en = retired_head;
   while(en) {
     if (en->txn == txn) {
       if (is_abort) {
         en->txn->lock_abort = true;
+        CHECK_ROLL_BACK(en)
         en = remove_descendants(en, txn);
       } else {
         assert(txn->status == COMMITED);
@@ -410,6 +422,7 @@ inline bool Row_bamboo::wound_txn(BBLockEntry * en, txn_man * txn, bool check_re
   if (en->txn->set_abort() != ABORTED)
     return false;
   if (check_retired) {
+    CHECK_ROLL_BACK(en);
     en = remove_descendants(en, txn);
   } else {
     LIST_RM(owners, owners_tail, en, owner_cnt);
@@ -420,7 +433,6 @@ inline bool Row_bamboo::wound_txn(BBLockEntry * en, txn_man * txn, bool check_re
 
 inline RC Row_bamboo::wound_conflict(lock_t type, txn_man * txn, ts_t ts,
     bool check_retired, RC status) {
-
   BBLockEntry * en;
   BBLockEntry * to_reset;
   if (check_retired)
@@ -429,6 +441,7 @@ inline RC Row_bamboo::wound_conflict(lock_t type, txn_man * txn, ts_t ts,
     en = owners;
   bool recheck = false;
   int checked_cnt = 0;
+  bool conflicted = false;
   while (en) {
     checked_cnt++;
     recheck = false;
@@ -540,41 +553,25 @@ Row_bamboo::remove_descendants(BBLockEntry * en, txn_man * txn) {
   while(en && (!conflict_lock(type, en->type))) {
     en = en->next;
   }
-  // 2.2 remove dependees
+  // 2.2 remove dependendees,
+  // NOTE: only the first wounded/aborted txn needs to be rolled back
   if (en == NULL) {
-    if (!conflict_with_owners) {
-      // clean owners
-      while(owners) {
-        en = owners;
-        // no need to be too complicated (i.e. call function) as the owner will be empty in the end
-        owners = owners->next;
-#if DEBUG_CS_PROFILING
-        abort_try++;
-        if (en->txn->status == ABORTED)
-          abort_cnt++;
-#endif
-        en->txn->set_abort();
-        return_entry(en);
-      }
-      owners_tail = NULL;
-      owners = NULL;
-      owner_cnt = 0;
+    // no dependendees, if conflict with owner, need to empty owner
+    if (conflict_with_owners) {
+      ABORT_ALL_OWNERS()
     } // else, nothing to do
   } else {
-    // abort till end
+    // abort till end and empty owners
     LIST_RM_SINCE(retired_head, retired_tail, en);
     while(en) {
       next = en->next;
-#if DEBUG_CS_PROFILING
-      abort_try++;
-      if (en->txn->status == ABORTED)
-        abort_cnt++;
-#endif
       en->txn->set_abort();
+      CHECK_ROLL_BACK(en);
       retired_cnt--;
       return_entry(en);
       en = next;
     }
+    ABORT_ALL_OWNERS()
   }
   assert(!retired_head || retired_head->is_cohead);
 #if DEBUG_CS_PROFILING

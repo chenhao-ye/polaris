@@ -14,7 +14,6 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
   this->h_thd = h_thd;
   this->h_wl = h_wl;
   pthread_mutex_init(&txn_lock, NULL);
-  //pthread_mutex_init(&txn_ts_lock, NULL);
   lock_ready = false;
   lock_abort = false;
   timestamp = 0;
@@ -127,11 +126,7 @@ void txn_man::cleanup(RC rc) {
 #endif
 
 #if CC_ALG == BAMBOO
-    if (ROLL_BACK && type == XP) {
-      orig_r->return_row(type, this, accesses[rid]->orig_data, rc);
-    } else {
-      orig_r->return_row(type, this, accesses[rid]->data, rc);
-    }
+    orig_r->return_row(type, this, accesses[rid]->data, rc);
 #elif CC_ALG == WOUND_WAIT
     orig_r->return_row(type, this, accesses[rid]->data);
 #else
@@ -184,20 +179,27 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
     access->data->init(MAX_TUPLE_SIZE);
     access->orig_data = (row_t *) _mm_malloc(sizeof(row_t), 64);
     access->orig_data->init(MAX_TUPLE_SIZE);
-#elif (CC_ALG == WOUND_WAIT || (CC_ALG == BAMBOO))
+#elif (CC_ALG == WOUND_WAIT)
     // for ww and bb, data is a local copy of original row for txn to work on
     access->data = (row_t *) _mm_malloc(sizeof(row_t), 64);
     access->data->init(MAX_TUPLE_SIZE);
+#elif (CC_ALG == BAMBOO)
     // TODO(zhihan): for bb no RAW conflict optimization, orig data is another
     //  copy of original row record the data before txn made any changes
+    access->data = (row_t *) _mm_malloc(sizeof(row_t), 64);
+    access->data->init(MAX_TUPLE_SIZE);
+    access->orig_data = (row_t *) _mm_malloc(sizeof(row_t), 64);
+    access->orig_data->init(MAX_TUPLE_SIZE);
 #elif (CC_ALG == DL_DETECT || (CC_ALG == NO_WAIT) || (CC_ALG == WAIT_DIE))
     access->orig_data = (row_t *) _mm_malloc(sizeof(row_t), 64);
     access->orig_data->init(MAX_TUPLE_SIZE);
 #endif
     num_accesses_alloc++;
   }
-#if (CC_ALG == WOUND_WAIT || (CC_ALG == BAMBOO))
+#if (CC_ALG == WOUND_WAIT)
   rc = row->get_row(type, this, accesses[row_cnt]->orig_data);
+#elif (CC_ALG == BAMBOO)
+  rc = row->get_row(type, this, accesses[row_cnt]);
 #else
   rc = row->get_row(type, this, accesses[ row_cnt ]->data);
 #endif
@@ -220,10 +222,17 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
 #endif
 
   if (type == WR) {
-#if (CC_ALG == WOUND_WAIT) || (CC_ALG == BAMBOO)
+#if CC_ALG == WOUND_WAIT
     // make local copy to work on
     accesses[row_cnt]->data->table = row->get_table();
     accesses[row_cnt]->data->copy(row);
+#elif CC_ALG == BAMBOO
+    // make local copy to work on
+    accesses[row_cnt]->data->table = row->get_table();
+    accesses[row_cnt]->data->copy(row);
+    // make copy to rollback
+    accesses[row_cnt]->orig_data->table = row->get_table();
+    accesses[row_cnt]->orig_data->copy(row);
 #elif ROLL_BACK && (CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE)
     accesses[row_cnt]->orig_data->table = row->get_table();
     accesses[row_cnt]->orig_data->copy(row);

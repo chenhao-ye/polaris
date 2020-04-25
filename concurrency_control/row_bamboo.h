@@ -1,6 +1,26 @@
 #ifndef ROW_BAMBOO_H
 #define ROW_BAMBOO_H
 
+#define CHECK_ROLL_BACK(en) \
+  if (!fcw && (en->type == EX)) { \
+    en->access->orig_row->copy(en->access->orig_data); \
+    fcw = en; \
+  } \
+
+// no need to be too complicated (i.e. call function) as the owner will be empty in the end
+#define ABORT_ALL_OWNERS() \
+  while(owners) { \
+    en = owners; \
+    owners = owners->next; \
+    abort_try++; \
+    if (en->txn->status == ABORTED) \
+      abort_cnt++; \
+    en->txn->set_abort(); \
+    return_entry(en); \
+  } \
+  owners_tail = NULL; \
+  owners = NULL; \
+  owner_cnt = 0;
 
 struct BBLockEntry {
   // type of lock: EX or SH
@@ -11,14 +31,16 @@ struct BBLockEntry {
   txn_man * txn;
   BBLockEntry * next;
   BBLockEntry * prev;
+  Access * access;
 };
 
 class Row_bamboo {
  public:
   void init(row_t * row);
   // [DL_DETECT] txnids are the txn_ids that current txn is waiting for.
-  RC lock_get(lock_t type, txn_man * txn);
-  RC lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt);
+  RC lock_get(lock_t type, txn_man * txn, Access * access);
+  RC lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt,
+      Access * access);
   RC lock_release(txn_man * txn, RC rc);
   RC lock_retire(txn_man * txn);
 
@@ -52,6 +74,7 @@ class Row_bamboo {
   BBLockEntry * retired_tail;
   BBLockEntry * waiters_head;
   BBLockEntry * waiters_tail;
+  BBLockEntry * fcw;
 
   bool bring_next(txn_man * txn);
   static bool conflict_lock_entry(BBLockEntry * l1, BBLockEntry * l2);
