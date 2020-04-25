@@ -1,7 +1,7 @@
 cp -r config-ycsb-std.h config.h
 
 # algorithm
-alg=WOUND_WAIT
+alg=$1
 spin="true"
 # [WW]
 ww_starv_free="false"
@@ -14,7 +14,7 @@ cs_pf="false"
 wl="YCSB"
 req=16
 synthetic=false
-zipf=1.2
+zipf=0.9
 num_hs=0
 pos=TOP
 specified=0
