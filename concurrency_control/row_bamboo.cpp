@@ -441,7 +441,6 @@ inline RC Row_bamboo::wound_conflict(lock_t type, txn_man * txn, ts_t ts,
     en = owners;
   bool recheck = false;
   int checked_cnt = 0;
-  bool conflicted = false;
   while (en) {
     checked_cnt++;
     recheck = false;
