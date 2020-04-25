@@ -3,12 +3,12 @@ import smtplib
 
 
 def send_email(msg):
-    password = 'expnotification@'
+    password = 'experiment'
     smtpObj = smtplib.SMTP('smtp.gmail.com',587)
     smtpObj.ehlo()
     smtpObj.starttls()
-    smtpObj.login('experiments.guo@gmail.com',password)
-    smtpObj.sendmail('experiments.guo@gmail.com','zguo74@wisc.edu',"Subject: {} is done!".format(msg))
+    smtpObj.login('exp.zeng@gmail.com',password)
+    smtpObj.sendmail('exp.zeng@gmail.com','xzeng56@wisc.edu',"Subject: {} is done!".format(msg))
     smtpObj.quit()
 
 if __name__ == "__main__":

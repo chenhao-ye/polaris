@@ -13,7 +13,7 @@ cs_pf="false"
 
 ## workload
 wl="TPCC"
-wh=1
+wh=2
 perc=0.5 # payment percentage
 
 #other
@@ -22,13 +22,22 @@ profile="true"
 cnt=100000
 penalty=50000
 
+for i in 0 1 2 3 4
+do
+for threads in 1 2 4 8 16 32
+do
+for alg in WOUND_WAIT
+do
 timeout 30 python test.py CC_ALG=$alg SPINLOCK=$spin WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=$dynamic RETIRE_ON=$retire DEBUG_CS_PROFILING=${cs_pf} WORKLOAD=${wl} NUM_WH=${wh} PERC_PAYMENT=$perc THREAD_CNT=$threads DEBUG_PROFILING=${profile} MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty
+done
+done
+done
 #
 
 cd outputs/
 python3 collect_stats.py
-mv stats.csv tpcc.csv
-mv stats.json tpcc.json
+mv stats.csv tpcc_ww.csv
+mv stats.json tpcc_ww.json
 cd ..
 
 cd experiments/

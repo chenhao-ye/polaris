@@ -36,7 +36,7 @@ penalty=50000
 # figure 4: normalized throughput with optimal case, varying requests
 for i in 0 1 2 3 4
 do
-for alg in BAMBOO #WOUND_WAIT
+for alg in WOUND_WAIT
 do
 for specified in 0 0.25 0.5 0.75 1
 do
@@ -53,8 +53,8 @@ done
 
 cd outputs/
 python3 collect_stats.py
-mv stats.csv hs1_pos.csv
-mv stats.json hs1_pos.json
+mv stats.csv hs1_pos_ww.csv
+mv stats.json hs1_pos_ww.json
 cd ..
 
 python experiments/send_email.py node_0_hs1_pos
