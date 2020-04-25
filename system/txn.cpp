@@ -251,11 +251,16 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
   uint64_t timespan = get_sys_clock() - starttime;
   INC_TMP_STATS(get_thd_id(), time_man, timespan);
 
-#if  (CC_ALG == WOUND_WAIT) || (CC_ALG == BAMBOO)
+#if  (CC_ALG == WOUND_WAIT)
   if (type == WR)
     return accesses[row_cnt - 1]->data;
   else
     return accesses[row_cnt - 1]->orig_data;
+#elif CC_ALG == BAMBOO
+  if (type == WR)
+    return accesses[row_cnt - 1]->data;
+  else
+    return accesses[row_cnt - 1]->orig_row;
 #else
   return accesses[row_cnt - 1]->data;
 #endif
