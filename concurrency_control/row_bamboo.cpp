@@ -22,7 +22,7 @@ void Row_bamboo::init(row_t * row) {
   local_ts = -1;
   txn_ts = 0;
   // record first conflicting write to rollback
-  fcw = NULL:
+  fcw = NULL;
 
 #if SPINLOCK
   latch = new pthread_spinlock_t;
@@ -269,7 +269,7 @@ RC Row_bamboo::lock_retire(txn_man * txn) {
     RETIRED_LIST_PUT_TAIL(retired_head, retired_tail, entry);
     retired_cnt++;
     // make dirty data globally visible
-    if (entry->type == EX)
+    if (entry->type == LOCK_EX)
       entry->access->orig_row->copy(entry->access->data);
   } else {
     // may be is aborted
@@ -407,7 +407,7 @@ BBLockEntry * Row_bamboo::get_entry() {
   entry->delta = false;
   entry->is_cohead = false;
   entry->txn = NULL;
-  entry->wounded = false;
+  entry->access = NULL;
   return entry;
 }
 

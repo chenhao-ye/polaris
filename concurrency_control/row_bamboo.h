@@ -2,7 +2,7 @@
 #define ROW_BAMBOO_H
 
 #define CHECK_ROLL_BACK(en) \
-  if (!fcw && (en->type == EX)) { \
+  if (!fcw && (en->type == LOCK_EX)) { \
     en->access->orig_row->copy(en->access->orig_data); \
     fcw = en; \
   } \
@@ -12,9 +12,6 @@
   while(owners) { \
     en = owners; \
     owners = owners->next; \
-    abort_try++; \
-    if (en->txn->status == ABORTED) \
-      abort_cnt++; \
     en->txn->set_abort(); \
     return_entry(en); \
   } \
@@ -27,7 +24,6 @@ struct BBLockEntry {
   lock_t type;
   bool is_cohead;
   bool delta;
-  bool wounded;
   txn_man * txn;
   BBLockEntry * next;
   BBLockEntry * prev;
