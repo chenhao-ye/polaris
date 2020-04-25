@@ -236,8 +236,8 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
       // try to release lock
 #if (CC_ALG == WOUND_WAIT) || (CC_ALG == BAMBOO)
       return_row(type, txn, NULL, Abort);
-      return Abort;
 #endif
+      return Abort;
     }
     endtime = get_sys_clock();
     INC_TMP_STATS(thd_id, time_wait, endtime - starttime);
