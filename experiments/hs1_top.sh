@@ -36,7 +36,7 @@ penalty=50000
 # figure 4: normalized throughput with optimal case, varying requests
 for i in 0 1 2 3 4
 do
-for alg in BAMBOO #WOUND_WAIT WAIT_DIE NO_WAIT SILO
+for alg in WOUND_WAIT #WAIT_DIE NO_WAIT SILO
 do
 for threads in 1 2 4 8 16 32
 do
@@ -50,8 +50,8 @@ done
 
 cd outputs/
 python3 collect_stats.py
-mv stats.csv hs1_top.csv
-mv stats.json hs1_top.json
+mv stats.csv hs1_top_ww.csv
+mv stats.json hs1_top_ww.json
 cd ..
 
 python experiments/send_email.py node0_hs1
