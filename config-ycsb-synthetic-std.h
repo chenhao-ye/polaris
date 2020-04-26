@@ -135,6 +135,8 @@
 // ==== [YCSB-synthetic] ====
 #define SYNTHETIC_YCSB              true
 #define POS_HS                      TOP
+#define SPECIFIED_RATIO             0
+#define FLIP_RATIO                  0
 #define NUM_HS                      1
 #define FIRST_HS                    WR
 #define SECOND_HS                   WR

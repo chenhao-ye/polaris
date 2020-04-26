@@ -33,7 +33,6 @@ profile="true"
 cnt=100000 
 penalty=50000
 
-="true"
 # figure 4: normalized throughput with optimal case, varying requests
 for i in 0 1 2 3 4
 do
@@ -51,8 +50,8 @@ done
 
 cd outputs/
 python3 collect_stats.py
-mv stats.csv hs1_top.csv
-mv stats.json hs1_top.json
+mv stats.csv hs1_top_bb.csv
+mv stats.json hs1_top_bb.json
 cd ..
 
 python experiments/send_email.py node0_hs1
