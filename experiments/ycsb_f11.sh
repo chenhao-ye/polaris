@@ -2,7 +2,7 @@ cd ../
 cp -r config-ycsb-std.h config.h
 
 # algorithm
-alg=WOUND_WAIT
+alg=BAMBOO
 spin="true"
 # [WW]
 ww_starv_free="false"
@@ -50,8 +50,8 @@ done
 
 cd outputs/
 python3 collect_stats.py
-mv stats.csv ycsb_ww_f11.csv
-mv stats.json ycsb_ww_f11.json
+mv stats.csv ycsb_bb_f11.csv
+mv stats.json ycsb_bb_f11.json
 cd ..
 
 cd experiments
