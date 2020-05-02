@@ -201,7 +201,7 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &t
       } else {
         to_retire->is_cohead = true;
       }
-      RETIRED_LIST_PUT_TAIL(retired_head, retired_tail, to_retire);
+      LIST_PUT_TAIL(retired_head, retired_tail, to_retire);
       retired_cnt++;
     }
     if (bring_next(txn)) {
@@ -258,7 +258,7 @@ RC Row_bamboo_pt::lock_retire(txn_man * txn) {
     } else {
       entry->is_cohead = true;
     }
-    RETIRED_LIST_PUT_TAIL(retired_head, retired_tail, entry);
+    LIST_PUT_TAIL(retired_head, retired_tail, entry);
     retired_cnt++;
   } else {
     // may be is aborted

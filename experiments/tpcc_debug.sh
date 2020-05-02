@@ -9,6 +9,7 @@ ww_starv_free="false"
 dynamic="true"
 retire="true"
 cs_pf="false"
+opt_raw="true"
 
 ## workload
 wl="TPCC"
@@ -21,5 +22,5 @@ profile="true"
 cnt=100000
 penalty=50000 
 
-python test_debug.py CC_ALG=$alg SPINLOCK=$spin WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=$dynamic RETIRE_ON=$retire DEBUG_CS_PROFILING=${cs_pf} WORKLOAD=${wl} NUM_WH=${wh} PERC_PAYMENT=$perc THREAD_CNT=$threads DEBUG_PROFILING=${profile} MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty
+python test_debug.py CC_ALG=$alg SPINLOCK=$spin WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=$dynamic RETIRE_ON=$retire DEBUG_CS_PROFILING=${cs_pf} BB_OPT_RAW=${opt_raw} WORKLOAD=${wl} NUM_WH=${wh} PERC_PAYMENT=$perc THREAD_CNT=$threads DEBUG_PROFILING=${profile} MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty
 #

@@ -1,11 +1,28 @@
 #ifndef ROW_BAMBOO_H
 #define ROW_BAMBOO_H
 
-#define CHECK_ROLL_BACK(en) \
+#define UPDATE_RETIRE_INFO(en, prev) { \
+    if (prev) { \
+      if (conflict_lock(prev->type, en->type)) { \
+        en->delta = true; \
+        en->txn->increment_commit_barriers(); \
+      } else { \
+        if (prev->is_cohead) \
+          en->is_cohead = true; \
+        else \
+          en->txn->increment_commit_barriers(); \
+     } \
+    } else \
+      en->is_cohead = true; \
+}
+
+
+#define CHECK_ROLL_BACK(en) { \
   if (!fcw && (en->type == LOCK_EX)) { \
     en->access->orig_row->copy(en->access->orig_data); \
     fcw = en; \
   } \
+}
 
 // no need to be too complicated (i.e. call function) as the owner will be empty in the end
 #define ABORT_ALL_OWNERS() \

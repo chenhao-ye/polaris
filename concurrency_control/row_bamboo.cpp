@@ -152,6 +152,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
     // RAW conflict, need to read its orig_data by making a read copy
     access->data->copy(fcw->access->orig_data);
     // insert before writer
+    UPDATE_RETIRE_INFO(to_insert, fcw->prev); 
     LIST_INSERT_BEFORE_CH(retired_head, fcw, to_insert);
     retired_cnt++;
     fcw = NULL;
@@ -176,7 +177,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
     // RAW conflict, need to read its orig_data by making a read copy
     access->data->copy(fcw->access->orig_data);
     // append to the end of retired
-    ASSERT(!retired_tail || retired_tail->is_cohead);
+    UPDATE_RETIRE_INFO(to_insert, retired_tail);
     LIST_PUT_TAIL(retired_head, retired_tail, to_insert);
     retired_cnt++;
     fcw = NULL;
@@ -219,21 +220,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
       to_retire->next = NULL;
       to_retire->prev = NULL;
       // try to add to retired
-      if (retired_tail) {
-        if (conflict_lock(retired_tail->type, to_retire->type)) {
-          // conflict with tail -> increment barrier for sure
-          // default is_cohead = false
-          to_retire->delta = true;
-          to_retire->txn->increment_commit_barriers();
-        } else {
-          // not conflict with tail ->increment if is not head
-          to_retire->is_cohead = retired_tail->is_cohead;
-          if (!to_retire->is_cohead)
-            to_retire->txn->increment_commit_barriers();
-        }
-      } else {
-        to_retire->is_cohead = true;
-      }
+      UPDATE_RETIRE_INFO(to_retire, retired_tail);
       LIST_PUT_TAIL(retired_head, retired_tail, to_retire);
       retired_cnt++;
     }
@@ -276,21 +263,7 @@ RC Row_bamboo::lock_retire(txn_man * txn) {
     entry->prev = NULL;
     //assert(entry->txn->get_ts() != 0);
     // try to add to retired
-    if (retired_tail) {
-      if (conflict_lock(retired_tail->type, entry->type)) {
-        // conflict with tail -> increment barrier for sure
-        // default is_cohead = false
-        entry->delta = true;
-        entry->txn->increment_commit_barriers();
-      } else {
-        // not conflict with tail ->increment if is not head
-        entry->is_cohead = retired_tail->is_cohead;
-        if (!entry->is_cohead)
-          entry->txn->increment_commit_barriers();
-      }
-    } else {
-      entry->is_cohead = true;
-    }
+    UPDATE_RETIRE_INFO(entry, retired_tail);
     LIST_PUT_TAIL(retired_head, retired_tail, entry);
     retired_cnt++;
     // make dirty data globally visible
@@ -481,6 +454,7 @@ inline RC Row_bamboo::wound_conflict(lock_t type, txn_man * txn, ts_t ts,
           fcw = en;
           return FINISH;
         }
+assert((type == LOCK_EX && (en->type == LOCK_EX)) || (type==LOCK_EX && (en->type == LOCK_SH)));
 #endif
       }
       if (status == WAIT) {
