@@ -12,7 +12,7 @@ void Row_bamboo::init(row_t * row) {
   // waiter is a double linked list. two ptrs to the linked lists
   waiters_head = NULL;
   waiters_tail = NULL;
-  // retired is a linked list, the next of tail is the head of owners
+  // retired is a double linked list
   retired_head = NULL;
   retired_tail = NULL;
   owner_cnt = 0;
@@ -73,10 +73,13 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
 
 RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
 &txncnt, Access * access) {
+  // allocate an lock entry
   assert (CC_ALG == BAMBOO);
   BBLockEntry * to_insert;
   to_insert = get_entry();
   to_insert->access = access;
+  to_insert->txn = txn;
+  to_insert->type = type;
 
 #if DEBUG_CS_PROFILING
   uint64_t starttime = get_sys_clock();
@@ -100,10 +103,8 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
         (retired_cnt == 0 || (!conflict_lock(retired_tail->type, type) && retired_tail->is_cohead)) &&
         (owner_cnt == 0 || !conflict_lock(owners->type, type)) ) {
       // add to owners directly
-      to_insert->type = type;
-      to_insert->txn = txn;
       txn->lock_ready = true;
-      RETIRED_LIST_PUT_TAIL(owners, owners_tail, to_insert);
+      LIST_PUT_TAIL(owners, owners_tail, to_insert);
       owner_cnt++;
       unlock();
       return RCOK;
@@ -146,6 +147,19 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
     return_entry(to_insert);
     return rc;
   }
+#if BB_OPT_RAW
+  else if (status == FINISH) {
+    // RAW conflict, need to read its orig_data by making a read copy
+    access->data->copy(en->access->orig_data);
+    // insert before writer
+    to_insert->lock_ready = true;
+    LIST_INSERT_BEFORE_CH(retired_head, en, to_insert);
+    retired_cnt++;
+    fcw = NULL;
+    unlock();
+    return FINISH;
+  }
+#endif
 
   // 2.2 check owners
   status = wound_conflict(type, txn, ts, false, status);
@@ -157,21 +171,32 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
     return_entry(to_insert);
     return rc;
   }
+#if BB_OPT_RAW
+  else if (status == FINISH) {
+    // RAW conflict, need to read its orig_data by making a read copy
+    access->data->copy(en->access->orig_data);
+    // append to the end of retired
+    ASSERT(!retired_tail || retired_tail->is_cohead);
+    to_insert->lock_ready = true;
+    LIST_PUT_TAIL(retired_head, retired_tail, to_insert);
+    retired_cnt++;
+    fcw = NULL;
+    unlock();
+    return FINISH;
+  }
+#endif
 
   // 2. insert into waiters and bring in next waiter
   to_insert->txn = txn;
   to_insert->type = type;
   BBLockEntry * en = waiters_head;
   while (en != NULL) {
-    //if (txn->get_ts() < en->txn->get_ts())
     if (txn_ts < en->txn->get_ts())
       break;
     en = en->next;
   }
   if (en) {
-    LIST_INSERT_BEFORE(en, to_insert);
-    if (en == waiters_head)
-      waiters_head = to_insert;
+    LIST_INSERT_BEFORE_CH(waiters_head, en, to_insert);
   } else {
     LIST_PUT_TAIL(waiters_head, waiters_tail, to_insert);
   }
@@ -209,7 +234,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
       } else {
         to_retire->is_cohead = true;
       }
-      RETIRED_LIST_PUT_TAIL(retired_head, retired_tail, to_retire);
+      LIST_PUT_TAIL(retired_head, retired_tail, to_retire);
       retired_cnt++;
     }
     if (owner_cnt == 0 && bring_next(txn)) {
@@ -266,7 +291,7 @@ RC Row_bamboo::lock_retire(txn_man * txn) {
     } else {
       entry->is_cohead = true;
     }
-    RETIRED_LIST_PUT_TAIL(retired_head, retired_tail, entry);
+    LIST_PUT_TAIL(retired_head, retired_tail, entry);
     retired_cnt++;
     // make dirty data globally visible
     if (entry->type == LOCK_EX)
@@ -370,7 +395,7 @@ Row_bamboo::bring_next(txn_man * txn) {
       LIST_GET_HEAD(waiters_head, waiters_tail, entry);
       waiter_cnt --;
       // add to onwers
-      RETIRED_LIST_PUT_TAIL(owners, owners_tail, entry);
+      LIST_PUT_TAIL(owners, owners_tail, entry);
       owner_cnt ++;
       entry->txn->lock_ready = true;
       if (txn == entry->txn) {
@@ -447,14 +472,20 @@ inline RC Row_bamboo::wound_conflict(lock_t type, txn_man * txn, ts_t ts,
     ts_t en_ts = en->txn->get_ts();
     if (ts != 0) {
       // self assigned, if conflicted, assign a number
-      //if (status == RCOK && conflict_lock(en->type, type) &&
-      //	 ((en_ts > txn->get_ts()) || (en_ts == 0))) {
       if (status == RCOK && conflict_lock(en->type, type) &&
           ((en_ts > txn_ts) || (en_ts == 0))) {
         status = WAIT;
+#if BB_OPT_RAW
+        if (type == LOCK_SH) {
+          // RAW conflict. read orig_data of the entry
+          fcw = en;
+          return FINISH;
+        }
+#endif
       }
       if (status == WAIT) {
         if ((en_ts > ts) || (en_ts == 0)) {
+          // has conflict.
           to_reset = en;
           en = en->prev;
           if (!wound_txn(to_reset, txn, check_retired))

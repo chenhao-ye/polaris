@@ -100,6 +100,7 @@
 #define DYNAMIC_TS					true
 #define SPINLOCK					true
 #define RETIRE_ON 					true
+#define BB_OPT_RAW                  true
 // [WW]
 #define WW_STARV_FREE               false // set false if compared w/ bamboo
 

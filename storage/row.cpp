@@ -241,6 +241,8 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
     }
     endtime = get_sys_clock();
     INC_TMP_STATS(thd_id, time_wait, endtime - starttime);
+  } else if (rc == FINISH) {
+    // RAW optimization, need to return data for read
   }
 #if CC_ALG != BAMBOO
   row = this;
