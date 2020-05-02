@@ -150,12 +150,12 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
 #if BB_OPT_RAW
   else if (status == FINISH) {
     // RAW conflict, need to read its orig_data by making a read copy
-    access->data->copy(en->access->orig_data);
+    access->data->copy(fcw->access->orig_data);
     // insert before writer
-    to_insert->lock_ready = true;
-    LIST_INSERT_BEFORE_CH(retired_head, en, to_insert);
+    LIST_INSERT_BEFORE_CH(retired_head, fcw, to_insert);
     retired_cnt++;
     fcw = NULL;
+    txn->lock_ready = true;
     unlock();
     return FINISH;
   }
@@ -174,13 +174,13 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
 #if BB_OPT_RAW
   else if (status == FINISH) {
     // RAW conflict, need to read its orig_data by making a read copy
-    access->data->copy(en->access->orig_data);
+    access->data->copy(fcw->access->orig_data);
     // append to the end of retired
     ASSERT(!retired_tail || retired_tail->is_cohead);
-    to_insert->lock_ready = true;
     LIST_PUT_TAIL(retired_head, retired_tail, to_insert);
     retired_cnt++;
     fcw = NULL;
+    txn->lock_ready = true;
     unlock();
     return FINISH;
   }
