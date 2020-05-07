@@ -8,6 +8,7 @@ public:
 	char _pad2[CL_SIZE];
 	uint64_t txn_cnt;
 	uint64_t abort_cnt;
+    uint64_t user_abort_cnt;
 	double run_time;
 	double time_man;
 	double time_index;

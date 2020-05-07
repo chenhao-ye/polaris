@@ -300,6 +300,9 @@ txn_man::index_read(INDEX * index, idx_key_t key, int part_id, itemid_t *& item)
 }
 
 RC txn_man::finish(RC rc) {
+  RC ret_rc = rc;
+  if (rc == ERROR)
+    rc = Abort;
 #if THINKTIME > 0
   usleep(THINKTIME);
 #endif
@@ -352,7 +355,7 @@ RC txn_man::finish(RC rc) {
   uint64_t timespan = get_sys_clock() - starttime;
   INC_TMP_STATS(get_thd_id(), time_man,  timespan);
   INC_STATS(get_thd_id(), time_cleanup,  timespan);
-  return rc;
+  return ret_rc;
 }
 
 void

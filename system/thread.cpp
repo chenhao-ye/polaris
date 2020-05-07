@@ -193,6 +193,12 @@ RC thread_t::run() {
 			INC_STATS(get_thd_id(), abort_cnt, 1);
 			stats.abort(get_thd_id());
 			m_txn->abort_cnt ++;
+		} else if (rc == ERROR) {
+		  // user initiated aborts
+          INC_STATS(get_thd_id(), user_abort_cnt, 1);
+          INC_STATS(get_thd_id(), abort_cnt, 1);
+          stats.abort(get_thd_id());
+          m_txn->abort_cnt ++;
 		}
 
 		if (rc == FINISH)

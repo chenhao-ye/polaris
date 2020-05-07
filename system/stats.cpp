@@ -16,6 +16,7 @@ void Stats_thd::init(uint64_t thd_id) {
 void Stats_thd::clear() {
 	txn_cnt = 0;
 	abort_cnt = 0;
+	user_abort_cnt = 0;
 	run_time = 0;
 	time_man = 0;
 	debug1 = 0;
@@ -115,6 +116,7 @@ void Stats::print() {
 	
 	uint64_t total_txn_cnt = 0;
 	uint64_t total_abort_cnt = 0;
+    uint64_t total_user_abort_cnt = 0;
 	double total_run_time = 0;
 	double total_time_man = 0;
 	double total_debug1 = 0;
@@ -140,6 +142,7 @@ void Stats::print() {
 	for (uint64_t tid = 0; tid < g_thread_cnt; tid ++) {
 		total_txn_cnt += _stats[tid]->txn_cnt;
 		total_abort_cnt += _stats[tid]->abort_cnt;
+        total_user_abort_cnt += _stats[tid]->user_abort_cnt;
 		total_run_time += _stats[tid]->run_time;
 		total_time_man += _stats[tid]->time_man;
 		total_debug1 += _stats[tid]->debug1;
@@ -164,10 +167,11 @@ void Stats::print() {
 		total_latency += _stats[tid]->latency;
 		total_time_query += _stats[tid]->time_query;
 		
-		printf("[tid=%ld] txn_cnt=%ld,abort_cnt=%ld\n", 
+		printf("[tid=%ld] txn_cnt=%ld,abort_cnt=%ld, user_abort_cnt=%ld\n",
 			tid,
 			_stats[tid]->txn_cnt,
-			_stats[tid]->abort_cnt
+			_stats[tid]->abort_cnt,
+			_stats[tid]->user_abort_cnt
 		);
 	}
 	FILE * outf;
@@ -216,6 +220,7 @@ void Stats::print() {
 		fclose(outf);
 	}
 	printf("[summary] throughput=%f, txn_cnt=%ld, abort_cnt=%ld"
+        ", user_abort_cnt=%ld"
 		", run_time=%f, time_wait=%f, time_ts_alloc=%f"
 		", time_man=%f, time_index=%f, time_abort=%f, time_cleanup=%f, latency=%f"
 		", deadlock_cnt=%ld, cycle_detect=%ld, dl_detect_time=%f, dl_wait_time=%f"
@@ -228,6 +233,7 @@ void Stats::print() {
 		total_txn_cnt / total_run_time * BILLION * THREAD_CNT,
 		total_txn_cnt, 
 		total_abort_cnt,
+		total_user_abort_cnt,
 		total_run_time / BILLION,
 		total_time_wait / BILLION,
 		total_time_ts_alloc / BILLION,

@@ -419,7 +419,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
         // XXX(zhihan): if key is invalid, abort. user-initiated abort
         // according to tpc-c documentation
         if (ol_i_id == 0)
-          return finish(Abort);
+          return finish(ERROR);
 #endif
 		uint64_t ol_supply_w_id = query->items[ol_number].ol_supply_w_id;
 		uint64_t ol_quantity = query->items[ol_number].ol_quantity;
