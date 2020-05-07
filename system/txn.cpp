@@ -355,7 +355,10 @@ RC txn_man::finish(RC rc) {
   uint64_t timespan = get_sys_clock() - starttime;
   INC_TMP_STATS(get_thd_id(), time_man,  timespan);
   INC_STATS(get_thd_id(), time_cleanup,  timespan);
-  return ret_rc;
+  if (rc == Abort && (ret_rc == ERROR))
+    return ret_rc;
+  else
+    return rc;
 }
 
 void
