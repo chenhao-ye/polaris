@@ -99,10 +99,6 @@ RC thread_t::run() {
 					m_query = query_queue->get_next_query( _thd_id );
 			}
 		}
-		if (m_query == NULL) {
-		  _wl->sim_done = true;
-          goto STOP;
-        }
 		INC_STATS(_thd_id, time_query, get_sys_clock() - starttime);
 		m_txn->abort_cnt = 0;
 //#if CC_ALG == VLL
@@ -218,7 +214,6 @@ RC thread_t::run() {
 				assert( _wl->sim_done);
 		}
 
-STOP:
 		if (_wl->sim_done) {
 			return FINISH;
 		}
