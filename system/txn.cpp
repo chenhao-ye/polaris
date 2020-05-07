@@ -184,10 +184,10 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
     access->data = (row_t *) _mm_malloc(sizeof(row_t), 64);
     access->data->init(MAX_TUPLE_SIZE);
 #elif (CC_ALG == BAMBOO)
-    // TODO(zhihan): for bb no RAW conflict optimization, orig data is another
-    //  copy of original row record the data before txn made any changes
+    // data is for making local changes before added to retired
     access->data = (row_t *) _mm_malloc(sizeof(row_t), 64);
     access->data->init(MAX_TUPLE_SIZE);
+    // orig data is for rollback
     access->orig_data = (row_t *) _mm_malloc(sizeof(row_t), 64);
     access->orig_data->init(MAX_TUPLE_SIZE);
 #elif (CC_ALG == DL_DETECT || (CC_ALG == NO_WAIT) || (CC_ALG == WAIT_DIE))
@@ -210,6 +210,12 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
 #endif
     return NULL;
   }
+#if (CC_ALG == BAMBOO && BB_OPT_RAW)
+  else if (rc == FINISH) {
+    // RAW optimization
+    accesses[row_cnt]->data->table = row->get_table();
+  }
+#endif
   accesses[row_cnt]->type = type;
   accesses[row_cnt]->orig_row = row;
 #if CC_ALG == TICTOC
@@ -259,8 +265,12 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
 #elif CC_ALG == BAMBOO
   if (type == WR)
     return accesses[row_cnt - 1]->data;
-  else
-    return accesses[row_cnt - 1]->orig_row;
+  else {
+    if (rc != FINISH)
+      return accesses[row_cnt - 1]->orig_row;
+    else
+      return accesses[row_cnt - 1]->data; // RAW
+  }
 #else
   return accesses[row_cnt - 1]->data;
 #endif
