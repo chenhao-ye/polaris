@@ -84,9 +84,9 @@ void tpcc_query::gen_new_order(uint64_t thd_id) {
 		// rolling back update transactions.
 		// If this is the last item on the order and rbk = 1 (chosen from [1,
 		// 100]), then the item number is set to an unused value.
-        if (oid == ol_cnt - 1 && rbk == 1) {
+        if ((oid == ol_cnt - 1) && (rbk == 1)) {
           items[oid].ol_i_id = 0;
-        }
+        } 
 #endif
 		UInt32 x = URand(1, 100, w_id-1);
 		if (x > 1 || g_num_wh == 1)
