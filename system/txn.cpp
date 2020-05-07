@@ -300,9 +300,11 @@ txn_man::index_read(INDEX * index, idx_key_t key, int part_id, itemid_t *& item)
 }
 
 RC txn_man::finish(RC rc) {
+#if TPCC_USER_ABORT
   RC ret_rc = rc;
   if (rc == ERROR)
     rc = Abort;
+#endif
 #if THINKTIME > 0
   usleep(THINKTIME);
 #endif
