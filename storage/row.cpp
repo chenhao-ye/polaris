@@ -172,6 +172,8 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
   if (txn->lock_abort)
     return Abort;
   rc = this->manager->lock_get(lt, txn);
+  #else
+  rc = this->manager->lock_get(lt, txn);
   #endif
   #endif
   if (rc == RCOK) {
