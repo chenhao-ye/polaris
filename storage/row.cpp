@@ -303,7 +303,6 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 
 void row_t::return_row(access_t type, txn_man * txn, row_t * row, RC rc) {
 #if CC_ALG == BAMBOO
-  // all writes are retired! and globally visible already in cs.
   this->manager->lock_release(txn, rc);
 #elif CC_ALG == WOUND_WAIT
   // make committed writes globally visible

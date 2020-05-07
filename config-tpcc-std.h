@@ -147,7 +147,6 @@
 // Some of the transactions read the data but never use them.
 // If TPCC_ACCESS_ALL == fales, then these parts of the transactions
 // are not modeled.
-#define REORDER_WH				false
 #define TPCC_ACCESS_ALL 			false
 #define WH_UPDATE					true
 #define NUM_WH 						1
@@ -167,6 +166,8 @@ extern TPCCTxnType 					g_tpcc_txn_type;
 #define LASTNAME_LEN 				16
 
 #define DIST_PER_WARE				10
+// enable user-initiated aborts in new-order txn according to TPC-C doc.
+#define TPCC_USER_ABORT             true
 
 /***********************************************/
 // TODO centralized CC management.

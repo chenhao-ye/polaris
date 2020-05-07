@@ -168,6 +168,8 @@ extern TPCCTxnType 					g_tpcc_txn_type;
 #define LASTNAME_LEN 				16
 
 #define DIST_PER_WARE				10
+// enable user-initiated aborts in new-order txn according to TPC-C doc.
+#define TPCC_USER_ABORT             true
 
 /***********************************************/
 // TODO centralized CC management.

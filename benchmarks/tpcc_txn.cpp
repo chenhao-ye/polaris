@@ -415,6 +415,12 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 	for (UInt32 ol_number = 0; ol_number < ol_cnt; ol_number++) {
 
 		uint64_t ol_i_id = query->items[ol_number].ol_i_id;
+#if TPCC_USER_ABORT
+        // XXX(zhihan): if key is invalid, abort. user-initiated abort
+        // according to tpc-c documentation
+        if (ol_i_id == 0)
+          return finish(Abort);
+#endif
 		uint64_t ol_supply_w_id = query->items[ol_number].ol_supply_w_id;
 		uint64_t ol_quantity = query->items[ol_number].ol_quantity;
 		/*===========================================+
@@ -425,7 +431,6 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 		+===========================================*/
 		key = ol_i_id;
 		item = index_read(_wl->i_item, key, 0);
-		assert(item != NULL);
 		row_t * r_item = ((row_t *)item->location);
 
 		row_t * r_item_local = get_row(r_item, RD);
