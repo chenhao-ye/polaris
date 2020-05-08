@@ -25,7 +25,7 @@ penalty=50000
 
 for i in 0 1 2 3 4
 do
-for alg in BAMBOO SILO WOUND_WAIT WAIT_DIE NO_WAIT
+for alg in WOUND_WAIT WAIT_DIE NO_WAIT
 do
 for threads in 1 2 4 8 16 32
 do
