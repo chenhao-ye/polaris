@@ -171,7 +171,7 @@ void txn_man::cleanup(RC rc) {
 
 
 #if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT || CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT
-inline ALWAYS_INLINE
+inline 
 void txn_man::assign_lock_entry(Access * access) {
   size_t sz = 0;
 #if LATCH == LH_MCSLOCK

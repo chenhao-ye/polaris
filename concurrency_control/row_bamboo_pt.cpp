@@ -131,7 +131,7 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
         return_entry(entry);
         return rc;
       }
-      en = remove_descendants(en);
+      en = remove_descendants(en, txn);
     } else {
       en = en->next;
     }
@@ -313,9 +313,9 @@ void Row_bamboo_pt::rm_from_retired(BBLockEntry * en, bool is_abort) {
   if (is_abort) {
     en->txn->lock_abort = true;
     CHECK_ROLL_BACK(en)
-    en = remove_descendants(en, txn);
+    en = remove_descendants(en, en->txn);
   } else {
-    assert(txn->status == COMMITED);
+    assert(en->txn->status == COMMITED);
     update_entry(en);
     LIST_RM(retired_head, retired_tail, en, retired_cnt);
     return_entry(en);
