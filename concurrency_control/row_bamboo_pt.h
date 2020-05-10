@@ -76,8 +76,8 @@ class Row_bamboo_pt {
 #endif
   bool blatch;
 
-  static bool 		        conflict_lock(lock_t l1, lock_t l2);
-  static bool conflict_lock_entry(BBLockEntry * l1, BBLockEntry * l2);
+  virtual bool 		        conflict_lock(lock_t l1, lock_t l2);
+  virtual bool              conflict_lock_entry(BBLockEntry * l1,BBLockEntry * l2);
   virtual BBLockEntry *     get_entry(Access *);
   virtual void 		        return_entry(BBLockEntry * entry);
   virtual void		        lock(BBLockEntry * en);
