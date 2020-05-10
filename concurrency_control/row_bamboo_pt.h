@@ -58,13 +58,13 @@ struct BBLockEntry {
 
 class Row_bamboo_pt {
  public:
-  void init(row_t * row);
+  virtual void init(row_t * row);
   // [DL_DETECT] txnids are the txn_ids that current txn is waiting for.
   virtual RC lock_get(lock_t type, txn_man * txn, Access * access);
   virtual RC lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
   &txncnt, Access * access);
-  RC lock_release(void * en, RC rc);
-  RC lock_retire(void * en);
+  virtual RC lock_release(void * en, RC rc);
+  virtual RC lock_retire(void * en);
 
  protected:
 #if LATCH == LH_SPINLOCK
@@ -76,11 +76,16 @@ class Row_bamboo_pt {
 #endif
   bool blatch;
 
-  static bool 		conflict_lock(lock_t l1, lock_t l2);
-  BBLockEntry *     get_entry(Access *);
-  void 		        return_entry(BBLockEntry * entry);
-  void		        lock(BBLockEntry * en);
-  void		        unlock(BBLockEntry * en);
+  static bool 		        conflict_lock(lock_t l1, lock_t l2);
+  static bool conflict_lock_entry(BBLockEntry * l1, BBLockEntry * l2);
+  virtual BBLockEntry *     get_entry(Access *);
+  virtual void 		        return_entry(BBLockEntry * entry);
+  virtual void		        lock(BBLockEntry * en);
+  virtual void		        unlock(BBLockEntry * en);
+  virtual bool              bring_next(txn_man * txn);
+  virtual void              update_entry(BBLockEntry * en);
+  virtual void              rm_from_retired(BBLockEntry * en, bool is_abort);
+  virtual BBLockEntry *     remove_descendants(BBLockEntry * en, txn_man * txn);
   row_t * _row;
   UInt32 owner_cnt;
   UInt32 waiter_cnt;
@@ -97,12 +102,6 @@ class Row_bamboo_pt {
   BBLockEntry * waiters_head;
   BBLockEntry * waiters_tail;
   BBLockEntry * fcw;
-
-  bool bring_next(txn_man * txn);
-  static bool conflict_lock_entry(BBLockEntry * l1, BBLockEntry * l2);
-  void update_entry(BBLockEntry * en);
-  void rm_from_retired(BBLockEntry * en, bool is_abort);
-  BBLockEntry * remove_descendants(BBLockEntry * en, txn_man * txn);
 };
 
 #endif
