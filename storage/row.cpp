@@ -145,16 +145,12 @@ void row_t::free_row() {
 }
 
 #if CC_ALG == BAMBOO
-RC row_t::retire_row(txn_man * txn) {
-  return this->manager->lock_retire(txn);
+RC row_t::retire_row(void * lock_entry) {
+  return this->manager->lock_retire(lock_entry);
 }
 #endif
 
-#if CC_ALG == BAMBOO
-RC row_t::get_row(access_t type, txn_man * txn, Access * access) {
-#else
-RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
-#endif
+RC row_t::get_row(access_t type, txn_man * txn, row_t *& row, Access * access) {
   RC rc = RCOK;
 #if CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT || CC_ALG == BAMBOO
   uint64_t thd_id = txn->get_thd_id();
@@ -164,20 +160,19 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 	int txncnt; 
 	rc = this->manager->lock_get(lt, txn, txnids, txncnt);
   #else
-  #if CC_ALG == BAMBOO
+  #if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT
   if (txn->lock_abort)
     return Abort;
   rc = this->manager->lock_get(lt, txn, access);
-  #elif CC_ALG == WOUND_WAIT
-  if (txn->lock_abort)
-    return Abort;
-  rc = this->manager->lock_get(lt, txn);
+  #elif CC_ALG == DL_DETECT || (CC_ALG == NO_WAIT) || (CC_ALG== WAIT_DIE)
+  rc = this->manager->lock_get(lt, txn, access);
   #else
   rc = this->manager->lock_get(lt, txn);
   #endif
   #endif
   if (rc == RCOK) {
   } else if (rc == Abort) {
+    row = NULL;
     return rc;
   } else if (rc == WAIT) {
     ASSERT(CC_ALG == WAIT_DIE || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT || CC_ALG == BAMBOO);
@@ -237,7 +232,7 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
       // check if txn is aborted, if aborted due to conflicts on this or other
       // try to release lock
 #if (CC_ALG == WOUND_WAIT) || (CC_ALG == BAMBOO)
-      return_row(type, txn, NULL, Abort);
+      return_row(access->lock_entry, Abort);
 #endif
       return Abort;
     }
@@ -246,9 +241,7 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
   } else if (rc == FINISH) {
     // RAW optimization, need to return data for read
   }
-#if CC_ALG != BAMBOO
   row = this;
-#endif
   return rc;
 
 #elif CC_ALG == TIMESTAMP || CC_ALG == MVCC || CC_ALG == HEKATON
@@ -303,14 +296,28 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row) {
 #endif
 }
 
-void row_t::return_row(access_t type, txn_man * txn, row_t * row, RC rc) {
+void row_t::return_row(void * lock_entry, RC rc) {
 #if CC_ALG == BAMBOO
-  this->manager->lock_release(txn, rc);
+  this->manager->lock_release(lock_entry, rc);
 #elif CC_ALG == WOUND_WAIT
+  this->manager->lock_release(lock_entry);
+#endif
+}
+
+void row_t::return_row(access_t type, row_t * row, void * lock_entry) {
+#if CC_ALG == WOUND_WAIT
   // make committed writes globally visible
-  if (rc != Abort && (type == WR))
+  if (type == WR) // must be commited, aborted write will be XP
     this->copy(row);
-  this->manager->lock_release(txn);
+  this->manager->lock_release(lock_entry);
+#elif CC_ALG == WAIT_DIE || (CC_ALG == NO_WAIT) || (CC_ALG == DL_DETECT)
+  assert (row == NULL || row == this || type == XP);
+  if (type == XP) {// recover from previous writes.
+    this->copy(row);
+  }
+  this->manager->lock_release(lock_entry);
+#else
+  assert(false);
 #endif
 }
 
@@ -322,18 +329,7 @@ void row_t::return_row(access_t type, txn_man * txn, row_t * row, RC rc) {
 // For TIMESTAMP, the row will be explicity deleted at the end of access().
 // (cf. row_ts.cpp)
 void row_t::return_row(access_t type, txn_man * txn, row_t * row) {
-#if CC_ALG == WOUND_WAIT
-  // make committed writes globally visible
-  if (type == WR) // must be commited, aborted write will be XP
-    this->copy(row);
-  this->manager->lock_release(txn);
-#elif CC_ALG == WAIT_DIE || (CC_ALG == NO_WAIT) || (CC_ALG == DL_DETECT)
-  assert (row == NULL || row == this || type == XP);
-  if (type == XP) {// recover from previous writes.
-    this->copy(row);
-  }
-  this->manager->lock_release(txn);
-#elif CC_ALG == TIMESTAMP || CC_ALG == MVCC
+#if CC_ALG == TIMESTAMP || CC_ALG == MVCC
   // for RD or SCAN or XP, the row should be deleted.
 	// because all WR should be companied by a RD
 	// for MVCC RD, the row is not copied, so no need to free. 

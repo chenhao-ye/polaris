@@ -25,14 +25,14 @@ class Access {
   void cleanup();
 #if CC_ALG == TICTOC
   ts_t 		wts;
-    ts_t 		rts;
+  ts_t 		rts;
 #elif CC_ALG == SILO
   ts_t 		tid;
     ts_t 		epoch;
 #elif CC_ALG == HEKATON
   void * 		history_entry;
 #endif
-
+  void * lock_entry;
 };
 
 class txn_man
@@ -124,6 +124,9 @@ class txn_man
  protected:
   void 			    insert_row(row_t * row, table_t * table);
  private:
+#if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT || CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT
+  void              assign_lock_entry(Access * access);
+#endif
   // insert rows
   uint64_t 		    insert_cnt;
   row_t * 		    insert_rows[MAX_ROW_PER_TXN];

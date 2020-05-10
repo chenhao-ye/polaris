@@ -24,41 +24,47 @@ void Row_bamboo::init(row_t * row) {
   // record first conflicting write to rollback
   fcw = NULL;
 
-#if SPINLOCK
+#if LATCH == LH_SPINLOCK
   latch = new pthread_spinlock_t;
   pthread_spin_init(latch, PTHREAD_PROCESS_SHARED);
-#else
+#elif LATCH == LH_MUTEX
   latch = new pthread_mutex_t;
-    pthread_mutex_init(latch, NULL);
+  pthread_mutex_init(latch, NULL);
+#else
+  latch = new mcslock();
 #endif
   blatch = false;
 }
 
-inline
-void Row_bamboo::lock() {
+inline ALWAYS_INLINE
+void Row_bamboo::lock(BBLockEntry * en) {
   if (g_thread_cnt > 1) {
     if (g_central_man)
       glob_manager->lock_row(_row);
     else {
-#if SPINLOCK
+#if LATCH == LH_SPINLOCK
       pthread_spin_lock( latch );
-#else
+#elif LATCH == LH_MUTEX
       pthread_mutex_lock( latch );
+#else
+      latch->acquire(en->m_node);
 #endif
     }
   }
 }
 
-inline
-void Row_bamboo::unlock() {
+inline ALWAYS_INLINE
+void Row_bamboo::unlock(BBLockEntry * en) {
   if (g_thread_cnt > 1) {
     if (g_central_man)
       glob_manager->release_row(_row);
     else {
-#if SPINLOCK
+#if LATCH == LH_SPINLOCK
       pthread_spin_unlock( latch );
-#else
+#elif LATCH == LH_MUTEX
       pthread_mutex_unlock( latch );
+#else
+      latch->release(en->m_node)
 #endif
     }
   }
@@ -76,15 +82,14 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
   // allocate an lock entry
   assert (CC_ALG == BAMBOO);
   BBLockEntry * to_insert;
-  to_insert = get_entry();
-  to_insert->access = access;
+  to_insert = get_entry(access);
   to_insert->txn = txn;
   to_insert->type = type;
 
 #if DEBUG_CS_PROFILING
   uint64_t starttime = get_sys_clock();
 #endif
-  lock();
+  lock(to_insert);
 #if DEBUG_CS_PROFILING
   INC_STATS(txn->get_thd_id(), debug1, get_sys_clock() - starttime);
   starttime = get_sys_clock();
@@ -105,8 +110,9 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
       // add to owners directly
       txn->lock_ready = true;
       LIST_PUT_TAIL(owners, owners_tail, to_insert);
+      to_insert->status = LOCK_OWNER;
       owner_cnt++;
-      unlock();
+      unlock(to_insert);
       return RCOK;
     }
     // else has to assign a priority and add to waiters first
@@ -143,7 +149,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
     rc = Abort;
     if (owner_cnt == 0)
       bring_next(NULL);
-    unlock();
+    unlock(to_insert);
     return_entry(to_insert);
     return rc;
   }
@@ -154,10 +160,11 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
     // insert before writer
     UPDATE_RETIRE_INFO(to_insert, fcw->prev); 
     LIST_INSERT_BEFORE_CH(retired_head, fcw, to_insert);
+    to_insert->status = LOCK_RETIRED;
     retired_cnt++;
     fcw = NULL;
     txn->lock_ready = true;
-    unlock();
+    unlock(to_insert);
     return FINISH;
   }
 #endif
@@ -168,7 +175,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
     rc = Abort;
     if (owner_cnt == 0)
       bring_next(NULL);
-    unlock();
+    unlock(to_insert);
     return_entry(to_insert);
     return rc;
   }
@@ -179,10 +186,11 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
     // append to the end of retired
     UPDATE_RETIRE_INFO(to_insert, retired_tail);
     LIST_PUT_TAIL(retired_head, retired_tail, to_insert);
+    to_insert->status = LOCK_RETIRED;
     retired_cnt++;
     fcw = NULL;
     txn->lock_ready = true;
-    unlock();
+    unlock(to_insert);
     return FINISH;
   }
 #endif
@@ -201,6 +209,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
   } else {
     LIST_PUT_TAIL(waiters_head, waiters_tail, to_insert);
   }
+  to_insert->status = LOCK_WAITER;
   waiter_cnt ++;
   txn->lock_ready = false;
 
@@ -222,6 +231,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
       // try to add to retired
       UPDATE_RETIRE_INFO(to_retire, retired_tail);
       LIST_PUT_TAIL(retired_head, retired_tail, to_retire);
+      to_retire->status = LOCK_RETIRED;
       retired_cnt++;
     }
     if (owner_cnt == 0 && bring_next(txn)) {
@@ -232,31 +242,23 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
 #if DEBUG_CS_PROFILING
   INC_STATS(txn->get_thd_id(), debug3, get_sys_clock() - starttime);
 #endif
-  unlock();
+  unlock(to_insert);
   return rc;
 }
 
-RC Row_bamboo::lock_retire(txn_man * txn) {
-
-
+RC Row_bamboo::lock_retire(void * addr) {
+  BBLockEntry * entry = (BBLockEntry *) addr;
 #if DEBUG_CS_PROFILING
   uint64_t starttime = get_sys_clock();
 #endif
-  lock();
+  lock(entry);
 #if DEBUG_CS_PROFILING
   INC_STATS(txn->get_thd_id(), debug4, get_sys_clock() - starttime);
     starttime = get_sys_clock();
 #endif
-
   RC rc = RCOK;
   // 1. find entry in owner and remove
-  BBLockEntry * entry = owners;
-  while (entry) {
-    if (entry->txn == txn)
-      break;
-    entry = entry->next;
-  }
-  if (entry) {
+  if (entry->status == LOCK_OWNER) {
     // rm from owners
     LIST_RM(owners, owners_tail, entry, owner_cnt);
     entry->next = NULL;
@@ -265,6 +267,7 @@ RC Row_bamboo::lock_retire(txn_man * txn) {
     // try to add to retired
     UPDATE_RETIRE_INFO(entry, retired_tail);
     LIST_PUT_TAIL(retired_head, retired_tail, entry);
+    entry->status = LOCK_RETIRED;
     retired_cnt++;
     // make dirty data globally visible
     if (entry->type == LOCK_EX)
@@ -272,6 +275,7 @@ RC Row_bamboo::lock_retire(txn_man * txn) {
   } else {
     // may be is aborted
     //assert(txn->status == ABORTED);
+    assert(entry->status == LOCK_DROPPED);
     rc = Abort;
   }
   if (owner_cnt == 0)
@@ -281,47 +285,35 @@ RC Row_bamboo::lock_retire(txn_man * txn) {
   INC_STATS(txn->get_thd_id(), debug5, get_sys_clock() - starttime);
     starttime = get_sys_clock();
 #endif
-  unlock();
+  unlock(entry);
   return rc;
 }
 
-RC Row_bamboo::lock_release(txn_man * txn, RC rc) {
+RC Row_bamboo::lock_release(void * addr, RC rc) {
+  auto entry = (BBLockEntry *) addr;
 #if DEBUG_CS_PROFILING
   uint64_t starttime = get_sys_clock();
 #endif
-  lock();
+  lock(entry);
 #if DEBUG_CS_PROFILING
   INC_STATS(txn->get_thd_id(), debug6, get_sys_clock() - starttime);
     starttime = get_sys_clock();
 #endif
-  BBLockEntry * en = NULL;
-  // Try to find the entry in the retired
-  if (!rm_if_in_retired(txn, rc == Abort)) {
-    // Try to find the entry in the owners
-    en = owners;
-    while (en) {
-      if (en->txn == txn)
-        break;
-      en = en->next;
-    }
-    if (en) {
-      // rm from owners
-      LIST_RM(owners, owners_tail, en, owner_cnt);
+    // if in retired
+    if (entry->status == LOCK_RETIRED) {
+      rm_from_retired(entry, rc == Abort);
+      return_entry(entry);
+    } else if (entry->status == LOCK_OWNER) {
+      LIST_RM(owners, owners_tail, entry, owner_cnt);
+      return_entry(entry);
+    } else if (entry->status == LOCK_WAITER) {
+      LIST_RM(waiters_head, waiters_tail, entry, waiter_cnt);
+      return_entry(entry);
     } else {
-      // not found in owner or retired, try waiters
-      en = waiters_head;
-      while(en) {
-        if (en->txn == txn) {
-          LIST_RM(waiters_head, waiters_tail, en, waiter_cnt);
-          break;
-        }
-        en = en->next;
-      }
+      // not found in retired, need to make globally visible if rc = commit
+      if (rc == Commit)
+        entry->access->orig_row->copy(entry->access->data);
     }
-    // not found in retired, need to make globally visible if rc = commit
-    if (en && (rc == Commit))
-      en->access->orig_row->copy(en->access->data);
-  }
   if (owner_cnt == 0) {
     bring_next(NULL);
   }
@@ -330,32 +322,23 @@ RC Row_bamboo::lock_release(txn_man * txn, RC rc) {
 #if DEBUG_CS_PROFILING
   INC_STATS(txn->get_thd_id(), debug7, get_sys_clock() - starttime);
 #endif
-  unlock();
-  if (en)
-    return_entry(en);
+  unlock(entry);
   return RCOK;
 }
 
-inline bool Row_bamboo::rm_if_in_retired(txn_man * txn, bool is_abort) {
+inline ALWAYS_INLINE
+void Row_bamboo::rm_from_retired(BBLockEntry * en, bool is_abort) {
   fcw = NULL;
-  BBLockEntry * en = retired_head;
-  while(en) {
-    if (en->txn == txn) {
-      if (is_abort) {
-        en->txn->lock_abort = true;
-        CHECK_ROLL_BACK(en)
-        en = remove_descendants(en, txn);
-      } else {
-        assert(txn->status == COMMITED);
-        update_entry(en);
-        LIST_RM(retired_head, retired_tail, en, retired_cnt);
-        return_entry(en);
-      }
-      return true;
-    } else
-      en = en->next;
+  if (is_abort) {
+    en->txn->lock_abort = true;
+    CHECK_ROLL_BACK(en)
+    en = remove_descendants(en, txn);
+  } else {
+    assert(txn->status == COMMITED);
+    update_entry(en);
+    LIST_RM(retired_head, retired_tail, en, retired_cnt);
+    return_entry(en);
   }
-  return false;
 }
 
 inline bool
@@ -369,6 +352,7 @@ Row_bamboo::bring_next(txn_man * txn) {
       waiter_cnt --;
       // add to onwers
       LIST_PUT_TAIL(owners, owners_tail, entry);
+      entry->status = LOCK_OWNER;
       owner_cnt ++;
       entry->txn->lock_ready = true;
       if (txn == entry->txn) {
@@ -398,19 +382,21 @@ inline bool Row_bamboo::conflict_lock_entry(BBLockEntry * l1,
   return conflict_lock(l1->type, l2->type);
 }
 
-BBLockEntry * Row_bamboo::get_entry() {
-  BBLockEntry * entry = (BBLockEntry *) mem_allocator.alloc(sizeof(BBLockEntry), _row->get_part_id());
-  entry->prev = NULL;
-  entry->next = NULL;
-  entry->delta = false;
-  entry->is_cohead = false;
-  entry->txn = NULL;
-  entry->access = NULL;
-  return entry;
+inline ALWAYS_INLINE
+BBLockEntry * Row_bamboo::get_entry(Access * access) {
+  //BBLockEntry * entry = (BBLockEntry *) mem_allocator.alloc(sizeof(BBLockEntry), _row->get_part_id());
+  return (BBLockEntry *) access->lock_entry;
 }
 
+inline ALWAYS_INLINE
 void Row_bamboo::return_entry(BBLockEntry * entry) {
-  mem_allocator.free(entry, sizeof(BBLockEntry));
+  //mem_allocator.free(entry, sizeof(BBLockEntry));
+  entry->next = NULL;
+  entry->prev = NULL;
+  entry->type = LOCK_NONE;
+  entry->status = LOCK_DROPPED;
+  entry->is_cohead = false;
+  entry->delta = true;
 }
 
 inline bool Row_bamboo::wound_txn(BBLockEntry * en, txn_man * txn, bool check_retired) {

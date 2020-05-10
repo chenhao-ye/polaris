@@ -85,16 +85,13 @@ public:
 
 	// for concurrency control. can be lock, timestamp etc.
 #if CC_ALG == BAMBOO
-    RC retire_row(txn_man * txn);
-    RC get_row(access_t type, txn_man * txn, Access * row);
-#else
-	RC get_row(access_t type, txn_man * txn, row_t *& row);
+    RC retire_row(void * lock_entry);
 #endif
-	void return_row(access_t type, txn_man * txn, row_t * row);
-	
+    RC get_row(access_t type, txn_man * txn, row_t *& row, Access *access=NULL);
 
-
-  void return_row(access_t type, txn_man * txn, row_t * row, RC rc);
+	void return_row(void * lock_entry, RC rc);
+    void return_row(access_t type, row_t * row, void * lock_entry);
+    void return_row(access_t type, txn_man * txn, row_t * row);
 	
   #if CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE
     Row_lock * manager;

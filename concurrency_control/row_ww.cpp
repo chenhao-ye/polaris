@@ -14,28 +14,65 @@ void Row_ww::init(row_t * row) {
   owner_cnt = 0;
   waiter_cnt = 0;
 
-#if SPINLOCK
+#if LATCH == LH_SPINLOCK
   latch = new pthread_spinlock_t;
-  pthread_spin_init(latch, PTHREAD_PROCESS_SHARED);
-#else
+	pthread_spin_init(latch, PTHREAD_PROCESS_SHARED);
+#elif LATCH == LH_MUTEX
   latch = new pthread_mutex_t;
 	pthread_mutex_init(latch, NULL);
+#else
+  latch = new mcslock();
 #endif
 
   lock_type = LOCK_NONE;
   blatch = false;
 }
 
-RC Row_ww::lock_get(lock_t type, txn_man * txn) {
-  uint64_t *txnids = NULL;
-  int txncnt = 0;
-  return lock_get(type, txn, txnids, txncnt);
+inline ALWAYS_INLINE
+RC Row_ww::lock(LockEntry * en) {
+  // take latch
+  if (g_central_man)
+    glob_manager->lock_row(_row);
+  else
+  {
+#if LATCH == LH_SPINLOCK
+    pthread_spin_lock( latch );
+#elif LATCH == LH_MUTEX
+    pthread_mutex_lock( latch );
+#else
+    latch->acquire(en->m_node);
+#endif
+  }
 }
 
-RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) {
+inline ALWAYS_INLINE
+RC Row_ww::unlock(LockEntry * en) {
+  // release latch
+  if (g_central_man)
+    glob_manager->release_row(_row);
+  else
+  {
+#if LATCH == LH_SPINLOCK
+    pthread_spin_unlock( latch );
+#elif LATCH == LH_MUTEX
+    pthread_mutex_unlock( latch );
+#else
+    latch->release(en->m_node);
+#endif
+  }
+}
+
+RC Row_ww::lock_get(lock_t type, txn_man * txn, Access * access) {
+  uint64_t *txnids = NULL;
+  int txncnt = 0;
+  return lock_get(type, txn, txnids, txncnt, access);
+}
+
+RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int&txncnt,
+    Access * access) {
   assert (CC_ALG == WOUND_WAIT);
   RC rc;
-  LockEntry * entry = get_entry();
+  LockEntry * entry = get_entry(access);
   LockEntry * en;
   LockEntry * to_return = NULL;
 #if DEBUG_CS_PROFILING
@@ -43,20 +80,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
   uint32_t abort_try = 0;
   uint64_t starttime = get_sys_clock();
 #endif
-
-  if (g_thread_cnt > 1){
-    if (g_central_man)
-      // if using central manager
-      glob_manager->lock_row(_row);
-    else {
-#if SPINLOCK
-      pthread_spin_lock( latch );
-#else
-      pthread_mutex_lock( latch );
-#endif
-    }
-  }
-
+  lock(entry);
 #if DEBUG_CS_PROFILING
   INC_STATS(txn->get_thd_id(), debug1, get_sys_clock() - starttime);
 #endif
@@ -68,10 +92,10 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
 
   if (owner_cnt == 0) {
     // if owner is empty, grab the lock
-    LockEntry * entry = get_entry();
     entry->type = type;
     entry->txn = txn;
     STACK_PUSH(owners, entry);
+    entry->status = LOCK_OWNER;
     owner_cnt ++;
     lock_type = type;
     txn->lock_ready = true;
@@ -140,7 +164,8 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
       if (en == waiters_head)
         waiters_head = entry;
     } else
-    LIST_PUT_TAIL(waiters_head, waiters_tail, entry);
+      LIST_PUT_TAIL(waiters_head, waiters_tail, entry);
+    entry->status = LOCK_WAITER;
     waiter_cnt ++;
     txn->lock_ready = false;
     rc = WAIT;
@@ -158,51 +183,31 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt) 
   }
 
   final:
-  if (g_central_man)
-    glob_manager->release_row(_row);
-  else {
-#if SPINLOCK
-    pthread_spin_unlock( latch );
-#else
-    pthread_mutex_unlock( latch );
-#endif
-  }
+  unlock(entry);
   return rc;
 }
 
 
-RC Row_ww::lock_release(txn_man * txn) {
+RC Row_ww::lock_release(void * addr) {
+
+  auto entry = (LockEntry * ) addr;
 
 #if DEBUG_CS_PROFILING
   uint64_t starttime = get_sys_clock();
 #endif
-  if (g_thread_cnt > 1) {
-    if (g_central_man)
-      glob_manager->lock_row(_row);
-    else {
-#if SPINLOCK
-      pthread_spin_lock( latch );
-#else
-      pthread_mutex_lock( latch );
-#endif
-    }
-  }
+  lock(entry);
 #if DEBUG_CS_PROFILING
   INC_STATS(txn->get_thd_id(), debug6, get_sys_clock() - starttime);
 #endif
 
-  RC rc = Abort;
-
   // Try to find the entry in the owners
-  LockEntry * en = owners;
-  LockEntry * prev = NULL;
-
-  while ((en != NULL) && (en->txn != txn)) {
-    prev = en;
-    en = en->next;
-  }
-  if (en) { // find the entry in the owner list
-    rc = RCOK;
+  if (entry->status == LOCK_OWNER) {
+    LockEntry * en = owners;
+    LockEntry * prev = NULL;
+    while ((en != NULL) && (en != entry)) {
+      prev = en;
+      en = en->next;
+    }
     if (prev)
       prev->next = en->next;
     else{
@@ -212,37 +217,20 @@ RC Row_ww::lock_release(txn_man * txn) {
     owner_cnt --;
     if (owner_cnt == 0)
       lock_type = LOCK_NONE;
-  } else {
-    // Not in owners list, try waiters list.
-    en = waiters_head;
-    while (en != NULL && en->txn != txn)
-      en = en->next;
-    if (en) {
-      rc = RCOK;
-      LIST_REMOVE(en);
-      if (en == waiters_head)
-        waiters_head = en->next;
-      if (en == waiters_tail)
-        waiters_tail = en->prev;
-      waiter_cnt --;
-    }
+    return_entry(entry);
+  } else if (entry->status == LOCK_WAITER) {
+    LIST_REMOVE(entry);
+    if (entry == waiters_head)
+      waiters_head = entry->next;
+    if (entry == waiters_tail)
+      waiters_tail = entry->prev;
+    waiter_cnt --;
+    return_entry(entry);
   }
-
   bring_next();
   ASSERT((owners == NULL) == (owner_cnt == 0));
-
-  if (g_central_man)
-    glob_manager->release_row(_row);
-  else {
-#if SPINLOCK
-    pthread_spin_unlock( latch );
-#else
-    pthread_mutex_unlock( latch );
-#endif
-  }
-  if (en)
-    return_entry(en);
-  return rc;
+  unlock(entry);
+  return RCOK;
 }
 
 bool Row_ww::conflict_lock(lock_t l1, lock_t l2) {
@@ -254,13 +242,20 @@ bool Row_ww::conflict_lock(lock_t l1, lock_t l2) {
     return false;
 }
 
-LockEntry * Row_ww::get_entry() {
-  LockEntry * entry = (LockEntry *)
-      mem_allocator.alloc(sizeof(LockEntry), _row->get_part_id());
-  return entry;
+inline ALWAYS_INLINE
+LockEntry * Row_ww::get_entry(Access * access) {
+  //LockEntry * entry = (LockEntry *) mem_allocator.alloc(sizeof(LockEntry),
+  // _row->get_part_id());
+  return (LockEntry *) access->lock_entry;
 }
+
+inline ALWAYS_INLINE
 void Row_ww::return_entry(LockEntry * entry) {
-  mem_allocator.free(entry, sizeof(LockEntry));
+  //mem_allocator.free(entry, sizeof(LockEntry));
+  entry->next = NULL;
+  entry->prev = NULL;
+  entry->type = LOCK_NONE;
+  entry->status = LOCK_DROPPED;
 }
 
 void

@@ -39,12 +39,21 @@
 struct BBLockEntry {
   // type of lock: EX or SH
   lock_t type;
+  lock_status status;
   bool is_cohead;
   bool delta;
   txn_man * txn;
   BBLockEntry * next;
   BBLockEntry * prev;
   Access * access;
+#if LATCH == LH_MCSLOCK
+  mcslock::qnode_t * m_node;
+  BBLockEntry(): type(LOCK_NONE), status(LOCK_DROPPED), is_cohead(false),
+  delta(true), txn(NULL), next(NULL), prev(NULL), access(NULL), m_node(NULL){};
+#else
+  BBLockEntry(): type(LOCK_NONE), status(LOCK_DROPPED), is_cohead(false),
+  delta(true), txn(NULL), next(NULL), prev(NULL), access(NULL);
+#endif
 };
 
 class Row_bamboo {
@@ -54,22 +63,24 @@ class Row_bamboo {
   RC lock_get(lock_t type, txn_man * txn, Access * access);
   RC lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt,
       Access * access);
-  RC lock_release(txn_man * txn, RC rc);
-  RC lock_retire(txn_man * txn);
+  RC lock_release(void * en, RC rc);
+  RC lock_retire(void * en);
 
  private:
-#if SPINLOCK
+#if LATCH == LH_SPINLOCK
   pthread_spinlock_t * latch;
-#else
+#elif LATCH == LH_MUTEX
   pthread_mutex_t * latch;
+#else
+  mcslock * latch;
 #endif
   bool blatch;
 
   static bool 		conflict_lock(lock_t l1, lock_t l2);
-  BBLockEntry * get_entry();
+  BBLockEntry * get_entry(Access *);
   void 		return_entry(BBLockEntry * entry);
-  void		lock();
-  void		unlock();
+  void		lock(BBLockEntry * en);
+  void		unlock(BBLockEntry * en);
   row_t * _row;
   UInt32 owner_cnt;
   UInt32 waiter_cnt;
@@ -92,7 +103,7 @@ class Row_bamboo {
   bool bring_next(txn_man * txn);
   static bool conflict_lock_entry(BBLockEntry * l1, BBLockEntry * l2);
   void update_entry(BBLockEntry * en);
-  bool rm_if_in_retired(txn_man * txn, bool is_abort);
+  bool rm_from_retired(BBLockEntry * en, bool is_abort);
   RC wound_conflict(lock_t type, txn_man * txn, ts_t ts, bool check_retired, RC status);
   bool wound_txn(BBLockEntry* en, txn_man* txn, bool check_retired);
   BBLockEntry * remove_descendants(BBLockEntry * en, txn_man * txn);
