@@ -222,16 +222,19 @@ RC Row_lock::lock_release(void * addr) {
       prev = en;
       en = en->next;
     }
+    // rm from owners
     if (prev)
       prev->next = entry->next;
     else
       owners = entry->next;
     owner_cnt --;
+    return_entry(entry);
     if (owner_cnt == 0)
       lock_type = LOCK_NONE;
   } else if (entry->status == LOCK_WAITER) {
     // Not in owners list, try waiters list.
     LIST_REMOVE(entry);
+    return_entry(entry);
     if (entry == waiters_head)
       waiters_head = entry->next;
     if (entry == waiters_tail)
