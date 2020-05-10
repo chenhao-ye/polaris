@@ -167,6 +167,7 @@ RC Row_lock::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
     entry->type = type;
     entry->txn = txn;
     STACK_PUSH(owners, entry);
+    entry->status = LOCK_OWNER;
     owner_cnt ++;
     lock_type = type;
     if (CC_ALG == DL_DETECT)
