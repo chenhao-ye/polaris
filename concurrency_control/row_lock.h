@@ -11,10 +11,10 @@ struct LockEntry {
 #if LATCH == LH_MCSLOCK
   mcslock::qnode_t * m_node;
   LockEntry(): type(LOCK_NONE), status(LOCK_DROPPED), txn(NULL), next(NULL),
-  prev(NULL), access(NULL), m_node(NULL){};
+  prev(NULL), access(NULL), m_node(NULL) {};
 #else
   LockEntry(): type(LOCK_NONE), status(LOCK_DROPPED), txn(NULL), next(NULL),
-  prev(NULL), access(NULL);
+  prev(NULL), access(NULL) {};
 #endif
 };
 

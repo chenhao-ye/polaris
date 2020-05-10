@@ -127,7 +127,7 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
       if (txn->wound_txn(en->txn) == COMMITED) {
         rc = Abort;
         bring_next(NULL);
-        unlock();
+        unlock(entry);
         return_entry(entry);
         return rc;
       }
@@ -148,7 +148,7 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
       if (txn->wound_txn(en->txn) == COMMITED) {
         rc = Abort;
         bring_next(NULL);
-        unlock();
+        unlock(entry);
         return_entry(entry);
         return rc;
       }
