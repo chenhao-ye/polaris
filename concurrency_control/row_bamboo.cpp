@@ -180,7 +180,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
   return rc;
 }
 
-inline ALWAYS_INLINE
+inline 
 bool Row_bamboo::wound_txn(BBLockEntry * en, txn_man * txn, bool check_retired) {
 
   if (txn->status == ABORTED)
@@ -197,7 +197,7 @@ bool Row_bamboo::wound_txn(BBLockEntry * en, txn_man * txn, bool check_retired) 
   return true;
 }
 
-inline ALWAYS_INLINE
+inline 
 RC Row_bamboo::wound_conflict(lock_t type, txn_man * txn, ts_t ts,
     bool check_retired, RC status) {
   BBLockEntry * en;
@@ -294,7 +294,7 @@ assert((type == LOCK_EX && (en->type == LOCK_EX)) || (type==LOCK_EX && (en->type
   return status;
 }
 
-inline ALWAYS_INLINE
+inline 
 BBLockEntry * Row_bamboo::remove_descendants(BBLockEntry * en, txn_man * txn) {
 #if DEBUG_CS_PROFILING
   uint32_t abort_cnt = 1;

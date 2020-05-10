@@ -28,7 +28,7 @@ void Row_ww::init(row_t * row) {
   blatch = false;
 }
 
-inline ALWAYS_INLINE
+inline 
 RC Row_ww::lock(LockEntry * en) {
   // take latch
   if (g_central_man)
@@ -45,7 +45,7 @@ RC Row_ww::lock(LockEntry * en) {
   }
 }
 
-inline ALWAYS_INLINE
+inline 
 RC Row_ww::unlock(LockEntry * en) {
   // release latch
   if (g_central_man)
@@ -242,14 +242,14 @@ bool Row_ww::conflict_lock(lock_t l1, lock_t l2) {
     return false;
 }
 
-inline ALWAYS_INLINE
+inline 
 LockEntry * Row_ww::get_entry(Access * access) {
   //LockEntry * entry = (LockEntry *) mem_allocator.alloc(sizeof(LockEntry),
   // _row->get_part_id());
   return (LockEntry *) access->lock_entry;
 }
 
-inline ALWAYS_INLINE
+inline 
 void Row_ww::return_entry(LockEntry * entry) {
   //mem_allocator.free(entry, sizeof(LockEntry));
   entry->next = NULL;

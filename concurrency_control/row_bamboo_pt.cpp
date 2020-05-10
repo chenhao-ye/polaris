@@ -32,7 +32,7 @@ void Row_bamboo_pt::init(row_t * row) {
   blatch = false;
 }
 
-inline ALWAYS_INLINE
+inline 
 void Row_bamboo_pt::lock(BBLockEntry * en) {
   if (g_thread_cnt > 1) {
     if (g_central_man)
@@ -49,7 +49,7 @@ void Row_bamboo_pt::lock(BBLockEntry * en) {
   }
 }
 
-inline ALWAYS_INLINE
+inline 
 void Row_bamboo_pt::unlock(BBLockEntry * en) {
   if (g_thread_cnt > 1) {
     if (g_central_man)
@@ -362,7 +362,7 @@ RC Row_bamboo_pt::lock_release(void * addr, RC rc) {
   return RCOK;
 }
 
-inline ALWAYS_INLINE
+inline 
 void Row_bamboo_pt::rm_from_retired(BBLockEntry * en, bool is_abort) {
   fcw = NULL;
   if (is_abort) {
@@ -377,7 +377,7 @@ void Row_bamboo_pt::rm_from_retired(BBLockEntry * en, bool is_abort) {
   }
 }
 
-inline ALWAYS_INLINE
+inline 
 bool Row_bamboo_pt::bring_next(txn_man * txn) {
   bool has_txn = false;
   BBLockEntry * entry;
@@ -420,13 +420,13 @@ bool Row_bamboo_pt::conflict_lock_entry(BBLockEntry * l1, BBLockEntry * l2) {
 }
 
 
-inline ALWAYS_INLINE
+inline 
 BBLockEntry * Row_bamboo_pt::get_entry(Access * access) {
   //BBLockEntry * entry = (BBLockEntry *) mem_allocator.alloc(sizeof(BBLockEntry), _row->get_part_id());
   return (BBLockEntry *) access->lock_entry;
 }
 
-inline ALWAYS_INLINE
+inline 
 void Row_bamboo_pt::return_entry(BBLockEntry * entry) {
   //mem_allocator.free(entry, sizeof(BBLockEntry));
   entry->next = NULL;
@@ -437,7 +437,7 @@ void Row_bamboo_pt::return_entry(BBLockEntry * entry) {
   entry->delta = true;
 }
 
-inline ALWAYS_INLINE
+inline 
 void Row_bamboo_pt::update_entry(BBLockEntry * en) {
   BBLockEntry * entry;
   if (en->prev) {
