@@ -6,7 +6,7 @@
 
 class Row_bamboo : public Row_bamboo_pt {
  public:
-  void init(row_t * row) override ;
+  void init(row_t * row);
   RC lock_get(lock_t type, txn_man * txn, Access * access) override {
     return Row_bamboo_pt::lock_get(type, txn, access);
   };
