@@ -401,7 +401,7 @@ bool Row_bamboo_pt::bring_next(txn_man * txn) {
   return has_txn;
 }
 
-inline ALWAYS_IN_LINE
+inline 
 bool Row_bamboo_pt::conflict_lock(lock_t l1, lock_t l2) {
   if (l1 == LOCK_NONE || l2 == LOCK_NONE)
     return false;
@@ -412,7 +412,7 @@ bool Row_bamboo_pt::conflict_lock(lock_t l1, lock_t l2) {
 }
 
 
-inline ALWAYS_IN_LINE
+inline 
 bool Row_bamboo_pt::conflict_lock_entry(BBLockEntry * l1, BBLockEntry * l2) {
   if (l1 == NULL || l2 == NULL)
     return false;

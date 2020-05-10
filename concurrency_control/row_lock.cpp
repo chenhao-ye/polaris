@@ -27,7 +27,7 @@ void Row_lock::init(row_t * row) {
 }
 
 inline 
-RC Row_lock::lock(LockEntry * en) {
+void Row_lock::lock(LockEntry * en) {
   // take latch
   if (g_central_man)
     glob_manager->lock_row(_row);
@@ -44,7 +44,7 @@ RC Row_lock::lock(LockEntry * en) {
 }
 
 inline 
-RC Row_lock::unlock(LockEntry * en) {
+void Row_lock::unlock(LockEntry * en) {
   // release latch
   if (g_central_man)
     glob_manager->release_row(_row);

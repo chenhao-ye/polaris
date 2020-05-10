@@ -101,7 +101,7 @@ class Row_bamboo_pt {
   bool bring_next(txn_man * txn);
   static bool conflict_lock_entry(BBLockEntry * l1, BBLockEntry * l2);
   void update_entry(BBLockEntry * en);
-  bool rm_from_retired(BBLockEntry * en, bool is_abort);
+  void rm_from_retired(BBLockEntry * en, bool is_abort);
 
  private:
   BBLockEntry * remove_descendants(BBLockEntry * en);
