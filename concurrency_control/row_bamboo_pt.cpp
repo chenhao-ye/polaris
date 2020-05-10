@@ -227,61 +227,6 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
   return rc;
 }
 
-BBLockEntry * Row_bamboo_pt::remove_descendants(BBLockEntry * en) {
-  BBLockEntry * next;
-  assert(en != NULL);
-  BBLockEntry * prev = en->prev;
-  // 1. remove self, set iterator to next entry
-  lock_t type = en->type;
-  bool conflict_with_owners = conflict_lock_entry(en, owners);
-  next = en->next;
-  update_entry(en);
-  LIST_RM(retired_head, retired_tail, en, retired_cnt);
-  return_entry(en);
-  if (en->type == LOCK_SH) {
-    if (prev)
-      return prev->next;
-    else
-      return retired_head;
-  }
-  en = next;
-  // 2. remove next conflict till end
-  // 2.1 find next conflict
-  while(en && (!conflict_lock(type, en->type))) {
-    en = en->next;
-  }
-  // 2.2 remove dependees
-  if (en == NULL) {
-    if (!conflict_with_owners) {
-      // clean owners
-      while(owners) {
-        en = owners;
-        en->txn->set_abort();
-        // no need to be too complicated (i.e. call function) as the owner will be empty in the end
-        owners = owners->next;
-        return_entry(en);
-      }
-      owners_tail = NULL;
-      owners = NULL;
-      owner_cnt = 0;
-    } // else, nothing to do
-  } else {
-    // abort till end
-    LIST_RM_SINCE(retired_head, retired_tail, en);
-    while(en) {
-      next = en->next;
-      en->txn->set_abort();
-      retired_cnt--;
-      return_entry(en);
-      en = next;
-    }
-  }
-  if (prev)
-    return prev->next;
-  else
-    return retired_head;
-}
-
 RC Row_bamboo_pt::lock_retire(void * addr) {
   BBLockEntry * entry = (BBLockEntry *) addr;
 #if DEBUG_CS_PROFILING
@@ -467,4 +412,77 @@ void Row_bamboo_pt::update_entry(BBLockEntry * en) {
       // has no next entry, never mind
     }
   }
+}
+
+inline
+BBLockEntry * Row_bamboo_pt::remove_descendants(BBLockEntry * en, txn_man *
+txn) {
+#if DEBUG_CS_PROFILING
+  uint32_t abort_cnt = 1;
+  uint32_t abort_try = 1;
+#endif
+  assert(en != NULL);
+  BBLockEntry * next = NULL;
+  BBLockEntry * prev = en->prev;
+  // 1. remove self, set iterator to next entry
+  lock_t type = en->type;
+  bool conflict_with_owners = conflict_lock_entry(en, owners);
+  next = en->next;
+  if (type == LOCK_SH) {
+    // update entry and no need to remove descendants!
+    update_entry(en);
+    LIST_RM(retired_head, retired_tail, en, retired_cnt);
+    return_entry(en);
+    if (prev)
+      return prev->next;
+    else
+      return retired_head;
+  }
+  //update_entry(en); // no need to update as any non-cohead needs to be aborted, coheads will not be aborted
+  LIST_RM(retired_head, retired_tail, en, retired_cnt);
+  return_entry(en);
+  en = next;
+  // 2. remove next conflict till end
+  // 2.1 find next conflict
+  while(en && (!conflict_lock(type, en->type))) {
+    en = en->next;
+  }
+  // 2.2 remove dependendees,
+  // NOTE: only the first wounded/aborted txn needs to be rolled back
+  if (en == NULL) {
+    // no dependendees, if conflict with owner, need to empty owner
+    if (conflict_with_owners) {
+      ABORT_ALL_OWNERS()
+    } // else, nothing to do
+  } else {
+    // abort till end and empty owners
+    LIST_RM_SINCE(retired_head, retired_tail, en);
+    while(en) {
+      next = en->next;
+      en->txn->set_abort();
+      CHECK_ROLL_BACK(en);
+      retired_cnt--;
+      return_entry(en);
+      en = next;
+    }
+    ABORT_ALL_OWNERS()
+  }
+  assert(!retired_head || retired_head->is_cohead);
+#if DEBUG_CS_PROFILING
+  // debug9: sum of all lengths of chains; debug 10: time of cascading aborts; debug2: max chain
+    if (abort_cnt > 1) {
+        INC_STATS(0, debug2, 1);
+        INC_STATS(0, debug9, abort_cnt); // out of all aborts, how many are cascading aborts (have >= 1 dependency)
+    }
+    // max length of aborts
+    if (abort_cnt > stats._stats[txn->get_thd_id()]->debug11)
+        stats._stats[txn->get_thd_id()]->debug11 = abort_cnt;
+    // max length of depedency
+    if (abort_try > stats._stats[txn->get_thd_id()]->debug10)
+        stats._stats[txn->get_thd_id()]->debug10 = abort_try;
+#endif
+  if (prev)
+    return prev->next;
+  else
+    return retired_head;
 }
