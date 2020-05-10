@@ -63,6 +63,7 @@ void row_t::init_manager(row_t * row) {
 #elif CC_ALG == BAMBOO
 #if DYNAMIC_TS
   manager = (Row_bamboo *) mem_allocator.alloc(sizeof(Row_bamboo), _part_id);
+  new(manager) Row_bamboo();
 #else
   manager = (Row_bamboo_pt *) mem_allocator.alloc(sizeof(Row_bamboo_pt), _part_id);
 #endif
