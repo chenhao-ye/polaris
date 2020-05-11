@@ -263,6 +263,7 @@ RC Row_lock::lock_release(void * addr) {
     ASSERT(en->txn->lock_ready == false);
     en->txn->lock_ready = true;
     lock_type = en->type;
+    //printf("[%p]txn-%lu got %lu\n", en, en->txn->get_txn_id(), _row->get_row_id());
   }
   ASSERT((owners == NULL) == (owner_cnt == 0));
   unlock(entry);

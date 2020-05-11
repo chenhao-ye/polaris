@@ -123,8 +123,8 @@ void txn_man::cleanup(RC rc) {
       type = XP;
 #if (CC_ALG == NO_WAIT || CC_ALG == DL_DETECT) && ISOLATION_LEVEL == REPEATABLE_READ
     if (type == RD) {
-			accesses[rid]->data = NULL;
-			continue;
+	accesses[rid]->data = NULL;
+	continue;
     }
 #endif
 
@@ -137,10 +137,10 @@ void txn_man::cleanup(RC rc) {
     {
       orig_r->return_row(type, accesses[rid]->orig_data, accesses[rid]->lock_entry);
     } else {
-#if CC_ALG == WAID_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT
+#if CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT
       orig_r->return_row(type, accesses[rid]->data, accesses[rid]->lock_entry);
 #else
-      orig_r->return_row(type, accesses[rid]->data, accesses[rid]);
+      orig_r->return_row(type, this, accesses[rid]->data);
 #endif
     }
 #endif
@@ -175,21 +175,16 @@ void txn_man::cleanup(RC rc) {
 #if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT || CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT
 inline 
 void txn_man::assign_lock_entry(Access * access) {
-  size_t sz = 0;
-#if LATCH == LH_MCSLOCK
-  sz += sizeof(mcslock::qnode_t);
-#endif
 #if CC_ALG == BAMBOO
-  auto buf = (char *) _mm_malloc(sz + sizeof(BBLockEntry), 64);
-  auto lock_entry = new (buf) BBLockEntry;
-  buf += sizeof(BBLockEntry);
+  auto lock_entry = (BBLockEntry *) _mm_malloc(sizeof(BBLockEntry), 64);
+  new (lock_entry) BBLockEntry;
 #else
-  auto buf = (char *) _mm_malloc(sz + sizeof(LockEntry), 64);
-  auto lock_entry = new (buf) LockEntry;
-  buf += sizeof(LockEntry);
+  auto lock_entry = (LockEntry *) _mm_malloc(sizeof(LockEntry), 64);
+  new (lock_entry) LockEntry;
 #endif
 #if LATCH == LH_MCSLOCK
-  lock_entry->m_node = new (buf) mcslock::qnode_t();
+  lock_entry->m_node = (mcslock::qnode_t *) _mm_malloc(sizeof(mcslock::qnode_t), 64);
+  new (lock_entry->m_node) mcslock::qnode_t();
 #endif
   access->lock_entry = lock_entry;
   lock_entry->txn = this;
@@ -230,6 +225,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
     assign_lock_entry(access);
     access->orig_data = (row_t *) _mm_malloc(sizeof(row_t), 64);
     access->orig_data->init(MAX_TUPLE_SIZE);
+//printf("init access %p for row %lu\n", accesses[row_cnt], row->get_row_id());
 #endif
     num_accesses_alloc++;
   }

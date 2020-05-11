@@ -313,6 +313,7 @@ void row_t::return_row(access_t type, row_t * row, void * lock_entry) {
   if (type == XP) {// recover from previous writes.
     this->copy(row);
   }
+//printf("[%p]txn-%lu return row %lu\n", lock_entry, ((LockEntry *)lock_entry)->txn->get_txn_id(), get_row_id());
   this->manager->lock_release(lock_entry);
 #else
   assert(false);

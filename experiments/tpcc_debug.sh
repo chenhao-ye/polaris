@@ -20,6 +20,7 @@ user_abort="true"
 
 #other
 threads=16 
+#threads=1 
 profile="true"
 cnt=100000
 penalty=50000 
