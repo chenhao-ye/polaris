@@ -158,10 +158,9 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row, Access * access) {
   lock_t lt = (type == RD || type == SCAN)? LOCK_SH : LOCK_EX;
   #if CC_ALG == DL_DETECT
   uint64_t * txnids;
-	int txncnt; 
-	rc = this->manager->lock_get(lt, txn, txnids, txncnt);
-  #else
-  #if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT
+  int txncnt; 
+  rc = this->manager->lock_get(lt, txn, txnids, txncnt);
+  #elif CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT
   if (txn->lock_abort)
     return Abort;
   rc = this->manager->lock_get(lt, txn, access);
@@ -169,7 +168,6 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row, Access * access) {
   rc = this->manager->lock_get(lt, txn, access);
   #else
   rc = this->manager->lock_get(lt, txn);
-  #endif
   #endif
   if (rc == RCOK) {
   } else if (rc == Abort) {
@@ -244,7 +242,6 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row, Access * access) {
   }
   row = this;
   return rc;
-
 #elif CC_ALG == TIMESTAMP || CC_ALG == MVCC || CC_ALG == HEKATON
   uint64_t thd_id = txn->get_thd_id();
 	// For TIMESTAMP RD, a new copy of the row will be returned.

@@ -73,6 +73,7 @@ RC Row_lock::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
   int part_id =_row->get_part_id();
 
   LockEntry * entry = get_entry(access);
+  //printf("[%p] txn-%lu try get %lu\n", entry, txn->get_txn_id(), _row->get_row_id());
 
   lock(entry);
   assert(owner_cnt <= g_thread_cnt);
@@ -173,6 +174,7 @@ RC Row_lock::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
     if (CC_ALG == DL_DETECT)
       ASSERT(waiters_head == NULL);
     rc = RCOK;
+    //printf("[%p]txn-%lu got %lu\n", entry, txn->get_txn_id(), _row->get_row_id());
   }
   final:
 
@@ -209,11 +211,13 @@ RC Row_lock::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
 RC Row_lock::lock_release(void * addr) {
 
   auto entry = (LockEntry *) addr;
+  //printf("[%p]txn-%lu try release %lu\n", entry, entry->txn->get_txn_id(), _row->get_row_id());
   lock(entry);
 
   LockEntry * en;
   // Try to find the entry in the owners
   if (entry->status == LOCK_OWNER) { // find the entry in the owner list
+  //printf("txn-%lu rm %lu from owner\n", entry->txn->get_txn_id(), _row->get_row_id());
     en = owners;
     LockEntry * prev = NULL;
     while(en) {
@@ -228,13 +232,12 @@ RC Row_lock::lock_release(void * addr) {
     else
       owners = entry->next;
     owner_cnt --;
-    return_entry(entry);
     if (owner_cnt == 0)
       lock_type = LOCK_NONE;
   } else if (entry->status == LOCK_WAITER) {
+  //printf("txn-%lu rm %lu from waiter\n", entry->txn->get_txn_id(), _row->get_row_id());
     // Not in owners list, try waiters list.
     LIST_REMOVE(entry);
-    return_entry(entry);
     if (entry == waiters_head)
       waiters_head = entry->next;
     if (entry == waiters_tail)
@@ -250,7 +253,6 @@ RC Row_lock::lock_release(void * addr) {
   for (en = waiters_head; en != NULL && en->next != NULL; en = en->next)
 			assert(en->next->txn->get_ts() < en->txn->get_ts());
 #endif
-
   // If any waiter can join the owners, just do it!
   while (waiters_head && !conflict_lock(lock_type, waiters_head->type)) {
     LIST_GET_HEAD(waiters_head, waiters_tail, en);
@@ -280,7 +282,11 @@ inline
 LockEntry * Row_lock::get_entry(Access * access) {
   //LockEntry * entry = (LockEntry *) mem_allocator.alloc(sizeof(LockEntry),
   // _row->get_part_id());
-  return (LockEntry *) access->lock_entry;
+  LockEntry * entry = (LockEntry *) access->lock_entry;
+  entry->next = NULL;
+  entry->prev = NULL;
+  entry->status = LOCK_DROPPED;
+  return entry;
 }
 
 inline 

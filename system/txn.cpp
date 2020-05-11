@@ -129,22 +129,24 @@ void txn_man::cleanup(RC rc) {
 #endif
 
 #if CC_ALG == BAMBOO
-    orig_r->return_row(accesses[rid], rc);
+    orig_r->return_row(accesses[rid]->lock_entry, rc);
 #elif CC_ALG == WOUND_WAIT
-    orig_r->return_row(type, accesses[rid]->data, accesses[rid]);
+    orig_r->return_row(type, accesses[rid]->data, accesses[rid]->lock_entry);
 #else
-    if (ROLL_BACK && type == XP &&
-					(CC_ALG == DL_DETECT || 
-					CC_ALG == NO_WAIT || 
-					CC_ALG == WAIT_DIE))
-		{
-            orig_r->return_row(type, accesses[rid]->orig_data, accesses[rid]);
-		} else {
-            orig_r->return_row(type, accesses[rid]->data, accesses[rid]);
-		}
+    if (ROLL_BACK && type == XP && (CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE))
+    {
+      orig_r->return_row(type, accesses[rid]->orig_data, accesses[rid]->lock_entry);
+    } else {
+#if CC_ALG == WAID_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT
+      orig_r->return_row(type, accesses[rid]->data, accesses[rid]->lock_entry);
+#else
+      orig_r->return_row(type, accesses[rid]->data, accesses[rid]);
+#endif
+    }
 #endif
 
 #if CC_ALG != TICTOC && (CC_ALG != SILO) && (CC_ALG != WOUND_WAIT) && (CC_ALG!= BAMBOO)
+    // invalidate ptr for cc keeping globally visible ptr
     accesses[rid]->data = NULL;
 #endif
   }
