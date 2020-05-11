@@ -7,6 +7,7 @@ spin="true"
 ww_starv_free="false"
 # [BAMBOO]
 dynamic="true"
+dynamic="false"
 retire="true"
 cs_pf="false"
 opt_raw="true"
@@ -20,7 +21,6 @@ user_abort="true"
 
 #other
 threads=16 
-#threads=1 
 profile="true"
 cnt=100000
 penalty=50000 

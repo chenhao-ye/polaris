@@ -74,7 +74,6 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int&txncnt,
   RC rc;
   LockEntry * entry = get_entry(access);
   LockEntry * en;
-  LockEntry * to_return = NULL;
 #if DEBUG_CS_PROFILING
   uint32_t abort_cnt = 0;
   uint32_t abort_try = 0;
@@ -114,7 +113,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int&txncnt,
           if (owner_cnt == 0)
             bring_next();
           rc = Abort;
-          return_entry(entry);
+          entry->status = LOCK_DROPPED;
           goto final;
         }
 #if DEBUG_CS_PROFILING
@@ -130,7 +129,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int&txncnt,
             owners = en->next;
         }
         // free en
-        to_return = en;
+        en->status = LOCK_DROPPED;
         // update count
         owner_cnt--;
         if (owner_cnt == 0)
@@ -139,10 +138,6 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int&txncnt,
         prev = en;
       }
       en = en->next;
-      if (to_return) {
-        return_entry(to_return);
-        to_return = NULL;
-      }
     }
 #if DEBUG_CS_PROFILING
     // max abort chain
@@ -217,7 +212,6 @@ RC Row_ww::lock_release(void * addr) {
     owner_cnt --;
     if (owner_cnt == 0)
       lock_type = LOCK_NONE;
-    return_entry(entry);
   } else if (entry->status == LOCK_WAITER) {
     LIST_REMOVE(entry);
     if (entry == waiters_head)
@@ -225,7 +219,6 @@ RC Row_ww::lock_release(void * addr) {
     if (entry == waiters_tail)
       waiters_tail = entry->prev;
     waiter_cnt --;
-    return_entry(entry);
   }
   bring_next();
   ASSERT((owners == NULL) == (owner_cnt == 0));
@@ -246,16 +239,20 @@ inline
 LockEntry * Row_ww::get_entry(Access * access) {
   //LockEntry * entry = (LockEntry *) mem_allocator.alloc(sizeof(LockEntry),
   // _row->get_part_id());
-  return (LockEntry *) access->lock_entry;
+  LockEntry * entry = (LockEntry *) access->lock_entry;
+  entry->next = NULL;
+  entry->prev = NULL;
+  entry->status = LOCK_DROPPED;
+  return entry;
 }
 
 inline 
 void Row_ww::return_entry(LockEntry * entry) {
-  //mem_allocator.free(entry, sizeof(LockEntry));
+  entry->status = LOCK_DROPPED;
   entry->next = NULL;
   entry->prev = NULL;
   entry->type = LOCK_NONE;
-  entry->status = LOCK_DROPPED;
+  //mem_allocator.free(entry, sizeof(LockEntry));
 }
 
 void
@@ -265,6 +262,7 @@ Row_ww::bring_next() {
   while (waiters_head && (owner_cnt == 0 || !conflict_lock(owners->type, waiters_head->type) )) {
     LIST_GET_HEAD(waiters_head, waiters_tail, entry);
     STACK_PUSH(owners, entry);
+    entry->status = LOCK_OWNER;
     owner_cnt ++;
     waiter_cnt --;
     ASSERT(entry->txn->lock_ready == 0);

@@ -66,6 +66,7 @@ void row_t::init_manager(row_t * row) {
   new(manager) Row_bamboo();
 #else
   manager = (Row_bamboo_pt *) mem_allocator.alloc(sizeof(Row_bamboo_pt), _part_id);
+  new(manager) Row_bamboo_pt();
 #endif
 #endif
 
