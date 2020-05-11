@@ -93,7 +93,6 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
   starttime = get_sys_clock();
 #endif
 
-  BBLockEntry * to_reset = NULL;
   // each thread has at most one owner of a lock
   assert(owner_cnt <= g_thread_cnt);
   // each thread has at most one waiter
@@ -126,13 +125,7 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
     if (rc == RCOK && conflict_lock(en->type, type) && (en->txn->get_ts() > ts))
       rc = WAIT;
     if (rc == WAIT && en->txn->get_ts() > ts) {
-      if (txn->wound_txn(en->txn) == COMMITED) {
-        rc = Abort;
-        bring_next(NULL);
-        unlock(entry);
-        entry->status = LOCK_DROPPED;
-        return rc;
-      }
+      TRY_WOUND_PT(en, entry);
       en = remove_descendants(en, txn);
     } else {
       en = en->next;
@@ -146,15 +139,9 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
     if (rc == RCOK && conflict_lock(en->type, type) && (en->txn->get_ts() > ts))
       rc = WAIT;
     if (rc == WAIT && en->txn->get_ts() > ts) {
-      if (txn->wound_txn(en->txn) == COMMITED) {
-        rc = Abort;
-        bring_next(NULL);
-        unlock(entry);
-        entry->status = LOCK_DROPPED;
-        return rc;
-      }
-      en->status = LOCK_DROPPED;
+      TRY_WOUND_PT(en, entry);
       QUEUE_RM(owners, owners_tail, prev, en, owner_cnt);
+      en->status = LOCK_DROPPED;
       en = en->next;
     } else {
       prev = en;
@@ -194,28 +181,7 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
     BBLockEntry * to_retire = NULL;
     while (owners) {
       to_retire = owners;
-      LIST_RM(owners, owners_tail, to_retire, owner_cnt);
-      to_retire->next=NULL;
-      to_retire->prev=NULL;
-      // try to add to retired
-      if (retired_tail) {
-        if (conflict_lock(retired_tail->type, to_retire->type)) {
-          // conflict with tail -> increment barrier for sure
-          // default is_cohead = false
-          to_retire->delta = true;
-          to_retire->txn->increment_commit_barriers();
-        } else {
-          // not conflict with tail ->increment if is not head
-          to_retire->is_cohead = retired_tail->is_cohead;
-          if (!to_retire->is_cohead)
-            to_retire->txn->increment_commit_barriers();
-        }
-      } else {
-        to_retire->is_cohead = true;
-      }
-      LIST_PUT_TAIL(retired_head, retired_tail, to_retire);
-      to_retire->status = LOCK_RETIRED;
-      retired_cnt++;
+      RETIRE_ENTRY(to_retire);
     }
     if (bring_next(txn)) {
       rc = RCOK;
@@ -241,22 +207,12 @@ RC Row_bamboo_pt::lock_retire(void * addr) {
   RC rc = RCOK;
   // 1. find entry in owner and remove
   if (entry->status == LOCK_OWNER) {
-    // rm from owners
-    LIST_RM(owners, owners_tail, entry, owner_cnt);
-    entry->next = NULL;
-    entry->prev = NULL;
-    //assert(entry->txn->get_ts() != 0);
-    // try to add to retired
-    UPDATE_RETIRE_INFO(entry, retired_tail);
-    LIST_PUT_TAIL(retired_head, retired_tail, entry);
-    entry->status = LOCK_RETIRED;
-    retired_cnt++;
+    RETIRE_ENTRY(entry);
     // make dirty data globally visible
     if (entry->type == LOCK_EX)
       entry->access->orig_row->copy(entry->access->data);
   } else {
-    // may be is aborted
-    //assert(txn->status == ABORTED);
+    // may be is aborted: assert(txn->status == ABORTED);
     assert(entry->status == LOCK_DROPPED);
     rc = Abort;
   }
@@ -422,17 +378,15 @@ inline
 BBLockEntry * Row_bamboo_pt::remove_descendants(BBLockEntry * en, txn_man *
 txn) {
   assert(en != NULL);
-  BBLockEntry * next = NULL;
+  BBLockEntry * itr = en->next;
 
   // 1. remove self, set iterator to next entry
   rm_from_retired(en, false);
-  if (en->type == LOCK_SH) {
+  if (en->type == LOCK_SH)
     goto final;
-  }
 
   // 2. remove next conflict till end
   // 2.1 find next conflict
-  itr = en->next;
   while(itr && (!conflict_lock(en->type, itr->type))) {
     itr = itr->next;
   }
@@ -458,7 +412,7 @@ txn) {
   assert(!retired_head || retired_head->is_cohead);
 final:
   if (en->prev)
-    return prev->next;
+    return en->prev->next;
   else
     return retired_head;
 }

@@ -111,6 +111,8 @@ void txn_man::cleanup(RC rc) {
 	return;
 #endif
 
+if (rc == RCOK )
+  printf("cleanup txn-%lu rc=%d\n", get_txn_id(), rc);
   // go through accesses and release
   for (int rid = row_cnt - 1; rid >= 0; rid --) {
 #if (CC_ALG == WOUND_WAIT) || (CC_ALG == BAMBOO)
@@ -214,6 +216,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
 #elif (CC_ALG == BAMBOO)
     // allocate lock entry as well
     assign_lock_entry(access);
+printf("init access %p for row %lu\n", accesses[row_cnt], row->get_row_id());
     // data is for making local changes before added to retired
     access->data = (row_t *) _mm_malloc(sizeof(row_t), 64);
     access->data->init(MAX_TUPLE_SIZE);
@@ -225,7 +228,6 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
     assign_lock_entry(access);
     access->orig_data = (row_t *) _mm_malloc(sizeof(row_t), 64);
     access->orig_data->init(MAX_TUPLE_SIZE);
-//printf("init access %p for row %lu\n", accesses[row_cnt], row->get_row_id());
 #endif
     num_accesses_alloc++;
   }

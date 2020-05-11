@@ -162,16 +162,17 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row, Access * access) {
   int txncnt; 
   rc = this->manager->lock_get(lt, txn, txnids, txncnt);
   #elif CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT
-  if (txn->lock_abort)
+  if (txn->lock_abort) {
+    printf("txn-%lu abort trying %lu", txn->get_txn_id(), get_row_id());
     return Abort;
-  rc = this->manager->lock_get(lt, txn, access);
-  #elif CC_ALG == DL_DETECT || (CC_ALG == NO_WAIT) || (CC_ALG== WAIT_DIE)
+  }
   rc = this->manager->lock_get(lt, txn, access);
   #else
-  rc = this->manager->lock_get(lt, txn);
+  rc = this->manager->lock_get(lt, txn, access);
   #endif
   if (rc == RCOK) {
   } else if (rc == Abort) {
+    printf("txn-%lu abort accessing %lu", txn->get_txn_id(), get_row_id());
     row = NULL;
     return rc;
   } else if (rc == WAIT) {
@@ -191,43 +192,43 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row, Access * access) {
       continue;
     #elif CC_ALG == DL_DETECT
       uint64_t last_detect = starttime;
-			uint64_t last_try = starttime;
-
-			uint64_t now = get_sys_clock();
-			if (now - starttime > g_timeout ) {
+      uint64_t last_try = starttime;
+      uint64_t now = get_sys_clock();
+      if (now - starttime > g_timeout ) {
 				txn->lock_abort = true;
 				break;
-			}
-			if (g_no_dl) {
+      }
+      if (g_no_dl) {
 				PAUSE
 				continue;
-			}
-			int ok = 0;
-			if ((now - last_detect > g_dl_loop_detect) && (now - last_try > DL_LOOP_TRIAL)) {
-				if (!dep_added) {
-					ok = dl_detector.add_dep(txn->get_txn_id(), txnids, txncnt, txn->row_cnt);
-					if (ok == 0)
-						dep_added = true;
-					else if (ok == 16)
-						last_try = now;
-				}
-				if (dep_added) {
-					ok = dl_detector.detect_cycle(txn->get_txn_id());
-					if (ok == 16)  // failed to lock the deadlock detector
-						last_try = now;
-					else if (ok == 0) 
-						last_detect = now;
-					else if (ok == 1) {
-						last_detect = now;
-					}
-				}
-			} else 
-				PAUSE
+      }
+      int ok = 0;
+      if ((now - last_detect > g_dl_loop_detect) && (now - last_try > DL_LOOP_TRIAL)) {
+        if (!dep_added) {
+          ok = dl_detector.add_dep(txn->get_txn_id(), txnids, txncnt, txn->row_cnt);
+	  if (ok == 0)
+            dep_added = true;
+          else if (ok == 16)
+	  last_try = now;
+        }
+	if (dep_added) {
+	  ok = dl_detector.detect_cycle(txn->get_txn_id());
+	  if (ok == 16)  // failed to lock the deadlock detector
+	    last_try = now;
+	  else if (ok == 0) 
+	    last_detect = now;
+          else if (ok == 1) {
+	    last_detect = now;
+          }
+        }
+      } else 
+        PAUSE
     #endif
     }
     if (txn->lock_ready) {
       rc = RCOK;
     } else if (txn->lock_abort) {
+    printf("txn-%lu abort waiting %lu", txn->get_txn_id(), get_row_id());
       // only possible for wound-wait based algs.
       // check if txn is aborted, if aborted due to conflicts on this or other
       // try to release lock

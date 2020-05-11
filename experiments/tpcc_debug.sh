@@ -11,16 +11,18 @@ dynamic="false"
 retire="true"
 cs_pf="false"
 opt_raw="true"
+opt_raw="false"
 
 ## workload
 wl="TPCC"
 wh=1
 perc=0.5 # payment percentage
 user_abort="true"
-#user_abort="false"
+user_abort="false"
 
 #other
 threads=16 
+threads=2 
 profile="true"
 cnt=100000
 penalty=50000 

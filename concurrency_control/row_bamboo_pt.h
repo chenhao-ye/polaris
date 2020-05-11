@@ -13,15 +13,22 @@
           en->txn->increment_commit_barriers(); \
      } \
     } else \
-      en->is_cohead = true; \
-}
+      en->is_cohead = true; }
 
 #define CHECK_ROLL_BACK(en) { \
   if (!fcw && (en->type == LOCK_EX)) { \
     en->access->orig_row->copy(en->access->orig_data); \
     fcw = en; \
-  } \
-}
+  } }
+
+#define RETIRE_ENTRY(to_retire) { \
+  LIST_RM(owners, owners_tail, to_retire, owner_cnt); \
+  to_retire->next=NULL; \
+  to_retire->prev=NULL; \
+  UPDATE_RETIRE_INFO(to_retire, retired_tail); \
+  LIST_PUT_TAIL(retired_head, retired_tail, to_retire); \
+  to_retire->status = LOCK_RETIRED; \
+  retired_cnt++; } 
 
 // no need to be too complicated (i.e. call function) as the owner will be empty in the end
 #define ABORT_ALL_OWNERS(itr) {\
@@ -34,6 +41,16 @@
   owners_tail = NULL; \
   owners = NULL; \
   owner_cnt = 0; }
+
+// try_wound(to_wound, wounder)
+#define TRY_WOUND_PT(to_wound, wounder) {\
+  if (wounder->txn->wound_txn(to_wound->txn) == COMMITED) {\
+    bring_next(NULL); \
+    unlock(wounder); \
+    wounder->status = LOCK_DROPPED; \
+    return Abort; \
+  } }
+
 
 struct BBLockEntry {
   // type of lock: EX or SH
