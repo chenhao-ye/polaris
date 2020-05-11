@@ -118,7 +118,7 @@ class txn_man
 
   // For BAMBOO
 #if CC_ALG == BAMBOO
-  RC                retire_row(row_t * row);
+  RC                retire_row(int access_cnt);
 #endif
 
  protected:

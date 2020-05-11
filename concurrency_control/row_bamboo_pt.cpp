@@ -82,7 +82,6 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
   entry->type = type;
   // helper
   BBLockEntry * en;
-  BBLockEntry * prev = NULL;
 
 #if DEBUG_CS_PROFILING
   uint64_t starttime = get_sys_clock();
@@ -140,11 +139,10 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
       rc = WAIT;
     if (rc == WAIT && en->txn->get_ts() > ts) {
       TRY_WOUND_PT(en, entry);
-      QUEUE_RM(owners, owners_tail, prev, en, owner_cnt);
+      LIST_RM(owners, owners_tail, entry, owner_cnt);
       en->status = LOCK_DROPPED;
       en = en->next;
     } else {
-      prev = en;
       en = en->next;
     }
   }
@@ -196,6 +194,7 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
 
 RC Row_bamboo_pt::lock_retire(void * addr) {
   BBLockEntry * entry = (BBLockEntry *) addr;
+//assert(entry->type == LOCK_EX);
 #if DEBUG_CS_PROFILING
   uint64_t starttime = get_sys_clock();
 #endif
@@ -249,6 +248,7 @@ RC Row_bamboo_pt::lock_release(void * addr, RC rc) {
     if (rc == Commit)
       entry->access->orig_row->copy(entry->access->data);
   }
+  entry->status = LOCK_DROPPED;
   if (owner_cnt == 0) {
     bring_next(NULL);
   }

@@ -163,7 +163,6 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row, Access * access) {
   rc = this->manager->lock_get(lt, txn, txnids, txncnt);
   #elif CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT
   if (txn->lock_abort) {
-    printf("txn-%lu abort trying %lu", txn->get_txn_id(), get_row_id());
     return Abort;
   }
   rc = this->manager->lock_get(lt, txn, access);

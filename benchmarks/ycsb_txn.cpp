@@ -83,7 +83,7 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 #if (CC_ALG == BAMBOO) && RETIRE_ON && (THREAD_CNT != 1)
             // retire write txn
             if (finish_req && (req->rtype == WR)) {
-                if (retire_row(row) == Abort)
+                if (retire_row(row_cnt-1) == Abort)
                   return finish(Abort);
             }
 #endif
