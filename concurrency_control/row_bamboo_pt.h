@@ -16,7 +16,6 @@
       en->is_cohead = true; \
 }
 
-
 #define CHECK_ROLL_BACK(en) { \
   if (!fcw && (en->type == LOCK_EX)) { \
     en->access->orig_row->copy(en->access->orig_data); \
@@ -25,16 +24,16 @@
 }
 
 // no need to be too complicated (i.e. call function) as the owner will be empty in the end
-#define ABORT_ALL_OWNERS() \
+#define ABORT_ALL_OWNERS(itr) {\
   while(owners) { \
-    en = owners; \
+    itr = owners; \
     owners = owners->next; \
-    en->txn->set_abort(); \
-    return_entry(en); \
+    itr->txn->set_abort(); \
+    itr->status = LOCK_DROPPED; \
   } \
   owners_tail = NULL; \
   owners = NULL; \
-  owner_cnt = 0;
+  owner_cnt = 0; }
 
 struct BBLockEntry {
   // type of lock: EX or SH
