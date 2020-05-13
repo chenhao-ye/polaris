@@ -172,7 +172,6 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row, Access * access) {
   #endif
   if (rc == RCOK) {
   } else if (rc == Abort) {
-    printf("txn %lu abort accessing %p\n", txn->get_txn_id(), (void*)this);
     row = NULL;
     return rc;
   } else if (rc == WAIT) {
@@ -228,7 +227,6 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row, Access * access) {
     if (txn->lock_ready) {
       rc = RCOK;
     } else if (txn->lock_abort) {
-    printf("txn %lu abort waiting %p\n", txn->get_txn_id(), (void*)this);
       // only possible for wound-wait based algs.
       // check if txn is aborted, if aborted due to conflicts on this or other
       // try to release lock
