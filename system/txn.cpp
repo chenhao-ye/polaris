@@ -111,12 +111,13 @@ void txn_man::cleanup(RC rc) {
 	return;
 #endif
 
-if (rc == RCOK )
   // go through accesses and release
   for (int rid = row_cnt - 1; rid >= 0; rid --) {
 #if (CC_ALG == WOUND_WAIT) || (CC_ALG == BAMBOO)
-    if (accesses[rid]->orig_row == NULL)
+    if (accesses[rid]->orig_row == NULL) {
+      printf("txn %lu not gonna release\n", txn_id); 
       continue;
+    }
 #endif
     row_t * orig_r = accesses[rid]->orig_row;
     access_t type = accesses[rid]->type;
@@ -131,8 +132,10 @@ if (rc == RCOK )
 
 #if CC_ALG == BAMBOO
     orig_r->return_row(accesses[rid]->lock_entry, rc);
+    accesses[rid]->orig_row = NULL;
 #elif CC_ALG == WOUND_WAIT
     orig_r->return_row(type, accesses[rid]->data, accesses[rid]->lock_entry);
+    accesses[rid]->orig_row = NULL;
 #else
     if (ROLL_BACK && type == XP && (CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE))
     {
@@ -301,6 +304,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
   else
     return accesses[row_cnt - 1]->orig_row;
 #elif CC_ALG == BAMBOO
+printf("txn %lu got row %p at %d-th access %p\n", get_txn_id(), (void *)accesses[row_cnt - 1]->orig_row, row_cnt - 1, (void *)accesses[row_cnt - 1]);
   if (type == WR)
     return accesses[row_cnt - 1]->data;
   else {
@@ -423,6 +427,7 @@ txn_man::increment_commit_barriers() {
 #if CC_ALG == BAMBOO
 RC
 txn_man::retire_row(int access_cnt){
+printf("txn %lu try retire row %p at %d-th access %p\n", get_txn_id(), (void *)(accesses[access_cnt]->orig_row), access_cnt, (void *)accesses[access_cnt]);
   return accesses[access_cnt]->orig_row->retire_row(accesses[access_cnt]->lock_entry);
 }
 #endif

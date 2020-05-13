@@ -82,6 +82,7 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
   entry->type = type;
   // helper
   BBLockEntry * en;
+  BBLockEntry * to_return = NULL;
 
 #if DEBUG_CS_PROFILING
   uint64_t starttime = get_sys_clock();
@@ -96,7 +97,7 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
   assert(owner_cnt <= g_thread_cnt);
   // each thread has at most one waiter
   assert(waiter_cnt < g_thread_cnt);
-  assert(retired_cnt < g_thread_cnt);
+  assert(retired_cnt <= g_thread_cnt);
 
   // assign a ts if ts == 0
   if (txn->get_ts() == 0)
@@ -108,8 +109,7 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
 
   // check if can grab directly
   if (retired_cnt == 0 && owner_cnt == 0 && waiter_cnt == 0) {
-    entry->next = NULL;
-    QUEUE_PUSH(owners, owners_tail, entry);
+    LIST_PUT_TAIL(owners, owners_tail, entry);
     entry->status = LOCK_OWNER;
     owner_cnt++;
     txn->lock_ready = true;
@@ -120,10 +120,14 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
   // check retired and wound conflicted
   en = retired_head;
   while (en != NULL) {
+#if !RETIRE_ON
+printf("en is %p\n", (void *)en);
+ASSERT(false);
+#endif
     // self assigned, if conflicted, assign a number
     if (rc == RCOK && conflict_lock(en->type, type) && (en->txn->get_ts() > ts))
       rc = WAIT;
-    if (rc == WAIT && en->txn->get_ts() > ts) {
+    if (rc == WAIT && (en->txn->get_ts() > ts)) {
       TRY_WOUND_PT(en, entry);
       en = remove_descendants(en, txn);
     } else {
@@ -134,14 +138,17 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
   // check owners
   en = owners;
   while (en != NULL) {
-    // self assigned, if conflicted, assign a number
     if (rc == RCOK && conflict_lock(en->type, type) && (en->txn->get_ts() > ts))
       rc = WAIT;
-    if (rc == WAIT && en->txn->get_ts() > ts) {
+    if (rc == WAIT && (en->txn->get_ts() > ts)) {
       TRY_WOUND_PT(en, entry);
-      LIST_RM(owners, owners_tail, entry, owner_cnt);
-      en->status = LOCK_DROPPED;
+      LIST_RM(owners, owners_tail, en, owner_cnt);
+      to_return = en;
       en = en->next;
+      if (to_return) {
+        return_entry(to_return);
+        to_return = NULL;
+      }
     } else {
       en = en->next;
     }
@@ -172,6 +179,7 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
     rc = WAIT;
   }
 
+#if RETIRE_ON
   // 5. move reads to retired if RETIRE_READ=false
   if (owners && (waiter_cnt > 0) && (owners->type == LOCK_SH)) {
     // if retire turned on and share lock is the owner
@@ -185,6 +193,7 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
       rc = RCOK;
     }
   }
+#endif
 #if DEBUG_CS_PROFILING
   INC_STATS(txn->get_thd_id(), debug3, get_sys_clock() - starttime);
 #endif
@@ -238,18 +247,24 @@ RC Row_bamboo_pt::lock_release(void * addr, RC rc) {
 #endif
   // if in retired
   if (entry->status == LOCK_RETIRED) {
+printf("rm txn %lu from row %p 's retired\n", entry->txn->get_txn_id(), (void *)_row);
     rm_from_retired(entry, rc == Abort);
   } else if (entry->status == LOCK_OWNER) {
+printf("rm txn %lu from row %p 's owners\n", entry->txn->get_txn_id(), (void *)_row);
     LIST_RM(owners, owners_tail, entry, owner_cnt);
+ASSERT((owners == NULL) == (owner_cnt == 0));
+    // not found in retired, need to make globally visible if rc = commit
+    if (rc == RCOK && (entry->type == LOCK_EX))
+       entry->access->orig_row->copy(entry->access->data);
   } else if (entry->status == LOCK_WAITER) {
+printf("rm txn %lu from row %p 's waiters\n", entry->txn->get_txn_id(), (void *)_row);
     LIST_RM(waiters_head, waiters_tail, entry, waiter_cnt);
   } else {
-    // not found in retired, need to make globally visible if rc = commit
-    if (rc == Commit)
-      entry->access->orig_row->copy(entry->access->data);
+printf("rm txn %lu from row %p 's not found\n", entry->txn->get_txn_id(), (void *)_row);
   }
-  entry->status = LOCK_DROPPED;
+  return_entry(entry);
   if (owner_cnt == 0) {
+ASSERT((owners == NULL) == (owner_cnt == 0));
     bring_next(NULL);
   }
   // WAIT - done releasing with is_abort = true
@@ -271,12 +286,13 @@ void Row_bamboo_pt::rm_from_retired(BBLockEntry * en, bool is_abort) {
   } else {
     update_entry(en);
     LIST_RM(retired_head, retired_tail, en, retired_cnt);
-    en->status = LOCK_DROPPED;
+    return_entry(en);
   }
 }
 
 inline 
 bool Row_bamboo_pt::bring_next(txn_man * txn) {
+  ASSERT((owners == NULL) == (owner_cnt == 0));
   bool has_txn = false;
   BBLockEntry * entry;
   // If any waiter can join the owners, just do it!
@@ -324,7 +340,6 @@ BBLockEntry * Row_bamboo_pt::get_entry(Access * access) {
   BBLockEntry * entry = (BBLockEntry *) access->lock_entry;
   entry->next = NULL;
   entry->prev = NULL;
-  entry->type = LOCK_NONE;
   entry->status = LOCK_DROPPED;
   entry->is_cohead = false;
   entry->delta = true;
@@ -336,10 +351,7 @@ void Row_bamboo_pt::return_entry(BBLockEntry * entry) {
   //mem_allocator.free(entry, sizeof(BBLockEntry));
   entry->next = NULL;
   entry->prev = NULL;
-  entry->type = LOCK_NONE;
   entry->status = LOCK_DROPPED;
-  entry->is_cohead = false;
-  entry->delta = true;
 }
 
 inline 
@@ -379,6 +391,8 @@ BBLockEntry * Row_bamboo_pt::remove_descendants(BBLockEntry * en, txn_man *
 txn) {
   assert(en != NULL);
   BBLockEntry * itr = en->next;
+  BBLockEntry * prev = en->prev;
+  BBLockEntry * to_return = NULL;
 
   // 1. remove self, set iterator to next entry
   rm_from_retired(en, false);
@@ -402,17 +416,21 @@ txn) {
     LIST_RM_SINCE(retired_head, retired_tail, itr);
     while(itr) {
       itr->txn->set_abort();
-      itr->status = LOCK_DROPPED;
+      to_return = itr;
       CHECK_ROLL_BACK(itr);
       retired_cnt--;
       itr = itr->next;
+      if (to_return) {
+        return_entry(to_return);
+        to_return = NULL;
+      }
     }
     ABORT_ALL_OWNERS(itr);
   }
   assert(!retired_head || retired_head->is_cohead);
 final:
-  if (en->prev)
-    return en->prev->next;
+  if (prev)
+    return prev->next;
   else
     return retired_head;
 }

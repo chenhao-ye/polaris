@@ -36,18 +36,18 @@
     itr = owners; \
     owners = owners->next; \
     itr->txn->set_abort(); \
-    itr->status = LOCK_DROPPED; \
+    return_entry(itr); \
   } \
   owners_tail = NULL; \
   owners = NULL; \
   owner_cnt = 0; }
 
-// try_wound(to_wound, wounder)
+// try_wound(to_wound, wounder), if commited, wound failed, return wounder
 #define TRY_WOUND_PT(to_wound, wounder) {\
   if (wounder->txn->wound_txn(to_wound->txn) == COMMITED) {\
     bring_next(NULL); \
+    return_entry(wounder); \
     unlock(wounder); \
-    wounder->status = LOCK_DROPPED; \
     return Abort; \
   } }
 
@@ -107,7 +107,7 @@ class Row_bamboo_pt {
   UInt32 waiter_cnt;
   UInt32 retired_cnt; // no need to keep retied cnt
 
-  // owners is a single linked list
+  // owners is a double linked list
   // waiters is a double linked list
   // [waiters] head is the oldest txn, tail is the youngest txn.
   //   So new txns are inserted into the tail.
