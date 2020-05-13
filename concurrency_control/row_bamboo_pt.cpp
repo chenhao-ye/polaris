@@ -369,7 +369,7 @@ void Row_bamboo_pt::update_entry(BBLockEntry * entry) {
     // cohead: no need to update
     // delta: update next entry only
     if (entry->prev) {
-      if (conflict_lock(entry->next->type, entry->prev->type))
+      if (entry->prev->type == LOCK_EX)
         entry->next->delta = true;
       else
         entry->next->delta = false;
