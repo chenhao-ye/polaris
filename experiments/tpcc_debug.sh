@@ -7,7 +7,6 @@ spin="true"
 ww_starv_free="false"
 # [BAMBOO]
 dynamic="true"
-dynamic="false"
 retire="true"
 cs_pf="false"
 opt_raw="true"

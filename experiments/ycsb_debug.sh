@@ -30,7 +30,6 @@ table_size="1024*1024*10"
 
 # other
 threads=16
-threads=2
 profile="true"
 cnt=100000
 penalty=50000
