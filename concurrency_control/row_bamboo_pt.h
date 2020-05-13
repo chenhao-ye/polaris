@@ -1,25 +1,21 @@
 #ifndef ROW_BAMBOO_PT_H
 #define ROW_BAMBOO_PT_H
 
+// note: RW (Write-After-Read does not form commit dependency)
 #define UPDATE_RETIRE_INFO(en, prev) { \
     if (prev) { \
-      if (conflict_lock(prev->type, en->type)) { \
-        en->delta = true; \
-        en->txn->increment_commit_barriers(); \
+      if (prev->type == LOCK_SH) { \
+        en->delta = false;  \
+        en->is_cohead = prev->is_cohead; \
+        if (!en->is_cohead) \
+          en->txn->increment_commit_barriers(); } \
       } else { \
-        if (prev->is_cohead) \
-          en->is_cohead = true; \
-        else \
-          en->txn->increment_commit_barriers(); \
-     } \
-    } else \
-      en->is_cohead = true; }
-
-#define CHECK_ROLL_BACK(en) { \
-  if (!fcw && (en->type == LOCK_EX)) { \
-    en->access->orig_row->copy(en->access->orig_data); \
-    fcw = en; \
-  } }
+        en->delta = true; \
+        en->is_cohead = false; \
+        en->txn->increment_commit_barriers(); } \
+    } else { \
+      en->is_cohead = true; \
+      en->delta = false; } }
 
 #define RETIRE_ENTRY(to_retire) { \
   LIST_RM(owners, owners_tail, to_retire, owner_cnt); \
@@ -28,7 +24,13 @@
   UPDATE_RETIRE_INFO(to_retire, retired_tail); \
   LIST_PUT_TAIL(retired_head, retired_tail, to_retire); \
   to_retire->status = LOCK_RETIRED; \
-  retired_cnt++; } 
+  retired_cnt++; }
+
+#define CHECK_ROLL_BACK(en) { \
+  if (!fcw && (en->type == LOCK_EX)) { \
+    en->access->orig_row->copy(en->access->orig_data); \
+    fcw = en; \
+  } }
 
 // no need to be too complicated (i.e. call function) as the owner will be empty in the end
 #define ABORT_ALL_OWNERS(itr) {\
@@ -57,7 +59,7 @@ struct BBLockEntry {
   lock_t type;
   lock_status status;
   bool is_cohead;
-  bool delta;
+  bool delta; // if conflict with prev
   txn_man * txn;
   BBLockEntry * next;
   BBLockEntry * prev;

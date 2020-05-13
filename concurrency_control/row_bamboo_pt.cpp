@@ -362,73 +362,68 @@ void Row_bamboo_pt::return_entry(BBLockEntry * entry) {
 }
 
 inline 
-void Row_bamboo_pt::update_entry(BBLockEntry * en) {
-  BBLockEntry * entry;
-  if (en->prev) {
-    if (en->next) {
-      if (en->delta && !en->next->delta) // WR(1)R(0)
-        en->next->delta = true;
-    } else {
-      // has no next, nothing needs to be updated
+void Row_bamboo_pt::update_entry(BBLockEntry * entry) {
+  if (!entry->next)
+    return; // nothing to update
+  if (entry->type == LOCK_SH) {
+    // cohead: no need to update
+    // delta: update next entry only
+    if (entry->prev) {
+      if (conflict_lock(entry->next->type, entry->prev->type))
+        entry->next->delta = true;
+      else
+        entry->next->delta = false;
+    }
+    return;
+  }
+  // if entry->type == LOCK_EX, has to be co-head and txn commits, otherwise
+  // abort will not call this
+  ASSERT(entry->is_cohead);
+  BBLockEntry * en = entry->next;
+  if (entry->prev) {
+    // prev can only be reads
+    // cohead: whatever it is, it becomes NEW cohead and decrement barrier
+    // delta: set only the immediate next
+    en->delta = false;
+    // R(W-committed)RRR -- yes for entry->next->next, i.e. en->next
+    // R(W-committed)RWR -- yes
+    // R(W-committed)WRR -- no
+    // R(W-committed)WWR -- no
+    while (en && !(en->delta)) {
+      en->is_cohead = true;
+      en->txn->decrement_commit_barriers();
+      en = en->next;
     }
   } else {
-    // has no previous, en = head
-    if (en->next) {
-      // has next entry
-      // en->next->is_cohead = true;
-      if (!en->next->is_cohead) {
-        en->next->delta = false;
-        entry = en->next;
-        while(entry && (!entry->delta)) {
-          assert(!entry->is_cohead);
-          entry->is_cohead = true;
-          entry->txn->decrement_commit_barriers();
-          entry = entry->next;
-        }
-      } // else (R)RR, no changes
-      assert(en->next->is_cohead);
-    } else {
-      // has no next entry, never mind
-    }
+    // cohead: whatever it is becomes cohead
+    // delta: whatever it is delta is false
+    entry->delta = false;
+    do { // RRRRW
+      en->is_cohead = true;
+      en->txn->decrement_commit_barriers();
+      en = en->next;
+    } while(en && !(en->delta));
   }
-}
 
 inline
 BBLockEntry * Row_bamboo_pt::remove_descendants(BBLockEntry * en, txn_man *
 txn) {
-  assert(en != NULL);
-  BBLockEntry * itr = en->next;
+  // en->type must be LOCK_EX, which conflicts with everything after it.
+  // including owners
+  assert(en->type == LOCK_EX);
   BBLockEntry * prev = en->prev;
-  BBLockEntry * to_return = NULL;
-
-  // 1. remove self, set iterator to next entry
-  rm_from_retired(en, false);
-  if (en->type == LOCK_SH)
-    goto final;
-
-  // en->type must be LOCK_EX
-  // 2. remove next conflict till end
-  // 2.1 find next conflict (EX)
-  while(itr && (itr->type == LOCK_SH)) {
-    itr = itr->next;
+  BBLockEntry * to_return;
+  // abort till end, no need to update barrier as set abort anyway
+  LIST_RM_SINCE(retired_head, retired_tail, en);
+  while(en) {
+    en->txn->set_abort();
+    to_return = en;
+    retired_cnt--;
+    en = en->next;
+    return_entry(to_return);
   }
-  // 2.2 remove dependendees,
-  // NOTE: only the first wounded/aborted txn needs to be rolled back
-  if (itr == NULL) {
-    // need to empty owners, as en is writer
-    ABORT_ALL_OWNERS(itr);
-  } else {
-    // abort till end and empty owners
-    LIST_RM_SINCE(retired_head, retired_tail, itr);
-    while(itr) {
-      itr->txn->set_abort();
-      to_return = itr;
-      retired_cnt--;
-      itr = itr->next;
-      return_entry(to_return);
-    }
-    ABORT_ALL_OWNERS(itr);
-  }
+  // empty owners
+  ABORT_ALL_OWNERS(itr);
   assert(!retired_head || retired_head->is_cohead);
 final:
   if (prev)
