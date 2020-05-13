@@ -153,26 +153,20 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
   }
 
   // 4. retire read directly
+#if RETIRE_ON
   if (owners && (waiter_cnt > 0) && (owners->type == LOCK_SH)) {
     // if retire turned on and share lock is the owner
     // move to retired
     BBLockEntry * to_retire = NULL;
     while (owners) {
       to_retire = owners;
-      LIST_RM(owners, owners_tail, to_retire, owner_cnt);
-      to_retire->next = NULL;
-      to_retire->prev = NULL;
-      // try to add to retired
-      UPDATE_RETIRE_INFO(to_retire, retired_tail);
-      LIST_PUT_TAIL(retired_head, retired_tail, to_retire);
-      to_retire->status = LOCK_RETIRED;
-      retired_cnt++;
+      RETIRE_ENTRY(to_retire);
     }
     if (owner_cnt == 0 && bring_next(txn)) {
       rc = RCOK;
     }
   }
-
+#endif
 #if DEBUG_CS_PROFILING
   INC_STATS(txn->get_thd_id(), debug3, get_sys_clock() - starttime);
 #endif
@@ -188,8 +182,7 @@ bool Row_bamboo::wound_txn(BBLockEntry * en, txn_man * txn, bool check_retired) 
   if (en->txn->set_abort() != ABORTED)
     return false;
   if (check_retired) {
-    CHECK_ROLL_BACK(en);
-    en = remove_descendants(en, txn);
+    en = rm_from_retired(en,true);
   } else {
     LIST_RM(owners, owners_tail, en, owner_cnt);
     return_entry(en);
