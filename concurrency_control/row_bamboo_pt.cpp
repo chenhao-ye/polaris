@@ -424,9 +424,9 @@ txn) {
     return_entry(to_return);
   }
   // empty owners
-  ABORT_ALL_OWNERS(itr);
+  ABORT_ALL_OWNERS(en);
   assert(!retired_head || retired_head->is_cohead);
-final:
+
   if (prev)
     return prev->next;
   else
