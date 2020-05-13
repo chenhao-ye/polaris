@@ -8,7 +8,7 @@
         en->delta = false;  \
         en->is_cohead = prev->is_cohead; \
         if (!en->is_cohead) \
-          en->txn->increment_commit_barriers(); } \
+          en->txn->increment_commit_barriers(); \
       } else { \
         en->delta = true; \
         en->is_cohead = false; \
