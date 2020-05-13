@@ -120,6 +120,10 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
   // check retired and wound conflicted
   en = retired_head;
   while (en != NULL) {
+#if !RETIRE_ON
+printf("en is %p\n", (void *)en);
+ASSERT(false);
+#endif
     // self assigned, if conflicted, assign a number
     if (rc == RCOK && conflict_lock(en->type, type) && (en->txn->get_ts() > ts))
       rc = WAIT;
@@ -243,16 +247,20 @@ RC Row_bamboo_pt::lock_release(void * addr, RC rc) {
 #endif
   // if in retired
   if (entry->status == LOCK_RETIRED) {
+printf("rm txn %lu from row %p 's retired\n", entry->txn->get_txn_id(), (void *)_row);
     rm_from_retired(entry, rc == Abort);
   } else if (entry->status == LOCK_OWNER) {
+printf("rm txn %lu from row %p 's owners\n", entry->txn->get_txn_id(), (void *)_row);
     LIST_RM(owners, owners_tail, entry, owner_cnt);
 ASSERT((owners == NULL) == (owner_cnt == 0));
     // not found in retired, need to make globally visible if rc = commit
     if (rc == RCOK && (entry->type == LOCK_EX))
        entry->access->orig_row->copy(entry->access->data);
   } else if (entry->status == LOCK_WAITER) {
+printf("rm txn %lu from row %p 's waiters\n", entry->txn->get_txn_id(), (void *)_row);
     LIST_RM(waiters_head, waiters_tail, entry, waiter_cnt);
   } else {
+printf("rm txn %lu from row %p 's not found\n", entry->txn->get_txn_id(), (void *)_row);
   }
   return_entry(entry);
   if (owner_cnt == 0) {

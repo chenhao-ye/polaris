@@ -172,6 +172,7 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row, Access * access) {
   #endif
   if (rc == RCOK) {
   } else if (rc == Abort) {
+    printf("txn %lu abort accessing %p\n", txn->get_txn_id(), (void*)this);
     row = NULL;
     return rc;
   } else if (rc == WAIT) {
