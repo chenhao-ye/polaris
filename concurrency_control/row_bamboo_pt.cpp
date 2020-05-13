@@ -404,6 +404,7 @@ void Row_bamboo_pt::update_entry(BBLockEntry * entry) {
       en = en->next;
     } while(en && !(en->delta));
   }
+}
 
 inline
 BBLockEntry * Row_bamboo_pt::remove_descendants(BBLockEntry * en, txn_man *
