@@ -13,8 +13,10 @@
   if (check_retired) { \
     en = rm_from_retired(en, true); \
   } else { \
+    LockEntry * next = en->next; \
     LIST_RM(owners, owners_tail, en, owner_cnt); \
-    return_entry(en); } \
+    return_entry(en); \
+    en = next; } \
 }
 
 #define TRY_WOUND_CONFLICT(en, en_ts, txn_ts, check_retired) { \
