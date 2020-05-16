@@ -220,9 +220,11 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
     // data is for making local changes before added to retired
     access->data = (row_t *) _mm_malloc(sizeof(row_t), 64);
     access->data->init(MAX_TUPLE_SIZE);
+    access->data->table = row->get_table();
     // orig data is for rollback
     access->orig_data = (row_t *) _mm_malloc(sizeof(row_t), 64);
     access->orig_data->init(MAX_TUPLE_SIZE);
+    access->orig_data->table = row->get_table();
 #elif (CC_ALG == DL_DETECT || (CC_ALG == NO_WAIT) || (CC_ALG == WAIT_DIE))
     // allocate lock entry as well
     assign_lock_entry(access);

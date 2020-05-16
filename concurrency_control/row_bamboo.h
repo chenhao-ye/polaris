@@ -4,7 +4,7 @@
 #include "row_bamboo_pt.h"
 
 #define TRY_WOUND(en, check_retired) { \
-  if (type == LOCK_SH && !fcw && BB_OPT_RAW) { \
+  if (BB_OPT_RAW && (type == LOCK_SH)) { \
     fcw = en; \
     return FINISH; \
   } \
