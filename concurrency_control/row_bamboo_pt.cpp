@@ -60,7 +60,7 @@ void Row_bamboo_pt::unlock(BBLockEntry * en) {
 #elif LATCH == LH_MUTEX
       pthread_mutex_unlock( latch );
 #else
-      latch->release(en->m_node)
+      latch->release(en->m_node);
 #endif
     }
   }
@@ -275,10 +275,8 @@ RC Row_bamboo_pt::lock_release(void * addr, RC rc) {
  */
 inline 
 BBLockEntry * Row_bamboo_pt::rm_from_retired(BBLockEntry * en, bool is_abort) {
-  if (is_abort) {
-    CHECK_ROLL_BACK(en); // roll back only for the first-conflicting-write
-  }
   if (is_abort && (en->type == LOCK_EX)) {
+    CHECK_ROLL_BACK(en); // roll back only for the first-conflicting-write
     en->txn->lock_abort = true;
     en = remove_descendants(en, en->txn);
     return en;

@@ -14,7 +14,7 @@ void Row_bamboo::init(row_t * row) {
 RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
 &txncnt, Access * access) {
   // allocate an lock entry
-  assert (CC_ALG == BAMBOO);
+  ASSERT(CC_ALG == BAMBOO);
   BBLockEntry * to_insert;
   to_insert = get_entry(access);
   to_insert->txn = txn;
@@ -92,7 +92,8 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
     // RAW conflict, need to read its orig_data by making a read copy
     access->data->copy(fcw->access->orig_data);
     // insert before writer
-    UPDATE_RETIRE_INFO(to_insert, fcw->prev); 
+    UPDATE_RETIRE_INFO(to_insert, fcw->prev);
+    UPDATE_RETIRE_INFO(fcw, to_insert);
     LIST_INSERT_BEFORE_CH(retired_head, fcw, to_insert);
     to_insert->status = LOCK_RETIRED;
     retired_cnt++;
@@ -216,7 +217,6 @@ RC Row_bamboo::wound_conflict(lock_t type, txn_man * txn, ts_t ts,
           fcw = en;
           return FINISH;
         }
-assert((type == LOCK_EX && (en->type == LOCK_EX)) || (type==LOCK_EX && (en->type == LOCK_SH)));
 #endif
       }
       if (status == WAIT) {
@@ -253,7 +253,7 @@ assert((type == LOCK_EX && (en->type == LOCK_EX)) || (type==LOCK_EX && (en->type
           en = en->next;
           continue;
         }
-        assert(local_ts < txn_ts);
+        ASSERT(local_ts < txn_ts);
         if (!en->txn->atomic_set_ts(local_ts)) { // it has a ts already
           recheck = true;
         } else {
@@ -263,6 +263,13 @@ assert((type == LOCK_EX && (en->type == LOCK_EX)) || (type==LOCK_EX && (en->type
       }
       //if (!recheck && (en->txn->get_ts() > txn->get_ts())) {
       if (!recheck && (en_ts > txn_ts)) {
+#if BB_OPT_RAW
+        if (type == LOCK_SH) {
+          // RAW conflict. read orig_data of the entry
+          fcw = en;
+          return FINISH;
+        }
+#endif
         to_reset = en;
         en = en->prev;
         if (!wound_txn(to_reset, txn, check_retired))
