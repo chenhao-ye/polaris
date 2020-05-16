@@ -34,8 +34,8 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
   RC status = RCOK;
   // if unassigned, grab or assign the largest possible number
   local_ts = -1;
-  ts_t ts = txn->get_ts();
-  txn_ts = ts;
+  ts_t ts = txn->get_ts(); // ts: orig timestamp of txn
+  txn_ts = ts; // txn_ts: current timestamp of txn
   if (ts == 0) {
     // test if can grab the lock without assigning priority
     if ((waiter_cnt == 0) &&
@@ -78,7 +78,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
   // 2. wound conflicts
   // 2.1 check retired
   fcw = NULL;
-  status = wound_conflict(type, txn, ts, true, status);
+  status = wound_conflict(type, txn, ts==0, true, status);
   if (status == Abort) {
     rc = Abort;
     if (owner_cnt == 0)
@@ -105,7 +105,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
 #endif
 
   // 2.2 check owners
-  status = wound_conflict(type, txn, ts, false, status);
+  status = wound_conflict(type, txn, ts==0, false, status);
   if (status == Abort) {
     rc = Abort;
     if (owner_cnt == 0)
@@ -175,7 +175,49 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
   return rc;
 }
 
-inline 
+inline
+RC Row_bamboo::wound_conflict(lock_t type, txn_man * txn, bool unassigned,
+bool check_retired, RC status) {
+  BBLockEntry * en;
+  if (check_retired)
+    en = retired_head;
+  else
+    en = owners;
+  // flag for rechecking an entry when fail to assign a ts to get the updated ts
+  bool recheck = false;
+  // go through retire list
+  while (en) {
+    ts_t en_ts = en->txn->get_ts(); // fetch ts ahead of time
+    if (unassigned) {
+      if (en_ts == 0) {
+        // both unassigned, can assign en_ts a smaller timestamp than txn's
+        if (!en->txn->atomic_set_ts(local_ts)) { // it has a ts already
+          recheck = true;
+        } else {
+          // assign a smaller timestamp booked ahead of time
+          local_ts++;
+        }
+        if (!recheck)
+          en = en->next;
+      } else {
+        // txn unassigned, en assigned
+        TRY_WOUND_CONFLICT(en, en_ts, txn_ts, check_retired);
+      }
+    } else {
+      if (en_ts == 0) {
+        // txn assigned, en unassigned, abort en
+        TRY_WOUND(en, check_retired);
+      } else {
+        // txn assigned, en assigned, check for conflicts
+        TRY_WOUND_CONFLICT(en, en_ts, txn_ts, check_retired);
+      }
+    }
+  }
+  return RCOK;
+}
+
+/*
+inline
 bool Row_bamboo::wound_txn(BBLockEntry * en, txn_man * txn, bool check_retired) {
 
   if (txn->status == ABORTED)
@@ -191,9 +233,9 @@ bool Row_bamboo::wound_txn(BBLockEntry * en, txn_man * txn, bool check_retired) 
   return true;
 }
 
-inline 
+inline
 RC Row_bamboo::wound_conflict(lock_t type, txn_man * txn, ts_t ts,
-    bool check_retired, RC status) {
+                              bool check_retired, RC status) {
   BBLockEntry * en;
   BBLockEntry * to_reset;
   if (check_retired)
@@ -293,5 +335,4 @@ RC Row_bamboo::wound_conflict(lock_t type, txn_man * txn, ts_t ts,
   }
   return status;
 }
-
-
+*/
