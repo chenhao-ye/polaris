@@ -125,6 +125,22 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
     if (rc == RCOK && conflict_lock(en->type, type) && (en->txn->get_ts() > ts))
       rc = WAIT;
     if (rc == WAIT && (en->txn->get_ts() > ts)) {
+#if BB_OPT_RAW
+      if (type == LOCK_SH) {
+        // RAW conflict, need to read its orig_data by making a read copy
+        access->data->copy(en->access->orig_data);
+        // insert before writer
+        UPDATE_RETIRE_INFO(to_insert, en->prev);
+        UPDATE_RETIRE_INFO(en, to_insert);
+        LIST_INSERT_BEFORE_CH(retired_head, en, to_insert);
+        to_insert->status = LOCK_RETIRED;
+        retired_cnt++;
+        fcw = NULL;
+        txn->lock_ready = true;
+        unlock(to_insert);
+        return FINISH;
+      }
+#endif
       TRY_WOUND_PT(en, to_insert);
       en = rm_from_retired(en, true);
     } else {
@@ -138,6 +154,21 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
     if (rc == RCOK && conflict_lock(en->type, type) && (en->txn->get_ts() > ts))
       rc = WAIT;
     if (rc == WAIT && (en->txn->get_ts() > ts)) {
+#if BB_OPT_RAW
+      if (type == LOCK_SH) {
+        // RAW conflict, need to read its orig_data by making a read copy
+        access->data->copy(en->access->orig_data);
+        // append to the end of retired
+        UPDATE_RETIRE_INFO(to_insert, retired_tail);
+        LIST_PUT_TAIL(retired_head, retired_tail, to_insert);
+        to_insert->status = LOCK_RETIRED;
+        retired_cnt++;
+        fcw = NULL;
+        txn->lock_ready = true;
+        unlock(to_insert);
+        return FINISH;
+      }
+#endif
       TRY_WOUND_PT(en, to_insert);
       LIST_RM(owners, owners_tail, en, owner_cnt);
       to_return = en;

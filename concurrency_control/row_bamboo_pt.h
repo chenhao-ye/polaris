@@ -50,8 +50,8 @@
     bring_next(NULL); \
     return_entry(wounder); \
     unlock(wounder); \
-    return Abort; \
-  } }
+    return Abort; } \
+}
 
 
 struct BBLockEntry {
