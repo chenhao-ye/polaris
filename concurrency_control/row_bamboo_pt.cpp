@@ -131,7 +131,7 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
         access->data->copy(en->access->orig_data);
         // insert before writer
         UPDATE_RETIRE_INFO(to_insert, en->prev);
-        UPDATE_RETIRE_INFO(en, to_insert);
+        RECHECK_RETIRE_INFO(en, to_insert);
         LIST_INSERT_BEFORE_CH(retired_head, en, to_insert);
         to_insert->status = LOCK_RETIRED;
         retired_cnt++;

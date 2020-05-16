@@ -2,20 +2,42 @@
 #define ROW_BAMBOO_PT_H
 
 // note: RW (Write-After-Read does not form commit dependency)
-#define UPDATE_RETIRE_INFO(en, prev) { \
-    if (prev) { \
-      if (prev->type == LOCK_SH) { \
-        en->delta = false;  \
-        en->is_cohead = prev->is_cohead; \
-        if (!en->is_cohead) \
-          en->txn->increment_commit_barriers(); \
-      } else { \
-        en->delta = true; \
-        en->is_cohead = false; \
-        en->txn->increment_commit_barriers(); } \
+#define RECHECK_RETIRE_INFO(en, prev) { \
+  bool is_cohead = en->is_cohead; \
+  if (prev) { \
+    if (prev->type == LOCK_SH) { \
+      en->delta = false;  \
+      en->is_cohead = prev->is_cohead; \
+      if (!en->is_cohead && is_cohead) \
+        en->txn->increment_commit_barriers(); \
+      if (en->is_cohead && !is_cohead) \
+        en->txn->decrement_commit_barriers(); \
     } else { \
-      en->is_cohead = true; \
-      en->delta = false; } }
+      en->delta = true; \
+      en->is_cohead = false; \
+      if (is_cohead) \
+        en->txn->increment_commit_barriers(); } \
+  } else { \
+    en->is_cohead = true; \
+    en->delta = false; \
+    if (!is_cohead) \
+      en->txn->decrement_commit_barriers(); } \
+}
+
+#define UPDATE_RETIRE_INFO(en, prev) { \
+  if (prev) { \
+    if (prev->type == LOCK_SH) { \
+      en->delta = false;  \
+      en->is_cohead = prev->is_cohead; \
+      if (!en->is_cohead) \
+        en->txn->increment_commit_barriers(); \
+    } else { \
+      en->delta = true; \
+      en->is_cohead = false; \
+      en->txn->increment_commit_barriers(); } \
+  } else { \
+    en->is_cohead = true; \
+    en->delta = false; } }
 
 #define RETIRE_ENTRY(to_retire) { \
   LIST_RM(owners, owners_tail, to_retire, owner_cnt); \

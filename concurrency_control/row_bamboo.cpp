@@ -93,7 +93,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
     access->data->copy(fcw->access->orig_data);
     // insert before writer
     UPDATE_RETIRE_INFO(to_insert, fcw->prev);
-    UPDATE_RETIRE_INFO(fcw, to_insert);
+    RECHECK_RETIRE_INFO(fcw, to_insert);
     LIST_INSERT_BEFORE_CH(retired_head, fcw, to_insert);
     to_insert->status = LOCK_RETIRED;
     retired_cnt++;
