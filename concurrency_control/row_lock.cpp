@@ -73,9 +73,16 @@ RC Row_lock::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
   int part_id =_row->get_part_id();
 
   LockEntry * entry = get_entry(access);
-  //printf("[%p] txn-%lu try get %lu\n", entry, txn->get_txn_id(), _row->get_row_id());
 
+#if DEBUG_CS_PROFILING
+  uint64_t starttime = get_sys_clock();
+#endif
   lock(entry);
+#if DEBUG_CS_PROFILING
+  uint64_t endtime = get_sys_clock();
+  INC_STATS(txn->get_thd_id(), time_get_latch, endtime - starttime);
+  starttime = endtime;
+#endif
   assert(owner_cnt <= g_thread_cnt);
   assert(waiter_cnt < g_thread_cnt);
 #if DEBUG_ASSERT
@@ -199,6 +206,9 @@ RC Row_lock::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
   }
 
   unlock(entry);
+#if DEBUG_CS_PROFILING
+  INC_STATS(txn->get_thd_id(), time_get_cs, get_sys_clock() - starttime);
+#endif
 
   if (rc == Abort && (CC_ALG != NO_WAIT)) {
     return_entry(entry);
@@ -211,13 +221,20 @@ RC Row_lock::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
 RC Row_lock::lock_release(void * addr) {
 
   auto entry = (LockEntry *) addr;
-  //printf("[%p]txn-%lu try release %lu\n", entry, entry->txn->get_txn_id(), _row->get_row_id());
+
+#if DEBUG_CS_PROFILING
+  uint64_t starttime = get_sys_clock();
+#endif
   lock(entry);
+#if DEBUG_CS_PROFILING
+  uint64_t endtime = get_sys_clock();
+  INC_STATS(entry->txn->get_thd_id(), time_release_latch, endtime - starttime);
+  starttime = endtime;
+#endif
 
   LockEntry * en;
   // Try to find the entry in the owners
   if (entry->status == LOCK_OWNER) { // find the entry in the owner list
-  //printf("txn-%lu rm %lu from owner\n", entry->txn->get_txn_id(), _row->get_row_id());
     en = owners;
     LockEntry * prev = NULL;
     while(en) {
@@ -235,7 +252,6 @@ RC Row_lock::lock_release(void * addr) {
     if (owner_cnt == 0)
       lock_type = LOCK_NONE;
   } else if (entry->status == LOCK_WAITER) {
-  //printf("txn-%lu rm %lu from waiter\n", entry->txn->get_txn_id(), _row->get_row_id());
     // Not in owners list, try waiters list.
     LIST_REMOVE(entry);
     if (entry == waiters_head)
@@ -267,6 +283,10 @@ RC Row_lock::lock_release(void * addr) {
   }
   ASSERT((owners == NULL) == (owner_cnt == 0));
   unlock(entry);
+#if DEBUG_CS_PROFILING
+  INC_STATS(entry->txn->get_thd_id(), time_release_cs, get_sys_clock() -
+      starttime);
+#endif
   return RCOK;
 }
 

@@ -83,13 +83,16 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
   // helper
   BBLockEntry * en;
   BBLockEntry * to_return = NULL;
+#if RETIRE_ON
+  BBLockEntry * to_retire = NULL;
+#endif
 
 #if DEBUG_CS_PROFILING
   uint64_t starttime = get_sys_clock();
 #endif
   lock(to_insert);
 #if DEBUG_CS_PROFILING
-  INC_STATS(txn->get_thd_id(), debug1, get_sys_clock() - starttime);
+  INC_STATS(txn->get_thd_id(), time_get_latch, get_sys_clock() - starttime);
   starttime = get_sys_clock();
 #endif
 
@@ -113,8 +116,8 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
     to_insert->status = LOCK_OWNER;
     owner_cnt++;
     txn->lock_ready = true;
-    unlock(to_insert);
-    return rc;
+    rc = RCOK;
+    goto final;
   }
 
   fcw = NULL;
@@ -137,8 +140,8 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
         retired_cnt++;
         fcw = NULL;
         txn->lock_ready = true;
-        unlock(to_insert);
-        return FINISH;
+        rc = FINISH;
+        goto final;
       }
 #endif
       TRY_WOUND_PT(en, to_insert);
@@ -165,8 +168,8 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
         retired_cnt++;
         fcw = NULL;
         txn->lock_ready = true;
-        unlock(to_insert);
-        return FINISH;
+        rc = FINISH;
+        goto final;
       }
 #endif
       TRY_WOUND_PT(en, to_insert);
@@ -209,7 +212,7 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
   if (owners && (waiter_cnt > 0) && (owners->type == LOCK_SH)) {
     // if retire turned on and share lock is the owner
     // move to retired
-    BBLockEntry * to_retire = NULL;
+    to_retire = NULL;
     while (owners) {
       to_retire = owners;
       RETIRE_ENTRY(to_retire);
@@ -219,23 +222,26 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
     }
   }
 #endif
+
+  final:
 #if DEBUG_CS_PROFILING
-  INC_STATS(txn->get_thd_id(), debug3, get_sys_clock() - starttime);
+  INC_STATS(txn->get_thd_id(), time_get_cs, get_sys_clock() - starttime);
 #endif
   unlock(to_insert);
   return rc;
 }
 
 RC Row_bamboo_pt::lock_retire(void * addr) {
-  BBLockEntry * entry = (BBLockEntry *) addr;
+  auto entry = (BBLockEntry *) addr;
 //assert(entry->type == LOCK_EX);
 #if DEBUG_CS_PROFILING
   uint64_t starttime = get_sys_clock();
 #endif
   lock(entry);
 #if DEBUG_CS_PROFILING
-  INC_STATS(txn->get_thd_id(), debug4, get_sys_clock() - starttime);
-    starttime = get_sys_clock();
+  uint64_t endtime = get_sys_clock();
+  INC_STATS(entry->txn->get_thd_id(), time_retire_latch, endtime - starttime);
+  starttime = endtime;
 #endif
   RC rc = RCOK;
   // 1. find entry in owner and remove
@@ -253,8 +259,8 @@ RC Row_bamboo_pt::lock_retire(void * addr) {
     bring_next(NULL);
 
 #if DEBUG_CS_PROFILING
-  INC_STATS(txn->get_thd_id(), debug5, get_sys_clock() - starttime);
-    starttime = get_sys_clock();
+  INC_STATS(entry->txn->get_thd_id(), time_retire_cs, get_sys_clock() -
+  starttime);
 #endif
   unlock(entry);
   return rc;
@@ -267,25 +273,23 @@ RC Row_bamboo_pt::lock_release(void * addr, RC rc) {
 #endif
   lock(entry);
 #if DEBUG_CS_PROFILING
-  INC_STATS(txn->get_thd_id(), debug6, get_sys_clock() - starttime);
-    starttime = get_sys_clock();
+  uint64_t endtime = get_sys_clock();
+  INC_STATS(entry->txn->get_thd_id(), time_release_latch, endtime- starttime);
+  starttime = endtime;
 #endif
   // if in retired
   if (entry->status == LOCK_RETIRED) {
     fcw = NULL;
-//printf("rm txn %lu from row %p 's retired\n", entry->txn->get_txn_id(), (void *)_row);
     rm_from_retired(entry, rc == Abort);
+    fcw = NULL; // reset fcw
   } else if (entry->status == LOCK_OWNER) {
-//printf("rm txn %lu from row %p 's owners\n", entry->txn->get_txn_id(), (void *)_row);
     LIST_RM(owners, owners_tail, entry, owner_cnt);
     // not found in retired, need to make globally visible if rc = commit
     if (rc == RCOK && (entry->type == LOCK_EX))
        entry->access->orig_row->copy(entry->access->data);
   } else if (entry->status == LOCK_WAITER) {
-//printf("rm txn %lu from row %p 's waiters\n", entry->txn->get_txn_id(), (void *)_row);
     LIST_RM(waiters_head, waiters_tail, entry, waiter_cnt);
   } else {
-//printf("rm txn %lu from row %p 's not found\n", entry->txn->get_txn_id(), (void *)_row);
   }
   return_entry(entry);
   if (owner_cnt == 0) {
@@ -294,7 +298,8 @@ RC Row_bamboo_pt::lock_release(void * addr, RC rc) {
   // WAIT - done releasing with is_abort = true
   // FINISH - done releasing with is_abort = false
 #if DEBUG_CS_PROFILING
-  INC_STATS(txn->get_thd_id(), debug7, get_sys_clock() - starttime);
+  INC_STATS(entry->txn->get_thd_id(), time_release_cs, get_sys_clock() -
+  starttime);
 #endif
   unlock(entry);
   return RCOK;

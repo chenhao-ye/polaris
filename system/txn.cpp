@@ -388,7 +388,7 @@ RC txn_man::finish(RC rc) {
       continue;
     }
 #if DEBUG_PROFILING
-    INC_STATS(get_thd_id(), debug8, get_sys_clock() - starttime);
+    INC_STATS(get_thd_id(), time_commit, get_sys_clock() - starttime);
 #endif
     if (!ATOM_CAS(status, RUNNING, COMMITED))
       rc = Abort;

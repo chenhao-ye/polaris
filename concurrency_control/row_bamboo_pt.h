@@ -71,8 +71,8 @@
   if (wounder->txn->wound_txn(to_wound->txn) == COMMITED) {\
     bring_next(NULL); \
     return_entry(wounder); \
-    unlock(wounder); \
-    return Abort; } \
+    rc = Abort; \
+    goto final; } \
 }
 
 

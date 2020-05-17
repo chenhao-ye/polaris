@@ -15,17 +15,17 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
 &txncnt, Access * access) {
   // allocate an lock entry
   ASSERT(CC_ALG == BAMBOO);
-  BBLockEntry * to_insert;
-  to_insert = get_entry(access);
+  BBLockEntry * to_insert = get_entry(access);
   to_insert->txn = txn;
   to_insert->type = type;
+  BBLockEntry * en = NULL;
 
 #if DEBUG_CS_PROFILING
   uint64_t starttime = get_sys_clock();
 #endif
   lock(to_insert);
 #if DEBUG_CS_PROFILING
-  INC_STATS(txn->get_thd_id(), debug1, get_sys_clock() - starttime);
+  INC_STATS(txn->get_thd_id(), time_get_latch, get_sys_clock() - starttime);
   starttime = get_sys_clock();
 #endif
 
@@ -46,8 +46,8 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
       LIST_PUT_TAIL(owners, owners_tail, to_insert);
       to_insert->status = LOCK_OWNER;
       owner_cnt++;
-      unlock(to_insert);
-      return RCOK;
+      rc = RCOK;
+      goto final;
     }
     // else has to assign a priority and add to waiters first
     // assert(retired_cnt + owner_cnt != 0);
@@ -83,9 +83,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
     rc = Abort;
     if (owner_cnt == 0)
       bring_next(NULL);
-    unlock(to_insert);
-    return_entry(to_insert);
-    return rc;
+    goto final;
   }
 #if BB_OPT_RAW
   else if (status == FINISH) {
@@ -99,8 +97,8 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
     retired_cnt++;
     fcw = NULL;
     txn->lock_ready = true;
-    unlock(to_insert);
-    return FINISH;
+    rc = FINISH;
+    goto final;
   }
 #endif
 
@@ -110,9 +108,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
     rc = Abort;
     if (owner_cnt == 0)
       bring_next(NULL);
-    unlock(to_insert);
-    return_entry(to_insert);
-    return rc;
+    goto final;
   }
 #if BB_OPT_RAW
   else if (status == FINISH) {
@@ -125,15 +121,15 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
     retired_cnt++;
     fcw = NULL;
     txn->lock_ready = true;
-    unlock(to_insert);
-    return FINISH;
+    rc = FINISH;
+    goto final;
   }
 #endif
 
   // 2. insert into waiters and bring in next waiter
   to_insert->txn = txn;
   to_insert->type = type;
-  BBLockEntry * en = waiters_head;
+  en = waiters_head;
   while (en != NULL) {
     if (txn_ts < en->txn->get_ts())
       break;
@@ -168,8 +164,9 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
     }
   }
 #endif
+  final:
 #if DEBUG_CS_PROFILING
-  INC_STATS(txn->get_thd_id(), debug3, get_sys_clock() - starttime);
+  INC_STATS(txn->get_thd_id(), time_get_cs, get_sys_clock() - starttime);
 #endif
   unlock(to_insert);
   return rc;
@@ -216,123 +213,3 @@ bool check_retired, RC status) {
   return RCOK;
 }
 
-/*
-inline
-bool Row_bamboo::wound_txn(BBLockEntry * en, txn_man * txn, bool check_retired) {
-
-  if (txn->status == ABORTED)
-    return false;
-  if (en->txn->set_abort() != ABORTED)
-    return false;
-  if (check_retired) {
-    en = rm_from_retired(en,true);
-  } else {
-    LIST_RM(owners, owners_tail, en, owner_cnt);
-    return_entry(en);
-  }
-  return true;
-}
-
-inline
-RC Row_bamboo::wound_conflict(lock_t type, txn_man * txn, ts_t ts,
-                              bool check_retired, RC status) {
-  BBLockEntry * en;
-  BBLockEntry * to_reset;
-  if (check_retired)
-    en = retired_head;
-  else
-    en = owners;
-  bool recheck = false;
-  int checked_cnt = 0;
-  while (en) {
-    checked_cnt++;
-    recheck = false;
-    ts_t en_ts = en->txn->get_ts();
-    if (ts != 0) {
-      // self assigned, if conflicted, assign a number
-      if (status == RCOK && conflict_lock(en->type, type) &&
-          ((en_ts > txn_ts) || (en_ts == 0))) {
-        status = WAIT;
-#if BB_OPT_RAW
-        if (type == LOCK_SH) {
-          // RAW conflict. read orig_data of the entry
-          fcw = en;
-          return FINISH;
-        }
-#endif
-      }
-      if (status == WAIT) {
-        if ((en_ts > ts) || (en_ts == 0)) {
-          // has conflict.
-          to_reset = en;
-          en = en->prev;
-          if (!wound_txn(to_reset, txn, check_retired))
-            return Abort;
-          if (en)
-            en = en->next;
-          else {
-            if (check_retired)
-              en = retired_head;
-            else
-              en = owners;
-          }
-        } else {
-          en = en->next;
-        }
-      } else {
-        en = en->next;
-      }
-    } else {
-      // if already commited, abort self
-      if (en->txn->status == COMMITED) {
-        en = en->next;
-        continue;
-      }
-      // self unassigned, if not assigned, assign a number;
-      if (en_ts == 0) {
-        // if already commited, abort self
-        if (en->txn->status == COMMITED) {
-          en = en->next;
-          continue;
-        }
-        ASSERT(local_ts < txn_ts);
-        if (!en->txn->atomic_set_ts(local_ts)) { // it has a ts already
-          recheck = true;
-        } else {
-          en_ts = local_ts;
-          local_ts++;
-        }
-      }
-      //if (!recheck && (en->txn->get_ts() > txn->get_ts())) {
-      if (!recheck && (en_ts > txn_ts)) {
-#if BB_OPT_RAW
-        if (type == LOCK_SH) {
-          // RAW conflict. read orig_data of the entry
-          fcw = en;
-          return FINISH;
-        }
-#endif
-        to_reset = en;
-        en = en->prev;
-        if (!wound_txn(to_reset, txn, check_retired))
-          return Abort;
-        // if has previous
-        if (en)
-          en = en->next;
-        else {
-          if (check_retired)
-            en = retired_head;
-          else
-            en = owners;
-        }
-      } else {
-        if (!recheck)
-          en = en->next;
-        else
-          checked_cnt--;
-      }
-    }
-  }
-  return status;
-}
-*/

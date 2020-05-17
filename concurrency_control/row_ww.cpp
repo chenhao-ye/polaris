@@ -75,13 +75,13 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int&txncnt,
   LockEntry * entry = get_entry(access);
   LockEntry * en;
 #if DEBUG_CS_PROFILING
-  uint32_t abort_cnt = 0;
-  uint32_t abort_try = 0;
   uint64_t starttime = get_sys_clock();
 #endif
   lock(entry);
 #if DEBUG_CS_PROFILING
-  INC_STATS(txn->get_thd_id(), debug1, get_sys_clock() - starttime);
+  uint64_t endtime = get_sys_clock();
+  INC_STATS(txn->get_thd_id(), time_get_latch, endtime - starttime);
+  starttime = endtime;
 #endif
 
   // each thread has at most one owner of a lock
@@ -104,9 +104,6 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int&txncnt,
     LockEntry * prev = NULL;
     while (en != NULL) {
       if (en->txn->get_ts() > txn->get_ts() && conflict_lock(lock_type, type)) {
-#if DEBUG_CS_PROFILING
-        bool already_aborted = (en->txn->status == ABORTED);
-#endif
         if (txn->wound_txn(en->txn) == COMMITED){
           // curr txn is wounded by other txns or txn to wound comitted
           // already.. either way no entry is removed
@@ -116,11 +113,6 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int&txncnt,
           entry->status = LOCK_DROPPED;
           goto final;
         }
-#if DEBUG_CS_PROFILING
-        abort_try++;
-        if (!already_aborted)
-          abort_cnt++;
-#endif
         // remove from owner
         if (prev)
           prev->next = en->next;
@@ -139,15 +131,6 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int&txncnt,
       }
       en = en->next;
     }
-#if DEBUG_CS_PROFILING
-    // max abort chain
-    if (abort_cnt > stats._stats[txn->get_thd_id()]->debug10)
-      stats._stats[txn->get_thd_id()]->debug10 = abort_try;
-    // max length of aborts
-    if (abort_cnt > stats._stats[txn->get_thd_id()]->debug11)
-      stats._stats[txn->get_thd_id()]->debug11 = abort_cnt;
-#endif
-
     // insert to wait list, the waiter list is always in timestamp order
     entry->txn = txn;
     entry->type = type;
@@ -179,6 +162,9 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int&txncnt,
 
   final:
   unlock(entry);
+#if DEBUG_CS_PROFILING
+  INC_STATS(txn->get_thd_id(), time_get_cs, get_sys_clock() - starttime);
+#endif
   return rc;
 }
 
@@ -192,7 +178,9 @@ RC Row_ww::lock_release(void * addr) {
 #endif
   lock(entry);
 #if DEBUG_CS_PROFILING
-  INC_STATS(txn->get_thd_id(), debug6, get_sys_clock() - starttime);
+  uint64_t endtime = get_sys_clock();
+  INC_STATS(entry->txn->get_thd_id(), time_release_latch, endtime - starttime);
+  starttime = endtime;
 #endif
 
   // Try to find the entry in the owners
@@ -223,6 +211,10 @@ RC Row_ww::lock_release(void * addr) {
   bring_next();
   ASSERT((owners == NULL) == (owner_cnt == 0));
   unlock(entry);
+#if DEBUG_CS_PROFILING
+  INC_STATS(entry->txn->get_thd_id(), time_release_cs, get_sys_clock() -
+  starttime);
+#endif
   return RCOK;
 }
 
