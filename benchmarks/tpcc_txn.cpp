@@ -81,6 +81,8 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	char * tmp_str = r_wh_local->get_value(W_NAME);
 	memcpy(w_name, tmp_str, 10);
 	w_name[10] = '\0';
+
+	// retire wh
 #if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
         access_cnt = row_cnt - 1;
 	if (r_wh_type != RD) {
@@ -112,6 +114,7 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	memcpy(d_name, tmp_str, 10);
 	d_name[10] = '\0';
 
+	// retire dist
 #if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
         access_cnt = row_cnt - 1;
 	if (retire_row(access_cnt) == Abort)
@@ -208,6 +211,7 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 	r_cust_local->get_value(C_PAYMENT_CNT, c_payment_cnt);
 	r_cust_local->set_value(C_PAYMENT_CNT, c_payment_cnt + 1);
 
+	// retire cust
 	#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
         access_cnt = row_cnt - 1;
     	if (retire_row(access_cnt) == Abort)
@@ -335,6 +339,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 	o_id ++;
 	r_dist_local->set_value(D_NEXT_O_ID, o_id);
 
+	// retire dist
 #if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
 	if (retire_row(row_cnt-1) == Abort)
 		return finish(Abort);
@@ -398,10 +403,6 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 		//i_name = r_item_local->get_value(I_NAME);
 		//i_data = r_item_local->get_value(I_DATA);
 
-#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
-		if (retire_row(row_cnt-1) == Abort)
-			return finish(Abort);
-#endif
 
 		/*===================================================================+
 		EXEC SQL SELECT s_quantity, s_data,
@@ -456,6 +457,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 		}
 		r_stock_local->set_value(S_QUANTITY, &quantity);
 
+		// retire stock
 #if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
 		if (retire_row(row_cnt-1) == Abort)
 			return finish(Abort);
