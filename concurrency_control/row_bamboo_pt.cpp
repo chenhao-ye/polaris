@@ -232,8 +232,8 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
 }
 
 RC Row_bamboo_pt::lock_retire(void * addr) {
-  auto entry = (BBLockEntry *) addr;
-//assert(entry->type == LOCK_EX);
+  BBLockEntry * entry = (BBLockEntry *) addr;
+  ASSERT(entry->type == LOCK_EX);
 #if DEBUG_CS_PROFILING
   uint64_t starttime = get_sys_clock();
 #endif
@@ -267,7 +267,7 @@ RC Row_bamboo_pt::lock_retire(void * addr) {
 }
 
 RC Row_bamboo_pt::lock_release(void * addr, RC rc) {
-  auto entry = (BBLockEntry *) addr;
+  BBLockEntry * entry = (BBLockEntry *) addr;
 #if DEBUG_CS_PROFILING
   uint64_t starttime = get_sys_clock();
 #endif

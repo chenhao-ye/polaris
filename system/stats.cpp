@@ -91,15 +91,14 @@ void Stats::print() {
   ALL_METRICS(INIT_TOTAL_VAR, INIT_TOTAL_VAR)
   for (uint64_t tid = 0; tid < g_thread_cnt; tid ++) {
     ALL_METRICS(SUM_UP_STATS, SUM_UP_STATS)
-    printf("[tid=%lld] txn_cnt=%lld,abort_cnt=%lld, user_abort_cnt=%lld\n",
+    printf("[tid=%lu] txn_cnt=%lu,abort_cnt=%lu, user_abort_cnt=%lu\n",
         tid, _stats[tid]->txn_cnt, _stats[tid]->abort_cnt,
         _stats[tid]->user_abort_cnt);
   }
   total_latency = total_latency / total_txn_cnt;
   total_time_man = total_time_man - total_time_wait;
-  FILE * outf;
   if (output_file != NULL) {
-    ofstream outf;
+    ofstream outf(output_file);
     if (outf.is_open()) {
       outf << "[summary] throughput=" << total_txn_cnt / total_run_time *
       BILLION * THREAD_CNT << ", ";

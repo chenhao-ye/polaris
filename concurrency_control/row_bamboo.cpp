@@ -83,6 +83,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
     rc = Abort;
     if (owner_cnt == 0)
       bring_next(NULL);
+    return_entry(to_insert);
     goto final;
   }
 #if BB_OPT_RAW
@@ -108,6 +109,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
     rc = Abort;
     if (owner_cnt == 0)
       bring_next(NULL);
+    return_entry(to_insert);
     goto final;
   }
 #if BB_OPT_RAW
