@@ -9,7 +9,7 @@ ww_starv_free="false"
 # [BAMBOO]
 dynamic="true"
 retire="true"
-cs_pf="false"
+cs_pf="true"
 opt_raw="false"
 
 ## workload
@@ -26,9 +26,9 @@ penalty=50000
 
 for i in 0 1 2 3 4
 do
-for user_abort in true false
+for dynamic in true false
 do
-for alg in BAMBOO SILO WOUND_WAIT WAIT_DIE NO_WAIT
+for user_abort in true false
 do
 for threads in 1 2 4 8 16 32
 do
@@ -44,9 +44,9 @@ done
 
 cd outputs/
 python3 collect_stats.py
-mv stats.csv tpcc_ua.csv
-mv stats.json tpcc_ua.json
+mv stats.csv tpcc_bb_pf.csv
+mv stats.json tpcc_bb_pf.json
 cd ..
 
 cd experiments/
-python3 send_email.py tpcc
+python3 send_email.py tpcc_bb_pf
