@@ -1,4 +1,5 @@
 cd ../
+rm outputs/stats.json
 cp -r config-tpcc-std.h config.h
 
 ## algorithm

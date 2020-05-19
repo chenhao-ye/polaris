@@ -34,7 +34,7 @@ RC tpcc_txn_man::run_txn(base_query * query) {
 }
 
 RC tpcc_txn_man::run_payment(tpcc_query * query) {
-#if CC_ALG == BAMBOO && RETIRE_ON
+#if CC_ALG == BAMBOO && RETIRE_ON && THREAD_CNT > 1
         int access_cnt;
 #endif
 	RC rc = RCOK;

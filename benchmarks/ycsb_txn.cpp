@@ -26,7 +26,7 @@ RC ycsb_txn_man::run_txn(base_query * query) {
     ycsb_query * m_query = (ycsb_query *) query;
     ycsb_wl * wl = (ycsb_wl *) h_wl;
     itemid_t * m_item = NULL;
-#if CC_ALG == BAMBOO && RETIRE_ON
+#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
     int access_id;
 #else
     row_cnt = 0;
@@ -56,7 +56,7 @@ RC ycsb_txn_man::run_txn(base_query * query) {
                 rc = Abort;
                 goto final;
             }
-#if CC_ALG == BAMBOO && RETIRE_ON
+#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
             access_id = row_cnt - 1;
 #endif
 
