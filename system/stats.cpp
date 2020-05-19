@@ -96,6 +96,7 @@ void Stats::print() {
         _stats[tid]->user_abort_cnt);
   }
   total_latency = total_latency / total_txn_cnt;
+  total_commit_latency = total_commit_latency / total_txn_cnt;
   total_time_man = total_time_man - total_time_wait;
   if (output_file != NULL) {
     ofstream outf(output_file);

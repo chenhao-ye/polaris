@@ -9,7 +9,7 @@
   x(double, time_retire_latch) x(double, time_retire_cs) \
   x(double, time_release_latch) x(double, time_release_cs) \
   x(double, time_commit) y(uint64_t, time_ts_alloc) y(uint64_t, wait_cnt) \
-  y(uint64_t, latency) TMP_METRICS(x, y)
+  y(uint64_t, latency) y(uint64_t, commit_latency) TMP_METRICS(x, y)
 #define DECLARE_VAR(tpe, name) tpe name;
 #define INIT_VAR(tpe, name) name = 0;
 #define INIT_TOTAL_VAR(tpe, name) tpe total_##name = 0;
