@@ -24,7 +24,7 @@ class mcslock {
   {
     qnode_t* tail;
     lock_t(): tail(NULL){}
-  }PACKED;
+  };
 
   volatile lock_t lock_;
  public:
@@ -81,7 +81,7 @@ class mcslock {
     me->next->spin = 1;
   }
 
-} PACKED;
+};
 
 template <typename MCSLockable>
 class mcs_lock_guard {
