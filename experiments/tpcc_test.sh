@@ -5,6 +5,7 @@ cp -r config-tpcc-std.h config.h
 ## algorithm
 alg=BAMBOO
 latch=LH_SPINLOCK
+latch=LH_MCSLOCK
 # [WW]
 ww_starv_free="false"
 # [BAMBOO]
@@ -45,9 +46,9 @@ done
 
 cd outputs/
 python3 collect_stats.py
-mv stats.csv tpcc_ua.csv
-mv stats.json tpcc_ua.json
+mv stats.csv tpcc_ua_mcs.csv
+mv stats.json tpcc_ua_mcs.json
 cd ..
 
 cd experiments/
-python3 send_email.py tpcc
+python3 send_email.py tpcc_ua_mcs
