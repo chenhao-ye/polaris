@@ -36,7 +36,7 @@ penalty=50000
 # figure 4: normalized throughput with optimal case, varying requests
 for i in 0 1 2 3 4
 do
-for alg in BAMBOO #WOUND_WAIT WAIT_DIE NO_WAIT SILO
+for alg in WOUND_WAIT #WAIT_DIE NO_WAIT SILO
 do
 for threads in 1 2 4 8 16 32
 do
