@@ -45,6 +45,7 @@ private:
 	struct AbortBufferEntry	{
 		ts_t ready_time;
 		base_query * query;
+                ts_t starttime;
 	};
 	AbortBufferEntry * _abort_buffer;
 	int _abort_buffer_size;

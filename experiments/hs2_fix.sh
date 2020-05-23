@@ -37,7 +37,7 @@ for fixed in 1 0
 do
 for i in 0 1 2 3 4
 do
-for alg in WOUND_WAIT
+for alg in BAMBOO
 do
 for specified in 0 0.25 0.5 0.75 1
 do
@@ -55,8 +55,8 @@ done
 
 cd outputs/
 python3 collect_stats.py
-mv stats.csv hs2_ww.csv
-mv stats.json hs2_ww.json
+mv stats.csv hs2_bb.csv
+mv stats.json hs2_bb.json
 rm stats.json
 cd ..
 
