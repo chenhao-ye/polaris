@@ -145,6 +145,9 @@ enum TsType {R_REQ, W_REQ, P_REQ, XP_REQ};
 /* TXN STATUS */
 enum status_t {RUNNING, COMMITED, ABORTED};
 
+/* COMMUTATIVE OPERATIONS */
+enum com_t {COM_INC, COM_DEC, COM_NONE};
+
 
 #define MSG(str, args...) { \
 	printf("[%s : %d] " str, __FILE__, __LINE__, args); } \

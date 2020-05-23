@@ -28,6 +28,7 @@ row_t::init(table_t * host_table, uint64_t part_id, uint64_t row_id) {
   data = (char *) _mm_malloc(sizeof(char) * tuple_size, 64);
   return RCOK;
 }
+
 void
 row_t::init(int size)
 {
@@ -92,6 +93,16 @@ uint64_t row_t::get_tuple_size() {
 
 uint64_t row_t::get_field_cnt() {
   return get_schema()->field_cnt;
+}
+
+void row_t::inc_value(int id, uint64_t val) {
+  int pos = get_schema()->get_field_index(id);
+  ATOM_ADD(data[pos], val);
+}
+
+void row_t::dec_value(int id, uint64_t val) {
+  int pos = get_schema()->get_field_index(id);
+  ATOM_SUB(data[pos], val);
 }
 
 void row_t::set_value(int id, void * ptr) {

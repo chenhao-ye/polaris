@@ -16,7 +16,6 @@
 void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
   this->h_thd = h_thd;
   this->h_wl = h_wl;
-  //pthread_mutex_init(&txn_lock, NULL);
   lock_ready = false;
   lock_abort = false;
   timestamp = 0;
@@ -120,6 +119,14 @@ void txn_man::cleanup(RC rc) {
 #endif
     row_t * orig_r = accesses[rid]->orig_row;
     access_t type = accesses[rid]->type;
+#ifdef COMMUTATIVE_OPS
+    if (accesses[rid]->com_op != COM_NONE) {
+      if (accesses[rid]->com_op == COM_INC)
+        inc_value(accesses[rid]->com_col, accesses[rid]->com_val);
+      else
+        dec_value(accesses[rid]->com_col, accesses[rid]->com_val);
+    }
+#endif
     if (type == WR && rc == Abort)
       type = XP;
 #if (CC_ALG == NO_WAIT || CC_ALG == DL_DETECT) && ISOLATION_LEVEL == REPEATABLE_READ
@@ -202,6 +209,10 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
   RC rc = RCOK;
   if (accesses[row_cnt] == NULL) {
     Access *access = (Access *) _mm_malloc(sizeof(Access), 64);
+#ifdef COMMUTATIVE_OPS
+    // init
+    access->com_op= COM_NONE;
+#endif
     accesses[row_cnt] = access;
 #if (CC_ALG == SILO || CC_ALG == TICTOC)
     access->data = (row_t *) _mm_malloc(sizeof(row_t), 64);
@@ -430,5 +441,21 @@ RC
 txn_man::retire_row(int access_cnt){
 //printf("txn %lu try retire row %p at %d-th access %p\n", get_txn_id(), (void *)(accesses[access_cnt]->orig_row), access_cnt, (void *)accesses[access_cnt]);
   return accesses[access_cnt]->orig_row->retire_row(accesses[access_cnt]->lock_entry);
+}
+#endif
+
+#ifdef COMMUTATIVE_OPS
+void txn_man::inc_value(int col, uint64_t val) {
+  // store operation and execute at commit time
+  Access * access = accesses[row_cnt-1];
+  access->com_op = COM_INC;
+  access->com_val = val;
+}
+
+void txn_man::dec_value(int col, uint64_t val) {
+  // store operation and execute at commit time
+  Access * access = accesses[row_cnt-1];
+  access->com_op = COM_DEC;
+  access->com_val = val;
 }
 #endif
