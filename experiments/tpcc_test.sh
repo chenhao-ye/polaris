@@ -28,6 +28,7 @@ penalty=50000
 
 for i in 0 1 2 3 4
 do
+
 for user_abort in true false
 do
 for alg in BAMBOO SILO WOUND_WAIT WAIT_DIE NO_WAIT

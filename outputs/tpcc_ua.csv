@@ -1,3 +1,4 @@
+
 ABORT_PENALTY,BB_OPT_RAW,CC_ALG,DEBUG_CS_PROFILING,DEBUG_PROFILING,DYNAMIC_TS,LATCH,MAX_TXN_PER_PART,NUM_WH,PERC_PAYMENT,RETIRE_ON,THREAD_CNT,TPCC_USER_ABORT,WORKLOAD,WW_STARV_FREE,abort_cnt,commit_latency,cycle_detect,deadlock_cnt,dl_detect_time,dl_wait_time,latency,run_time,throughput,time_abort,time_cleanup,time_commit,time_get_cs,time_get_latch,time_index,time_man,time_query,time_release_cs,time_release_latch,time_retire_cs,time_retire_latch,time_ts_alloc,time_wait,txn_cnt,user_abort_cnt,wait_cnt
 50000,false,BAMBOO,false,true,true,LH_SPINLOCK,100000,1,0.5,true,1,true,TPCC,false, 503, 4067,0,0,0,0, 4067, 0.409836,244000, 0, 0.0260608, 0.001072, 0, 0, 0.0463546, 0.145619, 0.00206897, 0, 0, 0, 0, 0, 0, 100000, 503, 0
 50000,false,BAMBOO,false,true,true,LH_SPINLOCK,100000,2,0.5,true,1,true,TPCC,false, 468, 4835,0,0,0,0, 4835, 0.486939,205365, 0, 0.0266275, 0.00109174, 0, 0, 0.051466, 0.175285, 0.00211131, 0, 0, 0, 0, 0, 0, 100000, 468, 0
