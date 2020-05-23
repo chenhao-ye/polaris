@@ -9,11 +9,14 @@
 #include "catalog.h"
 #include "index_btree.h"
 #include "index_hash.h"
+// for info of lock entry
+#include "row_lock.h"
+#include "row_bamboo.h"
 
 void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
   this->h_thd = h_thd;
   this->h_wl = h_wl;
-  pthread_mutex_init(&txn_lock, NULL);
+  //pthread_mutex_init(&txn_lock, NULL);
   lock_ready = false;
   lock_abort = false;
   timestamp = 0;
@@ -24,11 +27,11 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
   row_cnt = 0;
   wr_cnt = 0;
   insert_cnt = 0;
+  // init accesses
   accesses = (Access **) _mm_malloc(sizeof(Access *) * MAX_ROW_PER_TXN, 64);
   for (int i = 0; i < MAX_ROW_PER_TXN; i++)
     accesses[i] = NULL;
   num_accesses_alloc = 0;
-
 #if CC_ALG == TICTOC || CC_ALG == SILO
   _pre_abort = (g_params["pre_abort"] == "true");
 	if (g_params["validation_lock"] == "no-wait")
@@ -111,8 +114,9 @@ void txn_man::cleanup(RC rc) {
   // go through accesses and release
   for (int rid = row_cnt - 1; rid >= 0; rid --) {
 #if (CC_ALG == WOUND_WAIT) || (CC_ALG == BAMBOO)
-    if (accesses[rid]->orig_row == NULL)
+    if (accesses[rid]->orig_row == NULL) {
       continue;
+    }
 #endif
     row_t * orig_r = accesses[rid]->orig_row;
     access_t type = accesses[rid]->type;
@@ -120,28 +124,32 @@ void txn_man::cleanup(RC rc) {
       type = XP;
 #if (CC_ALG == NO_WAIT || CC_ALG == DL_DETECT) && ISOLATION_LEVEL == REPEATABLE_READ
     if (type == RD) {
-			accesses[rid]->data = NULL;
-			continue;
+	accesses[rid]->data = NULL;
+	continue;
     }
 #endif
 
 #if CC_ALG == BAMBOO
-    orig_r->return_row(type, this, accesses[rid]->data, rc);
+    orig_r->return_row(accesses[rid]->lock_entry, rc);
+    accesses[rid]->orig_row = NULL;
 #elif CC_ALG == WOUND_WAIT
-    orig_r->return_row(type, this, accesses[rid]->data);
+    orig_r->return_row(type, accesses[rid]->data, accesses[rid]->lock_entry);
+    accesses[rid]->orig_row = NULL;
 #else
-    if (ROLL_BACK && type == XP &&
-					(CC_ALG == DL_DETECT || 
-					CC_ALG == NO_WAIT || 
-					CC_ALG == WAIT_DIE))
-		{
-			orig_r->return_row(type, this, accesses[rid]->orig_data);
-		} else {
-			orig_r->return_row(type, this, accesses[rid]->data);
-		}
+    if (ROLL_BACK && type == XP && (CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE))
+    {
+      orig_r->return_row(type, accesses[rid]->orig_data, accesses[rid]->lock_entry);
+    } else {
+#if CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT
+      orig_r->return_row(type, accesses[rid]->data, accesses[rid]->lock_entry);
+#else
+      orig_r->return_row(type, this, accesses[rid]->data);
+#endif
+    }
 #endif
 
 #if CC_ALG != TICTOC && (CC_ALG != SILO) && (CC_ALG != WOUND_WAIT) && (CC_ALG!= BAMBOO)
+    // invalidate ptr for cc keeping globally visible ptr
     accesses[rid]->data = NULL;
 #endif
   }
@@ -166,6 +174,27 @@ void txn_man::cleanup(RC rc) {
 #endif
 }
 
+
+#if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT || CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT
+inline 
+void txn_man::assign_lock_entry(Access * access) {
+#if CC_ALG == BAMBOO
+  auto lock_entry = (BBLockEntry *) _mm_malloc(sizeof(BBLockEntry), 64);
+  new (lock_entry) BBLockEntry;
+#else
+  auto lock_entry = (LockEntry *) _mm_malloc(sizeof(LockEntry), 64);
+  new (lock_entry) LockEntry;
+#endif
+#if LATCH == LH_MCSLOCK
+  lock_entry->m_node = (mcslock::qnode_t *) _mm_malloc(sizeof(mcslock::qnode_t), 64);
+  new (lock_entry->m_node) mcslock::qnode_t();
+#endif
+  access->lock_entry = lock_entry;
+  lock_entry->txn = this;
+  lock_entry->access = access;
+}
+#endif
+
 row_t * txn_man::get_row(row_t * row, access_t type) {
   if (CC_ALG == HSTORE)
     return row;
@@ -180,44 +209,57 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
     access->orig_data = (row_t *) _mm_malloc(sizeof(row_t), 64);
     access->orig_data->init(MAX_TUPLE_SIZE);
 #elif (CC_ALG == WOUND_WAIT)
+    // allocate lock entry as well
+    assign_lock_entry(access);
     // for ww and bb, data is a local copy of original row for txn to work on
     access->data = (row_t *) _mm_malloc(sizeof(row_t), 64);
     access->data->init(MAX_TUPLE_SIZE);
 #elif (CC_ALG == BAMBOO)
+    // allocate lock entry as well
+    assign_lock_entry(access);
     // data is for making local changes before added to retired
     access->data = (row_t *) _mm_malloc(sizeof(row_t), 64);
     access->data->init(MAX_TUPLE_SIZE);
+    access->data->table = row->get_table();
     // orig data is for rollback
     access->orig_data = (row_t *) _mm_malloc(sizeof(row_t), 64);
     access->orig_data->init(MAX_TUPLE_SIZE);
+    access->orig_data->table = row->get_table();
 #elif (CC_ALG == DL_DETECT || (CC_ALG == NO_WAIT) || (CC_ALG == WAIT_DIE))
+    // allocate lock entry as well
+    assign_lock_entry(access);
     access->orig_data = (row_t *) _mm_malloc(sizeof(row_t), 64);
     access->orig_data->init(MAX_TUPLE_SIZE);
 #endif
     num_accesses_alloc++;
   }
-#if (CC_ALG == WOUND_WAIT)
-  rc = row->get_row(type, this, accesses[row_cnt]->orig_data);
-#elif (CC_ALG == BAMBOO)
-  rc = row->get_row(type, this, accesses[row_cnt]);
-#else
-  rc = row->get_row(type, this, accesses[ row_cnt ]->data);
-#endif
-
-  if (rc == Abort) {
 #if (CC_ALG == WOUND_WAIT) || (CC_ALG == BAMBOO)
+  rc = row->get_row(type, this, accesses[ row_cnt ]->orig_row,
+      accesses[row_cnt]);
+  if (rc == Abort) {
     accesses[row_cnt]->orig_row = NULL;
-#endif
     return NULL;
   }
+#elif CC_ALG == DL_DETECT || (CC_ALG == NO_WAIT) || (CC_ALG == WAIT_DIE)
+  rc = row->get_row(type, this, accesses[ row_cnt ]->data, accesses[row_cnt]);
+  if (rc == Abort)
+    return NULL;
+  accesses[row_cnt]->orig_row = row;
+#else
+  rc = row->get_row(type, this, accesses[ row_cnt ]->data);
+  if (rc == Abort)
+    return NULL;
+  accesses[row_cnt]->orig_row = row;
+#endif
+
 #if (CC_ALG == BAMBOO && BB_OPT_RAW)
-  else if (rc == FINISH) {
+  if (rc == FINISH) {
     // RAW optimization
     accesses[row_cnt]->data->table = row->get_table();
   }
 #endif
+
   accesses[row_cnt]->type = type;
-  accesses[row_cnt]->orig_row = row;
 #if CC_ALG == TICTOC
   accesses[row_cnt]->wts = last_wts;
   accesses[row_cnt]->rts = last_rts;
@@ -247,7 +289,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
 
 #if (CC_ALG == NO_WAIT || CC_ALG == DL_DETECT) && ISOLATION_LEVEL == REPEATABLE_READ
   if (type == RD)
-		row->return_row(type, this, accesses[ row_cnt ]->data);
+    row->return_row(type, accesses[ row_cnt ]->data, accesses[row_cnt]->lock_entry);
 #endif
 
   row_cnt ++;
@@ -261,8 +303,9 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
   if (type == WR)
     return accesses[row_cnt - 1]->data;
   else
-    return accesses[row_cnt - 1]->orig_data;
+    return accesses[row_cnt - 1]->orig_row;
 #elif CC_ALG == BAMBOO
+//printf("txn %lu got row %p at %d-th access %p\n", get_txn_id(), (void *)accesses[row_cnt - 1]->orig_row, row_cnt - 1, (void *)accesses[row_cnt - 1]);
   if (type == WR)
     return accesses[row_cnt - 1]->data;
   else {
@@ -345,7 +388,7 @@ RC txn_man::finish(RC rc) {
       continue;
     }
 #if DEBUG_PROFILING
-    INC_STATS(get_thd_id(), debug8, get_sys_clock() - starttime);
+    INC_STATS(get_thd_id(), time_commit, get_sys_clock() - starttime);
 #endif
     if (!ATOM_CAS(status, RUNNING, COMMITED))
       rc = Abort;
@@ -384,7 +427,8 @@ txn_man::increment_commit_barriers() {
 
 #if CC_ALG == BAMBOO
 RC
-txn_man::retire_row(row_t * row){
-  return row->retire_row(this);
+txn_man::retire_row(int access_cnt){
+//printf("txn %lu try retire row %p at %d-th access %p\n", get_txn_id(), (void *)(accesses[access_cnt]->orig_row), access_cnt, (void *)accesses[access_cnt]);
+  return accesses[access_cnt]->orig_row->retire_row(accesses[access_cnt]->lock_entry);
 }
 #endif

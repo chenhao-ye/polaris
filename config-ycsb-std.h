@@ -43,6 +43,9 @@
 #define CC_ALG                      BAMBOO
 #define ISOLATION_LEVEL 			SERIALIZABLE
 
+// latch options
+#define LATCH					    LH_SPINLOCK
+
 // all transactions acquire tuples according to the primary key order.
 #define KEY_ORDER					false
 // transaction roll back changes after abort
@@ -98,7 +101,6 @@
 #define TXN_QUEUE_SIZE_LIMIT		THREAD_CNT
 // [BAMBOO]
 #define DYNAMIC_TS					true
-#define SPINLOCK					true
 #define RETIRE_ON 					true
 #define BB_OPT_RAW                  true
 // [WW]
@@ -218,6 +220,10 @@ extern TestCases					g_test_case;
 #define YCSB						1
 #define TPCC						2
 #define TEST						3
+// latch options
+#define LH_SPINLOCK                   1
+#define LH_MUTEX                      2
+#define LH_MCSLOCK                    3
 // Concurrency Control Algorithm
 #define NO_WAIT						1
 #define WAIT_DIE					2

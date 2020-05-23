@@ -56,47 +56,48 @@ RC thread_t::run() {
 	base_query * m_query = NULL;
 	uint64_t thd_txn_id = 0;
 	UInt64 txn_cnt = 0;
+	ts_t txn_starttime = 0;
 
 	while (true) {
 		ts_t starttime = get_sys_clock();
 		if (WORKLOAD != TEST) {
-			int trial = 0;
 			if (_abort_buffer_enable) {
-				m_query = NULL;
-				while (trial < 2) {
+                                while(true) {
+					m_query = NULL;
 					ts_t curr_time = get_sys_clock();
 					ts_t min_ready_time = UINT64_MAX;
 					if (_abort_buffer_empty_slots < _abort_buffer_size) {
 						for (int i = 0; i < _abort_buffer_size; i++) {
 							if (_abort_buffer[i].query != NULL && curr_time > _abort_buffer[i].ready_time) {
 								m_query = _abort_buffer[i].query;
+								txn_starttime = _abort_buffer[i].starttime;
 								_abort_buffer[i].query = NULL;
 								_abort_buffer_empty_slots ++;
 								break;
 							} else if (_abort_buffer_empty_slots == 0
-									   && _abort_buffer[i].ready_time < min_ready_time)
+					          		&& _abort_buffer[i].ready_time < min_ready_time)
 								min_ready_time = _abort_buffer[i].ready_time;
+							}
 						}
-					}
 					if (m_query == NULL && _abort_buffer_empty_slots == 0) {
-						assert(trial == 0);
 						M_ASSERT(min_ready_time >= curr_time, "min_ready_time=%ld, curr_time=%ld\n", min_ready_time, curr_time);
 						usleep((min_ready_time - curr_time)/1000); 
-					}
-					else if (m_query == NULL) {
-						starttime = get_sys_clock();
+					} else if (m_query == NULL) {
 						m_query = query_queue->get_next_query( _thd_id );
+						assert(m_query);
+                                        	txn_starttime = starttime;
 #if CC_ALG == WAIT_DIE || (CC_ALG == WOUND_WAIT && WW_STARV_FREE)
 						m_txn->set_ts(get_next_ts());
 #endif
 					}
-					if (m_query != NULL)
+					if (m_query)
 						break;
 				}
 			} else {
-				starttime = get_sys_clock();
-				if (rc == RCOK)
+				if (rc == RCOK) {
 					m_query = query_queue->get_next_query( _thd_id );
+                                        txn_starttime = starttime;
+                                }
 			}
 		}
 		INC_STATS(_thd_id, time_query, get_sys_clock() - starttime);
@@ -171,6 +172,7 @@ RC thread_t::run() {
 					if (_abort_buffer[i].query == NULL) {
 						_abort_buffer[i].query = m_query;
 						_abort_buffer[i].ready_time = get_sys_clock() + penalty;
+                                                _abort_buffer[i].starttime = txn_starttime;
 						_abort_buffer_empty_slots --;
 						break;
 					}
@@ -183,7 +185,8 @@ RC thread_t::run() {
 		INC_STATS(get_thd_id(), run_time, timespan);
 		//stats.add_lat(get_thd_id(), timespan);
 		if (rc == RCOK) {
-		INC_STATS(get_thd_id(), latency, timespan);
+		        INC_STATS(get_thd_id(), commit_latency, timespan);
+		        INC_STATS(get_thd_id(), latency, endtime - txn_starttime);
 			INC_STATS(get_thd_id(), txn_cnt, 1);
 			stats.commit(get_thd_id());
 			txn_cnt ++;
@@ -193,11 +196,11 @@ RC thread_t::run() {
 			stats.abort(get_thd_id());
 			m_txn->abort_cnt ++;
 		} else if (rc == ERROR) {
-		  // user initiated aborts
-          INC_STATS(get_thd_id(), user_abort_cnt, 1);
-          INC_STATS(get_thd_id(), abort_cnt, 1);
-          stats.abort(get_thd_id());
-          m_txn->abort_cnt ++;
+		       // user initiated aborts
+                       INC_STATS(get_thd_id(), user_abort_cnt, 1);
+                       INC_STATS(get_thd_id(), abort_cnt, 1);
+                       stats.abort(get_thd_id());
+                       m_txn->abort_cnt ++;
 		}
 
 		if (rc == FINISH)

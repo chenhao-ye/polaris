@@ -26,7 +26,11 @@ RC ycsb_txn_man::run_txn(base_query * query) {
     ycsb_query * m_query = (ycsb_query *) query;
     ycsb_wl * wl = (ycsb_wl *) h_wl;
     itemid_t * m_item = NULL;
+#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
+    int access_id;
+#else
     row_cnt = 0;
+#endif
 
     for (uint32_t rid = 0; rid < m_query->request_cnt; rid ++) {
         ycsb_request * req = &m_query->requests[rid];
@@ -52,6 +56,9 @@ RC ycsb_txn_man::run_txn(base_query * query) {
                 rc = Abort;
                 goto final;
             }
+#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
+            access_id = row_cnt - 1;
+#endif
 
             // Computation //
             // Only do computation when there are more than 1 requests.
@@ -83,7 +90,7 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 #if (CC_ALG == BAMBOO) && RETIRE_ON && (THREAD_CNT != 1)
             // retire write txn
             if (finish_req && (req->rtype == WR)) {
-                if (retire_row(row) == Abort)
+                if (retire_row(access_id) == Abort)
                   return finish(Abort);
             }
 #endif

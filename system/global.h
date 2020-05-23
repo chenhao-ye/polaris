@@ -25,6 +25,9 @@
 #include "config.h"
 #include "stats.h"
 #include "dl_detect.h"
+#if LATCH == LH_MCSLOCK
+#include "mcs_spinlock.h"
+#endif
 #ifndef NOGRAPHITE
 #include "carbon_user.h"
 #endif
@@ -136,6 +139,7 @@ enum access_t {RD, WR, XP, SCAN};
 /* LOCK */
 enum lock_t {LOCK_EX, LOCK_SH, LOCK_NONE };
 enum loc_t {RETIRED, OWNERS, WAITERS, LOC_NONE};
+enum lock_status {LOCK_DROPPED, LOCK_WAITER, LOCK_OWNER, LOCK_RETIRED};
 /* TIMESTAMP */
 enum TsType {R_REQ, W_REQ, P_REQ, XP_REQ};
 /* TXN STATUS */

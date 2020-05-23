@@ -3,6 +3,7 @@
 **.out
 **.swp
 **.swo
+run_exp.sh
 outputs/*.json
 config.h
 rundb
