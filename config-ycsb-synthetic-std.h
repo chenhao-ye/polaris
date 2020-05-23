@@ -43,6 +43,9 @@
 #define CC_ALG                      BAMBOO
 #define ISOLATION_LEVEL 			SERIALIZABLE
 
+// latch options
+#define LATCH					    LH_SPINLOCK
+
 // all transactions acquire tuples according to the primary key order.
 #define KEY_ORDER					false
 // transaction roll back changes after abort
@@ -98,8 +101,8 @@
 #define TXN_QUEUE_SIZE_LIMIT		THREAD_CNT
 // [BAMBOO]
 #define DYNAMIC_TS					true
-#define SPINLOCK					true
 #define RETIRE_ON 					true
+#define BB_OPT_RAW                  true
 // [WW]
 #define WW_STARV_FREE               false // set false if compared w/ bamboo
 
@@ -135,8 +138,8 @@
 // ==== [YCSB-synthetic] ====
 #define SYNTHETIC_YCSB              true
 #define POS_HS                      TOP
-#define SPECIFIED_RATIO 	    0
-#define FLIP_RATIO		    0
+#define SPECIFIED_RATIO             0
+#define FLIP_RATIO                  0
 #define NUM_HS                      1
 #define FIRST_HS                    WR
 #define SECOND_HS                   WR
@@ -167,6 +170,8 @@ extern TPCCTxnType 					g_tpcc_txn_type;
 #define LASTNAME_LEN 				16
 
 #define DIST_PER_WARE				10
+// enable user-initiated aborts in new-order txn according to TPC-C doc.
+#define TPCC_USER_ABORT             true
 
 /***********************************************/
 // TODO centralized CC management.
@@ -217,6 +222,10 @@ extern TestCases					g_test_case;
 #define YCSB						1
 #define TPCC						2
 #define TEST						3
+// latch options
+#define LH_SPINLOCK                   1
+#define LH_MUTEX                      2
+#define LH_MCSLOCK                    3
 // Concurrency Control Algorithm
 #define NO_WAIT						1
 #define WAIT_DIE					2

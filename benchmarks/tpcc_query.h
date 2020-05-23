@@ -37,7 +37,7 @@ public:
 	// txn input for new-order
 	/**********************************************/
 	Item_no * items;
-	bool rbk;
+	uint64_t rbk;
 	bool remote;
 	uint64_t ol_cnt;
 	uint64_t o_entry_d;

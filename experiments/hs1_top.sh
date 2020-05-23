@@ -50,8 +50,8 @@ done
 
 cd outputs/
 python3 collect_stats.py
-mv stats.csv hs1_top_ww.csv
-mv stats.json hs1_top_ww.json
+mv stats.csv hs1_top_bb.csv
+mv stats.json hs1_top_bb.json
 cd ..
 
 python experiments/send_email.py node0_hs1

@@ -76,41 +76,49 @@
 	if (lhead) lhead->prev = NULL; \
 	else ltail = NULL; \
 	en->next = NULL; }
+
 #define LIST_PUT_TAIL(lhead, ltail, en) {\
 	en->next = NULL; \
 	en->prev = NULL; \
 	if (ltail) { en->prev = ltail; ltail->next = en; ltail = en; } \
 	else { lhead = en; ltail = en; }}
-#define RETIRED_LIST_PUT_TAIL(lhead, ltail, en) {\
-	en->next = NULL; \
-	en->prev = NULL; \
-	if (ltail) { en->prev = ltail; ltail->next = en; ltail = en; } \
-	else { lhead = en; ltail = en; }}
+
 #define LIST_INSERT_BEFORE(entry, newentry) { \
 	newentry->next = entry; \
 	newentry->prev = entry->prev; \
 	if (entry->prev) entry->prev->next = newentry; \
 	entry->prev = newentry; }
+
 #define LIST_REMOVE(entry) { \
 	if (entry->next) entry->next->prev = entry->prev; \
 	if (entry->prev) entry->prev->next = entry->next; }
+
 #define LIST_REMOVE_HT(entry, head, tail) { \
 	if (entry->next) entry->next->prev = entry->prev; \
 	else { assert(entry == tail); tail = entry->prev; } \
 	if (entry->prev) entry->prev->next = entry->next; \
 	else { assert(entry == head); head = entry->next; } \
 }
+
 #define LIST_RM(head, tail, en, cnt) { \
 	if (en->next) en->next->prev = en->prev; \
 	if (en->prev) en->prev->next = en->next; \
 	else if (head == en) {	head = en->next; } \
 	if (tail == en)	{ tail = en->prev; } \
-	cnt--; }
+	cnt--; } \
 
 #define LIST_RM_SINCE(head, tail, en) { \
 	if (en->prev) en->prev->next = NULL; \
 	else if (head == en) {	head = NULL; } \
 	tail = en->prev; }
+
+#define LIST_INSERT_BEFORE_CH(lhead, entry, newentry) { \
+	newentry->next = entry; \
+	newentry->prev = entry->prev; \
+	if (entry->prev) entry->prev->next = newentry; \
+	entry->prev = newentry; \
+	if (lhead == entry) lhead = newentry; \
+}
 
 /************************************************/
 // STATS helper
