@@ -119,6 +119,17 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
   double d_ytd;
   r_dist_local->get_value(D_YTD, d_ytd);
   r_dist_local->set_value(D_YTD, d_ytd + query->h_amount);
+  char d_name[11];
+
+  tmp_str = r_dist_local->get_value(D_NAME);
+  memcpy(d_name, tmp_str, 10);
+  d_name[10] = '\0';
+  // retire dist
+#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
+  access_cnt = row_cnt - 1;
+  if (retire_row(access_cnt) == Abort)
+    return finish(Abort);
+#endif
 #else
   r_dist_local = get_row(r_dist, RD);
   //sleep(1);
@@ -126,19 +137,20 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
     return finish(Abort);
   }
   inc_value(D_YTD, query->h_amount);
-#endif
   char d_name[11];
 
   tmp_str = r_dist_local->get_value(D_NAME);
   memcpy(d_name, tmp_str, 10);
   d_name[10] = '\0';
-
   // retire dist
 #if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
   access_cnt = row_cnt - 1;
   if (retire_row(access_cnt) == Abort)
     return finish(Abort);
 #endif
+#endif
+
+
 
   /*====================================================================+
       EXEC SQL SELECT d_street_1, d_street_2, d_city, d_state, d_zip, d_name
