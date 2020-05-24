@@ -63,7 +63,7 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
   row_t * r_wh = ((row_t *)item->location);
   access_t r_wh_type;
   row_t * r_wh_local;
-#ifndef COMMUTATIVE_OPS
+#if !COMMUTATIVE_OPS
   if (g_wh_update)
     r_wh_type = WR;
   else
@@ -76,7 +76,7 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
   if (r_wh_local == NULL) {
     return finish(Abort);
   }
-#ifndef COMMUTATIVE_OPS
+#if !COMMUTATIVE_OPS
   double w_ytd;
   r_wh_local->get_value(W_YTD, w_ytd);
   if (g_wh_update) {
@@ -91,7 +91,7 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
   w_name[10] = '\0';
 
   // retire wh
-#ifndef COMMUTATIVE_OPS
+#if !COMMUTATIVE_OPS
 #if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
   access_cnt = row_cnt - 1;
   if (r_wh_type != RD) {
@@ -110,7 +110,7 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
   row_t * r_dist_local;
   row_t * r_dist = ((row_t *)item->location);
 
-#ifndef COMMUTATIVE_OPS
+#if !COMMUTATIVE_OPS
   r_dist_local = get_row(r_dist, WR);
   //sleep(1);
   if (r_dist_local == NULL) {
@@ -351,7 +351,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
   item = index_read(_wl->i_district, key, wh_to_part(w_id));
   assert(item != NULL);
   row_t * r_dist = ((row_t *)item->location);
-#ifndef COMMUTATIVE_OPS
+#if !COMMUTATIVE_OPS
   row_t * r_dist_local = get_row(r_dist, WR);
   if (r_dist_local == NULL) {
     return finish(Abort);

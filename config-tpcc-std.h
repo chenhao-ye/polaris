@@ -172,7 +172,7 @@ extern TPCCTxnType 					g_tpcc_txn_type;
 #define TPCC_USER_ABORT             true
 
 // Optimizations used in IC3
-#define COMMUTATIVE_OPS
+#define COMMUTATIVE_OPS             false
 
 /***********************************************/
 // TODO centralized CC management.

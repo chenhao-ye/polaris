@@ -22,7 +22,7 @@ class Access {
   row_t * 	orig_row;
   row_t * 	data;
   row_t * 	orig_data;
-#ifdef COMMUTATIVE_OPS
+#if COMMUTATIVE_OPS
   // support increment-only for now
   uint64_t  com_val;
   int       com_col;
@@ -58,7 +58,7 @@ class txn_man
   txnid_t 		    get_txn_id();
 
   // [COMMUTATIVE OPERATIONS]
-#ifdef COMMUTATIVE_OPS
+#if COMMUTATIVE_OPS
   void             inc_value(int col, uint64_t val);
   void             dec_value(int col, uint64_t val);
 #endif

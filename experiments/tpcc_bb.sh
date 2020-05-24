@@ -11,6 +11,7 @@ dynamic="true"
 retire="true"
 cs_pf="true"
 opt_raw="false"
+com="false"
 
 ## workload
 wl="TPCC"
@@ -27,17 +28,17 @@ penalty=50000
 
 for i in 0 1 2 3 4
 do
-for opt_raw in true false
-do
-for dynamic in true false
+for latch in LH_SPINLOCK LH_MCSLOCK
 do
 for user_abort in true false
 do
-for threads in 8 16 32
+for com in true false
 do
-for wh in 1 2 4
+for threads in 1 2 4 8 16 32
 do
-timeout 100 python test.py CC_ALG=$alg LATCH=${latch} WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=$dynamic RETIRE_ON=$retire DEBUG_CS_PROFILING=${cs_pf} BB_OPT_RAW=${opt_raw} WORKLOAD=${wl} NUM_WH=${wh} PERC_PAYMENT=$perc TPCC_USER_ABORT=${user_abort} THREAD_CNT=$threads DEBUG_PROFILING=${profile} MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty
+for wh in 1 2 4 8
+do
+timeout 100 python test.py CC_ALG=$alg LATCH=${latch} WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=$dynamic RETIRE_ON=$retire DEBUG_CS_PROFILING=${cs_pf} BB_OPT_RAW=${opt_raw} WORKLOAD=${wl} NUM_WH=${wh} PERC_PAYMENT=$perc TPCC_USER_ABORT=${user_abort} COMMUTATIVE_OPS=$com THREAD_CNT=$threads DEBUG_PROFILING=${profile} MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty
 done
 done
 done

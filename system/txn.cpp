@@ -119,7 +119,7 @@ void txn_man::cleanup(RC rc) {
 #endif
     row_t * orig_r = accesses[rid]->orig_row;
     access_t type = accesses[rid]->type;
-#ifdef COMMUTATIVE_OPS
+#if COMMUTATIVE_OPS
     if (accesses[rid]->com_op != COM_NONE) {
       if (accesses[rid]->com_op == COM_INC)
         inc_value(accesses[rid]->com_col, accesses[rid]->com_val);
@@ -209,7 +209,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
   RC rc = RCOK;
   if (accesses[row_cnt] == NULL) {
     Access *access = (Access *) _mm_malloc(sizeof(Access), 64);
-#ifdef COMMUTATIVE_OPS
+#if COMMUTATIVE_OPS
     // init
     access->com_op= COM_NONE;
 #endif
@@ -444,7 +444,7 @@ txn_man::retire_row(int access_cnt){
 }
 #endif
 
-#ifdef COMMUTATIVE_OPS
+#if COMMUTATIVE_OPS
 void txn_man::inc_value(int col, uint64_t val) {
   // store operation and execute at commit time
   Access * access = accesses[row_cnt-1];
