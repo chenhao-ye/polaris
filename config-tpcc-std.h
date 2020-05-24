@@ -173,7 +173,6 @@ extern TPCCTxnType 					g_tpcc_txn_type;
 
 // Optimizations used in IC3
 #define COMMUTATIVE_OPS
-#define FIELD_GRANULARITY
 
 /***********************************************/
 // TODO centralized CC management.

@@ -46,8 +46,8 @@ done
 
 cd outputs/
 python3 collect_stats.py
-mv stats.csv tpcc_ua_mcs.csv
-mv stats.json tpcc_ua_mcs.json
+mv stats.csv tpcc_com.csv
+mv stats.json tpcc_com.json
 cd ..
 
 cd experiments/
