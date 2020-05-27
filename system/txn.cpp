@@ -120,7 +120,7 @@ void txn_man::cleanup(RC rc) {
     row_t * orig_r = accesses[rid]->orig_row;
     access_t type = accesses[rid]->type;
 #if COMMUTATIVE_OPS
-    if (accesses[rid]->com_op != COM_NONE) {
+    if (accesses[rid]->com_op != COM_NONE && (rc != Abort)) {
       if (accesses[rid]->com_op == COM_INC)
         inc_value(accesses[rid]->com_col, accesses[rid]->com_val);
       else
