@@ -30,13 +30,16 @@ penalty=50000
 
 for i in 0 1 2 3 4
 do
-for alg in BAMBOO SILO WOUND_WAIT WAIT_DIE NO_WAIT
+for com_latcn in true false
+do
+for alg in BAMBOO #SILO WOUND_WAIT WAIT_DIE NO_WAIT
 do
 for threads in 1 2 4 8 16 32
 do
 for wh in 1 2 4 8 16 32
 do
 timeout 100 python test.py CC_ALG=$alg LATCH=${latch} WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=$dynamic RETIRE_ON=$retire DEBUG_CS_PROFILING=${cs_pf} BB_OPT_RAW=${opt_raw} WORKLOAD=${wl} NUM_WH=${wh} PERC_PAYMENT=$perc TPCC_USER_ABORT=${user_abort} COMMUTATIVE_OPS=$com COMMUTATIVE_LATCH=${com_latch} THREAD_CNT=$threads DEBUG_PROFILING=${profile} MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty
+done
 done
 done
 done
