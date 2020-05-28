@@ -30,7 +30,7 @@ penalty=50000
 
 for i in 0 1 2 3 4
 do
-for com_latcn in true false
+for com_latch in true
 do
 for alg in BAMBOO #SILO WOUND_WAIT WAIT_DIE NO_WAIT
 do
@@ -48,8 +48,8 @@ done
 
 cd outputs/
 python3 collect_stats.py
-mv stats.csv tpcc_com_latch.csv
-mv stats.json tpcc_com_latch.json
+mv stats.csv tpcc_com_latch_more.csv
+mv stats.json tpcc_com_latch_more.json
 cd ..
 
 cd experiments/
