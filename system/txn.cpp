@@ -125,7 +125,9 @@ void txn_man::cleanup(RC rc) {
         inc_value(accesses[rid]->com_col, accesses[rid]->com_val);
       else
         dec_value(accesses[rid]->com_col, accesses[rid]->com_val);
+      accesses[rid]->com_op = COM_NONE;
     }
+
 #endif
     if (type == WR && rc == Abort)
       type = XP;
@@ -136,22 +138,28 @@ void txn_man::cleanup(RC rc) {
     }
 #endif
 
-#if CC_ALG == BAMBOO
-    orig_r->return_row(accesses[rid]->lock_entry, rc);
-    accesses[rid]->orig_row = NULL;
-#elif CC_ALG == WOUND_WAIT
-    orig_r->return_row(type, accesses[rid]->data, accesses[rid]->lock_entry);
-    accesses[rid]->orig_row = NULL;
-#else
-    if (ROLL_BACK && type == XP && (CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE))
-    {
-      orig_r->return_row(type, accesses[rid]->orig_data, accesses[rid]->lock_entry);
-    } else {
-#if CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT
-      orig_r->return_row(type, accesses[rid]->data, accesses[rid]->lock_entry);
-#else
-      orig_r->return_row(type, this, accesses[rid]->data);
+#if COMMUTATIVE_OPS && !COMMUTATIVE_LATCH
+    if (type != CM) {
 #endif
+#if CC_ALG == BAMBOO
+      orig_r->return_row(accesses[rid]->lock_entry, rc);
+      accesses[rid]->orig_row = NULL;
+#elif CC_ALG == WOUND_WAIT
+      orig_r->return_row(type, accesses[rid]->data, accesses[rid]->lock_entry);
+      accesses[rid]->orig_row = NULL;
+#else
+      if (ROLL_BACK && type == XP && (CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE))
+      {
+        orig_r->return_row(type, accesses[rid]->orig_data, accesses[rid]->lock_entry);
+      } else {
+#if CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT
+        orig_r->return_row(type, accesses[rid]->data, accesses[rid]->lock_entry);
+#else
+        orig_r->return_row(type, this, accesses[rid]->data);
+#endif
+      }
+#endif
+#if COMMUTATIVE_OPS && !COMMUTATIVE_LATCH
     }
 #endif
 
