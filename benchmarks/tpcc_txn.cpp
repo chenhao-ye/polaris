@@ -69,7 +69,11 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
   else
     r_wh_type = RD;
 #else
+#if COMMUTATIVE_LATCH
+  r_wh_type = RD;
+#else
   r_wh_type = CM;
+#endif
 #endif
 
   r_wh_local = get_row(r_wh, r_wh_type);
@@ -131,7 +135,11 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
     return finish(Abort);
 #endif
 #else
+#if COMMUTATIVE_LATCH
+  r_dist_local = get_row(r_dist, RD);
+#else
   r_dist_local = get_row(r_dist, CM);
+#endif
   //sleep(1);
   if (r_dist_local == NULL) {
     return finish(Abort);
@@ -368,7 +376,11 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
     return finish(Abort);
 #endif
 #else
+#if COMMUTATIVE_LATCH
+  row_t * r_dist_local = get_row(r_dist, RD);
+#else
   row_t * r_dist_local = get_row(r_dist, CM);
+#endif
   if (r_dist_local == NULL) {
     return finish(Abort);
   }
