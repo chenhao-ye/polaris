@@ -135,7 +135,7 @@ typedef uint64_t idx_key_t; // key id for index
 typedef uint64_t (*func_ptr)(idx_key_t);	// part_id func_ptr(index_key);
 
 /* general concurrency control */
-enum access_t {RD, WR, XP, SCAN};
+enum access_t {RD, WR, XP, SCAN, CM};
 /* LOCK */
 enum lock_t {LOCK_EX, LOCK_SH, LOCK_NONE };
 enum loc_t {RETIRED, OWNERS, WAITERS, LOC_NONE};

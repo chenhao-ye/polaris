@@ -69,7 +69,7 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
   else
     r_wh_type = RD;
 #else
-  r_wh_type = RD;
+  r_wh_type = CM;
 #endif
 
   r_wh_local = get_row(r_wh, r_wh_type);
@@ -131,7 +131,7 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
     return finish(Abort);
 #endif
 #else
-  r_dist_local = get_row(r_dist, RD);
+  r_dist_local = get_row(r_dist, CM);
   //sleep(1);
   if (r_dist_local == NULL) {
     return finish(Abort);
@@ -368,7 +368,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
     return finish(Abort);
 #endif
 #else
-  row_t * r_dist_local = get_row(r_dist, RD);
+  row_t * r_dist_local = get_row(r_dist, CM);
   if (r_dist_local == NULL) {
     return finish(Abort);
   }

@@ -168,19 +168,29 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row, Access * access) {
 #if CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT || CC_ALG == BAMBOO
   uint64_t thd_id = txn->get_thd_id();
   lock_t lt = (type == RD || type == SCAN)? LOCK_SH : LOCK_EX;
-  #if CC_ALG == DL_DETECT
-  uint64_t * txnids;
-  int txncnt; 
-  rc = this->manager->lock_get(lt, txn, txnids, txncnt);
-  #elif CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT
-  if (txn->lock_abort) {
-    row = NULL;
-    return Abort;
+#if COMMUTATIVE_OPS
+#if COMMUTATIVE_LATCH
+  type = RD;
+#else
+  if (type != CM) {
+#endif
+#endif
+    #if CC_ALG == DL_DETECT
+    uint64_t * txnids;
+    int txncnt;
+    rc = this->manager->lock_get(lt, txn, txnids, txncnt);
+    #elif CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT
+    if (txn->lock_abort) {
+      row = NULL;
+      return Abort;
+    }
+    rc = this->manager->lock_get(lt, txn, access);
+    #else
+    rc = this->manager->lock_get(lt, txn, access);
+    #endif
+#if COMMUTATIVE_OPS && !COMMUTATIVE_LATCH
   }
-  rc = this->manager->lock_get(lt, txn, access);
-  #else
-  rc = this->manager->lock_get(lt, txn, access);
-  #endif
+#endif
   if (rc == RCOK) {
   } else if (rc == Abort) {
     row = NULL;

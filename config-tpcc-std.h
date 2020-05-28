@@ -173,6 +173,7 @@ extern TPCCTxnType 					g_tpcc_txn_type;
 
 // Optimizations used in IC3
 #define COMMUTATIVE_OPS             false
+#define COMMUTATIVE_LATCH           false
 
 /***********************************************/
 // TODO centralized CC management.
