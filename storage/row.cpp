@@ -28,6 +28,7 @@ row_t::init(table_t * host_table, uint64_t part_id, uint64_t row_id) {
   data = (char *) _mm_malloc(sizeof(char) * tuple_size, 64);
   return RCOK;
 }
+
 void
 row_t::init(int size)
 {
@@ -94,6 +95,16 @@ uint64_t row_t::get_field_cnt() {
   return get_schema()->field_cnt;
 }
 
+void row_t::inc_value(int id, uint64_t val) {
+  int pos = get_schema()->get_field_index(id);
+  ATOM_ADD(data[pos], val);
+}
+
+void row_t::dec_value(int id, uint64_t val) {
+  int pos = get_schema()->get_field_index(id);
+  ATOM_SUB(data[pos], val);
+}
+
 void row_t::set_value(int id, void * ptr) {
   int datasize = get_schema()->get_field_size(id);
   int pos = get_schema()->get_field_index(id);
@@ -157,19 +168,25 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row, Access * access) {
 #if CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT || CC_ALG == BAMBOO
   uint64_t thd_id = txn->get_thd_id();
   lock_t lt = (type == RD || type == SCAN)? LOCK_SH : LOCK_EX;
-  #if CC_ALG == DL_DETECT
-  uint64_t * txnids;
-  int txncnt; 
-  rc = this->manager->lock_get(lt, txn, txnids, txncnt);
-  #elif CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT
-  if (txn->lock_abort) {
-    row = NULL;
-    return Abort;
+#if COMMUTATIVE_OPS && !COMMUTATIVE_LATCH
+  if (type != CM) {
+#endif
+    #if CC_ALG == DL_DETECT
+    uint64_t * txnids;
+    int txncnt;
+    rc = this->manager->lock_get(lt, txn, txnids, txncnt);
+    #elif CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT
+    if (txn->lock_abort) {
+      row = NULL;
+      return Abort;
+    }
+    rc = this->manager->lock_get(lt, txn, access);
+    #else
+    rc = this->manager->lock_get(lt, txn, access);
+    #endif
+#if COMMUTATIVE_OPS && !COMMUTATIVE_LATCH
   }
-  rc = this->manager->lock_get(lt, txn, access);
-  #else
-  rc = this->manager->lock_get(lt, txn, access);
-  #endif
+#endif
   if (rc == RCOK) {
   } else if (rc == Abort) {
     row = NULL;

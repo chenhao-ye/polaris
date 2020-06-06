@@ -135,7 +135,7 @@ typedef uint64_t idx_key_t; // key id for index
 typedef uint64_t (*func_ptr)(idx_key_t);	// part_id func_ptr(index_key);
 
 /* general concurrency control */
-enum access_t {RD, WR, XP, SCAN};
+enum access_t {RD, WR, XP, SCAN, CM};
 /* LOCK */
 enum lock_t {LOCK_EX, LOCK_SH, LOCK_NONE };
 enum loc_t {RETIRED, OWNERS, WAITERS, LOC_NONE};
@@ -144,6 +144,9 @@ enum lock_status {LOCK_DROPPED, LOCK_WAITER, LOCK_OWNER, LOCK_RETIRED};
 enum TsType {R_REQ, W_REQ, P_REQ, XP_REQ};
 /* TXN STATUS */
 enum status_t {RUNNING, COMMITED, ABORTED};
+
+/* COMMUTATIVE OPERATIONS */
+enum com_t {COM_INC, COM_DEC, COM_NONE};
 
 
 #define MSG(str, args...) { \

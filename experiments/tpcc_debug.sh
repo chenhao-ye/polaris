@@ -6,19 +6,21 @@ latch=LH_SPINLOCK
 # [WW]
 ww_starv_free="false"
 # [BAMBOO]
-dynamic=$2
+dynamic="true"
 retire="true"
 cs_pf="true"
-opt_raw=$3
+opt_raw="true"
 
 ## workload
 wl="TPCC"
 wh=1
 perc=0.5 # payment percentage
 user_abort="true"
+com=$2
+com_latch=$3
 
 #other
-threads=16 
+threads=32 
 profile="true"
 cnt=100000
 penalty=50000 
@@ -29,5 +31,5 @@ user_abort="false"
 cs_pf="false"
 #cnt=1000000
 
-python test_debug.py CC_ALG=$alg LATCH=$latch WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=$dynamic RETIRE_ON=$retire DEBUG_CS_PROFILING=${cs_pf} BB_OPT_RAW=${opt_raw} WORKLOAD=${wl} NUM_WH=${wh} PERC_PAYMENT=$perc TPCC_USER_ABORT=${user_abort} THREAD_CNT=$threads DEBUG_PROFILING=${profile} MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty
+python test_debug.py CC_ALG=$alg LATCH=$latch WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=$dynamic RETIRE_ON=$retire DEBUG_CS_PROFILING=${cs_pf} BB_OPT_RAW=${opt_raw} WORKLOAD=${wl} NUM_WH=${wh} PERC_PAYMENT=$perc TPCC_USER_ABORT=${user_abort} COMMUTATIVE_OPS=$com COMMUTATIVE_LATCH=${com_latch} THREAD_CNT=$threads DEBUG_PROFILING=${profile} MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty
 #

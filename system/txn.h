@@ -22,13 +22,19 @@ class Access {
   row_t * 	orig_row;
   row_t * 	data;
   row_t * 	orig_data;
+#if COMMUTATIVE_OPS
+  // support increment-only for now
+  uint64_t  com_val;
+  int       com_col;
+  com_t     com_op;
+#endif
   void cleanup();
 #if CC_ALG == TICTOC
   ts_t 		wts;
   ts_t 		rts;
 #elif CC_ALG == SILO
   ts_t 		tid;
-    ts_t 		epoch;
+  ts_t 		epoch;
 #elif CC_ALG == HEKATON
   void * 		history_entry;
 #endif
@@ -50,6 +56,12 @@ class txn_man
   workload * 		get_wl();
   void 			    set_txn_id(txnid_t txn_id);
   txnid_t 		    get_txn_id();
+
+  // [COMMUTATIVE OPERATIONS]
+#if COMMUTATIVE_OPS
+  void             inc_value(int col, uint64_t val);
+  void             dec_value(int col, uint64_t val);
+#endif
 
   // [WW, BAMBOO]
   status_t          wound_txn(txn_man * txn);

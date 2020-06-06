@@ -171,6 +171,10 @@ extern TPCCTxnType 					g_tpcc_txn_type;
 // enable user-initiated aborts in new-order txn according to TPC-C doc.
 #define TPCC_USER_ABORT             true
 
+// Optimizations used in IC3
+#define COMMUTATIVE_OPS             false
+#define COMMUTATIVE_LATCH           false
+
 /***********************************************/
 // TODO centralized CC management.
 /***********************************************/

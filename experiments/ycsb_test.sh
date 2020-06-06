@@ -26,7 +26,7 @@ shs="WR"
 read_ratio=1
 ordered="false"
 flip=0
-table_size="1024*1024*20"
+table_size="10000000"
 
 # other
 threads=16
