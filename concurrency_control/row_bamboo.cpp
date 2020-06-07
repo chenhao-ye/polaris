@@ -39,19 +39,24 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
         // append to retired
         ADD_TO_RETIRED_TAIL(to_insert);
       } else {
+        owner_ts = owners->txn->get_ts();
         if (ts == 0) {
           ts = txn->set_next_ts(2);
           local_ts = ts-1;
           // if fail to assign, reload
           if ( ts == 0 )
             ts = txn->get_ts();
+          // assign owner a ts
+          if (owner_ts == 0) 
+            owner_ts = owners->txn->atomic_set_ts(ts);
+        } else {
+          if (owner_ts == 0) {
+            owner_ts = owners->txn->set_next_ts(1);
+          }
         }
-        owner_ts = owners->txn->get_ts();
-        if (owner_ts == 0) {
-          owner_ts = owners->txn->atomic_set_ts(ts);
-          if (owner_ts == 0)
-            owner_ts = owners->txn->get_ts();
-        }
+        // if fail to assign owner a ts, recheck
+        if (owner_ts == 0)
+          owner_ts = owners->txn->get_ts();
         if (ts > owner_ts) {
             ADD_TO_WAITERS(en, to_insert);
           goto final;
@@ -150,11 +155,12 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
       }
     }
     // all timestamps should be assigned already!
-    if (!owners || (ts != 0 && (owner_ts > ts))) {
+    if (!owners || (owner_ts > ts)) {
       // go through retired and wound
       en = retired_head;
       while (en) {
-        if (en->txn->get_ts() > ts) {
+        owner_ts = en->txn->get_ts(); // just use this var, but actually retired_ts
+        if (owner_ts == 0 || (owner_ts > ts)) {
           TRY_WOUND_PT(en, to_insert);
           // abort descendants
           en = rm_from_retired(en, true);
