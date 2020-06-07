@@ -83,7 +83,6 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
   // helper
   RC rc = RCOK;
   BBLockEntry * en;
-  BBLockEntry * to_return = NULL;
 
 #if DEBUG_CS_PROFILING
   uint64_t starttime = get_sys_clock();
@@ -170,6 +169,12 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
           en = rm_from_retired(en, true);
         } else
           en = en->next;
+      }
+      if (owners) {
+        // abort owners as well
+        TRY_WOUND_PT(owners, to_insert);
+        return_entry(owners);
+        owners = NULL;
       }
     }
     ADD_TO_WAITERS(en, to_insert);
@@ -407,9 +412,11 @@ txn) {
     return_entry(to_return);
   }
   // empty owners
-  owners->txn->set_abort();
-  return_entry(owners);
-  owners = NULL;
+  if (owners) {
+    owners->txn->set_abort();
+    return_entry(owners);
+    owners = NULL;
+  }
   assert(!retired_head || retired_head->is_cohead);
 
   if (prev)
