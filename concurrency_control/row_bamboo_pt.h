@@ -72,6 +72,13 @@
   waiter_cnt ++; \
 }
 
+#define ADD_TO_WAITERS_TAIL(to_insert) { \
+  rc = WAIT; \
+  LIST_PUT_TAIL(waiters_head, waiters_tail, to_insert); \
+  to_insert->status = LOCK_WAITER; \
+  waiter_cnt ++; \
+}
+
 #define RETIRE_ENTRY(to_retire) { \
   to_retire = owners; \
   owners = NULL; \
@@ -82,18 +89,6 @@
 #define CHECK_ROLL_BACK(en) { \
     en->access->orig_row->copy(en->access->orig_data); \
   }
-
-// no need to be too complicated (i.e. call function) as the owner will be empty in the end
-#define ABORT_ALL_OWNERS(itr) {\
-  while(owners) { \
-    itr = owners; \
-    owners = owners->next; \
-    itr->txn->set_abort(); \
-    return_entry(itr); \
-  } \
-  owners_tail = NULL; \
-  owners = NULL; \
-  owner_cnt = 0; }
 
 // try_wound(to_wound, wounder), if commited, wound failed, return wounder
 #define TRY_WOUND_PT(to_wound, wounder) { \
