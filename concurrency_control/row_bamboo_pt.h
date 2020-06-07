@@ -149,7 +149,6 @@ class Row_bamboo_pt {
   virtual BBLockEntry *     rm_from_retired(BBLockEntry * en, bool is_abort);
   virtual BBLockEntry *     remove_descendants(BBLockEntry * en, txn_man * txn);
   row_t * _row;
-  UInt32 owner_cnt;
   UInt32 waiter_cnt;
   UInt32 retired_cnt; // no need to keep retied cnt
 
@@ -158,12 +157,10 @@ class Row_bamboo_pt {
   // [waiters] head is the oldest txn, tail is the youngest txn.
   //   So new txns are inserted into the tail.
   BBLockEntry * owners;
-  BBLockEntry * owners_tail;
   BBLockEntry * retired_head;
   BBLockEntry * retired_tail;
   BBLockEntry * waiters_head;
   BBLockEntry * waiters_tail;
-  BBLockEntry * fcw;
 };
 
 #endif

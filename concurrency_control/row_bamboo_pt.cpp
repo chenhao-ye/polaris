@@ -8,18 +8,15 @@ void Row_bamboo_pt::init(row_t * row) {
   _row = row;
   // owners is a double linked list, each entry/node contains info like lock type, prev/next
   owners = NULL;
-  owners_tail = NULL;
   // waiter is a double linked list. two ptrs to the linked lists
   waiters_head = NULL;
   waiters_tail = NULL;
   // retired is a double linked list
   retired_head = NULL;
   retired_tail = NULL;
-  owner_cnt = 0;
   waiter_cnt = 0;
   retired_cnt = 0;
   // record first conflicting write to rollback
-  fcw = NULL;
 #if LATCH == LH_SPINLOCK
   latch = new pthread_spinlock_t;
   pthread_spin_init(latch, PTHREAD_PROCESS_SHARED);
