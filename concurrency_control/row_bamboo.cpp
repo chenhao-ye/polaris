@@ -42,13 +42,12 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
         owner_ts = owners->txn->get_ts();
         if (ts == 0) {
           ts = txn->set_next_ts(2);
-          local_ts = ts-1;
           // if fail to assign, reload
           if ( ts == 0 )
             ts = txn->get_ts();
           // assign owner a ts
           if (owner_ts == 0) 
-            owner_ts = owners->txn->atomic_set_ts(ts);
+            owner_ts = owners->txn->atomic_set_ts(ts-1);
         } else {
           if (owner_ts == 0) {
             owner_ts = owners->txn->set_next_ts(1);
@@ -130,7 +129,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
         if (owners) {
           owner_ts = owners->txn->get_ts();
           if (owner_ts == 0) {
-            owner_ts = owners->txn->atomic_set_ts(ts);
+            owner_ts = owners->txn->atomic_set_ts(ts-1);
             if (owner_ts == 0)
               owner_ts = owners->txn->get_ts();
           }
@@ -155,7 +154,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
       }
     }
     // all timestamps should be assigned already!
-    if (!owners || (owner_ts > ts)) {
+    if (!owners || (owner_ts > ts || (owner_ts == 0))) {
       // go through retired and wound
       en = retired_head;
       while (en) {

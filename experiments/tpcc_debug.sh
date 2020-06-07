@@ -28,6 +28,7 @@ penalty=50000
 # temp
 latch=LH_MCSLOCK
 user_abort="false"
+threads=32
 #dynamic="false"
 #cnt=1000000
 
