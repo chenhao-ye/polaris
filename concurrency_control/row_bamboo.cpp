@@ -117,6 +117,10 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
       txn->lock_ready = true;
       goto final;
     }
+    if (waiter_cnt > BB_OPT_MAX_WAITER) {
+      rc = Abort;
+      goto final;
+    }
     // has to assign self ts if not have one
     if (ts == 0) {
       if (retired_has_write || owners) {
