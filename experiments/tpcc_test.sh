@@ -34,22 +34,14 @@ for user_abort in true false
 do
 for alg in BAMBOO #SILO WOUND_WAIT WAIT_DIE NO_WAIT
 do
-for wh in 1 2 4 8 16 32
+for wh in 1 2 4 8 16
 do
-threads=8
-for max_waiter in 4 6 8
+for threads in 1 2 4 8 16 32
 do
-timeout 100 python test.py CC_ALG=$alg LATCH=${latch} WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=$dynamic RETIRE_ON=$retire DEBUG_CS_PROFILING=${cs_pf} BB_OPT_RAW=${opt_raw} BB_OPT_MAX_WAITER=${max_waiter} WORKLOAD=${wl} NUM_WH=${wh} PERC_PAYMENT=$perc TPCC_USER_ABORT=${user_abort} COMMUTATIVE_OPS=$com COMMUTATIVE_LATCH=${com_latch} THREAD_CNT=$threads DEBUG_PROFILING=${profile} MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty
-done
-threads=16
-for max_waiter in 4 6 8 10 12
+for max_waiter in 4 0
 do
 timeout 100 python test.py CC_ALG=$alg LATCH=${latch} WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=$dynamic RETIRE_ON=$retire DEBUG_CS_PROFILING=${cs_pf} BB_OPT_RAW=${opt_raw} BB_OPT_MAX_WAITER=${max_waiter} WORKLOAD=${wl} NUM_WH=${wh} PERC_PAYMENT=$perc TPCC_USER_ABORT=${user_abort} COMMUTATIVE_OPS=$com COMMUTATIVE_LATCH=${com_latch} THREAD_CNT=$threads DEBUG_PROFILING=${profile} MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty
 done
-threads=32
-for max_waiter in 4 6 8 10 12 16 20
-do
-timeout 100 python test.py CC_ALG=$alg LATCH=${latch} WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=$dynamic RETIRE_ON=$retire DEBUG_CS_PROFILING=${cs_pf} BB_OPT_RAW=${opt_raw} BB_OPT_MAX_WAITER=${max_waiter} WORKLOAD=${wl} NUM_WH=${wh} PERC_PAYMENT=$perc TPCC_USER_ABORT=${user_abort} COMMUTATIVE_OPS=$com COMMUTATIVE_LATCH=${com_latch} THREAD_CNT=$threads DEBUG_PROFILING=${profile} MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty
 done
 done
 done
@@ -59,8 +51,8 @@ done
 
 cd outputs/
 python3 collect_stats.py
-mv stats.csv tpcc_bb_max_waiter.csv
-mv stats.json tpcc_bb_max_waiter.json
+mv stats.csv tpcc_bb.csv
+mv stats.json tpcc_bb.json
 cd ..
 
 cd experiments/
