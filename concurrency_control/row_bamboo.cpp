@@ -117,7 +117,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
       txn->lock_ready = true;
       goto final;
     }
-    if (waiter_cnt > BB_OPT_MAX_WAITER) {
+    if (waiter_cnt > BB_OPT_MAX_WAITER && (BB_OPT_MAX_WAITER != 0)) {
       rc = Abort;
       goto final;
     }
