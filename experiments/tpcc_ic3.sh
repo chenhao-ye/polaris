@@ -19,7 +19,7 @@ wl="TPCC"
 wh=2
 perc=0.5 # payment percentage
 user_abort="false"
-com="true"
+com="false"
 com_latch="false"
 
 #other
@@ -28,10 +28,11 @@ profile="true"
 cnt=100000
 penalty=50000
 
+com="false"
 for i in 0 1 2 3 4
 do
-for com_latch in true
-do
+#for com_latch in true
+#do
 for alg in BAMBOO #SILO WOUND_WAIT WAIT_DIE NO_WAIT
 do
 for threads in 1 2 4 8 16 32
@@ -60,7 +61,7 @@ timeout 100 python test.py CC_ALG=$alg LATCH=${latch} WW_STARV_FREE=${ww_starv_f
 done
 
 fi
-done
+#done
 done
 done
 done
@@ -69,9 +70,9 @@ done
 
 cd outputs/
 python3 collect_stats.py
-mv stats.csv tpcc_bb_com_more.csv
-mv stats.json tpcc_bb_com_more.json
+mv stats.csv tpcc_bb.csv
+mv stats.json tpcc_bb.json
 cd ..
 
 cd experiments/
-python3 send_email.py tpcc_com_more
+python3 send_email.py tpcc_bb
