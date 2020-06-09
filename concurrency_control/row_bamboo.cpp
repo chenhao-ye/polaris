@@ -45,7 +45,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
           // assign owner a ts
           if (owner_ts == 0) { 
             if (!owners->txn->atomic_set_ts(ts-1))
-              owner_ts = owners->get_ts();
+              owner_ts = owners->txn->get_ts();
             else
               owner_ts = ts - 1;
           }
@@ -54,7 +54,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
             owner_ts = owners->txn->set_next_ts(1);
             // if fail to assign owner a ts, recheck
             if (owner_ts == 0)
-              owner_ts = owners->get_ts(); 
+              owner_ts = owners->txn->get_ts(); 
           }
         }
         if (ts > owner_ts) {
@@ -155,10 +155,10 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
           goto final;
         } else {
           ts = txn->get_ts(); // assigned by others already, need to continue
-          owner_ts = owners->txn->get_ts();
         }
       }
-    }
+    } 
+    // else: self has timestamp already. then need to kill all unassigned entries
     // all timestamps should be assigned already!
     if (!owners || (owner_ts > ts || (owner_ts == 0))) {
       // go through retired and wound
