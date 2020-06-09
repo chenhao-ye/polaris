@@ -36,13 +36,14 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
         // append to retired
         ADD_TO_RETIRED_TAIL(to_insert);
       } else {
+        // has write in owner but not in retired
         owner_ts = owners->txn->get_ts();
         if (ts == 0) {
           ts = txn->set_next_ts(2);
           // if fail to assign, reload
           if ( ts == 0 )
             ts = txn->get_ts();
-          // assign owner a ts
+          // the only writer in owner may be unassigned
           if (owner_ts == 0) { 
             if (!owners->txn->atomic_set_ts(ts-1))
               owner_ts = owners->txn->get_ts();
@@ -50,7 +51,9 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
               owner_ts = ts - 1;
           }
         } else {
+          // the only writer in owner may be unassigned
           if (owner_ts == 0) {
+            // assign owner a ts
             owner_ts = owners->txn->set_next_ts(1);
             // if fail to assign owner a ts, recheck
             if (owner_ts == 0)
@@ -125,14 +128,17 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
       rc = Abort;
       goto final;
     }
+    if (owners)
+      owner_ts = owners->txn->get_ts();
     // has to assign self ts if not have one
     if (ts == 0) {
       if (retired_has_write || owners) {
-        // all retired assigned, just check owner
+        // false-true: [RR][W] -- owner may be unassigned
+        // true-false: [WR][ ] -- all assigned
+        // true-true:  [WR][W] -- all assigned
         ts = txn->set_next_ts(2); // 1 for owner, 1 for self
         // assign owner
         if (owners) {
-          owner_ts = owners->txn->get_ts();
           if (owner_ts == 0) {
             if (owners->txn->atomic_set_ts(ts-1))
               owner_ts = ts - 1;
@@ -141,7 +147,9 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
           }
         }
       } else { // owner is empty, retired may have unassigned reads
-        // assgin each retired, then assign self
+        // retired_has_write = false && owners == NULL
+        // assgin each retired, then assign self and add to OWNER
+        // as no waiters for sure
         en = retired_head;
         while (en) {
           en->txn->set_next_ts(1);
@@ -158,8 +166,9 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
         }
       }
     } 
-    // else: self has timestamp already. then need to kill all unassigned entries
-    // all timestamps should be assigned already!
+    // else: self has timestamp already. 
+    // then need to kill all unassigned entries
+    // if ts == 0, all timestamps should be assigned already!
     if (!owners || (owner_ts > ts || (owner_ts == 0))) {
       // go through retired and wound
       en = retired_head;
