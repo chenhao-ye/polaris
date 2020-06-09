@@ -38,27 +38,19 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
       } else {
         // has write in owner but not in retired
         owner_ts = owners->txn->get_ts();
-        if (ts == 0) {
-          ts = txn->set_next_ts(2);
-          // if fail to assign, reload
-          if ( ts == 0 )
-            ts = txn->get_ts();
-          // the only writer in owner may be unassigned
-          if (owner_ts == 0) { 
-            if (!owners->txn->atomic_set_ts(ts-1))
-              owner_ts = owners->txn->get_ts();
-            else
-              owner_ts = ts - 1;
-          }
-        } else {
-          // the only writer in owner may be unassigned
-          if (owner_ts == 0) {
+        // the only writer in owner may be unassigned
+        if (owner_ts == 0) {
             // assign owner a ts
             owner_ts = owners->txn->set_next_ts(1);
             // if fail to assign owner a ts, recheck
             if (owner_ts == 0)
               owner_ts = owners->txn->get_ts(); 
-          }
+        }
+        if (ts == 0) {
+          ts = txn->set_next_ts(1);
+          // if fail to assign, reload
+          if ( ts == 0 )
+            ts = txn->get_ts();
         }
         if (ts > owner_ts) {
             ADD_TO_WAITERS(en, to_insert);
@@ -82,6 +74,9 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
         }
       }
     } else {
+      // special case: [W][]
+      if (retired_cnt == 1 && (retired_head->type == LOCK_EX))
+         retired_head->txn->set_next_ts(1);
       // retire has write -> retire all has ts. owner has ts if exists.
       if (ts == 0) {
         ts = txn->set_next_ts(1); // 1 for owner, 1 for self
@@ -134,20 +129,19 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
     if (ts == 0) {
       if (retired_has_write || owners) {
         // false-true: [  ][W] -- owner may be unassigned
-        // true-false: [WR][ ] -- all assigned
+        // true-false: [W][ ] -- special case, otherwise all assigned
         // true-true:  [WR][W] -- all assigned
-        ts = txn->set_next_ts(2); // 1 for owner, 1 for self
+        if (retired_has_write && (retired_cnt == 1) && retired_head->type == LOCK_EX)
+          retired_head->txn->set_next_ts(1);
+        // assign owner
+        if (owners && (owner_ts == 0)) {
+          owner_ts = owners->txn->set_next_ts(1);
+          if (owner_ts == 0)
+            owner_ts = owners->txn->get_ts();
+        }
+        ts = txn->set_next_ts(1); // 1 for owner, 1 for self
         if (ts == 0) {
           ts = txn->get_ts();
-        }
-        // assign owner
-        if (owners) {
-          if (owner_ts == 0) {
-            if (owners->txn->atomic_set_ts(ts-1))
-              owner_ts = ts - 1;
-            else
-              owner_ts = owners->txn->get_ts();
-          }
         }
       } else { // owner is empty, retired may have unassigned reads
         // retired_has_write = false & owners = NULL
