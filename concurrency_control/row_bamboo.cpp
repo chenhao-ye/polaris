@@ -133,10 +133,13 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
     // has to assign self ts if not have one
     if (ts == 0) {
       if (retired_has_write || owners) {
-        // false-true: [RR][W] -- owner may be unassigned
+        // false-true: [  ][W] -- owner may be unassigned
         // true-false: [WR][ ] -- all assigned
         // true-true:  [WR][W] -- all assigned
         ts = txn->set_next_ts(2); // 1 for owner, 1 for self
+        if (ts == 0) {
+          ts = txn->get_ts();
+        }
         // assign owner
         if (owners) {
           if (owner_ts == 0) {
@@ -147,7 +150,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
           }
         }
       } else { // owner is empty, retired may have unassigned reads
-        // retired_has_write = false && owners == NULL
+        // retired_has_write = false & owners = NULL
         // assgin each retired, then assign self and add to OWNER
         // as no waiters for sure
         en = retired_head;
