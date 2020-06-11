@@ -80,6 +80,9 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
   // helper
   RC rc = RCOK;
   BBLockEntry * en;
+#if DEBUG_ABORT_LENGTH
+  txn->abort_chain = 0;
+#endif
 
 #if DEBUG_CS_PROFILING
   uint64_t starttime = get_sys_clock();
@@ -163,7 +166,7 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
         if (en->txn->get_ts() > ts) {
           TRY_WOUND_PT(en, to_insert);
           // abort descendants
-          en = rm_from_retired(en, true);
+          en = rm_from_retired(en, true, txn);
         } else
           en = en->next;
       }
@@ -226,6 +229,9 @@ RC Row_bamboo_pt::lock_retire(void * addr) {
 
 RC Row_bamboo_pt::lock_release(void * addr, RC rc) {
   BBLockEntry * entry = (BBLockEntry *) addr;
+#if DEBUG_ABORT_LENGTH
+  entry->txn->abort_chain = 0;
+#endif
 #if DEBUG_CS_PROFILING
   uint64_t starttime = get_sys_clock();
 #endif
@@ -237,7 +243,7 @@ RC Row_bamboo_pt::lock_release(void * addr, RC rc) {
 #endif
   // if in retired
   if (entry->status == LOCK_RETIRED) {
-    rm_from_retired(entry, rc == Abort);
+    rm_from_retired(entry, rc == Abort, entry->txn);
   } else if (entry->status == LOCK_OWNER) {
     owners = NULL;
     // not found in retired, need to make globally visible if rc = commit
@@ -258,6 +264,10 @@ RC Row_bamboo_pt::lock_release(void * addr, RC rc) {
   starttime);
 #endif
   unlock(entry);
+#if DEBUG_ABORT_LENGTH
+  if (entry->txn->abort_chain > 0)
+    UPDATE_STATS(entry->txn->get_thd_id(), abort_length, entry->txn->abort_chain);
+#endif
   return RCOK;
 }
 
@@ -266,11 +276,11 @@ RC Row_bamboo_pt::lock_release(void * addr, RC rc) {
  * descendants if is_abort = true)
  */
 inline 
-BBLockEntry * Row_bamboo_pt::rm_from_retired(BBLockEntry * en, bool is_abort) {
+BBLockEntry * Row_bamboo_pt::rm_from_retired(BBLockEntry * en, bool is_abort, txn_man * txn) {
   if (is_abort && (en->type == LOCK_EX)) {
     CHECK_ROLL_BACK(en); // roll back only for the first-conflicting-write
     en->txn->lock_abort = true;
-    en = remove_descendants(en, en->txn);
+    en = remove_descendants(en, txn);
     return en;
   } else {
     BBLockEntry * next = en->next;
@@ -405,11 +415,17 @@ txn) {
     en->txn->set_abort();
     to_return = en;
     retired_cnt--;
+#if DEBUG_ABORT_LENGTH
+    txn->abort_chain++;
+#endif
     en = en->next;
     return_entry(to_return);
   }
   // empty owners
   if (owners) {
+#if DEBUG_ABORT_LENGTH
+    txn->abort_chain++;
+#endif
     owners->txn->set_abort();
     return_entry(owners);
     owners = NULL;

@@ -2,18 +2,20 @@
 
 #define TMP_METRICS(x, y) \
   x(double, time_wait) x(double, time_man) x(double, time_index)
-#define ALL_METRICS(x, y) \
+#define ALL_METRICS(x, y, z) \
   y(uint64_t, txn_cnt) y(uint64_t, abort_cnt) y(uint64_t, user_abort_cnt) \
   x(double, run_time) x(double, time_abort) x(double, time_cleanup) \
   x(double, time_query) x(double, time_get_latch) x(double, time_get_cs) \
   x(double, time_retire_latch) x(double, time_retire_cs) \
   x(double, time_release_latch) x(double, time_release_cs) \
   x(double, time_commit) y(uint64_t, time_ts_alloc) y(uint64_t, wait_cnt) \
-  y(uint64_t, latency) y(uint64_t, commit_latency) TMP_METRICS(x, y)
+  y(uint64_t, latency) y(uint64_t, commit_latency) z(uint64_t, abort_length) \
+  TMP_METRICS(x, y)
 #define DECLARE_VAR(tpe, name) tpe name;
 #define INIT_VAR(tpe, name) name = 0;
 #define INIT_TOTAL_VAR(tpe, name) tpe total_##name = 0;
 #define SUM_UP_STATS(tpe, name) total_##name += _stats[tid]->name;
+#define MAX_STATS(tpe, name) total_##name = max(total_##name, _stats[tid]->name);
 #define STR(x) #x
 #define XSTR(x) STR(x)
 #define STR_X(tpe, name) XSTR(name)
@@ -34,7 +36,7 @@ class Stats_thd {
   void clear();
 
   char _pad2[CL_SIZE];
-  ALL_METRICS(DECLARE_VAR, DECLARE_VAR)
+  ALL_METRICS(DECLARE_VAR, DECLARE_VAR, DECLARE_VAR)
   uint64_t * all_debug1;
   uint64_t * all_debug2;
   char _pad[CL_SIZE];

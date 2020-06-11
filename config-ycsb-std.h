@@ -211,6 +211,7 @@ extern TestCases					g_test_case;
 #define DEBUG_TMP					false
 #define DEBUG_PROFILING				false
 #define DEBUG_CS_PROFILING          false // profiling inside critical path
+#define DEBUG_ABORT_LENGTH          false
 
 /***********************************************/
 // Constant

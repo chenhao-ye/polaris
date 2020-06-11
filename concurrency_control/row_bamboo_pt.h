@@ -146,7 +146,7 @@ class Row_bamboo_pt {
   virtual void		        unlock(BBLockEntry * en);
   virtual bool              bring_next(txn_man * txn);
   virtual void              update_entry(BBLockEntry * en);
-  virtual BBLockEntry *     rm_from_retired(BBLockEntry * en, bool is_abort);
+  virtual BBLockEntry *     rm_from_retired(BBLockEntry * en, bool is_abort, txn_man * txn);
   virtual BBLockEntry *     remove_descendants(BBLockEntry * en, txn_man * txn);
   row_t * _row;
   UInt32 waiter_cnt;

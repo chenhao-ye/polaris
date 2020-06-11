@@ -18,6 +18,9 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
   RC rc = RCOK;
   ts_t owner_ts = 0;
 
+#if DEBUG_ABORT_LENGTH
+  txn->abort_chain = 0;
+#endif
 #if DEBUG_CS_PROFILING
   uint64_t starttime = get_sys_clock();
 #endif
@@ -174,7 +177,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
         if (owner_ts == 0 || (owner_ts > ts)) {
           TRY_WOUND_PT(en, to_insert);
           // abort descendants
-          en = rm_from_retired(en, true);
+          en = rm_from_retired(en, true, txn);
         } else
           en = en->next;
       }
@@ -199,5 +202,9 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
   INC_STATS(txn->get_thd_id(), time_get_cs, get_sys_clock() - starttime);
 #endif
   unlock(to_insert);
+#if DEBUG_ABORT_LENGTH
+  if (txn->abort_chain > 0)
+    UPDATE_STATS(txn->get_thd_id(), abort_length, txn->abort_chain);
+#endif
   return rc;
 }
