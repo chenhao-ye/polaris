@@ -4,7 +4,7 @@ cp -r config-ycsb-std.h config.h
 fname="ycsb-readratio"
 # algorithm
 alg=WOUND_WAIT
-latch=LH_SPINLOCK
+latch=LH_MCSLOCK
 # [WW]
 ww_starv_free="false"
 # [BAMBOO]
