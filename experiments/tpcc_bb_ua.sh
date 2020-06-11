@@ -10,7 +10,7 @@ ww_starv_free="false"
 # [BAMBOO]
 dynamic="true"
 retire="true"
-cs_pf="true"
+cs_pf="false"
 opt_raw="true"
 max_waiter=10
 
@@ -30,7 +30,7 @@ penalty=50000
 
 for i in 0 1 2 3 4
 do
-for user_abort in true false
+for user_abort in true #false
 do
 for alg in BAMBOO #SILO WOUND_WAIT WAIT_DIE NO_WAIT
 do
@@ -69,9 +69,9 @@ done
 
 cd outputs/
 python3 collect_stats.py
-mv stats.csv tpcc_bb_pf.csv
-mv stats.json tpcc_bb_pf.json
+mv stats.csv tpcc_bb_ua.csv
+mv stats.json tpcc_bb_ua.json
 cd ..
 
 cd experiments/
-python3 send_email.py tpcc_bb_pf
+python3 send_email.py tpcc_bb_ua
