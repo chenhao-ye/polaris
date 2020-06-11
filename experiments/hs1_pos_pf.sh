@@ -1,6 +1,8 @@
 cd ../
 cp -r config-ycsb-synthetic-std.h config.h
 
+fname="hs1_pos_ww_pf"
+
 # algorithm
 alg=BAMBOO
 latch=LH_MCSLOCK
@@ -38,25 +40,25 @@ penalty=50000
 # figure 4: normalized throughput with optimal case, varying requests
 for i in 0 1 2 3 4
 do
-for alg in BAMBOO
+for alg in WOUND_WAIT
 do
 for specified in 0 0.25 0.5 0.75 1
 do
-for max_waiter in 0 4 8 12
-do
-for dynamic in true false
-do
+#for max_waiter in 0 4 8 12
+#do
+#for dynamic in true false
+#do
 timeout 100 python test.py CC_ALG=${alg} LATCH=${latch} SPINLOCK=${spin} WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=${dynamic} RETIRE_ON=${retire_on} DEBUG_CS_PROFILING=${cs_pf} BB_OPT_RAW=${opt_raw} BB_OPT_MAX_WAITER=${max_waiter} WORKLOAD=${wl} REQ_PER_QUERY=$req SYNTHETIC_YCSB=$synthetic ZIPF_THETA=$zipf NUM_HS=${num_hs} POS_HS=$pos SPECIFIED_RATIO=${specified} FIXED_HS=${fixed} FIRST_HS=$fhs SECOND_HS=$shs READ_PERC=${read_ratio} KEY_ORDER=$ordered FLIP_RATIO=${flip} SYNTH_TABLE_SIZE=${table_size} THREAD_CNT=$threads DEBUG_PROFILING=$profile MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty
-done
-done
+#done
+#done
 done
 done
 done
 
 cd outputs/
 python3 collect_stats.py
-mv stats.csv hs1_pos_bb_pf.csv
-mv stats.json hs1_pos_bb_pf.json
+mv stats.csv ${fname}.csv
+mv stats.json ${fname}.json
 cd ..
 
 python experiments/send_email.py hs1_pos
