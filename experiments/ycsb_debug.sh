@@ -10,13 +10,13 @@ dynamic="true"
 retire_on="true"
 cs_pf="false"
 opt_raw="true"
-max_writer=0
+max_writer=8
 
 # workload
 wl="YCSB"
 req=16
 synthetic=false
-zipf=0.7
+zipf=1.1
 num_hs=0
 pos=TOP
 specified=0
