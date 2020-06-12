@@ -38,11 +38,11 @@ penalty=50000
 chain="true"
 
 read_ratio=0.5
-for i in 0 1 2 3 4 5
+for i in 0 1 2 3 4 5 6
 do
 for alg in BAMBOO WOUND_WAIT 
 do
-for zipf in 0.3 0.5 0.7 0.9 1.1
+for zipf in 0.1 0.3 0.5 0.7 0.9 1.1
 do
 if [ $alg == "BAMBOO" ] 
 then
