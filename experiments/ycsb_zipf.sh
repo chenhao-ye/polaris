@@ -1,9 +1,8 @@
 cd ../
 cp -r config-ycsb-std.h config.h
 
-fname="ycsb-zipf"
+fname="ycsb-zipf-more"
 # algorithm
-alg=WOUND_WAIT
 latch=LH_MCSLOCK
 # [WW]
 ww_starv_free="false"
@@ -37,11 +36,11 @@ cnt=100000
 penalty=50000
 
 read_ratio=0.5
-for i in 0 1 2 3 4 5
+for i in 0 1 2 3 4 5 6 7 8 9 
 do
-for alg in BAMBOO WOUND_WAIT SILO WAIT_DIE NO_WAIT
+for alg in WOUND_WAIT BAMBOO SILO WAIT_DIE NO_WAIT 
 do
-for zipf in 0.3 0.5 0.7 0.9 1.1
+for zipf in 0.5 0.7 0.9 1.1
 do
 if [ $alg == "BAMBOO" ] 
 then
