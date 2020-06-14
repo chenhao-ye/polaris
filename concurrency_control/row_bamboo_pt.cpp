@@ -108,6 +108,7 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
         // append to retired
         ADD_TO_RETIRED_TAIL(to_insert);
       } else {
+        // owner has write
         if (ts > owners->txn->get_ts()) {
           ADD_TO_WAITERS(en, to_insert);
           goto final;
@@ -119,17 +120,20 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
 #else
           // wound owner
           TRY_WOUND_PT(owners, to_insert);
-          ABORT_ALL_OWNERS(en);
+          return_entry(owners);
+          owners = NULL;
           // add to waiters
           ADD_TO_WAITERS(en, to_insert);
           if (bring_next(txn)) {
-            txn->lock_ready = true;
             rc = RCOK;
+          } else {
+            goto final;
           }
 #endif
         }
       }
     } else {
+      // retired has write
       if (!owners || (owners->txn->get_ts() > ts)) {
 #if BB_OPT_RAW
         // go through retired and insert
@@ -149,7 +153,22 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
         }
         rc = FINISH;
 #else
-        assert(false);
+        // go through retired and abort
+        en = retired_head;
+        while (en) {
+          if (en->type == LOCK_EX && (en->txn->get_ts() > ts)) {
+            TRY_WOUND_PT(en, to_insert);
+            // abort descendants
+            en = rm_from_retired(en, true, txn);
+          } else
+            en = en->next;
+        }
+        if (owners) {
+          // abort owners as well
+          TRY_WOUND_PT(owners, to_insert);
+          return_entry(owners);
+          owners = NULL;
+        }
 #endif
       } else {
           // add to waiter
@@ -184,7 +203,7 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
       goto final;
     }
   }
-  to_insert->txn->lock_ready = true;
+  txn->lock_ready = true;
   final:
 #if DEBUG_CS_PROFILING
   INC_STATS(txn->get_thd_id(), time_get_cs, get_sys_clock() - starttime);
