@@ -1,7 +1,6 @@
 cd ../
-cp -r config-ycsb-std.h config.h
+cp -r config-ycsb-synthetic-std.h config.h
 
-fname="ycsb-readratio"
 # algorithm
 alg=WOUND_WAIT
 latch=LH_MCSLOCK
@@ -17,9 +16,9 @@ max_waiter=0
 # workload
 wl="YCSB"
 req=16
-synthetic=false
+synthetic=true
 zipf=0
-num_hs=0
+num_hs=1
 pos=TOP
 specified=0
 fixed=1
@@ -29,40 +28,33 @@ read_ratio=1
 ordered="false"
 flip=0
 table_size="10000000"
+chain="false"
 
 # other
 threads=16
 profile="true"
-cnt=100000
+cnt=100000 
 penalty=50000
 
-zipf=0.9
-for i in 0 1 2 3 4 5
+# figure 4: normalized throughput with optimal case, varying requests
+for i in 0 1 2 3 4
 do
-for alg in WOUND_WAIT BAMBOO SILO WAIT_DIE NO_WAIT
+for alg in WOUND_WAIT BAMBOO
 do
-for read_ratio in 0.1 0.3 0.5 0.7 0.9
+for threads in 1 2 4 8 16 32
 do
-if [ $alg == "BAMBOO" ] 
-then
-for dynamic in true false
+for req in 4 16 64
 do
 timeout 200 python test.py CC_ALG=${alg} LATCH=${latch} WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=${dynamic} RETIRE_ON=${retire_on} DEBUG_CS_PROFILING=${cs_pf} BB_OPT_RAW=${opt_raw} BB_OPT_MAX_WAITER=${max_waiter} WORKLOAD=${wl} REQ_PER_QUERY=$req SYNTHETIC_YCSB=$synthetic ZIPF_THETA=$zipf NUM_HS=${num_hs} POS_HS=$pos SPECIFIED_RATIO=${specified} FIXED_HS=${fixed} FIRST_HS=$fhs SECOND_HS=$shs READ_PERC=${read_ratio} KEY_ORDER=$ordered FLIP_RATIO=${flip} SYNTH_TABLE_SIZE=${table_size} THREAD_CNT=$threads DEBUG_PROFILING=$profile MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty
-done 
-else 
-timeout 200 python test.py CC_ALG=${alg} LATCH=${latch} WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=${dynamic} RETIRE_ON=${retire_on} DEBUG_CS_PROFILING=${cs_pf} BB_OPT_RAW=${opt_raw} BB_OPT_MAX_WAITER=${max_waiter} WORKLOAD=${wl} REQ_PER_QUERY=$req SYNTHETIC_YCSB=$synthetic ZIPF_THETA=$zipf NUM_HS=${num_hs} POS_HS=$pos SPECIFIED_RATIO=${specified} FIXED_HS=${fixed} FIRST_HS=$fhs SECOND_HS=$shs READ_PERC=${read_ratio} KEY_ORDER=$ordered FLIP_RATIO=${flip} SYNTH_TABLE_SIZE=${table_size} THREAD_CNT=$threads DEBUG_PROFILING=$profile MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty
-fi
 done
 done
 done
-
-#
+done
 
 cd outputs/
 python3 collect_stats.py
-mv stats.csv ${fname}.csv
-mv stats.json ${fname}.json
+mv stats.csv hs1_top_req.csv
+mv stats.json hs1_top_req.json
 cd ..
 
-cd experiments
-python3 send_email.py ycsb_${fname}
+python experiments/send_email.py hs1_top_req
