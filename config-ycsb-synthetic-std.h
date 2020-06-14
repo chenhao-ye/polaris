@@ -144,6 +144,7 @@
 #define NUM_HS                      1
 #define FIRST_HS                    WR
 #define SECOND_HS                   WR
+#define FIXED_HS                    0
 
 // ==== [TPCC] ====
 // For large warehouse count, the tables do not fit in memory

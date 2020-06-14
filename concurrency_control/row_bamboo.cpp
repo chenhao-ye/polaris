@@ -64,15 +64,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
           ADD_TO_RETIRED_TAIL(to_insert);
           rc = FINISH;
 #else
-          // wound owner
-          TRY_WOUND_PT(owners, to_insert);
-          ABORT_ALL_OWNERS(en);
-          // add to waiters
-          ADD_TO_WAITERS(en, to_insert);
-          if (bring_next(txn)) {
-            txn->lock_ready = true;
-            rc = RCOK;
-          }
+          assert(false);
 #endif
         }
       }
