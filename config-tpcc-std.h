@@ -259,5 +259,6 @@ extern TestCases					g_test_case;
 #define BOT                         3
 #define TM                          4
 #define MB                          5
+#define SPECIFIED                   6
 
 #endif
