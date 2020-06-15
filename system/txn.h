@@ -50,6 +50,9 @@ class txn_man
   workload * h_wl;
   myrand * mrand;
   uint64_t abort_cnt;
+#if DEBUG_ABORT_LENGTH
+  uint64_t      abort_chain;
+#endif
 
   virtual RC 		run_txn(base_query * m_query) = 0;
   uint64_t 		    get_thd_id();

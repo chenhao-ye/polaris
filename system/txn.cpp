@@ -19,6 +19,9 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
   lock_ready = false;
   lock_abort = false;
   timestamp = 0;
+#if DEBUG_ABORT_LENGTH
+  abort_chain = 0;
+#endif
 #if CC_ALG == BAMBOO
   commit_barriers = 0;
 #endif

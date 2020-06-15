@@ -74,6 +74,9 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int&txncnt,
   RC rc;
   LockEntry * entry = get_entry(access);
   LockEntry * en;
+#if DEBUG_ABORT_LENGTH
+  txn->abort_chain = 0;
+#endif
 #if DEBUG_CS_PROFILING
   uint64_t starttime = get_sys_clock();
 #endif
@@ -113,6 +116,9 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int&txncnt,
           entry->status = LOCK_DROPPED;
           goto final;
         }
+#if DEBUG_ABORT_LENGTH
+        txn->abort_chain ++;
+#endif
         // remove from owner
         if (prev)
           prev->next = en->next;
@@ -161,9 +167,13 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int&txncnt,
   }
 
   final:
-  unlock(entry);
 #if DEBUG_CS_PROFILING
   INC_STATS(txn->get_thd_id(), time_get_cs, get_sys_clock() - starttime);
+#endif
+  unlock(entry);
+#if DEBUG_ABORT_LENGTH
+  if (txn->abort_chain > 0)
+    UPDATE_STATS(txn->get_thd_id(), abort_length, txn->abort_chain);
 #endif
   return rc;
 }
@@ -210,10 +220,14 @@ RC Row_ww::lock_release(void * addr) {
   }
   bring_next();
   ASSERT((owners == NULL) == (owner_cnt == 0));
-  unlock(entry);
 #if DEBUG_CS_PROFILING
   INC_STATS(entry->txn->get_thd_id(), time_release_cs, get_sys_clock() -
   starttime);
+#endif
+  unlock(entry);
+#if DEBUG_ABORT_LENGTH
+  if (entry->txn->abort_chain > 0)
+    UPDATE_STATS(entry->txn->get_thd_id(), abort_length, entry->txn->abort_chain);
 #endif
   return RCOK;
 }

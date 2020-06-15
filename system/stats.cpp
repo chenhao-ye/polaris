@@ -16,7 +16,7 @@ void Stats_thd::init(uint64_t thd_id) {
 }
 
 void Stats_thd::clear() {
-  ALL_METRICS(INIT_VAR, INIT_VAR)
+  ALL_METRICS(INIT_VAR, INIT_VAR, INIT_VAR)
 }
 
 void Stats_tmp::init() {
@@ -88,9 +88,9 @@ void Stats::abort(uint64_t thd_id) {
 }
 
 void Stats::print() {
-  ALL_METRICS(INIT_TOTAL_VAR, INIT_TOTAL_VAR)
+  ALL_METRICS(INIT_TOTAL_VAR, INIT_TOTAL_VAR, INIT_TOTAL_VAR)
   for (uint64_t tid = 0; tid < g_thread_cnt; tid ++) {
-    ALL_METRICS(SUM_UP_STATS, SUM_UP_STATS)
+    ALL_METRICS(SUM_UP_STATS, SUM_UP_STATS, MAX_STATS)
     printf("[tid=%lu] txn_cnt=%lu,abort_cnt=%lu, user_abort_cnt=%lu\n",
         tid, _stats[tid]->txn_cnt, _stats[tid]->abort_cnt,
         _stats[tid]->user_abort_cnt);
@@ -103,7 +103,7 @@ void Stats::print() {
     if (outf.is_open()) {
       outf << "[summary] throughput=" << total_txn_cnt / total_run_time *
       BILLION * THREAD_CNT << ", ";
-      ALL_METRICS(WRITE_STAT_X, WRITE_STAT_Y)
+      ALL_METRICS(WRITE_STAT_X, WRITE_STAT_Y, WRITE_STAT_Y)
       outf << "deadlock_cnt=" << deadlock << ", ";
       outf << "cycle_detect=" << cycle_detect << ", ";
       outf << "dl_detect_time=" << dl_detect_time / BILLION << ", ";
@@ -113,7 +113,7 @@ void Stats::print() {
   }
   std::cout << "[summary] throughput=" << total_txn_cnt / total_run_time *
       BILLION * THREAD_CNT << ", ";
-  ALL_METRICS(PRINT_STAT_X, PRINT_STAT_Y)
+  ALL_METRICS(PRINT_STAT_X, PRINT_STAT_Y, PRINT_STAT_Y)
   std::cout << "deadlock_cnt=" << deadlock << ", ";
   std::cout << "cycle_detect=" << cycle_detect << ", ";
   std::cout << "dl_detect_time=" << dl_detect_time / BILLION << ", ";

@@ -258,19 +258,19 @@ uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 	}
 	request_cnt = rid;
 
-	// Sort the requests in key order.
-	int a;
-	int b;
-#if NUM_HS > 0
-	// works only for g_virtual_part_cnt = 1
-	uint64_t upper = (table_size - NUM_HS - 1) * g_virtual_part_cnt;
-#endif
 	if (g_key_order) {
+	  // Sort the requests in key order.
+	  int a;
+	  int b;
+#if SYNTHETIC_YCSB && (NUM_HS > 0)
+	  // works only for g_virtual_part_cnt = 1
+	  uint64_t upper = (table_size - NUM_HS - 1) * g_virtual_part_cnt;
+#endif
 		for (int i = request_cnt - 1; i > 0; i--) {
 			for (int j = 0; j < i; j ++) {
 				a = j;
 				b = j+1;
-#if NUM_HS > 0
+#if SYNTHETIC_YCSB && (NUM_HS > 0)
 				if (requests[j].key > upper) {
 					if (j != 0)
 						a = j - 1;
@@ -293,7 +293,7 @@ uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 		}
 		part_num = 0;
 		for (UInt32 i = 0; i < request_cnt - 1; i++) {
-#if NUM_HS > 0
+#if SYNTHETIC_YCSB && (NUM_HS > 0)
 			if (requests[i].key > upper || (requests[i + 1].key > upper))
 				continue;
 #endif

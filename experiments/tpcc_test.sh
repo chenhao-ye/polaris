@@ -1,10 +1,9 @@
 cd ../
-rm outputs/stats.json
+#rm outputs/stats.json
 cp -r config-tpcc-std.h config.h
 
 ## algorithm
 alg=BAMBOO
-latch=LH_SPINLOCK
 latch=LH_MCSLOCK
 # [WW]
 ww_starv_free="false"
@@ -12,7 +11,8 @@ ww_starv_free="false"
 dynamic="true"
 retire="true"
 cs_pf="false"
-opt_raw="false"
+opt_raw="true"
+max_waiter=10
 
 ## workload
 wl="TPCC"
@@ -32,13 +32,16 @@ for i in 0 1 2 3 4
 do
 for user_abort in true false
 do
-for alg in BAMBOO SILO WOUND_WAIT WAIT_DIE NO_WAIT
+for alg in BAMBOO #SILO WOUND_WAIT WAIT_DIE NO_WAIT
 do
-for threads in 1 2 4 8 16 32
+for wh in 1 2 4 8 16
 do
-for wh in 1 2 4 8 16 32
+for threads in 32 #1 2 4 8 16 32
 do
-timeout 100 python test.py CC_ALG=$alg LATCH=${latch} WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=$dynamic RETIRE_ON=$retire DEBUG_CS_PROFILING=${cs_pf} BB_OPT_RAW=${opt_raw} WORKLOAD=${wl} NUM_WH=${wh} PERC_PAYMENT=$perc TPCC_USER_ABORT=${user_abort} COMMUTATIVE_OPS=$com COMMUTATIVE_LATCH=${com_latch} THREAD_CNT=$threads DEBUG_PROFILING=${profile} MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty
+for max_waiter in 16
+do
+timeout 200 python test.py CC_ALG=$alg LATCH=${latch} WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=$dynamic RETIRE_ON=$retire DEBUG_CS_PROFILING=${cs_pf} BB_OPT_RAW=${opt_raw} BB_OPT_MAX_WAITER=${max_waiter} WORKLOAD=${wl} NUM_WH=${wh} PERC_PAYMENT=$perc TPCC_USER_ABORT=${user_abort} COMMUTATIVE_OPS=$com COMMUTATIVE_LATCH=${com_latch} THREAD_CNT=$threads DEBUG_PROFILING=${profile} MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty
+done
 done
 done
 done
@@ -48,9 +51,9 @@ done
 
 cd outputs/
 python3 collect_stats.py
-mv stats.csv tpcc_com.csv
-mv stats.json tpcc_com.json
+mv stats.csv tpcc_bb.csv
+mv stats.json tpcc_bb.json
 cd ..
 
 cd experiments/
-python3 send_email.py tpcc_ua_mcs
+python3 send_email.py tpcc_bb

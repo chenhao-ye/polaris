@@ -8,18 +8,15 @@ void Row_bamboo_pt::init(row_t * row) {
   _row = row;
   // owners is a double linked list, each entry/node contains info like lock type, prev/next
   owners = NULL;
-  owners_tail = NULL;
   // waiter is a double linked list. two ptrs to the linked lists
   waiters_head = NULL;
   waiters_tail = NULL;
   // retired is a double linked list
   retired_head = NULL;
   retired_tail = NULL;
-  owner_cnt = 0;
   waiter_cnt = 0;
   retired_cnt = 0;
   // record first conflicting write to rollback
-  fcw = NULL;
 #if LATCH == LH_SPINLOCK
   latch = new pthread_spinlock_t;
   pthread_spin_init(latch, PTHREAD_PROCESS_SHARED);
@@ -81,10 +78,10 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
   BBLockEntry * to_insert = get_entry(access);
   to_insert->type = type;
   // helper
+  RC rc = RCOK;
   BBLockEntry * en;
-  BBLockEntry * to_return = NULL;
-#if RETIRE_ON
-  BBLockEntry * to_retire = NULL;
+#if DEBUG_ABORT_LENGTH
+  txn->abort_chain = 0;
 #endif
 
 #if DEBUG_CS_PROFILING
@@ -96,133 +93,117 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
   starttime = get_sys_clock();
 #endif
 
-  // each thread has at most one owner of a lock
-  assert(owner_cnt <= g_thread_cnt);
-  // each thread has at most one waiter
-  assert(waiter_cnt < g_thread_cnt);
-  assert(retired_cnt <= g_thread_cnt);
-
-  // assign a ts if ts == 0
-  if (txn->get_ts() == 0)
-    txn->set_next_ts(1);
-
-  // 1. set txn to abort in owners and retired
-  RC rc = RCOK;
+  // assign ts if does not have one
   ts_t ts = txn->get_ts();
-
-  // check if can grab directly
-  if (retired_cnt == 0 && owner_cnt == 0 && waiter_cnt == 0) {
-    LIST_PUT_TAIL(owners, owners_tail, to_insert);
-    to_insert->status = LOCK_OWNER;
-    owner_cnt++;
-    txn->lock_ready = true;
-    rc = RCOK;
-    goto final;
+  if (ts == 0) {
+    txn->set_next_ts(1);
+    ts = txn->get_ts();
   }
 
-  fcw = NULL;
-  // check retired and wound conflicted
-  en = retired_head;
-  while (en != NULL) {
-    // self assigned, if conflicted, assign a number
-    if (rc == RCOK && conflict_lock(en->type, type) && (en->txn->get_ts() > ts))
-      rc = WAIT;
-    if (rc == WAIT && (en->txn->get_ts() > ts)) {
+  if (type == LOCK_SH) {
+    bool retired_has_write = (retired_tail && (retired_tail->type==LOCK_EX ||
+        !retired_tail->is_cohead));
+    if (!retired_has_write) {
+      if (!owners) {
+        // append to retired
+        ADD_TO_RETIRED_TAIL(to_insert);
+      } else {
+        // owner has write
+        if (ts > owners->txn->get_ts()) {
+          ADD_TO_WAITERS(en, to_insert);
+          goto final;
+        } else {
 #if BB_OPT_RAW
-      if (type == LOCK_SH) {
-        // RAW conflict, need to read its orig_data by making a read copy
-        access->data->copy(en->access->orig_data);
-        // insert before writer
-        UPDATE_RETIRE_INFO(to_insert, en->prev);
-        RECHECK_RETIRE_INFO(en, to_insert);
-        LIST_INSERT_BEFORE_CH(retired_head, en, to_insert);
-        to_insert->status = LOCK_RETIRED;
-        retired_cnt++;
-        fcw = NULL;
-        txn->lock_ready = true;
-        rc = FINISH;
-        goto final;
-      }
+          access->data->copy(owners->access->orig_data);
+          ADD_TO_RETIRED_TAIL(to_insert);
+          rc = FINISH;
+#else
+          // wound owner
+          TRY_WOUND_PT(owners, to_insert);
+          return_entry(owners);
+          owners = NULL;
+          // add to waiters
+          ADD_TO_WAITERS(en, to_insert);
+          if (bring_next(txn)) {
+            rc = RCOK;
+          } else {
+            goto final;
+          }
 #endif
-      TRY_WOUND_PT(en, to_insert);
-      en = rm_from_retired(en, true);
+        }
+      }
     } else {
-      en = en->next;
-    }
-  }
-
-  // check owners
-  en = owners;
-  while (en != NULL) {
-    if (rc == RCOK && conflict_lock(en->type, type) && (en->txn->get_ts() > ts))
-      rc = WAIT;
-    if (rc == WAIT && (en->txn->get_ts() > ts)) {
+      // retired has write
+      if (!owners || (owners->txn->get_ts() > ts)) {
 #if BB_OPT_RAW
-      if (type == LOCK_SH) {
-        // RAW conflict, need to read its orig_data by making a read copy
-        access->data->copy(en->access->orig_data);
-        // append to the end of retired
-        UPDATE_RETIRE_INFO(to_insert, retired_tail);
-        LIST_PUT_TAIL(retired_head, retired_tail, to_insert);
-        to_insert->status = LOCK_RETIRED;
-        retired_cnt++;
-        fcw = NULL;
-        txn->lock_ready = true;
+        // go through retired and insert
+        en = retired_head;
+        while (en) {
+          if (en->type == LOCK_EX && (en->txn->get_ts() > ts))
+            break;
+          en = en->next;
+        }
+        if (en) {
+          access->data->copy(en->access->orig_data);
+          INSERT_TO_RETIRED(to_insert, en);
+        } else {
+          if (owners)
+            access->data->copy(owners->access->orig_data);
+          ADD_TO_RETIRED_TAIL(to_insert);
+        }
         rc = FINISH;
-        goto final;
-      }
+#else
+        // go through retired and abort
+        en = retired_head;
+        while (en) {
+          if (en->type == LOCK_EX && (en->txn->get_ts() > ts)) {
+            TRY_WOUND_PT(en, to_insert);
+            // abort descendants
+            en = rm_from_retired(en, true, txn);
+          } else
+            en = en->next;
+        }
+        if (owners) {
+          // abort owners as well
+          TRY_WOUND_PT(owners, to_insert);
+          return_entry(owners);
+          owners = NULL;
+        }
 #endif
-      TRY_WOUND_PT(en, to_insert);
-      LIST_RM(owners, owners_tail, en, owner_cnt);
-      to_return = en;
-      en = en->next;
-      return_entry(to_return);
-    } else {
-      en = en->next;
+      } else {
+          // add to waiter
+          ADD_TO_WAITERS(en, to_insert);
+          goto final;
+      }
     }
-  }
-
-  // 2. insert into waiters and bring in next waiter
-  en = waiters_head;
-  while (en != NULL) {
-    if (ts < en->txn->get_ts())
-      break;
-    en = en->next;
-  }
-  if (en) {
-    LIST_INSERT_BEFORE(en, to_insert);
-    if (en == waiters_head)
-      waiters_head = to_insert;
   } else {
-    LIST_PUT_TAIL(waiters_head, waiters_tail, to_insert);
-  }
-  to_insert->status = LOCK_WAITER;
-  waiter_cnt ++;
-
-  // 3. if brought txn in owner, return acquired lock
-  if (bring_next(txn)) {
-    rc = RCOK;
-  } else {
-    txn->lock_ready = false; // wait in waiters
-    rc = WAIT;
-  }
-
-#if RETIRE_ON
-  // 5. move reads to retired if RETIRE_READ=false
-  if (owners && (waiter_cnt > 0) && (owners->type == LOCK_SH)) {
-    // if retire turned on and share lock is the owner
-    // move to retired
-    to_retire = NULL;
-    while (owners) {
-      to_retire = owners;
-      RETIRE_ENTRY(to_retire);
+    // LOCK_EX
+    if (!owners || (owners->txn->get_ts() > ts)) {
+      // go through retired and wound
+      en = retired_head;
+      while (en) {
+        if (en->txn->get_ts() > ts) {
+          TRY_WOUND_PT(en, to_insert);
+          // abort descendants
+          en = rm_from_retired(en, true, txn);
+        } else
+          en = en->next;
+      }
+      if (owners) {
+        // abort owners as well
+        TRY_WOUND_PT(owners, to_insert);
+        return_entry(owners);
+        owners = NULL;
+      }
     }
+    ADD_TO_WAITERS(en, to_insert);
     if (bring_next(txn)) {
       rc = RCOK;
+    } else {
+      goto final;
     }
   }
-#endif
-
+  txn->lock_ready = true;
   final:
 #if DEBUG_CS_PROFILING
   INC_STATS(txn->get_thd_id(), time_get_cs, get_sys_clock() - starttime);
@@ -255,8 +236,7 @@ RC Row_bamboo_pt::lock_retire(void * addr) {
     assert(entry->status == LOCK_DROPPED);
     rc = Abort;
   }
-  if (owner_cnt == 0)
-    bring_next(NULL);
+  bring_next(NULL);
 
 #if DEBUG_CS_PROFILING
   INC_STATS(entry->txn->get_thd_id(), time_retire_cs, get_sys_clock() -
@@ -268,6 +248,9 @@ RC Row_bamboo_pt::lock_retire(void * addr) {
 
 RC Row_bamboo_pt::lock_release(void * addr, RC rc) {
   BBLockEntry * entry = (BBLockEntry *) addr;
+#if DEBUG_ABORT_LENGTH
+  entry->txn->abort_chain = 0;
+#endif
 #if DEBUG_CS_PROFILING
   uint64_t starttime = get_sys_clock();
 #endif
@@ -279,11 +262,9 @@ RC Row_bamboo_pt::lock_release(void * addr, RC rc) {
 #endif
   // if in retired
   if (entry->status == LOCK_RETIRED) {
-    fcw = NULL;
-    rm_from_retired(entry, rc == Abort);
-    fcw = NULL; // reset fcw
+    rm_from_retired(entry, rc == Abort, entry->txn);
   } else if (entry->status == LOCK_OWNER) {
-    LIST_RM(owners, owners_tail, entry, owner_cnt);
+    owners = NULL;
     // not found in retired, need to make globally visible if rc = commit
     if (rc == RCOK && (entry->type == LOCK_EX))
        entry->access->orig_row->copy(entry->access->data);
@@ -292,7 +273,7 @@ RC Row_bamboo_pt::lock_release(void * addr, RC rc) {
   } else {
   }
   return_entry(entry);
-  if (owner_cnt == 0) {
+  if (!owners) {
     bring_next(NULL);
   }
   // WAIT - done releasing with is_abort = true
@@ -302,6 +283,10 @@ RC Row_bamboo_pt::lock_release(void * addr, RC rc) {
   starttime);
 #endif
   unlock(entry);
+#if DEBUG_ABORT_LENGTH
+  if (entry->txn->abort_chain > 0)
+    UPDATE_STATS(entry->txn->get_thd_id(), abort_length, entry->txn->abort_chain);
+#endif
   return RCOK;
 }
 
@@ -310,11 +295,11 @@ RC Row_bamboo_pt::lock_release(void * addr, RC rc) {
  * descendants if is_abort = true)
  */
 inline 
-BBLockEntry * Row_bamboo_pt::rm_from_retired(BBLockEntry * en, bool is_abort) {
+BBLockEntry * Row_bamboo_pt::rm_from_retired(BBLockEntry * en, bool is_abort, txn_man * txn) {
   if (is_abort && (en->type == LOCK_EX)) {
     CHECK_ROLL_BACK(en); // roll back only for the first-conflicting-write
     en->txn->lock_abort = true;
-    en = remove_descendants(en, en->txn);
+    en = remove_descendants(en, txn);
     return en;
   } else {
     BBLockEntry * next = en->next;
@@ -331,13 +316,17 @@ bool Row_bamboo_pt::bring_next(txn_man * txn) {
   BBLockEntry * entry;
   // If any waiter can join the owners, just do it!
   while (waiters_head) {
-    if ((owner_cnt == 0) || (!conflict_lock(owners->type, waiters_head->type))) {
+    if (!owners || (!conflict_lock(owners->type, waiters_head->type))) {
       LIST_GET_HEAD(waiters_head, waiters_tail, entry);
       waiter_cnt --;
-      // add to onwers
-      LIST_PUT_TAIL(owners, owners_tail, entry);
-      entry->status = LOCK_OWNER;
-      owner_cnt ++;
+      if (entry->type == LOCK_EX) {
+        // add to onwers
+        owners = entry;
+        entry->status = LOCK_OWNER;
+      } else {
+        // add to retired
+        ADD_TO_RETIRED_TAIL(entry);
+      }
       entry->txn->lock_ready = true;
       if (txn == entry->txn) {
         has_txn = true;
@@ -345,7 +334,6 @@ bool Row_bamboo_pt::bring_next(txn_man * txn) {
     } else
       break;
   }
-  ASSERT((owners == NULL) == (owner_cnt == 0));
   return has_txn;
 }
 
@@ -372,6 +360,8 @@ inline
 BBLockEntry * Row_bamboo_pt::get_entry(Access * access) {
   //BBLockEntry * entry = (BBLockEntry *) mem_allocator.alloc(sizeof(BBLockEntry), _row->get_part_id());
   BBLockEntry * entry = (BBLockEntry *) access->lock_entry;
+  entry->txn->lock_ready = false;
+  entry->txn->lock_abort = false;
   entry->next = NULL;
   entry->prev = NULL;
   entry->status = LOCK_DROPPED;
@@ -396,10 +386,7 @@ void Row_bamboo_pt::update_entry(BBLockEntry * entry) {
     // cohead: no need to update
     // delta: update next entry only
     if (entry->prev) {
-      if (entry->prev->type == LOCK_EX)
-        entry->next->delta = true;
-      else
-        entry->next->delta = false;
+      entry->next->delta = entry->prev->type == LOCK_EX;
     }
     return;
   }
@@ -447,11 +434,21 @@ txn) {
     en->txn->set_abort();
     to_return = en;
     retired_cnt--;
+#if DEBUG_ABORT_LENGTH
+    txn->abort_chain++;
+#endif
     en = en->next;
     return_entry(to_return);
   }
   // empty owners
-  ABORT_ALL_OWNERS(en);
+  if (owners) {
+#if DEBUG_ABORT_LENGTH
+    txn->abort_chain++;
+#endif
+    owners->txn->set_abort();
+    return_entry(owners);
+    owners = NULL;
+  }
   assert(!retired_head || retired_head->is_cohead);
 
   if (prev)

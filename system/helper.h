@@ -135,6 +135,10 @@
 	if (STATS_ENABLE) \
 		stats.name += value;
 
+#define UPDATE_STATS(tid, name, value) \
+   if (STATS_ENABLE) \
+     stats._stats[tid]->name = max(stats._stats[tid]->name, value);
+
 /************************************************/
 // malloc helper
 /************************************************/

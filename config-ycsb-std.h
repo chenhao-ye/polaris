@@ -103,6 +103,7 @@
 #define DYNAMIC_TS					true
 #define RETIRE_ON 					true
 #define BB_OPT_RAW                  true
+#define BB_OPT_MAX_WAITER           0
 // [WW]
 #define WW_STARV_FREE               false // set false if compared w/ bamboo
 
@@ -142,6 +143,7 @@
 #define NUM_HS                      0
 #define FIRST_HS                    WR
 #define SECOND_HS                   WR
+#define FIXED_HS                    0
 
 // ==== [TPCC] ====
 // For large warehouse count, the tables do not fit in memory
@@ -210,6 +212,7 @@ extern TestCases					g_test_case;
 #define DEBUG_TMP					false
 #define DEBUG_PROFILING				false
 #define DEBUG_CS_PROFILING          false // profiling inside critical path
+#define DEBUG_ABORT_LENGTH          false
 
 /***********************************************/
 // Constant
