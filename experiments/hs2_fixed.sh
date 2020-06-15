@@ -77,7 +77,6 @@ cd outputs/
 python3 collect_stats.py
 mv stats.csv ${fname}.csv
 mv stats.json ${fname}.json
-rm stats.json
 cd ..
 
 python experiments/send_email.py ${fname}
