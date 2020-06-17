@@ -1,6 +1,6 @@
 cd ../
 cp -r config-ycsb-synthetic-std.h config.h
-fname="hs2_flipped"
+fname="hs2_flipped_bb"
 
 # algorithm
 alg=WOUND_WAIT
