@@ -79,13 +79,12 @@ if __name__ == "__main__":
 
         if ("UNSET_NUMA" in job) and job["UNSET_NUMA"]:
             compile_and_run(job, unset_numa=True)
-        else
+        else:
             compile_and_run(job)
 	job = parse_output(job)
 	stats = open("outputs/stats.json", 'a+')
 	stats.write(json.dumps(job)+"\n")
 	stats.close()
-
 	
 
 
