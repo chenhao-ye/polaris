@@ -77,7 +77,7 @@ if __name__ == "__main__":
 		value = item.split("=")[1]
 		job[key] = value
 
-        if "UNSET_NUMA" in job and job["UNSET_NUMA"]:
+        if ("UNSET_NUMA" in job) and job["UNSET_NUMA"]:
             compile_and_run(job, unset_numa=True)
         else
             compile_and_run(job)
