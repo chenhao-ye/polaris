@@ -32,18 +32,21 @@ def compile(job):
 		os.system("rm -f temp.out")
 
 
-def run(test = '', job=None):
+def run(test = '', job=None, unset_numa=False):
 	app_flags = ""
 	if test == 'read_write':
 		app_flags = "-Ar -t1"
 	if test == 'conflict':
 		app_flags = "-Ac -t4"
-	os.system("./rundb %s | tee temp.out" % app_flags)
+        if unset_numa:
+	    os.system("numactl --all ./rundb %s | tee temp.out" % app_flags)
+        else:
+            os.system("./rundb %s | tee temp.out" % app_flags)
 	
 
-def compile_and_run(job) :
+def compile_and_run(job, unset_numa=False) :
 	compile(job)
-	run('', job)
+	run('', job, unset_numa=unset_numa)
 
 def parse_output(job):
 	output = open("temp.out")
@@ -74,7 +77,10 @@ if __name__ == "__main__":
 		value = item.split("=")[1]
 		job[key] = value
 
-	compile_and_run(job)
+        if "UNSET_NUMA" in job and job["UNSET_NUMA"]:
+            compile_and_run(job, unset_numa=True)
+        else
+            compile_and_run(job)
 	job = parse_output(job)
 	stats = open("outputs/stats.json", 'a+')
 	stats.write(json.dumps(job)+"\n")
