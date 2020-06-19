@@ -157,6 +157,8 @@ RC thread_t::run() {
 #endif
 		}
 
+		ts_t endtime = get_sys_clock();
+
 		if (rc == Abort) {
 			uint64_t penalty = 0;
 			if (ABORT_PENALTY != 0)  {
@@ -180,7 +182,6 @@ RC thread_t::run() {
 			}
 		}
 
-		ts_t endtime = get_sys_clock();
 		uint64_t timespan = endtime - starttime;
 		INC_STATS(get_thd_id(), run_time, timespan);
 		//stats.add_lat(get_thd_id(), timespan);
@@ -197,6 +198,7 @@ RC thread_t::run() {
 			m_txn->abort_cnt ++;
 		} else if (rc == ERROR) {
 		       // user initiated aborts
+		       INC_STATS(get_thd_id(), time_abort, timespan);
                        INC_STATS(get_thd_id(), user_abort_cnt, 1);
                        INC_STATS(get_thd_id(), abort_cnt, 1);
                        stats.abort(get_thd_id());
