@@ -1,7 +1,7 @@
 cd ../
 cp -r config-ycsb-std.h config.h
 
-fname="ycsb-zipf"
+fname="ycsb-zipf-more"
 # algorithm
 latch=LH_MCSLOCK
 # [WW]
@@ -45,17 +45,14 @@ for i in 0 1 2 3 4
 do
 for alg in WOUND_WAIT BAMBOO SILO WAIT_DIE NO_WAIT 
 do
-for zipf in 0.5 0.7 0.9 1.1
+for zipf in 0.6 0.8 0.99
 do
 if [ $alg == "BAMBOO" ] 
 then
-for max_waiter in 0 4 8 12
-do
-for dynamic in true false
+for max_waiter in 0 4
 do
 timeout 200 python test.py UNSET_NUMA=${numa} CC_ALG=${alg} LATCH=${latch} SPINLOCK=${spin} WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=${dynamic} RETIRE_ON=${retire_on} DEBUG_CS_PROFILING=${cs_pf} BB_OPT_RAW=${opt_raw} BB_OPT_MAX_WAITER=${max_waiter} WORKLOAD=${wl} REQ_PER_QUERY=$req SYNTHETIC_YCSB=$synthetic ZIPF_THETA=$zipf NUM_HS=${num_hs} POS_HS=$pos SPECIFIED_RATIO=${specified} FIXED_HS=${fixed} FIRST_HS=$fhs SECOND_HS=$shs READ_PERC=${read_ratio} KEY_ORDER=$ordered FLIP_RATIO=${flip} SYNTH_TABLE_SIZE=${table_size} THREAD_CNT=$threads DEBUG_PROFILING=$profile MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty DEBUG_ABORT_LENGTH=${chain}
 done 
-done
 else 
 timeout 200 python test.py UNSET_NUMA=${numa} CC_ALG=${alg} LATCH=${latch} SPINLOCK=${spin} WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=${dynamic} RETIRE_ON=${retire_on} DEBUG_CS_PROFILING=${cs_pf} BB_OPT_RAW=${opt_raw} BB_OPT_MAX_WAITER=${max_waiter} WORKLOAD=${wl} REQ_PER_QUERY=$req SYNTHETIC_YCSB=$synthetic ZIPF_THETA=$zipf NUM_HS=${num_hs} POS_HS=$pos SPECIFIED_RATIO=${specified} FIXED_HS=${fixed} FIRST_HS=$fhs SECOND_HS=$shs READ_PERC=${read_ratio} KEY_ORDER=$ordered FLIP_RATIO=${flip} SYNTH_TABLE_SIZE=${table_size} THREAD_CNT=$threads DEBUG_PROFILING=$profile MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty DEBUG_ABORT_LENGTH=${chain}
 fi
