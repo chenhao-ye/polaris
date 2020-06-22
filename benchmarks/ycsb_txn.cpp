@@ -15,7 +15,6 @@
 #include "row_mvcc.h"
 #include "mem_alloc.h"
 #include "query.h"
-
 void ycsb_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
     txn_man::init(h_thd, h_wl, thd_id);
     _wl = (ycsb_wl *) h_wl;
@@ -28,6 +27,7 @@ RC ycsb_txn_man::run_txn(base_query * query) {
     itemid_t * m_item = NULL;
 #if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
     int access_id;
+    double retire_threshold = m_query->request_cnt * (1 - LAST_RETIRE);
 #else
     row_cnt = 0;
 #endif
@@ -89,7 +89,7 @@ RC ycsb_txn_man::run_txn(base_query * query) {
                 finish_req = true;
 #if (CC_ALG == BAMBOO) && RETIRE_ON && (THREAD_CNT != 1)
             // retire write txn
-            if (finish_req && (req->rtype == WR)) {
+            if (finish_req && (req->rtype == WR) && (rid <= retire_threshold)) {
                 if (retire_row(access_id) == Abort)
                   return finish(Abort);
             }

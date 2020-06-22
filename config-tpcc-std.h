@@ -104,6 +104,7 @@
 #define RETIRE_ON 					true
 #define BB_OPT_RAW                  false
 #define BB_OPT_MAX_WAITER           0
+#define LAST_RETIRE                 0
 // [WW]
 #define WW_STARV_FREE               false // set false if compared w/ bamboo
 

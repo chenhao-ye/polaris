@@ -104,6 +104,7 @@
 #define RETIRE_ON 					true
 #define BB_OPT_RAW                  true
 #define BB_OPT_MAX_WAITER           0
+#define LAST_RETIRE                 0.15
 // [WW]
 #define WW_STARV_FREE               false // set false if compared w/ bamboo
 
@@ -140,6 +141,7 @@
 #define SYNTHETIC_YCSB              false
 #define POS_HS                      TOP
 #define SPECIFIED_RATIO		    0
+#define FLIP_RATIO                  0
 #define NUM_HS                      0
 #define FIRST_HS                    WR
 #define SECOND_HS                   WR

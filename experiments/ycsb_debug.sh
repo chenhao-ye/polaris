@@ -8,22 +8,22 @@ ww_starv_free="false"
 # [BAMBOO]
 dynamic="true"
 retire_on="true"
-cs_pf="false"
+cs_pf="true"
 opt_raw="true"
-max_writer=4
+max_writer=0
 
 # workload
 wl="YCSB"
 req=16
-synthetic=false
-zipf=$2
-num_hs=0
-pos=TOP
+synthetic=true
+zipf=0
+num_hs=2
+pos=SPECIFIED
 specified=0
 fixed=1
 fhs="WR"
 shs="WR"
-read_ratio=0.5
+read_ratio=1
 ordered="false"
 flip=0
 table_size="10000000"
