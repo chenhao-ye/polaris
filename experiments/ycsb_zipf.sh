@@ -1,7 +1,7 @@
 cd ../
 cp -r config-ycsb-std.h config.h
 
-fname="ycsb-zipf-more"
+fname="ycsb-zipf-bb-lr"
 # algorithm
 latch=LH_MCSLOCK
 # [WW]
@@ -44,9 +44,9 @@ for latch in LH_MCSLOCK LH_SPINLOCK
 do
 for i in 0 1 2 3 4
 do
-for alg in WOUND_WAIT BAMBOO SILO WAIT_DIE NO_WAIT 
+for alg in BAMBOO #SILO WAIT_DIE NO_WAIT 
 do
-for zipf in 0.6 0.8 0.99
+for zipf in 0.5 0.6 0.7 0.8 0.9 0.99
 do
 if [ $alg == "BAMBOO" ] 
 then

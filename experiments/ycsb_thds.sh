@@ -1,7 +1,7 @@
 cd ../
 cp -r config-ycsb-std.h config.h
 
-fname="ycsb-thds"
+fname="ycsb-thds-bb-lr"
 # algorithm
 alg=WOUND_WAIT
 latch=LH_MCSLOCK
@@ -46,7 +46,7 @@ for latch in LH_MCSLOCK LH_SPINLOCK
 do
 for i in 0 1 2 3 4 5
 do
-for alg in BAMBOO WOUND_WAIT SILO WAIT_DIE NO_WAIT
+for alg in BAMBOO #WOUND_WAIT SILO WAIT_DIE NO_WAIT
 do
 for threads in 1 2 4 8 16 32
 do
