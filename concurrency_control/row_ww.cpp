@@ -172,8 +172,11 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int&txncnt,
 #endif
   unlock(entry);
 #if DEBUG_ABORT_LENGTH
-  if (txn->abort_chain > 0)
-    UPDATE_STATS(txn->get_thd_id(), abort_length, txn->abort_chain);
+  if (txn->abort_chain > 0) {
+    UPDATE_STATS(txn->get_thd_id(), max_abort_length, txn->abort_chain);
+    INC_STATS(txn->get_thd_id(), cascading_abort_times, 1);
+    INC_STATS(txn->get_thd_id(), abort_length, txn->abort_chain);
+  }
 #endif
   return rc;
 }

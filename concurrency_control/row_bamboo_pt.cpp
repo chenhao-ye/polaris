@@ -284,8 +284,11 @@ RC Row_bamboo_pt::lock_release(void * addr, RC rc) {
 #endif
   unlock(entry);
 #if DEBUG_ABORT_LENGTH
-  if (entry->txn->abort_chain > 0)
-    UPDATE_STATS(entry->txn->get_thd_id(), abort_length, entry->txn->abort_chain);
+  if (entry->txn->abort_chain > 0) {
+    UPDATE_STATS(entry->txn->get_thd_id(), max_abort_length, entry->txn->abort_chain);
+    INC_STATS(entry->txn->get_thd_id(), cascading_abort_times, 1);
+    INC_STATS(entry->txn->get_thd_id(), abort_length, entry->txn->abort_chain);
+  }
 #endif
   return RCOK;
 }
