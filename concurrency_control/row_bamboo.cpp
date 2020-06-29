@@ -118,6 +118,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
       owners = to_insert;
       owners->status = LOCK_OWNER;
       txn->lock_ready = true;
+      UPDATE_RETIRE_INFO(to_insert, retired_tail);
       goto final;
     }
     if (waiter_cnt > BB_OPT_MAX_WAITER && (BB_OPT_MAX_WAITER != 0)) {
