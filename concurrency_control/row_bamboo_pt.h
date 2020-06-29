@@ -39,8 +39,8 @@
     en->is_cohead = true; \
     en->delta = false; } }
 
+// UPDATE_RETIRE_INFO(to_retire, retired_tail);
 #define ADD_TO_RETIRED_TAIL(to_retire) { \
-  UPDATE_RETIRE_INFO(to_retire, retired_tail); \
   LIST_PUT_TAIL(retired_head, retired_tail, to_retire); \
   to_retire->status = LOCK_RETIRED; \
   retired_cnt++; }

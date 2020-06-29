@@ -238,7 +238,10 @@ uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 			if (all_keys.find(req->key) == all_keys.end()) {
 				all_keys.insert(req->key);
 				access_cnt ++;
-			} else continue;
+			} else {
+				tmp--;
+				continue;
+			}
 		} else {
 			bool conflict = false;
 			for (UInt32 i = 0; i < req->scan_len; i++) {
@@ -247,7 +250,10 @@ uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 					!= all_keys.end())
 					conflict = true;
 			}
-			if (conflict) continue;
+			if (conflict) {
+				tmp--;
+				continue;
+			}
 			else {
 				for (UInt32 i = 0; i < req->scan_len; i++)
 					all_keys.insert( (row_id + i) * g_part_cnt + part_id);
@@ -257,6 +263,7 @@ uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 		rid ++;
 	}
 	request_cnt = rid;
+	assert(request_cnt == g_req_per_query);
 
 	if (g_key_order) {
 	  // Sort the requests in key order.
