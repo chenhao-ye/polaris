@@ -412,6 +412,8 @@ void Row_bamboo_pt::update_entry(BBLockEntry * entry) {
   //  the loop)
   ASSERT(entry->is_cohead);
   BBLockEntry * en = entry->next;
+  if (!en)
+    en = owners;
   if (entry->prev) {
     // prev can only be reads
     // cohead: whatever it is, it becomes NEW cohead and decrement barrier
