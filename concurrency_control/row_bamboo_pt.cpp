@@ -106,6 +106,7 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
     if (!retired_has_write) {
       if (!owners) {
         // append to retired
+        UPDATE_RETIRE_INFO(to_insert, retired_tail);
         ADD_TO_RETIRED_TAIL(to_insert);
       } else {
         // owner has write
@@ -114,8 +115,11 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
           goto final;
         } else {
 #if BB_OPT_RAW
+          // add before owner
           access->data->copy(owners->access->orig_data);
+          UPDATE_RETIRE_INFO(to_insert, retired_tail);
           ADD_TO_RETIRED_TAIL(to_insert);
+          owners->delta = true;
           rc = FINISH;
 #else
           // wound owner
@@ -147,9 +151,12 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
           access->data->copy(en->access->orig_data);
           INSERT_TO_RETIRED(to_insert, en);
         } else {
-          if (owners)
-            access->data->copy(owners->access->orig_data);
+          UPDATE_RETIRE_INFO(to_insert, retired_tail);
           ADD_TO_RETIRED_TAIL(to_insert);
+          if (owners) {
+            access->data->copy(owners->access->orig_data);
+            owners->delta = true;
+          }
         }
         rc = FINISH;
 #else
@@ -227,6 +234,7 @@ RC Row_bamboo_pt::lock_retire(void * addr) {
   RC rc = RCOK;
   // 1. find entry in owner and remove
   if (entry->status == LOCK_OWNER) {
+    // move to retired list
     RETIRE_ENTRY(entry);
     // make dirty data globally visible
     if (entry->type == LOCK_EX)
@@ -306,6 +314,7 @@ BBLockEntry * Row_bamboo_pt::rm_from_retired(BBLockEntry * en, bool is_abort, tx
     return en;
   } else {
     BBLockEntry * next = en->next;
+    // TODO: also needs to update entry info in owners if the last
     update_entry(en);
     LIST_RM(retired_head, retired_tail, en, retired_cnt);
     return_entry(en);
@@ -326,6 +335,7 @@ bool Row_bamboo_pt::bring_next(txn_man * txn) {
         // add to onwers
         owners = entry;
         entry->status = LOCK_OWNER;
+        UPDATE_RETIRE_INFO(owners, retired_tail);
       } else {
         // add to retired
         ADD_TO_RETIRED_TAIL(entry);
@@ -383,18 +393,23 @@ void Row_bamboo_pt::return_entry(BBLockEntry * entry) {
 
 inline 
 void Row_bamboo_pt::update_entry(BBLockEntry * entry) {
-  if (!entry->next)
+  if (!entry->next && !owners)
     return; // nothing to update
   if (entry->type == LOCK_SH) {
     // cohead: no need to update
     // delta: update next entry only
     if (entry->prev) {
-      entry->next->delta = entry->prev->type == LOCK_EX;
+      if (entry->next)
+        entry->next->delta = entry->prev->type == LOCK_EX;
+      else
+        owners->delta = entry->prev->type == LOCK_EX;
     }
     return;
   }
   // if entry->type == LOCK_EX, has to be co-head and txn commits, otherwise
   // abort will not call this
+  // TODO: update owners' commit barrier if needed (just bring in owners in
+  //  the loop)
   ASSERT(entry->is_cohead);
   BBLockEntry * en = entry->next;
   if (entry->prev) {
@@ -410,6 +425,8 @@ void Row_bamboo_pt::update_entry(BBLockEntry * entry) {
       en->is_cohead = true;
       en->txn->decrement_commit_barriers();
       en = en->next;
+      if (!en)
+        en = owners;
     }
   } else {
     // cohead: whatever it is becomes cohead
@@ -419,6 +436,8 @@ void Row_bamboo_pt::update_entry(BBLockEntry * entry) {
       en->is_cohead = true;
       en->txn->decrement_commit_barriers();
       en = en->next;
+      if (!en)
+        en = owners;
     } while(en && !(en->delta));
   }
 }

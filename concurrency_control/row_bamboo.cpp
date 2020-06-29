@@ -37,6 +37,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
     if (!retired_has_write) {
       if (!owners) {
         // append to retired
+        UPDATE_RETIRE_INFO(to_insert, retired_tail);
         ADD_TO_RETIRED_TAIL(to_insert);
       } else {
         // has write in owner but not in retired
@@ -61,7 +62,9 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
         } else {
 #if BB_OPT_RAW
           access->data->copy(owners->access->orig_data);
+          UPDATE_RETIRE_INFO(to_insert, retired_tail);
           ADD_TO_RETIRED_TAIL(to_insert);
+          owners->delta = true;
           rc = FINISH;
 #else
           assert(false);
@@ -92,9 +95,12 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
           access->data->copy(en->access->orig_data);
           INSERT_TO_RETIRED(to_insert, en);
         } else {
-          if (owners)
-            access->data->copy(owners->access->orig_data);
+          UPDATE_RETIRE_INFO(to_insert, retired_tail);
           ADD_TO_RETIRED_TAIL(to_insert);
+          if (owners) {
+            access->data->copy(owners->access->orig_data);
+            owners->delta = true;
+          }
         }
         rc = FINISH;
 #else
