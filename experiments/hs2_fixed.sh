@@ -37,10 +37,10 @@ threads=16
 profile="true"
 cnt=100000 
 penalty=50000
-
-for numa in true #false
+numa="true"
+for last_retire in 0 0.15
 do
-for latch in LH_MCSLOCK LH_SPINLOCK
+for latch in LH_MCSLOCK #LH_SPINLOCK
 do
 for fixed in 1 0
 do

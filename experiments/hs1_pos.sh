@@ -38,9 +38,10 @@ profile="true"
 cnt=100000 
 penalty=50000
 chain="false"
+numa="true"
 
 # figure 4: normalized throughput with optimal case, varying requests
-for numa in true #false
+for last_retire in 0 0.15
 do
 for latch in LH_MCSLOCK LH_SPINLOCK
 do

@@ -1,7 +1,7 @@
 cd ../
 cp -r config-ycsb-std.h config.h
 
-fname="ycsb-zipf-bb-lr"
+fname="ycsb-zipf"
 # algorithm
 latch=LH_MCSLOCK
 # [WW]
@@ -38,13 +38,14 @@ penalty=50000
 chain="false"
 
 read_ratio=0.5
-for numa in true #false
+numa="true"
+for last_retire in 0 0.15
 do
-for latch in LH_MCSLOCK LH_SPINLOCK
+for latch in LH_MCSLOCK #LH_SPINLOCK
 do
 for i in 0 1 2 3 4
 do
-for alg in BAMBOO #SILO WAIT_DIE NO_WAIT 
+for alg in BAMBOO WOUND_WAIT SILO WAIT_DIE NO_WAIT 
 do
 for zipf in 0.5 0.6 0.7 0.8 0.9 0.99
 do

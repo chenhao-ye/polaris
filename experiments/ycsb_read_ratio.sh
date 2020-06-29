@@ -1,7 +1,7 @@
 cd ../
 cp -r config-ycsb-std.h config.h
 
-fname="ycsb-readratio-bb-lr"
+fname="ycsb-readratio"
 # algorithm
 alg=WOUND_WAIT
 latch=LH_MCSLOCK
@@ -39,13 +39,14 @@ penalty=50000
 chain="false"
 
 zipf=0.9
-for numa in true #false
+numa="true"
+for last_retire in 0 0.15
 do
-for latch in LH_MCSLOCK LH_SPINLOCK
+for latch in LH_MCSLOCK #LH_SPINLOCK
 do
 for i in 0 1 2 3 4 5
 do
-for alg in BAMBOO #WOUND_WAIT BAMBOO SILO WAIT_DIE NO_WAIT
+for alg in BAMBOO WOUND_WAIT BAMBOO SILO WAIT_DIE NO_WAIT
 do
 for read_ratio in 0.1 0.3 0.5 0.7 0.9
 do
