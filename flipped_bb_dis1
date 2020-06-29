@@ -1,0 +1,3731 @@
+mem_allocator initialized!
+BAMBOO
+init table MAIN_TABLE at 0x7f0a7bc35280
+workload initialized!
+Query Queue Init Time 0.000424
+query_queue initialized!
+[txn-0] start 0 requests at key 9999998
+[txn-1] start 0 requests at key 9999998
+[txn-0] retire 0 requests
+[txn-0] start 1 requests at key 1875895
+[txn-1] retire 0 requests
+[txn-1] start 1 requests at key 6829847
+[txn-0] start 2 requests at key 3512090
+[txn-0] start 3 requests at key 9508535
+[txn-1] start 2 requests at key 2563723
+[txn-0] start 4 requests at key 8065015
+[txn-1] start 3 requests at key 5074136
+[txn-0] start 5 requests at key 65779
+[txn-1] start 4 requests at key 8974646
+[txn-1] start 5 requests at key 4679277
+[txn-1] start 6 requests at key 9144419
+[txn-0] start 6 requests at key 8910804
+[txn-1] start 7 requests at key 4658935
+[txn-1] start 8 requests at key 1397088
+[txn-1] start 9 requests at key 2116847
+[txn-0] start 7 requests at key 6949940
+[txn-1] start 10 requests at key 1985430
+[txn-0] start 8 requests at key 1109573
+[txn-1] start 11 requests at key 4422274
+[txn-1] start 12 requests at key 5974713
+[txn-0] start 9 requests at key 2969335
+[txn-1] start 13 requests at key 2523133
+[txn-0] start 10 requests at key 3145772
+[txn-1] start 14 requests at key 3020973
+[txn-1] start 15 requests at key 9999999
+[txn-0] start 11 requests at key 7748090
+[txn-0] start 12 requests at key 6796326
+[txn-0] start 13 requests at key 3773659
+[txn-0] start 14 requests at key 9393278
+[txn-0] start 15 requests at key 9999999
+[txn-1] aborted
+[txn-0] committed
+[txn-2] start 0 requests at key 9999999
+[txn-2] retire 0 requests
+[txn-2] start 1 requests at key 7599289
+[txn-2] start 2 requests at key 5122465
+[txn-2] start 3 requests at key 1953338
+[txn-2] start 4 requests at key 2673997
+[txn-2] start 5 requests at key 3381362
+[txn-2] start 6 requests at key 9032352
+[txn-2] start 7 requests at key 9139483
+[txn-2] start 8 requests at key 9340311
+[txn-3] start 0 requests at key 9999998
+[txn-2] start 9 requests at key 1961358
+[txn-3] retire 0 requests
+[txn-3] start 1 requests at key 6829847
+[txn-3] start 2 requests at key 2563723
+[txn-3] start 3 requests at key 5074136
+[txn-3] start 4 requests at key 8974646
+[txn-3] start 5 requests at key 4679277
+[txn-3] start 6 requests at key 9144419
+[txn-3] start 7 requests at key 4658935
+[txn-3] start 8 requests at key 1397088
+[txn-3] start 9 requests at key 2116847
+[txn-3] start 10 requests at key 1985430
+[txn-3] start 11 requests at key 4422274
+[txn-3] start 12 requests at key 5974713
+[txn-3] start 13 requests at key 2523133
+[txn-3] start 14 requests at key 3020973
+[txn-3] start 15 requests at key 9999999
+[txn-3] committed
+[txn-2] start 10 requests at key 5674186
+[txn-5] start 0 requests at key 9999999
+[txn-5] retire 0 requests
+[txn-5] start 1 requests at key 1616742
+[txn-5] start 2 requests at key 398762
+[txn-2] start 11 requests at key 6497323
+[txn-2] start 12 requests at key 1812508
+[txn-5] start 3 requests at key 4815170
+[txn-2] start 13 requests at key 8598926
+[txn-5] start 4 requests at key 5685367
+[txn-2] start 14 requests at key 2886970
+[txn-2] start 15 requests at key 9999998
+[txn-2] committed
+[txn-5] start 5 requests at key 3936866
+[txn-4] start 0 requests at key 9999998
+[txn-4] retire 0 requests
+[txn-5] start 6 requests at key 4310345
+[txn-4] start 1 requests at key 2643930
+[txn-5] start 7 requests at key 1047903
+[txn-4] start 2 requests at key 9805962
+[txn-4] start 3 requests at key 2412468
+[txn-5] start 8 requests at key 1213000
+[txn-5] start 9 requests at key 6887681
+[txn-4] start 4 requests at key 5000603
+[txn-5] start 10 requests at key 4469776
+[txn-5] start 11 requests at key 1448726
+[txn-4] start 5 requests at key 2223102
+[txn-5] start 12 requests at key 453587
+[txn-4] start 6 requests at key 7218492
+[txn-4] start 7 requests at key 3182965
+[txn-4] start 8 requests at key 9388483
+[txn-5] start 13 requests at key 9901807
+[txn-4] start 9 requests at key 1196101
+[txn-5] start 14 requests at key 6375359
+[txn-5] committed
+[txn-4] start 10 requests at key 6066281
+[txn-7] start 0 requests at key 9999998
+[txn-7] retire 0 requests
+[txn-7] start 1 requests at key 9503096
+[txn-4] start 11 requests at key 3515261
+[txn-7] start 2 requests at key 528214
+[txn-4] start 12 requests at key 2784733
+[txn-4] start 13 requests at key 3590049
+[txn-4] start 14 requests at key 628703
+[txn-7] start 3 requests at key 9159827
+[txn-7] start 4 requests at key 1199191
+[txn-4] start 15 requests at key 9999999
+[txn-4] committed
+[txn-7] start 5 requests at key 2854409
+[txn-6] start 0 requests at key 9999999
+[txn-6] retire 0 requests
+[txn-6] start 1 requests at key 5598004
+[txn-7] start 6 requests at key 7951009
+[txn-7] start 7 requests at key 6664448
+[txn-6] start 2 requests at key 7763048
+[txn-7] start 8 requests at key 144179
+[txn-6] start 3 requests at key 7795379
+[txn-7] start 9 requests at key 3703232
+[txn-7] start 10 requests at key 3700137
+[txn-7] start 11 requests at key 9187151
+[txn-6] start 4 requests at key 1438111
+[txn-7] start 12 requests at key 5217178
+[txn-6] start 5 requests at key 1253411
+[txn-6] start 6 requests at key 9345152
+[txn-6] start 7 requests at key 5535541
+[txn-7] start 13 requests at key 6299468
+[txn-7] start 14 requests at key 3810946
+[txn-7] committed
+[txn-9] start 0 requests at key 9999998
+[txn-9] retire 0 requests
+[txn-9] start 1 requests at key 3610398
+[txn-6] start 8 requests at key 6495645
+[txn-9] start 2 requests at key 1385763
+[txn-6] start 9 requests at key 2880959
+[txn-9] start 3 requests at key 3498261
+[txn-6] start 10 requests at key 499006
+[txn-9] start 4 requests at key 8273986
+[txn-6] start 11 requests at key 954644
+[txn-6] start 12 requests at key 5878504
+[txn-6] start 13 requests at key 3825322
+[txn-9] start 5 requests at key 7739955
+[txn-6] start 14 requests at key 8092874
+[txn-6] committed
+[txn-9] start 6 requests at key 7448805
+[txn-8] start 0 requests at key 9999999
+[txn-8] retire 0 requests
+[txn-8] start 1 requests at key 5131277
+[txn-9] start 7 requests at key 7265278
+[txn-8] start 2 requests at key 3481250
+[txn-9] start 8 requests at key 6739449
+[txn-8] start 3 requests at key 8833372
+[txn-9] start 9 requests at key 242753
+[txn-8] start 4 requests at key 9475123
+[txn-8] start 5 requests at key 3564107
+[txn-9] start 10 requests at key 6018901
+[txn-8] start 6 requests at key 8924872
+[txn-9] start 11 requests at key 2720305
+[txn-9] start 12 requests at key 5660425
+[txn-8] start 7 requests at key 5686228
+[txn-9] start 13 requests at key 9993850
+[txn-9] start 14 requests at key 7199793
+[txn-9] start 15 requests at key 9999999
+[txn-9] committed
+[txn-11] start 0 requests at key 9999999
+[txn-11] retire 0 requests
+[txn-8] start 8 requests at key 4234795
+[txn-11] start 1 requests at key 4142932
+[txn-8] start 9 requests at key 1591048
+[txn-11] start 2 requests at key 2318183
+[txn-8] start 10 requests at key 840984
+[txn-11] start 3 requests at key 2094549
+[txn-8] start 11 requests at key 494640
+[txn-11] start 4 requests at key 737673
+[txn-8] start 12 requests at key 7937480
+[txn-11] start 5 requests at key 5545218
+[txn-8] start 13 requests at key 4869224
+[txn-8] start 14 requests at key 3695048
+[txn-8] committed
+[txn-11] start 6 requests at key 3538721
+[txn-10] start 0 requests at key 9999998
+[txn-10] retire 0 requests
+[txn-11] start 7 requests at key 9191206
+[txn-10] start 1 requests at key 2851196
+[txn-10] start 2 requests at key 4999783
+[txn-11] start 8 requests at key 5791416
+[txn-10] start 3 requests at key 8980511
+[txn-11] start 9 requests at key 6675789
+[txn-10] start 4 requests at key 7318322
+[txn-11] start 10 requests at key 4086408
+[txn-10] start 5 requests at key 2514600
+[txn-11] start 11 requests at key 5651092
+[txn-10] start 6 requests at key 5563297
+[txn-11] start 12 requests at key 5776689
+[txn-10] start 7 requests at key 5288951
+[txn-11] start 13 requests at key 2975094
+[txn-10] start 8 requests at key 3226314
+[txn-10] start 9 requests at key 2877766
+[txn-11] start 14 requests at key 5211990
+[txn-10] start 10 requests at key 3052158
+[txn-10] start 11 requests at key 7343638
+[txn-11] committed
+[txn-13] start 0 requests at key 9999998
+[txn-13] retire 0 requests
+[txn-13] start 1 requests at key 2803285
+[txn-13] start 2 requests at key 3285067
+[txn-10] start 12 requests at key 3669008
+[txn-13] start 3 requests at key 6122670
+[txn-10] start 13 requests at key 2945827
+[txn-13] start 4 requests at key 2957677
+[txn-10] start 14 requests at key 6541271
+[txn-10] start 15 requests at key 9999999
+[txn-10] committed
+[txn-12] start 0 requests at key 9999999
+[txn-12] retire 0 requests
+[txn-13] start 5 requests at key 5461360
+[txn-12] start 1 requests at key 1030649
+[txn-12] start 2 requests at key 6524187
+[txn-13] start 6 requests at key 9820062
+[txn-13] start 7 requests at key 9425246
+[txn-12] start 3 requests at key 8414897
+[txn-13] start 8 requests at key 8612997
+[txn-12] start 4 requests at key 1484298
+[txn-13] start 9 requests at key 4414109
+[txn-13] start 10 requests at key 4143415
+[txn-12] start 5 requests at key 1403274
+[txn-13] start 11 requests at key 9011917
+[txn-12] start 6 requests at key 3434337
+[txn-12] start 7 requests at key 7582778
+[txn-13] start 12 requests at key 5805254
+[txn-12] start 8 requests at key 8384335
+[txn-13] start 13 requests at key 3835733
+[txn-13] start 14 requests at key 4922923
+[txn-13] start 15 requests at key 9999999
+[txn-13] committed
+[txn-15] start 0 requests at key 9999998
+[txn-15] retire 0 requests
+[txn-12] start 9 requests at key 131582
+[txn-12] aborted
+[txn-15] start 1 requests at key 8474116
+[txn-15] start 2 requests at key 4586417
+[txn-15] start 3 requests at key 5795147
+[txn-15] start 4 requests at key 3117528
+[txn-15] start 5 requests at key 8062964
+[txn-15] start 6 requests at key 5410009
+[txn-15] start 7 requests at key 4502531
+[txn-15] start 8 requests at key 377719
+[txn-14] start 0 requests at key 9999999
+[txn-14] retire 0 requests
+[txn-14] start 1 requests at key 1030649
+[txn-14] start 2 requests at key 6524187
+[txn-14] start 3 requests at key 8414897
+[txn-14] start 4 requests at key 1484298
+[txn-14] start 5 requests at key 1403274
+[txn-14] start 6 requests at key 3434337
+[txn-14] start 7 requests at key 7582778
+[txn-14] start 8 requests at key 8384335
+[txn-14] start 9 requests at key 131582
+[txn-15] start 9 requests at key 8653110
+[txn-14] start 10 requests at key 631802
+[txn-15] start 10 requests at key 390441
+[txn-14] start 11 requests at key 1338766
+[txn-15] start 11 requests at key 7903658
+[txn-14] start 12 requests at key 3723972
+[txn-14] start 13 requests at key 395462
+[txn-15] start 12 requests at key 4501779
+[txn-15] start 13 requests at key 9799567
+[txn-15] start 14 requests at key 3867865
+[txn-15] start 15 requests at key 9999999
+[txn-15] committed
+[txn-14] start 14 requests at key 1110911
+[txn-17] start 0 requests at key 9999999
+[txn-17] retire 0 requests
+[txn-14] committed
+[txn-17] start 1 requests at key 1491444
+[txn-16] start 0 requests at key 9999999
+[txn-16] retire 0 requests
+[txn-16] start 1 requests at key 4099944
+[txn-16] start 2 requests at key 3995584
+[txn-17] start 2 requests at key 827219
+[txn-16] start 3 requests at key 7541841
+[txn-16] start 4 requests at key 1716155
+[txn-17] start 3 requests at key 512249
+[txn-16] start 5 requests at key 7281626
+[txn-16] start 6 requests at key 7786750
+[txn-17] start 4 requests at key 2854443
+[txn-17] start 5 requests at key 3929840
+[txn-17] start 6 requests at key 5543736
+[txn-16] start 7 requests at key 7547452
+[txn-17] start 7 requests at key 5431983
+[txn-16] start 8 requests at key 2026730
+[txn-16] start 9 requests at key 1538890
+[txn-17] start 8 requests at key 7242667
+[txn-16] start 10 requests at key 3575721
+[txn-17] start 9 requests at key 9350219
+[txn-16] start 11 requests at key 9235829
+[txn-16] start 12 requests at key 4972217
+[txn-17] start 10 requests at key 5924257
+[txn-16] start 13 requests at key 5174492
+[txn-17] start 11 requests at key 3859408
+[txn-17] start 12 requests at key 4906188
+[txn-17] start 13 requests at key 6644335
+[txn-16] start 14 requests at key 2769822
+[txn-17] start 14 requests at key 7607677
+[txn-17] committed
+[txn-16] committed
+[txn-19] start 0 requests at key 9999998
+[txn-19] retire 0 requests
+[txn-18] start 0 requests at key 9999998
+[txn-18] retire 0 requests
+[txn-18] start 1 requests at key 2756746
+[txn-19] start 1 requests at key 7741051
+[txn-18] start 2 requests at key 330130
+[txn-19] start 2 requests at key 7509349
+[txn-18] start 3 requests at key 5657554
+[txn-19] start 3 requests at key 2412085
+[txn-18] start 4 requests at key 8044685
+[txn-19] start 4 requests at key 4596302
+[txn-19] start 5 requests at key 2420323
+[txn-19] start 6 requests at key 7856617
+[txn-18] start 5 requests at key 7519407
+[txn-19] start 7 requests at key 9798503
+[txn-19] start 8 requests at key 6211142
+[txn-18] start 6 requests at key 855325
+[txn-18] start 7 requests at key 4553735
+[txn-18] start 8 requests at key 4599622
+[txn-19] start 9 requests at key 7793202
+[txn-18] start 9 requests at key 2532975
+[txn-18] start 10 requests at key 5089123
+[txn-19] start 10 requests at key 3527833
+[txn-19] start 11 requests at key 2452268
+[txn-19] start 12 requests at key 3947696
+[txn-18] start 11 requests at key 8612381
+[txn-19] start 13 requests at key 659384
+[txn-18] start 12 requests at key 7419654
+[txn-19] start 14 requests at key 8147141
+[txn-18] start 13 requests at key 7098967
+[txn-19] start 15 requests at key 9999999
+[txn-19] committed
+[txn-18] start 14 requests at key 3718051
+[txn-21] start 0 requests at key 9999998
+[txn-21] retire 0 requests
+[txn-18] start 15 requests at key 9999999
+[txn-18] committed
+[txn-20] start 0 requests at key 9999998
+[txn-20] retire 0 requests
+[txn-21] start 1 requests at key 7620377
+[txn-20] start 1 requests at key 7225487
+[txn-20] start 2 requests at key 2331727
+[txn-20] start 3 requests at key 6985395
+[txn-20] start 4 requests at key 3489737
+[txn-20] start 5 requests at key 3507812
+[txn-21] start 2 requests at key 8186537
+[txn-20] start 6 requests at key 5741566
+[txn-21] start 3 requests at key 7638103
+[txn-20] start 7 requests at key 7498282
+[txn-21] start 4 requests at key 7119995
+[txn-20] start 8 requests at key 8244519
+[txn-21] start 5 requests at key 5681414
+[txn-20] start 9 requests at key 1703643
+[txn-21] start 6 requests at key 6033526
+[txn-20] start 10 requests at key 6756242
+[txn-20] start 11 requests at key 2026969
+[txn-21] start 7 requests at key 5327334
+[txn-20] start 12 requests at key 8541557
+[txn-21] start 8 requests at key 7176857
+[txn-20] start 13 requests at key 3950683
+[txn-21] start 9 requests at key 9608717
+[txn-21] start 10 requests at key 7322420
+[txn-20] start 14 requests at key 8559868
+[txn-21] start 11 requests at key 1269853
+[txn-21] start 12 requests at key 8062811
+[txn-21] start 13 requests at key 830156
+[txn-21] start 14 requests at key 9888822
+[txn-21] start 15 requests at key 9999999
+[txn-21] committed
+[txn-20] committed
+[txn-23] start 0 requests at key 9999999
+[txn-23] retire 0 requests
+[txn-22] start 0 requests at key 9999999
+[txn-22] retire 0 requests
+[txn-23] start 1 requests at key 1573453
+[txn-22] start 1 requests at key 2042909
+[txn-23] start 2 requests at key 8532908
+[txn-22] start 2 requests at key 5750659
+[txn-23] start 3 requests at key 5680050
+[txn-22] start 3 requests at key 5265930
+[txn-23] start 4 requests at key 6548808
+[txn-22] start 4 requests at key 2397757
+[txn-23] start 5 requests at key 7991500
+[txn-22] start 5 requests at key 7577964
+[txn-23] start 6 requests at key 2623104
+[txn-23] start 7 requests at key 4357243
+[txn-22] start 6 requests at key 496374
+[txn-23] start 8 requests at key 5985300
+[txn-23] start 9 requests at key 7682716
+[txn-22] start 7 requests at key 8007387
+[txn-23] start 10 requests at key 8587629
+[txn-22] start 8 requests at key 5134398
+[txn-22] start 9 requests at key 4931062
+[txn-22] start 10 requests at key 6219613
+[txn-23] start 11 requests at key 6406893
+[txn-22] start 11 requests at key 1036235
+[txn-22] start 12 requests at key 9224394
+[txn-23] start 12 requests at key 5615374
+[txn-22] start 13 requests at key 8812035
+[txn-23] start 13 requests at key 6009400
+[txn-23] start 14 requests at key 4968713
+[txn-22] start 14 requests at key 2401935
+[txn-23] start 15 requests at key 9999998
+[txn-23] committed
+[txn-22] start 15 requests at key 9999998
+[txn-25] start 0 requests at key 9999999
+[txn-22] committed
+[txn-25] retire 0 requests
+[txn-24] start 0 requests at key 9999998
+[txn-24] retire 0 requests
+[txn-25] start 1 requests at key 7271245
+[txn-25] start 2 requests at key 3903412
+[txn-24] start 1 requests at key 103083
+[txn-25] start 3 requests at key 7399997
+[txn-24] start 2 requests at key 9055618
+[txn-25] start 4 requests at key 3575105
+[txn-25] start 5 requests at key 6960903
+[txn-24] start 3 requests at key 4079799
+[txn-25] start 6 requests at key 9839789
+[txn-25] start 7 requests at key 2415953
+[txn-24] start 4 requests at key 5597294
+[txn-25] start 8 requests at key 3320640
+[txn-25] start 9 requests at key 5813180
+[txn-24] start 5 requests at key 5133560
+[txn-25] start 10 requests at key 624733
+[txn-24] start 6 requests at key 3029188
+[txn-25] start 11 requests at key 6286329
+[txn-24] start 7 requests at key 4282857
+[txn-24] start 8 requests at key 3595183
+[txn-25] start 12 requests at key 2660934
+[txn-24] start 9 requests at key 6850490
+[txn-25] start 13 requests at key 2215872
+[txn-24] start 10 requests at key 1858520
+[txn-25] start 14 requests at key 6063754
+[txn-24] start 11 requests at key 1072606
+[txn-25] committed
+[txn-27] start 0 requests at key 9999999
+[txn-27] retire 0 requests
+[txn-27] start 1 requests at key 9130703
+[txn-24] start 12 requests at key 3879050
+[txn-24] start 13 requests at key 4869083
+[txn-27] start 2 requests at key 768720
+[txn-24] start 14 requests at key 6996470
+[txn-24] start 15 requests at key 9999999
+[txn-24] committed
+[txn-26] start 0 requests at key 9999998
+[txn-26] retire 0 requests
+[txn-26] start 1 requests at key 1621113
+[txn-27] start 3 requests at key 3911238
+[txn-26] start 2 requests at key 9470752
+[txn-27] start 4 requests at key 2350180
+[txn-27] start 5 requests at key 9937306
+[txn-26] start 3 requests at key 7693226
+[txn-27] start 6 requests at key 1420643
+[txn-27] start 7 requests at key 6705534
+[txn-26] start 4 requests at key 1139517
+[txn-27] start 8 requests at key 883652
+[txn-27] start 9 requests at key 6077144
+[txn-26] start 5 requests at key 623011
+[txn-27] start 10 requests at key 8050767
+[txn-26] start 6 requests at key 8392133
+[txn-27] start 11 requests at key 7340779
+[txn-26] start 7 requests at key 4332360
+[txn-26] start 8 requests at key 2115778
+[txn-26] start 9 requests at key 8220573
+[txn-27] start 12 requests at key 2557119
+[txn-27] start 13 requests at key 786331
+[txn-26] start 10 requests at key 3648117
+[txn-26] start 11 requests at key 4961533
+[txn-26] start 12 requests at key 9177237
+[txn-26] start 13 requests at key 4311907
+[txn-26] start 14 requests at key 1804956
+[txn-27] start 14 requests at key 4440320
+[txn-26] start 15 requests at key 9999999
+[txn-27] committed
+[txn-26] committed
+[txn-28] start 0 requests at key 9999999
+[txn-28] retire 0 requests
+[txn-29] start 0 requests at key 9999999
+[txn-29] retire 0 requests
+[txn-28] start 1 requests at key 8736992
+[txn-29] start 1 requests at key 5810983
+[txn-29] start 2 requests at key 3657430
+[txn-28] start 2 requests at key 8071614
+[txn-29] start 3 requests at key 8442727
+[txn-28] start 3 requests at key 1048163
+[txn-28] start 4 requests at key 2544097
+[txn-29] start 4 requests at key 3894258
+[txn-28] start 5 requests at key 1364897
+[txn-29] start 5 requests at key 6734337
+[txn-28] start 6 requests at key 5850441
+[txn-29] start 6 requests at key 4974601
+[txn-28] start 7 requests at key 4152349
+[txn-28] start 8 requests at key 7081159
+[txn-29] start 7 requests at key 5764135
+[txn-28] start 9 requests at key 3788208
+[txn-28] start 10 requests at key 9781203
+[txn-28] start 11 requests at key 9486366
+[txn-28] start 12 requests at key 1655959
+[txn-29] start 8 requests at key 8815277
+[txn-28] start 13 requests at key 1052091
+[txn-28] start 14 requests at key 7970809
+[txn-29] start 9 requests at key 3796913
+[txn-29] start 10 requests at key 9319289
+[txn-29] start 11 requests at key 3848213
+[txn-28] start 15 requests at key 9999998
+[txn-28] committed
+[txn-29] start 12 requests at key 4972430
+[txn-30] start 0 requests at key 9999998
+[txn-30] retire 0 requests
+[txn-30] start 1 requests at key 5606084
+[txn-29] start 13 requests at key 8580125
+[txn-29] start 14 requests at key 7633486
+[txn-30] start 2 requests at key 89535
+[txn-29] committed
+[txn-31] start 0 requests at key 9999998
+[txn-31] retire 0 requests
+[txn-30] start 3 requests at key 8149992
+[txn-31] start 1 requests at key 5020651
+[txn-30] start 4 requests at key 5855724
+[txn-31] start 2 requests at key 6289211
+[txn-30] start 5 requests at key 6199735
+[txn-31] start 3 requests at key 4773121
+[txn-30] start 6 requests at key 4785874
+[txn-30] start 7 requests at key 9597134
+[txn-30] start 8 requests at key 9866529
+[txn-30] start 9 requests at key 3079505
+[txn-31] start 4 requests at key 209815
+[txn-30] start 10 requests at key 8251163
+[txn-31] start 5 requests at key 9831086
+[txn-31] start 6 requests at key 6092642
+[txn-30] start 11 requests at key 7499658
+[txn-31] start 7 requests at key 8056165
+[txn-31] start 8 requests at key 4569281
+[txn-31] start 9 requests at key 1397355
+[txn-30] start 12 requests at key 8268319
+[txn-31] start 10 requests at key 3575441
+[txn-31] start 11 requests at key 8126671
+[txn-30] start 13 requests at key 1554475
+[txn-30] start 14 requests at key 433955
+[txn-31] start 12 requests at key 2624741
+[txn-30] start 15 requests at key 9999999
+[txn-30] committed
+[txn-31] start 13 requests at key 8083344
+[txn-32] start 0 requests at key 9999999
+[txn-32] retire 0 requests
+[txn-32] start 1 requests at key 7450004
+[txn-31] start 14 requests at key 3586668
+[txn-31] start 15 requests at key 9999999
+[txn-31] committed
+[txn-32] start 2 requests at key 1244129
+[txn-32] aborted
+[txn-33] start 0 requests at key 9999999
+[txn-33] retire 0 requests
+[txn-33] start 1 requests at key 354760
+[txn-33] start 2 requests at key 135637
+[txn-33] start 3 requests at key 5149343
+[txn-33] start 4 requests at key 8303980
+[txn-34] start 0 requests at key 9999999
+[txn-34] retire 0 requests
+[txn-34] start 1 requests at key 7450004
+[txn-34] start 2 requests at key 1244129
+[txn-33] start 5 requests at key 4202386
+[txn-34] start 3 requests at key 9428957
+[txn-33] start 6 requests at key 7031380
+[txn-34] start 4 requests at key 3706269
+[txn-33] start 7 requests at key 6250252
+[txn-34] start 5 requests at key 2695187
+[txn-33] start 8 requests at key 3149883
+[txn-33] start 9 requests at key 2623105
+[txn-34] start 6 requests at key 7641280
+[txn-33] start 10 requests at key 856683
+[txn-33] start 11 requests at key 1955877
+[txn-34] start 7 requests at key 9167044
+[txn-33] start 12 requests at key 6355345
+[txn-34] start 8 requests at key 10228
+[txn-33] start 13 requests at key 6147462
+[txn-33] start 14 requests at key 7845138
+[txn-34] start 9 requests at key 9965574
+[txn-34] start 10 requests at key 5615389
+[txn-34] start 11 requests at key 9734850
+[txn-33] start 15 requests at key 9999998
+[txn-33] committed
+[txn-35] start 0 requests at key 9999999
+[txn-35] retire 0 requests
+[txn-34] start 12 requests at key 5100870
+[txn-35] start 1 requests at key 8817453
+[txn-34] start 13 requests at key 9710541
+[txn-34] start 14 requests at key 5801296
+[txn-35] start 2 requests at key 8158988
+[txn-34] start 15 requests at key 9999998
+[txn-34] committed
+[txn-36] start 0 requests at key 9999998
+[txn-36] retire 0 requests
+[txn-36] start 1 requests at key 4533184
+[txn-35] start 3 requests at key 1468219
+[txn-36] start 2 requests at key 866963
+[txn-35] start 4 requests at key 2931813
+[txn-36] start 3 requests at key 1819542
+[txn-35] start 5 requests at key 2676599
+[txn-36] start 4 requests at key 3363286
+[txn-35] start 6 requests at key 4944013
+[txn-36] start 5 requests at key 6423613
+[txn-35] start 7 requests at key 5666710
+[txn-36] start 6 requests at key 3205327
+[txn-36] start 7 requests at key 6475748
+[txn-36] start 8 requests at key 9597952
+[txn-36] start 9 requests at key 1422547
+[txn-35] start 8 requests at key 365560
+[txn-36] start 10 requests at key 3002781
+[txn-36] start 11 requests at key 7622225
+[txn-35] start 9 requests at key 9600499
+[txn-35] start 10 requests at key 2065066
+[txn-35] start 11 requests at key 9938741
+[txn-36] start 12 requests at key 6474916
+[txn-35] start 12 requests at key 1962157
+[txn-36] start 13 requests at key 6204373
+[txn-35] start 13 requests at key 3566409
+[txn-36] start 14 requests at key 2610792
+[txn-35] start 14 requests at key 1490925
+[txn-36] start 15 requests at key 9999999
+[txn-36] committed
+[txn-38] start 0 requests at key 9999999
+[txn-38] retire 0 requests
+[txn-35] committed
+[txn-37] start 0 requests at key 9999998
+[txn-37] retire 0 requests
+[txn-38] start 1 requests at key 7463745
+[txn-37] start 1 requests at key 1752069
+[txn-37] start 2 requests at key 4386218
+[txn-37] start 3 requests at key 4730925
+[txn-37] start 4 requests at key 4479201
+[txn-37] start 5 requests at key 2118379
+[txn-38] start 2 requests at key 3728372
+[txn-38] start 3 requests at key 6650682
+[txn-37] start 6 requests at key 5690576
+[txn-38] start 4 requests at key 5344828
+[txn-38] start 5 requests at key 9098646
+[txn-37] start 7 requests at key 263770
+[txn-38] start 6 requests at key 336765
+[txn-38] start 7 requests at key 3661483
+[txn-37] start 8 requests at key 5089058
+[txn-38] start 8 requests at key 7822071
+[txn-37] start 9 requests at key 5015825
+[txn-38] start 9 requests at key 7059116
+[txn-38] start 10 requests at key 9481148
+[txn-37] start 10 requests at key 1946978
+[txn-38] start 11 requests at key 504526
+[txn-37] start 11 requests at key 2490247
+[txn-37] start 12 requests at key 3328478
+[txn-38] start 12 requests at key 4754468
+[txn-38] start 13 requests at key 6796887
+[txn-37] start 13 requests at key 2803491
+[txn-38] start 14 requests at key 9539350
+[txn-38] start 15 requests at key 9999998
+[txn-38] committed
+[txn-40] start 0 requests at key 9999998
+[txn-37] start 14 requests at key 5676919
+[txn-37] aborted
+[txn-40] retire 0 requests
+[txn-40] start 1 requests at key 9387018
+[txn-40] start 2 requests at key 8712802
+[txn-40] start 3 requests at key 5458901
+[txn-40] start 4 requests at key 8544196
+[txn-40] start 5 requests at key 9805515
+[txn-40] start 6 requests at key 1059041
+[txn-40] start 7 requests at key 987416
+[txn-40] start 8 requests at key 981375
+[txn-40] start 9 requests at key 7657118
+[txn-40] start 10 requests at key 3371064
+[txn-39] start 0 requests at key 9999998
+[txn-39] retire 0 requests
+[txn-39] start 1 requests at key 1752069
+[txn-39] start 2 requests at key 4386218
+[txn-39] start 3 requests at key 4730925
+[txn-39] start 4 requests at key 4479201
+[txn-39] start 5 requests at key 2118379
+[txn-39] start 6 requests at key 5690576
+[txn-39] start 7 requests at key 263770
+[txn-39] start 8 requests at key 5089058
+[txn-39] start 9 requests at key 5015825
+[txn-39] start 10 requests at key 1946978
+[txn-39] start 11 requests at key 2490247
+[txn-39] start 12 requests at key 3328478
+[txn-39] start 13 requests at key 2803491
+[txn-39] start 14 requests at key 5676919
+[txn-40] start 11 requests at key 7757517
+[txn-40] start 12 requests at key 3249467
+[txn-39] start 15 requests at key 9999999
+[txn-40] start 13 requests at key 5365977
+[txn-40] start 14 requests at key 5951399
+[txn-40] start 15 requests at key 9999999
+[txn-40] committed
+[txn-39] aborted
+[txn-42] start 0 requests at key 9999999
+[txn-42] retire 0 requests
+[txn-42] start 1 requests at key 7269959
+[txn-42] start 2 requests at key 5485891
+[txn-42] start 3 requests at key 6452551
+[txn-42] start 4 requests at key 2905303
+[txn-42] start 5 requests at key 1630664
+[txn-42] start 6 requests at key 4922057
+[txn-42] start 7 requests at key 1168156
+[txn-42] start 8 requests at key 8604993
+[txn-41] start 0 requests at key 9999998
+[txn-41] retire 0 requests
+[txn-41] start 1 requests at key 1752069
+[txn-41] start 2 requests at key 4386218
+[txn-41] start 3 requests at key 4730925
+[txn-41] start 4 requests at key 4479201
+[txn-41] start 5 requests at key 2118379
+[txn-41] start 6 requests at key 5690576
+[txn-41] start 7 requests at key 263770
+[txn-41] start 8 requests at key 5089058
+[txn-41] start 9 requests at key 5015825
+[txn-41] start 10 requests at key 1946978
+[txn-41] start 11 requests at key 2490247
+[txn-41] start 12 requests at key 3328478
+[txn-41] start 13 requests at key 2803491
+[txn-41] start 14 requests at key 5676919
+[txn-41] start 15 requests at key 9999999
+[txn-41] committed
+[txn-43] start 0 requests at key 9999999
+[txn-43] retire 0 requests
+[txn-43] start 1 requests at key 9390499
+[txn-42] start 9 requests at key 2828761
+[txn-42] start 10 requests at key 9141176
+[txn-43] start 2 requests at key 7653765
+[txn-42] start 11 requests at key 1951368
+[txn-42] start 12 requests at key 7835684
+[txn-43] start 3 requests at key 7369721
+[txn-42] start 13 requests at key 7290441
+[txn-42] start 14 requests at key 4312958
+[txn-42] committed
+[txn-44] start 0 requests at key 9999999
+[txn-44] retire 0 requests
+[txn-44] start 1 requests at key 3343034
+[txn-43] start 4 requests at key 5463282
+[txn-44] start 2 requests at key 3104213
+[txn-43] start 5 requests at key 4002184
+[txn-44] start 3 requests at key 463388
+[txn-43] start 6 requests at key 2036238
+[txn-43] start 7 requests at key 582582
+[txn-44] start 4 requests at key 5042481
+[txn-44] start 5 requests at key 3938091
+[txn-43] start 8 requests at key 3010754
+[txn-44] start 6 requests at key 3146305
+[txn-43] start 9 requests at key 1673852
+[txn-44] start 7 requests at key 3463335
+[txn-44] start 8 requests at key 6012014
+[txn-43] start 10 requests at key 5232352
+[txn-44] start 9 requests at key 3853332
+[txn-44] start 10 requests at key 5457204
+[txn-43] start 11 requests at key 2821196
+[txn-43] start 12 requests at key 1145262
+[txn-44] start 11 requests at key 6692236
+[txn-44] start 12 requests at key 8545828
+[txn-43] start 13 requests at key 8411806
+[txn-44] start 13 requests at key 3130749
+[txn-43] start 14 requests at key 6409993
+[txn-43] committed
+[txn-44] start 14 requests at key 5330283
+[txn-45] start 0 requests at key 9999999
+[txn-45] retire 0 requests
+[txn-45] start 1 requests at key 1371577
+[txn-45] start 2 requests at key 4489795
+[txn-44] committed
+[txn-46] start 0 requests at key 9999999
+[txn-46] retire 0 requests
+[txn-46] start 1 requests at key 4618776
+[txn-45] start 3 requests at key 7420251
+[txn-46] start 2 requests at key 1822234
+[txn-46] start 3 requests at key 1604274
+[txn-45] start 4 requests at key 4107995
+[txn-46] start 4 requests at key 227130
+[txn-45] start 5 requests at key 9020941
+[txn-46] start 5 requests at key 6455773
+[txn-45] start 6 requests at key 4145178
+[txn-45] start 7 requests at key 5620655
+[txn-46] start 6 requests at key 7802126
+[txn-45] start 8 requests at key 2173497
+[txn-45] start 9 requests at key 4066757
+[txn-46] start 7 requests at key 8563805
+[txn-45] start 10 requests at key 1766624
+[txn-45] start 11 requests at key 4672880
+[txn-45] start 12 requests at key 4640176
+[txn-45] start 13 requests at key 7449978
+[txn-46] start 8 requests at key 9846813
+[txn-45] start 14 requests at key 9493683
+[txn-45] start 15 requests at key 9999998
+[txn-45] committed
+[txn-46] start 9 requests at key 5658267
+[txn-47] start 0 requests at key 9999999
+[txn-47] retire 0 requests
+[txn-47] start 1 requests at key 9641594
+[txn-47] start 2 requests at key 7228249
+[txn-47] start 3 requests at key 1066049
+[txn-46] start 10 requests at key 2537384
+[txn-47] start 4 requests at key 2375929
+[txn-46] start 11 requests at key 1546934
+[txn-47] start 5 requests at key 1011496
+[txn-46] start 12 requests at key 2540658
+[txn-47] start 6 requests at key 7716350
+[txn-46] start 13 requests at key 9003710
+[txn-47] start 7 requests at key 1052563
+[txn-46] start 14 requests at key 3263008
+[txn-46] committed
+[txn-47] start 8 requests at key 7275305
+[txn-48] start 0 requests at key 9999999
+[txn-48] retire 0 requests
+[txn-48] start 1 requests at key 1235694
+[txn-47] start 9 requests at key 2737852
+[txn-48] start 2 requests at key 7163693
+[txn-48] start 3 requests at key 2305478
+[txn-47] start 10 requests at key 7726114
+[txn-48] start 4 requests at key 6278854
+[txn-48] start 5 requests at key 9280353
+[txn-48] start 6 requests at key 179840
+[txn-47] start 11 requests at key 1507491
+[txn-47] start 12 requests at key 8930356
+[txn-48] start 7 requests at key 1592502
+[txn-48] start 8 requests at key 5939511
+[txn-48] start 9 requests at key 3942524
+[txn-47] start 13 requests at key 4255356
+[txn-47] start 14 requests at key 2695568
+[txn-48] start 10 requests at key 7466542
+[txn-47] committed
+[txn-49] start 0 requests at key 9999998
+[txn-49] retire 0 requests
+[txn-49] start 1 requests at key 4385775
+[txn-49] start 2 requests at key 6260674
+[txn-48] start 11 requests at key 8663326
+[txn-49] start 3 requests at key 97320
+[txn-48] start 12 requests at key 5538217
+[txn-49] start 4 requests at key 5623946
+[txn-48] start 13 requests at key 3462528
+[txn-48] start 14 requests at key 2908587
+[txn-48] committed
+[txn-50] start 0 requests at key 9999999
+[txn-50] retire 0 requests
+[txn-49] start 5 requests at key 1277133
+[txn-50] start 1 requests at key 7818301
+[txn-49] start 6 requests at key 9852731
+[txn-49] start 7 requests at key 8334189
+[txn-50] start 2 requests at key 4964014
+[txn-50] start 3 requests at key 8074484
+[txn-49] start 8 requests at key 212580
+[txn-50] start 4 requests at key 5486704
+[txn-49] start 9 requests at key 2509513
+[txn-49] start 10 requests at key 3096122
+[txn-50] start 5 requests at key 294506
+[txn-49] start 11 requests at key 5255301
+[txn-50] start 6 requests at key 6311530
+[txn-50] start 7 requests at key 6141607
+[txn-49] start 12 requests at key 7527744
+[txn-50] start 8 requests at key 1164259
+[txn-50] start 9 requests at key 9050828
+[txn-49] start 13 requests at key 5263812
+[txn-50] start 10 requests at key 6077210
+[txn-50] start 11 requests at key 1697750
+[txn-49] start 14 requests at key 1803117
+[txn-49] start 15 requests at key 9999999
+[txn-49] committed
+[txn-50] start 12 requests at key 5077771
+[txn-51] start 0 requests at key 9999998
+[txn-51] retire 0 requests
+[txn-51] start 1 requests at key 8539067
+[txn-50] start 13 requests at key 4316893
+[txn-50] start 14 requests at key 1480714
+[txn-50] start 15 requests at key 9999998
+[txn-50] committed
+[txn-52] start 0 requests at key 9999998
+[txn-52] retire 0 requests
+[txn-52] start 1 requests at key 1341359
+[txn-51] start 2 requests at key 8339704
+[txn-51] aborted
+[txn-52] start 2 requests at key 2018235
+[txn-52] start 3 requests at key 3964277
+[txn-52] start 4 requests at key 4793228
+[txn-52] start 5 requests at key 5746994
+[txn-52] start 6 requests at key 3399750
+[txn-52] start 7 requests at key 4514588
+[txn-52] start 8 requests at key 7450687
+[txn-52] start 9 requests at key 5954770
+[txn-52] start 10 requests at key 1202235
+[txn-52] start 11 requests at key 7582770
+[txn-52] start 12 requests at key 8485649
+[txn-52] start 13 requests at key 3795653
+[txn-52] start 14 requests at key 9057624
+[txn-53] start 0 requests at key 9999998
+[txn-53] retire 0 requests
+[txn-53] start 1 requests at key 8539067
+[txn-53] start 2 requests at key 8339704
+[txn-52] committed
+[txn-54] start 0 requests at key 9999999
+[txn-54] retire 0 requests
+[txn-54] start 1 requests at key 2149156
+[txn-54] start 2 requests at key 5252246
+[txn-53] start 3 requests at key 3599997
+[txn-53] start 4 requests at key 4610717
+[txn-53] start 5 requests at key 6902761
+[txn-53] start 6 requests at key 9353973
+[txn-54] start 3 requests at key 1731285
+[txn-53] start 7 requests at key 6343665
+[txn-54] start 4 requests at key 6210944
+[txn-53] start 8 requests at key 1091088
+[txn-53] start 9 requests at key 4748086
+[txn-54] start 5 requests at key 5358736
+[txn-53] start 10 requests at key 6285427
+[txn-53] start 11 requests at key 8249968
+[txn-54] start 6 requests at key 1597398
+[txn-54] start 7 requests at key 8106153
+[txn-53] start 12 requests at key 1640566
+[txn-53] start 13 requests at key 2549865
+[txn-53] start 14 requests at key 3974044
+[txn-53] start 15 requests at key 9999999
+[txn-53] committed
+[txn-54] start 8 requests at key 760715
+[txn-54] aborted
+[txn-55] start 0 requests at key 9999998
+[txn-55] retire 0 requests
+[txn-55] start 1 requests at key 9124769
+[txn-55] start 2 requests at key 9870291
+[txn-55] start 3 requests at key 4371358
+[txn-55] start 4 requests at key 4804951
+[txn-55] start 5 requests at key 5802202
+[txn-55] start 6 requests at key 1810272
+[txn-55] start 7 requests at key 819459
+[txn-55] start 8 requests at key 2388277
+[txn-55] start 9 requests at key 3706933
+[txn-55] start 10 requests at key 9090227
+[txn-55] start 11 requests at key 8489460
+[txn-56] start 0 requests at key 9999999
+[txn-56] retire 0 requests
+[txn-56] start 1 requests at key 2149156
+[txn-56] start 2 requests at key 5252246
+[txn-56] start 3 requests at key 1731285
+[txn-56] start 4 requests at key 6210944
+[txn-56] start 5 requests at key 5358736
+[txn-56] start 6 requests at key 1597398
+[txn-56] start 7 requests at key 8106153
+[txn-56] start 8 requests at key 760715
+[txn-55] start 12 requests at key 2845747
+[txn-55] start 13 requests at key 5141941
+[txn-56] start 9 requests at key 1679327
+[txn-56] start 10 requests at key 8541413
+[txn-55] start 14 requests at key 8395765
+[txn-56] start 11 requests at key 3249693
+[txn-56] start 12 requests at key 521706
+[txn-55] start 15 requests at key 9999999
+[txn-55] committed
+[txn-57] start 0 requests at key 9999999
+[txn-57] retire 0 requests
+[txn-57] start 1 requests at key 1911876
+[txn-57] start 2 requests at key 2123006
+[txn-56] start 13 requests at key 108447
+[txn-57] start 3 requests at key 2393836
+[txn-57] start 4 requests at key 370659
+[txn-56] start 14 requests at key 7313885
+[txn-56] committed
+[txn-58] start 0 requests at key 9999998
+[txn-58] retire 0 requests
+[txn-58] start 1 requests at key 6267211
+[txn-58] start 2 requests at key 6170049
+[txn-57] start 5 requests at key 6938064
+[txn-58] start 3 requests at key 7448558
+[txn-57] start 6 requests at key 239951
+[txn-58] start 4 requests at key 4790817
+[txn-57] start 7 requests at key 6798365
+[txn-58] start 5 requests at key 5086802
+[txn-57] start 8 requests at key 6253209
+[txn-57] start 9 requests at key 8681510
+[txn-58] start 6 requests at key 8111968
+[txn-57] start 10 requests at key 3486713
+[txn-58] start 7 requests at key 9754969
+[txn-58] start 8 requests at key 5816512
+[txn-57] start 11 requests at key 8477743
+[txn-58] start 9 requests at key 8689676
+[txn-57] start 12 requests at key 8518072
+[txn-58] start 10 requests at key 2702997
+[txn-58] start 11 requests at key 6536819
+[txn-57] start 13 requests at key 8580724
+[txn-58] start 12 requests at key 9913118
+[txn-58] start 13 requests at key 3241879
+[txn-58] start 14 requests at key 1648191
+[txn-57] start 14 requests at key 4292228
+[txn-57] start 15 requests at key 9999998
+[txn-58] committed
+[txn-57] aborted
+[txn-60] start 0 requests at key 9999998
+[txn-60] retire 0 requests
+[txn-60] start 1 requests at key 3565574
+[txn-60] start 2 requests at key 8267028
+[txn-60] start 3 requests at key 3909261
+[txn-60] start 4 requests at key 385938
+[txn-60] start 5 requests at key 6174748
+[txn-60] start 6 requests at key 2066162
+[txn-60] start 7 requests at key 7841342
+[txn-60] start 8 requests at key 8159868
+[txn-59] start 0 requests at key 9999999
+[txn-59] retire 0 requests
+[txn-59] start 1 requests at key 1911876
+[txn-59] start 2 requests at key 2123006
+[txn-59] start 3 requests at key 2393836
+[txn-59] start 4 requests at key 370659
+[txn-59] start 5 requests at key 6938064
+[txn-59] start 6 requests at key 239951
+[txn-59] start 7 requests at key 6798365
+[txn-59] start 8 requests at key 6253209
+[txn-59] start 9 requests at key 8681510
+[txn-59] start 10 requests at key 3486713
+[txn-59] start 11 requests at key 8477743
+[txn-59] start 12 requests at key 8518072
+[txn-59] start 13 requests at key 8580724
+[txn-59] start 14 requests at key 4292228
+[txn-59] start 15 requests at key 9999998
+[txn-59] committed
+[txn-61] start 0 requests at key 9999998
+[txn-61] retire 0 requests
+[txn-60] start 9 requests at key 6662781
+[txn-61] start 1 requests at key 177837
+[txn-60] start 10 requests at key 942978
+[txn-60] start 11 requests at key 4225415
+[txn-60] start 12 requests at key 6758037
+[txn-60] start 13 requests at key 3745632
+[txn-61] start 2 requests at key 2844750
+[txn-60] start 14 requests at key 649572
+[txn-61] start 3 requests at key 2077747
+[txn-61] start 4 requests at key 7450353
+[txn-60] committed
+[txn-62] start 0 requests at key 9999998
+[txn-62] retire 0 requests
+[txn-62] start 1 requests at key 4384067
+[txn-62] start 2 requests at key 3285281
+[txn-62] start 3 requests at key 4161136
+[txn-62] start 4 requests at key 6852025
+[txn-61] start 5 requests at key 3400745
+[txn-61] start 6 requests at key 4460238
+[txn-62] start 5 requests at key 3060564
+[txn-61] start 7 requests at key 7903491
+[txn-62] start 6 requests at key 5984951
+[txn-62] start 7 requests at key 8836811
+[txn-61] start 8 requests at key 7595228
+[txn-62] start 8 requests at key 9389894
+[txn-62] start 9 requests at key 1151315
+[txn-61] start 9 requests at key 1825852
+[txn-62] start 10 requests at key 503016
+[txn-61] start 10 requests at key 7427431
+[txn-62] start 11 requests at key 3667257
+[txn-62] start 12 requests at key 2576846
+[txn-61] start 11 requests at key 1866011
+[txn-62] start 13 requests at key 6680533
+[txn-61] start 12 requests at key 2021122
+[txn-62] start 14 requests at key 9919759
+[txn-61] start 13 requests at key 1475213
+[txn-61] start 14 requests at key 9111783
+[txn-61] committed
+[txn-62] committed
+[txn-63] start 0 requests at key 9999999
+[txn-63] retire 0 requests
+[txn-64] start 0 requests at key 9999999
+[txn-64] retire 0 requests
+[txn-64] start 1 requests at key 6217678
+[txn-63] start 1 requests at key 5670068
+[txn-64] start 2 requests at key 6133119
+[txn-64] start 3 requests at key 9544652
+[txn-64] start 4 requests at key 4627680
+[txn-64] start 5 requests at key 8134657
+[txn-63] start 2 requests at key 1522611
+[txn-63] start 3 requests at key 2838246
+[txn-63] start 4 requests at key 1912523
+[txn-64] start 6 requests at key 6730446
+[txn-63] start 5 requests at key 6122067
+[txn-64] start 7 requests at key 3137509
+[txn-63] start 6 requests at key 6354751
+[txn-64] start 8 requests at key 557196
+[txn-63] start 7 requests at key 8804295
+[txn-64] start 9 requests at key 7542044
+[txn-63] start 8 requests at key 1281345
+[txn-63] start 9 requests at key 9476295
+[txn-63] start 10 requests at key 2080220
+[txn-63] start 11 requests at key 6299360
+[txn-64] start 10 requests at key 8805367
+[txn-63] start 12 requests at key 4088405
+[txn-63] start 13 requests at key 910636
+[txn-63] start 14 requests at key 1574117
+[txn-63] committed
+[txn-64] start 11 requests at key 5729726
+[txn-65] start 0 requests at key 9999998
+[txn-65] retire 0 requests
+[txn-65] start 1 requests at key 9289333
+[txn-65] start 2 requests at key 7626510
+[txn-64] start 12 requests at key 7217806
+[txn-64] start 13 requests at key 6441528
+[txn-64] start 14 requests at key 9692945
+[txn-64] committed
+[txn-65] start 3 requests at key 6399251
+[txn-66] start 0 requests at key 9999999
+[txn-66] retire 0 requests
+[txn-65] start 4 requests at key 3035987
+[txn-66] start 1 requests at key 8113840
+[txn-65] start 5 requests at key 7003302
+[txn-65] start 6 requests at key 3292990
+[txn-66] start 2 requests at key 4363623
+[txn-66] start 3 requests at key 6000902
+[txn-65] start 7 requests at key 6866088
+[txn-66] start 4 requests at key 6446215
+[txn-65] start 8 requests at key 2439521
+[txn-66] start 5 requests at key 7110753
+[txn-65] start 9 requests at key 6745879
+[txn-65] start 10 requests at key 4043380
+[txn-66] start 6 requests at key 1124485
+[txn-65] start 11 requests at key 8843420
+[txn-66] start 7 requests at key 128351
+[txn-65] start 12 requests at key 6981683
+[txn-66] start 8 requests at key 6165930
+[txn-65] start 13 requests at key 9989982
+[txn-66] start 9 requests at key 3600480
+[txn-65] start 14 requests at key 1716814
+[txn-65] committed
+[txn-66] start 10 requests at key 2338727
+[txn-67] start 0 requests at key 9999999
+[txn-67] retire 0 requests
+[txn-67] start 1 requests at key 9764461
+[txn-66] start 11 requests at key 6871474
+[txn-67] start 2 requests at key 5162805
+[txn-66] start 12 requests at key 1182307
+[txn-66] start 13 requests at key 7400262
+[txn-67] start 3 requests at key 5167933
+[txn-66] start 14 requests at key 3182298
+[txn-66] committed
+[txn-68] start 0 requests at key 9999999
+[txn-68] retire 0 requests
+[txn-68] start 1 requests at key 6642582
+[txn-67] start 4 requests at key 4072649
+[txn-67] start 5 requests at key 9375513
+[txn-68] start 2 requests at key 2122748
+[txn-67] start 6 requests at key 7715479
+[txn-68] start 3 requests at key 9080972
+[txn-67] start 7 requests at key 7386312
+[txn-68] start 4 requests at key 7377974
+[txn-67] start 8 requests at key 7702180
+[txn-68] start 5 requests at key 250844
+[txn-67] start 9 requests at key 8931109
+[txn-68] start 6 requests at key 7987963
+[txn-68] start 7 requests at key 4526501
+[txn-67] start 10 requests at key 5268969
+[txn-68] start 8 requests at key 6846548
+[txn-68] start 9 requests at key 8163624
+[txn-67] start 11 requests at key 7832779
+[txn-68] start 10 requests at key 6133697
+[txn-68] start 11 requests at key 1162757
+[txn-67] start 12 requests at key 9879092
+[txn-67] start 13 requests at key 4402854
+[txn-68] start 12 requests at key 2817144
+[txn-67] start 14 requests at key 6477902
+[txn-67] committed
+[txn-68] start 13 requests at key 2904194
+[txn-69] start 0 requests at key 9999999
+[txn-69] retire 0 requests
+[txn-69] start 1 requests at key 2458633
+[txn-68] start 14 requests at key 6458906
+[txn-68] committed
+[txn-69] start 2 requests at key 3824794
+[txn-70] start 0 requests at key 9999999
+[txn-70] retire 0 requests
+[txn-69] start 3 requests at key 4188183
+[txn-70] start 1 requests at key 3733785
+[txn-69] start 4 requests at key 2189107
+[txn-70] start 2 requests at key 6472479
+[txn-69] start 5 requests at key 6514198
+[txn-70] start 3 requests at key 9565670
+[txn-69] start 6 requests at key 3357252
+[txn-70] start 4 requests at key 8510665
+[txn-69] start 7 requests at key 8572716
+[txn-70] start 5 requests at key 3930446
+[txn-70] start 6 requests at key 4226128
+[txn-70] start 7 requests at key 6829758
+[txn-70] start 8 requests at key 1562089
+[txn-69] start 8 requests at key 6113109
+[txn-70] start 9 requests at key 7687600
+[txn-69] start 9 requests at key 3050225
+[txn-69] start 10 requests at key 4791469
+[txn-69] start 11 requests at key 2377881
+[txn-70] start 10 requests at key 5497250
+[txn-69] start 12 requests at key 632378
+[txn-70] start 11 requests at key 2515006
+[txn-70] start 12 requests at key 2125568
+[txn-69] start 13 requests at key 839033
+[txn-70] start 13 requests at key 8997081
+[txn-69] start 14 requests at key 2281968
+[txn-69] start 15 requests at key 9999998
+[txn-69] committed
+[txn-71] start 0 requests at key 9999999
+[txn-71] retire 0 requests
+[txn-71] start 1 requests at key 6071270
+[txn-70] start 14 requests at key 6094911
+[txn-70] committed
+[txn-72] start 0 requests at key 9999998
+[txn-72] retire 0 requests
+[txn-71] start 2 requests at key 5794182
+[txn-72] start 1 requests at key 6408930
+[txn-72] start 2 requests at key 6426551
+[txn-72] start 3 requests at key 2718296
+[txn-71] start 3 requests at key 5395207
+[txn-72] start 4 requests at key 8155722
+[txn-71] start 4 requests at key 3041942
+[txn-72] start 5 requests at key 1212867
+[txn-71] start 5 requests at key 6770834
+[txn-72] start 6 requests at key 4689590
+[txn-72] start 7 requests at key 2822706
+[txn-71] start 6 requests at key 6196278
+[txn-72] start 8 requests at key 3157781
+[txn-71] start 7 requests at key 1854069
+[txn-72] start 9 requests at key 6274790
+[txn-71] start 8 requests at key 7339651
+[txn-72] start 10 requests at key 5029621
+[txn-71] start 9 requests at key 2292057
+[txn-72] start 11 requests at key 6689989
+[txn-71] start 10 requests at key 629899
+[txn-72] start 12 requests at key 5788448
+[txn-71] start 11 requests at key 1674506
+[txn-72] start 13 requests at key 3048350
+[txn-71] start 12 requests at key 7336446
+[txn-72] start 14 requests at key 3313
+[txn-71] start 13 requests at key 6366363
+[txn-72] committed
+[txn-74] start 0 requests at key 9999999
+[txn-74] retire 0 requests
+[txn-71] start 14 requests at key 3780877
+[txn-71] start 15 requests at key 9999998
+[txn-71] committed
+[txn-74] start 1 requests at key 410015
+[txn-73] start 0 requests at key 9999999
+[txn-73] retire 0 requests
+[txn-73] start 1 requests at key 7966642
+[txn-74] start 2 requests at key 8365681
+[txn-73] start 2 requests at key 6146032
+[txn-74] start 3 requests at key 3387210
+[txn-73] start 3 requests at key 2566855
+[txn-74] start 4 requests at key 8733007
+[txn-73] start 4 requests at key 7821298
+[txn-74] start 5 requests at key 1432771
+[txn-73] start 5 requests at key 4620155
+[txn-74] start 6 requests at key 3855044
+[txn-73] start 6 requests at key 2085399
+[txn-74] start 7 requests at key 4881292
+[txn-73] start 7 requests at key 4723162
+[txn-73] start 8 requests at key 4076197
+[txn-73] start 9 requests at key 2182471
+[txn-74] start 8 requests at key 82286
+[txn-73] start 10 requests at key 6179123
+[txn-73] start 11 requests at key 7268776
+[txn-74] start 9 requests at key 7298178
+[txn-74] start 10 requests at key 6896473
+[txn-73] start 12 requests at key 169422
+[txn-74] start 11 requests at key 1567814
+[txn-74] start 12 requests at key 2695442
+[txn-73] start 13 requests at key 9742402
+[txn-74] start 13 requests at key 2508030
+[txn-73] start 14 requests at key 4159296
+[txn-74] start 14 requests at key 8837205
+[txn-74] start 15 requests at key 9999998
+[txn-74] committed
+[txn-73] committed
+[txn-76] start 0 requests at key 9999999
+[txn-76] retire 0 requests
+[txn-75] start 0 requests at key 9999998
+[txn-75] retire 0 requests
+[txn-76] start 1 requests at key 6452950
+[txn-75] start 1 requests at key 1738822
+[txn-76] start 2 requests at key 3279342
+[txn-75] start 2 requests at key 2374967
+[txn-76] start 3 requests at key 6775258
+[txn-75] start 3 requests at key 9539679
+[txn-75] start 4 requests at key 4526367
+[txn-76] start 4 requests at key 7768609
+[txn-75] start 5 requests at key 5112292
+[txn-76] start 5 requests at key 6480058
+[txn-75] start 6 requests at key 996687
+[txn-76] start 6 requests at key 2607628
+[txn-75] start 7 requests at key 9284494
+[txn-76] start 7 requests at key 1984772
+[txn-75] start 8 requests at key 6645424
+[txn-76] start 8 requests at key 9444564
+[txn-75] start 9 requests at key 2865550
+[txn-76] start 9 requests at key 2228072
+[txn-75] start 10 requests at key 9746950
+[txn-76] start 10 requests at key 3373981
+[txn-75] start 11 requests at key 8576463
+[txn-76] start 11 requests at key 536990
+[txn-75] start 12 requests at key 7085911
+[txn-75] start 13 requests at key 3402657
+[txn-75] start 14 requests at key 4911511
+[txn-76] start 12 requests at key 8902726
+[txn-75] start 15 requests at key 9999999
+[txn-75] committed
+[txn-77] start 0 requests at key 9999998
+[txn-77] retire 0 requests
+[txn-77] start 1 requests at key 8988638
+[txn-76] start 13 requests at key 1877677
+[txn-76] start 14 requests at key 5394518
+[txn-77] start 2 requests at key 7750255
+[txn-76] committed
+[txn-78] start 0 requests at key 9999998
+[txn-78] retire 0 requests
+[txn-78] start 1 requests at key 5611812
+[txn-77] start 3 requests at key 254505
+[txn-78] start 2 requests at key 9579934
+[txn-78] start 3 requests at key 6051454
+[txn-77] start 4 requests at key 2824605
+[txn-78] start 4 requests at key 1091332
+[txn-77] start 5 requests at key 4534233
+[txn-77] start 6 requests at key 9165738
+[txn-77] start 7 requests at key 9188935
+[txn-78] start 5 requests at key 5909333
+[txn-77] start 8 requests at key 6258405
+[txn-78] start 6 requests at key 3469517
+[txn-77] start 9 requests at key 9447436
+[txn-77] start 10 requests at key 1005661
+[txn-78] start 7 requests at key 6359784
+[txn-77] start 11 requests at key 1143877
+[txn-78] start 8 requests at key 8003655
+[txn-77] start 12 requests at key 7793809
+[txn-78] start 9 requests at key 9409174
+[txn-78] start 10 requests at key 8878050
+[txn-77] start 13 requests at key 4823622
+[txn-77] start 14 requests at key 6454736
+[txn-77] committed
+[txn-79] start 0 requests at key 9999999
+[txn-79] retire 0 requests
+[txn-79] start 1 requests at key 2583878
+[txn-78] start 11 requests at key 9756070
+[txn-78] start 12 requests at key 3239348
+[txn-79] start 2 requests at key 2982214
+[txn-78] start 13 requests at key 8336848
+[txn-79] start 3 requests at key 7960460
+[txn-78] start 14 requests at key 7736331
+[txn-79] start 4 requests at key 8806252
+[txn-78] start 15 requests at key 9999999
+[txn-78] committed
+[txn-80] start 0 requests at key 9999998
+[txn-80] retire 0 requests
+[txn-80] start 1 requests at key 1925302
+[txn-79] start 5 requests at key 7236980
+[txn-79] start 6 requests at key 7682702
+[txn-80] start 2 requests at key 397250
+[txn-79] start 7 requests at key 7495848
+[txn-80] start 3 requests at key 7627579
+[txn-79] start 8 requests at key 7608562
+[txn-80] start 4 requests at key 8027387
+[txn-79] start 9 requests at key 3164059
+[txn-79] start 10 requests at key 6521154
+[txn-80] start 5 requests at key 4521496
+[txn-80] start 6 requests at key 3615266
+[txn-79] start 11 requests at key 616974
+[txn-80] start 7 requests at key 9295486
+[txn-80] start 8 requests at key 5369739
+[txn-79] start 12 requests at key 2848599
+[txn-79] start 13 requests at key 1808429
+[txn-80] start 9 requests at key 2650562
+[txn-79] start 14 requests at key 6819532
+[txn-80] start 10 requests at key 6412565
+[txn-79] aborted
+[txn-80] start 11 requests at key 3028609
+[txn-80] start 12 requests at key 8142850
+[txn-80] start 13 requests at key 3462864
+[txn-80] start 14 requests at key 4829890
+[txn-80] start 15 requests at key 9999999
+[txn-80] committed
+[txn-82] start 0 requests at key 9999999
+[txn-82] retire 0 requests
+[txn-82] start 1 requests at key 4543944
+[txn-82] start 2 requests at key 701248
+[txn-82] start 3 requests at key 2552709
+[txn-82] start 4 requests at key 8912919
+[txn-82] start 5 requests at key 5429597
+[txn-82] start 6 requests at key 7001748
+[txn-82] start 7 requests at key 2969816
+[txn-82] start 8 requests at key 1045506
+[txn-82] start 9 requests at key 6327390
+[txn-81] start 0 requests at key 9999999
+[txn-81] retire 0 requests
+[txn-81] start 1 requests at key 2583878
+[txn-81] start 2 requests at key 2982214
+[txn-81] start 3 requests at key 7960460
+[txn-81] start 4 requests at key 8806252
+[txn-81] start 5 requests at key 7236980
+[txn-81] start 6 requests at key 7682702
+[txn-81] start 7 requests at key 7495848
+[txn-81] start 8 requests at key 7608562
+[txn-81] start 9 requests at key 3164059
+[txn-81] start 10 requests at key 6521154
+[txn-81] start 11 requests at key 616974
+[txn-81] start 12 requests at key 2848599
+[txn-81] start 13 requests at key 1808429
+[txn-82] start 10 requests at key 8521260
+[txn-81] start 14 requests at key 6819532
+[txn-82] start 11 requests at key 3935053
+[txn-82] start 12 requests at key 1261289
+[txn-82] start 13 requests at key 8441107
+[txn-82] start 14 requests at key 5900073
+[txn-82] committed
+[txn-81] committed
+[txn-84] start 0 requests at key 9999999
+[txn-84] retire 0 requests
+[txn-83] start 0 requests at key 9999998
+[txn-83] retire 0 requests
+[txn-84] start 1 requests at key 1907165
+[txn-83] start 1 requests at key 5906371
+[txn-83] start 2 requests at key 1095110
+[txn-84] start 2 requests at key 7517981
+[txn-83] start 3 requests at key 5264744
+[txn-84] start 3 requests at key 8773169
+[txn-83] start 4 requests at key 1110832
+[txn-83] start 5 requests at key 9283233
+[txn-83] start 6 requests at key 2447785
+[txn-84] start 4 requests at key 8578703
+[txn-83] start 7 requests at key 1429208
+[txn-83] start 8 requests at key 1192999
+[txn-84] start 5 requests at key 6393816
+[txn-83] start 9 requests at key 9129264
+[txn-83] start 10 requests at key 3200687
+[txn-84] start 6 requests at key 1770783
+[txn-83] start 11 requests at key 3526985
+[txn-84] start 7 requests at key 4623731
+[txn-84] start 8 requests at key 9247097
+[txn-83] start 12 requests at key 4198790
+[txn-84] start 9 requests at key 6332851
+[txn-83] start 13 requests at key 7124295
+[txn-84] start 10 requests at key 9291540
+[txn-84] start 11 requests at key 4520368
+[txn-83] start 14 requests at key 1874158
+[txn-84] start 12 requests at key 7118399
+[txn-83] start 15 requests at key 9999999
+[txn-83] committed
+[txn-84] start 13 requests at key 4442149
+[txn-85] start 0 requests at key 9999999
+[txn-85] retire 0 requests
+[txn-84] start 14 requests at key 6122996
+[txn-84] start 15 requests at key 9999998
+[txn-84] committed
+[txn-85] start 1 requests at key 564050
+[txn-86] start 0 requests at key 9999998
+[txn-86] retire 0 requests
+[txn-86] start 1 requests at key 2893631
+[txn-86] start 2 requests at key 8076979
+[txn-85] start 2 requests at key 2021054
+[txn-85] start 3 requests at key 4518863
+[txn-85] start 4 requests at key 9123555
+[txn-85] start 5 requests at key 6700099
+[txn-85] start 6 requests at key 6291851
+[txn-86] start 3 requests at key 8989814
+[txn-85] start 7 requests at key 9955448
+[txn-85] start 8 requests at key 9258230
+[txn-86] start 4 requests at key 9431010
+[txn-85] start 9 requests at key 8758092
+[txn-86] start 5 requests at key 8025141
+[txn-85] start 10 requests at key 7013900
+[txn-85] start 11 requests at key 3332489
+[txn-86] start 6 requests at key 7420707
+[txn-85] start 12 requests at key 391799
+[txn-86] start 7 requests at key 6343261
+[txn-86] start 8 requests at key 9491682
+[txn-86] start 9 requests at key 3536601
+[txn-85] start 13 requests at key 7965614
+[txn-86] start 10 requests at key 7955928
+[txn-85] start 14 requests at key 9622022
+[txn-85] start 15 requests at key 9999998
+[txn-85] committed
+[txn-87] start 0 requests at key 9999999
+[txn-87] retire 0 requests
+[txn-86] start 11 requests at key 2875586
+[txn-86] aborted
+[txn-87] start 1 requests at key 9013807
+[txn-87] start 2 requests at key 9099084
+[txn-87] start 3 requests at key 6312341
+[txn-87] start 4 requests at key 2411293
+[txn-87] start 5 requests at key 2525322
+[txn-87] start 6 requests at key 3066531
+[txn-87] start 7 requests at key 5857680
+[txn-87] start 8 requests at key 6206412
+[txn-87] start 9 requests at key 9457095
+[txn-87] start 10 requests at key 9573434
+[txn-88] start 0 requests at key 9999998
+[txn-88] retire 0 requests
+[txn-88] start 1 requests at key 2893631
+[txn-88] start 2 requests at key 8076979
+[txn-88] start 3 requests at key 8989814
+[txn-88] start 4 requests at key 9431010
+[txn-88] start 5 requests at key 8025141
+[txn-87] start 11 requests at key 6782932
+[txn-88] start 6 requests at key 7420707
+[txn-88] start 7 requests at key 6343261
+[txn-88] start 8 requests at key 9491682
+[txn-88] start 9 requests at key 3536601
+[txn-88] start 10 requests at key 7955928
+[txn-88] start 11 requests at key 2875586
+[txn-87] start 12 requests at key 4766066
+[txn-87] start 13 requests at key 2597320
+[txn-88] start 12 requests at key 7756952
+[txn-87] start 14 requests at key 2222189
+[txn-87] start 15 requests at key 9999998
+[txn-87] committed
+[txn-89] start 0 requests at key 9999999
+[txn-89] retire 0 requests
+[txn-89] start 1 requests at key 9838518
+[txn-89] start 2 requests at key 6299213
+[txn-88] start 13 requests at key 2000892
+[txn-89] start 3 requests at key 4795382
+[txn-88] start 14 requests at key 3166926
+[txn-89] start 4 requests at key 7533084
+[txn-88] start 15 requests at key 9999999
+[txn-88] committed
+[txn-90] start 0 requests at key 9999998
+[txn-90] retire 0 requests
+[txn-90] start 1 requests at key 6399836
+[txn-90] start 2 requests at key 2566437
+[txn-89] start 5 requests at key 5771503
+[txn-90] start 3 requests at key 2662961
+[txn-90] start 4 requests at key 7875018
+[txn-89] start 6 requests at key 8190822
+[txn-90] start 5 requests at key 5299884
+[txn-89] start 7 requests at key 4102388
+[txn-89] start 8 requests at key 593870
+[txn-90] start 6 requests at key 3020114
+[txn-90] start 7 requests at key 3918816
+[txn-90] start 8 requests at key 9131438
+[txn-90] start 9 requests at key 4733041
+[txn-90] start 10 requests at key 3679971
+[txn-89] start 9 requests at key 3080505
+[txn-90] start 11 requests at key 2334689
+[txn-89] start 10 requests at key 5506417
+[txn-90] start 12 requests at key 8556995
+[txn-89] start 11 requests at key 9890798
+[txn-90] start 13 requests at key 8580818
+[txn-89] start 12 requests at key 7356946
+[txn-90] start 14 requests at key 8230138
+[txn-89] start 13 requests at key 1063183
+[txn-90] committed
+[txn-89] start 14 requests at key 9450858
+[txn-89] aborted
+[txn-92] start 0 requests at key 9999999
+[txn-92] retire 0 requests
+[txn-92] start 1 requests at key 3117671
+[txn-92] start 2 requests at key 1443788
+[txn-92] start 3 requests at key 6393416
+[txn-92] start 4 requests at key 6238364
+[txn-92] start 5 requests at key 9143815
+[txn-92] start 6 requests at key 9978931
+[txn-92] start 7 requests at key 4819817
+[txn-92] start 8 requests at key 3255281
+[txn-92] start 9 requests at key 5364741
+[txn-92] start 10 requests at key 2043528
+[txn-91] start 0 requests at key 9999999
+[txn-91] retire 0 requests
+[txn-91] start 1 requests at key 9838518
+[txn-91] start 2 requests at key 6299213
+[txn-91] start 3 requests at key 4795382
+[txn-91] start 4 requests at key 7533084
+[txn-91] start 5 requests at key 5771503
+[txn-91] start 6 requests at key 8190822
+[txn-91] start 7 requests at key 4102388
+[txn-92] start 11 requests at key 7924467
+[txn-91] start 8 requests at key 593870
+[txn-91] start 9 requests at key 3080505
+[txn-91] start 10 requests at key 5506417
+[txn-91] start 11 requests at key 9890798
+[txn-91] start 12 requests at key 7356946
+[txn-91] start 13 requests at key 1063183
+[txn-91] start 14 requests at key 9450858
+[txn-92] start 12 requests at key 6237908
+[txn-92] start 13 requests at key 4848437
+[txn-92] start 14 requests at key 4720017
+[txn-92] committed
+[txn-94] start 0 requests at key 9999998
+[txn-91] committed
+[txn-94] retire 0 requests
+[txn-93] start 0 requests at key 9999999
+[txn-93] retire 0 requests
+[txn-94] start 1 requests at key 5312260
+[txn-93] start 1 requests at key 7849923
+[txn-94] start 2 requests at key 9142658
+[txn-94] start 3 requests at key 6858510
+[txn-94] start 4 requests at key 1643184
+[txn-93] start 2 requests at key 5290661
+[txn-94] start 5 requests at key 1490387
+[txn-94] start 6 requests at key 1062908
+[txn-94] start 7 requests at key 3049040
+[txn-93] start 3 requests at key 5354403
+[txn-94] start 8 requests at key 5038965
+[txn-93] start 4 requests at key 327895
+[txn-94] start 9 requests at key 390475
+[txn-94] start 10 requests at key 6386322
+[txn-93] start 5 requests at key 6963277
+[txn-94] start 11 requests at key 2596966
+[txn-93] start 6 requests at key 9854301
+[txn-94] start 12 requests at key 4926017
+[txn-94] start 13 requests at key 2786878
+[txn-93] start 7 requests at key 799380
+[txn-94] start 14 requests at key 5473574
+[txn-93] start 8 requests at key 9297074
+[txn-93] start 9 requests at key 6548211
+[txn-94] start 15 requests at key 9999999
+[txn-94] committed
+[txn-96] start 0 requests at key 9999998
+[txn-96] retire 0 requests
+[txn-96] start 1 requests at key 3257921
+[txn-93] start 10 requests at key 7394583
+[txn-96] start 2 requests at key 843146
+[txn-96] start 3 requests at key 3203097
+[txn-96] start 4 requests at key 9815159
+[txn-96] start 5 requests at key 8938331
+[txn-93] start 11 requests at key 7962521
+[txn-96] start 6 requests at key 1008892
+[txn-96] start 7 requests at key 3443348
+[txn-93] start 12 requests at key 8636400
+[txn-96] start 8 requests at key 3681026
+[txn-96] start 9 requests at key 8610118
+[txn-93] start 13 requests at key 2880345
+[txn-93] start 14 requests at key 8654559
+[txn-96] start 10 requests at key 7252718
+[txn-96] start 11 requests at key 3925299
+[txn-96] start 12 requests at key 9762466
+[txn-96] start 13 requests at key 7245208
+[txn-93] committed
+[txn-95] start 0 requests at key 9999999
+[txn-95] retire 0 requests
+[txn-96] start 14 requests at key 493612
+[txn-95] start 1 requests at key 7588756
+[txn-96] committed
+[txn-98] start 0 requests at key 9999998
+[txn-98] retire 0 requests
+[txn-98] start 1 requests at key 4251646
+[txn-98] start 2 requests at key 4415716
+[txn-98] start 3 requests at key 6381142
+[txn-95] start 2 requests at key 117503
+[txn-98] start 4 requests at key 6326524
+[txn-98] start 5 requests at key 4467307
+[txn-98] start 6 requests at key 9962644
+[txn-98] start 7 requests at key 7306673
+[txn-98] start 8 requests at key 4683050
+[txn-98] start 9 requests at key 2938120
+[txn-95] start 3 requests at key 343986
+[txn-98] start 10 requests at key 4341515
+[txn-98] start 11 requests at key 7264877
+[txn-98] start 12 requests at key 3712206
+[txn-98] start 13 requests at key 4452878
+[txn-95] start 4 requests at key 5072043
+[txn-98] start 14 requests at key 2795850
+[txn-98] committed
+[txn-100] start 0 requests at key 9999998
+[txn-100] retire 0 requests
+[txn-100] start 1 requests at key 5403082
+[txn-95] start 5 requests at key 2162443
+[txn-95] start 6 requests at key 2985504
+[txn-100] start 2 requests at key 3369087
+[txn-95] start 7 requests at key 6673930
+[txn-95] start 8 requests at key 4289108
+[txn-95] start 9 requests at key 4284855
+[txn-100] start 3 requests at key 787411
+[txn-95] start 10 requests at key 1128604
+[txn-95] start 11 requests at key 2373079
+[txn-95] start 12 requests at key 1145024
+[txn-100] start 4 requests at key 8573632
+[txn-95] start 13 requests at key 8245795
+[txn-100] start 5 requests at key 830263
+[txn-95] start 14 requests at key 2687456
+[txn-95] committed
+[txn-97] start 0 requests at key 9999999
+[txn-97] retire 0 requests
+[txn-97] start 1 requests at key 1437802
+[txn-100] start 6 requests at key 874249
+[txn-100] start 7 requests at key 6295293
+[txn-97] start 2 requests at key 3340612
+[txn-97] start 3 requests at key 4780089
+[txn-97] start 4 requests at key 2529131
+[txn-100] start 8 requests at key 5728194
+[txn-97] start 5 requests at key 8871436
+[txn-100] start 9 requests at key 9919884
+[txn-100] start 10 requests at key 1393493
+[txn-100] start 11 requests at key 7715952
+[txn-97] start 6 requests at key 1628770
+[txn-97] start 7 requests at key 4062622
+[txn-97] start 8 requests at key 3670264
+[txn-100] start 12 requests at key 2251991
+[txn-97] start 9 requests at key 1599049
+[txn-100] start 13 requests at key 7056148
+[txn-97] start 10 requests at key 2822969
+[txn-100] start 14 requests at key 5968176
+[txn-97] start 11 requests at key 4535141
+[txn-100] start 15 requests at key 9999999
+[txn-100] committed
+[txn-102] start 0 requests at key 9999998
+[txn-102] retire 0 requests
+[txn-97] start 12 requests at key 7864538
+[txn-102] start 1 requests at key 7468824
+[txn-97] start 13 requests at key 8261058
+[txn-102] start 2 requests at key 591668
+[txn-97] start 14 requests at key 8227578
+[txn-102] start 3 requests at key 2570245
+[txn-102] start 4 requests at key 4407931
+[txn-102] start 5 requests at key 4752992
+[txn-97] start 15 requests at key 9999998
+[txn-102] start 6 requests at key 932196
+[txn-97] committed
+[txn-102] aborted
+[txn-99] start 0 requests at key 9999999
+[txn-99] retire 0 requests
+[txn-99] start 1 requests at key 6699672
+[txn-99] start 2 requests at key 4721464
+[txn-99] start 3 requests at key 6647777
+[txn-99] start 4 requests at key 7521709
+[txn-99] start 5 requests at key 5842507
+[txn-99] start 6 requests at key 4060249
+[txn-99] start 7 requests at key 2583210
+[txn-99] start 8 requests at key 533331
+[txn-99] start 9 requests at key 3244133
+[txn-99] start 10 requests at key 8301363
+[txn-104] start 0 requests at key 9999998
+[txn-104] retire 0 requests
+[txn-104] start 1 requests at key 7468824
+[txn-104] start 2 requests at key 591668
+[txn-104] start 3 requests at key 2570245
+[txn-104] start 4 requests at key 4407931
+[txn-104] start 5 requests at key 4752992
+[txn-104] start 6 requests at key 932196
+[txn-104] start 7 requests at key 9253461
+[txn-99] start 11 requests at key 2500223
+[txn-104] start 8 requests at key 7699696
+[txn-99] start 12 requests at key 2186338
+[txn-99] start 13 requests at key 9343756
+[txn-99] start 14 requests at key 7806673
+[txn-104] start 9 requests at key 8246788
+[txn-99] start 15 requests at key 9999998
+[txn-99] committed
+[txn-101] start 0 requests at key 9999999
+[txn-101] retire 0 requests
+[txn-104] start 10 requests at key 3219188
+[txn-101] start 1 requests at key 6029491
+[txn-104] start 11 requests at key 8676343
+[txn-101] start 2 requests at key 1549482
+[txn-101] start 3 requests at key 684928
+[txn-104] start 12 requests at key 6914067
+[txn-104] start 13 requests at key 2159072
+[txn-104] start 14 requests at key 6606449
+[txn-104] committed
+[txn-101] start 4 requests at key 8327540
+[txn-106] start 0 requests at key 9999999
+[txn-106] retire 0 requests
+[txn-106] start 1 requests at key 5413560
+[txn-101] start 5 requests at key 5973356
+[txn-106] start 2 requests at key 7270150
+[txn-101] start 6 requests at key 1777259
+[txn-106] start 3 requests at key 5982749
+[txn-101] start 7 requests at key 3113028
+[txn-106] start 4 requests at key 4708646
+[txn-106] start 5 requests at key 8590406
+[txn-101] start 8 requests at key 5786148
+[txn-101] start 9 requests at key 6493768
+[txn-106] start 6 requests at key 5655402
+[txn-101] start 10 requests at key 9959107
+[txn-101] start 11 requests at key 1779051
+[txn-106] start 7 requests at key 9686229
+[txn-106] start 8 requests at key 9785878
+[txn-106] start 9 requests at key 9346523
+[txn-101] start 12 requests at key 587286
+[txn-106] start 10 requests at key 875902
+[txn-101] start 13 requests at key 5106415
+[txn-106] start 11 requests at key 5267020
+[txn-106] start 12 requests at key 6773882
+[txn-101] start 14 requests at key 277112
+[txn-106] start 13 requests at key 2367236
+[txn-101] start 15 requests at key 9999998
+[txn-106] start 14 requests at key 5010997
+[txn-101] committed
+[txn-103] start 0 requests at key 9999999
+[txn-103] retire 0 requests
+[txn-103] start 1 requests at key 6164462
+[txn-106] committed
+[txn-108] start 0 requests at key 9999998
+[txn-108] retire 0 requests
+[txn-108] start 1 requests at key 3745928
+[txn-103] start 2 requests at key 5360965
+[txn-108] start 2 requests at key 8611722
+[txn-103] start 3 requests at key 1169892
+[txn-108] start 3 requests at key 6857019
+[txn-103] start 4 requests at key 3813759
+[txn-108] start 4 requests at key 40715
+[txn-103] start 5 requests at key 3386329
+[txn-103] start 6 requests at key 487043
+[txn-108] start 5 requests at key 4049970
+[txn-108] start 6 requests at key 7222312
+[txn-108] start 7 requests at key 4685419
+[txn-108] start 8 requests at key 5285
+[txn-103] start 7 requests at key 958061
+[txn-103] start 8 requests at key 4681223
+[txn-103] start 9 requests at key 9703833
+[txn-103] start 10 requests at key 1693692
+[txn-108] start 9 requests at key 2202608
+[txn-103] start 11 requests at key 9064909
+[txn-108] start 10 requests at key 5249597
+[txn-103] start 12 requests at key 4787323
+[txn-108] start 11 requests at key 3343601
+[txn-103] start 13 requests at key 2645672
+[txn-103] start 14 requests at key 3833609
+[txn-108] start 12 requests at key 1900341
+[txn-103] start 15 requests at key 9999998
+[txn-103] committed
+[txn-105] start 0 requests at key 9999999
+[txn-105] retire 0 requests
+[txn-108] start 13 requests at key 5429178
+[txn-108] aborted
+[txn-105] start 1 requests at key 7036768
+[txn-105] start 2 requests at key 3248780
+[txn-105] start 3 requests at key 5969443
+[txn-105] start 4 requests at key 2988506
+[txn-105] start 5 requests at key 2504172
+[txn-105] start 6 requests at key 7592956
+[txn-105] start 7 requests at key 7046756
+[txn-105] start 8 requests at key 1181008
+[txn-105] start 9 requests at key 9394269
+[txn-105] start 10 requests at key 6773074
+[txn-105] start 11 requests at key 3997689
+[txn-105] start 12 requests at key 5607329
+[txn-110] start 0 requests at key 9999998
+[txn-110] retire 0 requests
+[txn-110] start 1 requests at key 3745928
+[txn-110] start 2 requests at key 8611722
+[txn-110] start 3 requests at key 6857019
+[txn-110] start 4 requests at key 40715
+[txn-110] start 5 requests at key 4049970
+[txn-110] start 6 requests at key 7222312
+[txn-110] start 7 requests at key 4685419
+[txn-110] start 8 requests at key 5285
+[txn-110] start 9 requests at key 2202608
+[txn-110] start 10 requests at key 5249597
+[txn-110] start 11 requests at key 3343601
+[txn-110] start 12 requests at key 1900341
+[txn-105] start 13 requests at key 9500860
+[txn-110] start 13 requests at key 5429178
+[txn-105] start 14 requests at key 6836489
+[txn-105] committed
+[txn-107] start 0 requests at key 9999999
+[txn-107] retire 0 requests
+[txn-107] start 1 requests at key 3206056
+[txn-110] start 14 requests at key 6638443
+[txn-110] committed
+[txn-107] start 2 requests at key 3377275
+[txn-112] start 0 requests at key 9999999
+[txn-112] retire 0 requests
+[txn-112] start 1 requests at key 1364652
+[txn-107] start 3 requests at key 2767538
+[txn-112] start 2 requests at key 2711510
+[txn-107] start 4 requests at key 6398612
+[txn-112] start 3 requests at key 452161
+[txn-107] start 5 requests at key 8165990
+[txn-112] start 4 requests at key 4136598
+[txn-112] start 5 requests at key 7996014
+[txn-107] start 6 requests at key 784868
+[txn-112] start 6 requests at key 1483864
+[txn-107] start 7 requests at key 4337208
+[txn-107] start 8 requests at key 9228180
+[txn-107] start 9 requests at key 9257596
+[txn-107] start 10 requests at key 2233661
+[txn-112] start 7 requests at key 5798406
+[txn-107] start 11 requests at key 6260619
+[txn-107] start 12 requests at key 8708068
+[txn-112] start 8 requests at key 3432492
+[txn-112] start 9 requests at key 1339798
+[txn-107] start 13 requests at key 5638625
+[txn-112] start 10 requests at key 8577136
+[txn-107] start 14 requests at key 2884273
+[txn-112] start 11 requests at key 6875023
+[txn-107] committed
+[txn-109] start 0 requests at key 9999999
+[txn-109] retire 0 requests
+[txn-112] start 12 requests at key 5130726
+[txn-109] start 1 requests at key 7374431
+[txn-112] start 13 requests at key 3467559
+[txn-112] start 14 requests at key 8450726
+[txn-109] start 2 requests at key 8159090
+[txn-112] committed
+[txn-109] start 3 requests at key 5454808
+[txn-114] start 0 requests at key 9999999
+[txn-114] retire 0 requests
+[txn-114] start 1 requests at key 9982099
+[txn-114] start 2 requests at key 9051542
+[txn-109] start 4 requests at key 7552831
+[txn-114] start 3 requests at key 3289185
+[txn-114] start 4 requests at key 5506540
+[txn-109] start 5 requests at key 5596364
+[txn-114] start 5 requests at key 7202467
+[txn-114] start 6 requests at key 4731008
+[txn-114] start 7 requests at key 9183260
+[txn-114] start 8 requests at key 7287759
+[txn-109] start 6 requests at key 3669345
+[txn-109] start 7 requests at key 4912096
+[txn-114] start 9 requests at key 6603844
+[txn-109] start 8 requests at key 4910947
+[txn-114] start 10 requests at key 1130648
+[txn-109] start 9 requests at key 7719853
+[txn-114] start 11 requests at key 7448004
+[txn-109] start 10 requests at key 7052396
+[txn-109] start 11 requests at key 3762462
+[txn-114] start 12 requests at key 6693806
+[txn-109] start 12 requests at key 9822648
+[txn-109] start 13 requests at key 1003683
+[txn-114] start 13 requests at key 2394980
+[txn-114] start 14 requests at key 7517925
+[txn-109] start 14 requests at key 3529555
+[txn-114] start 15 requests at key 9999998
+[txn-109] start 15 requests at key 9999998
+[txn-109] committed
+[txn-114] aborted
+[txn-111] start 0 requests at key 9999999
+[txn-111] retire 0 requests
+[txn-111] start 1 requests at key 5606961
+[txn-111] start 2 requests at key 7714683
+[txn-111] start 3 requests at key 3320246
+[txn-111] start 4 requests at key 4740070
+[txn-111] start 5 requests at key 505140
+[txn-111] start 6 requests at key 9983658
+[txn-111] start 7 requests at key 6419947
+[txn-111] start 8 requests at key 6238358
+[txn-111] start 9 requests at key 446168
+[txn-116] start 0 requests at key 9999999
+[txn-116] retire 0 requests
+[txn-116] start 1 requests at key 9982099
+[txn-116] start 2 requests at key 9051542
+[txn-116] start 3 requests at key 3289185
+[txn-116] start 4 requests at key 5506540
+[txn-116] start 5 requests at key 7202467
+[txn-116] start 6 requests at key 4731008
+[txn-116] start 7 requests at key 9183260
+[txn-116] start 8 requests at key 7287759
+[txn-116] start 9 requests at key 6603844
+[txn-116] start 10 requests at key 1130648
+[txn-116] start 11 requests at key 7448004
+[txn-116] start 12 requests at key 6693806
+[txn-116] start 13 requests at key 2394980
+[txn-116] start 14 requests at key 7517925
+[txn-116] start 15 requests at key 9999998
+[txn-111] start 10 requests at key 7714332
+[txn-111] start 11 requests at key 846928
+[txn-111] start 12 requests at key 1026861
+[txn-111] start 13 requests at key 1636975
+[txn-111] start 14 requests at key 4322116
+[txn-111] start 15 requests at key 9999998
+[txn-111] committed
+[txn-116] aborted
+[txn-113] start 0 requests at key 9999998
+[txn-113] retire 0 requests
+[txn-113] start 1 requests at key 9878746
+[txn-113] start 2 requests at key 5236182
+[txn-113] start 3 requests at key 3296711
+[txn-113] start 4 requests at key 4474947
+[txn-113] start 5 requests at key 3689094
+[txn-113] start 6 requests at key 5155401
+[txn-113] start 7 requests at key 2033134
+[txn-118] start 0 requests at key 9999999
+[txn-118] retire 0 requests
+[txn-118] start 1 requests at key 9982099
+[txn-113] start 8 requests at key 135723
+[txn-118] start 2 requests at key 9051542
+[txn-118] start 3 requests at key 3289185
+[txn-118] start 4 requests at key 5506540
+[txn-118] start 5 requests at key 7202467
+[txn-118] start 6 requests at key 4731008
+[txn-118] start 7 requests at key 9183260
+[txn-118] start 8 requests at key 7287759
+[txn-118] start 9 requests at key 6603844
+[txn-118] start 10 requests at key 1130648
+[txn-118] start 11 requests at key 7448004
+[txn-118] start 12 requests at key 6693806
+[txn-118] start 13 requests at key 2394980
+[txn-118] start 14 requests at key 7517925
+[txn-118] start 15 requests at key 9999998
+[txn-113] start 9 requests at key 1892960
+[txn-118] committed
+[txn-120] start 0 requests at key 9999998
+[txn-120] retire 0 requests
+[txn-120] start 1 requests at key 780998
+[txn-113] start 10 requests at key 5801407
+[txn-113] start 11 requests at key 2784458
+[txn-120] start 2 requests at key 5064396
+[txn-113] start 12 requests at key 7529809
+[txn-120] start 3 requests at key 5734241
+[txn-113] start 13 requests at key 4091780
+[txn-113] start 14 requests at key 8231491
+[txn-120] start 4 requests at key 4477791
+[txn-120] start 5 requests at key 9528594
+[txn-120] start 6 requests at key 1232163
+[txn-120] start 7 requests at key 9242376
+[txn-120] start 8 requests at key 9620731
+[txn-113] start 15 requests at key 9999999
+[txn-113] committed
+[txn-120] start 9 requests at key 7151831
+[txn-115] start 0 requests at key 9999999
+[txn-115] retire 0 requests
+[txn-115] start 1 requests at key 8577739
+[txn-120] start 10 requests at key 7454988
+[txn-115] start 2 requests at key 2037617
+[txn-120] start 11 requests at key 6027077
+[txn-120] start 12 requests at key 2792158
+[txn-115] start 3 requests at key 8248335
+[txn-120] start 13 requests at key 3685536
+[txn-120] start 14 requests at key 7422133
+[txn-115] start 4 requests at key 8093561
+[txn-120] start 15 requests at key 9999999
+[txn-120] committed
+[txn-122] start 0 requests at key 9999999
+[txn-122] retire 0 requests
+[txn-122] start 1 requests at key 5094460
+[txn-115] start 5 requests at key 730226
+[txn-122] start 2 requests at key 977116
+[txn-122] start 3 requests at key 835911
+[txn-115] start 6 requests at key 782415
+[txn-122] start 4 requests at key 4390398
+[txn-122] start 5 requests at key 5466960
+[txn-115] start 7 requests at key 4837086
+[txn-115] start 8 requests at key 7412279
+[txn-122] start 6 requests at key 3603825
+[txn-122] start 7 requests at key 8534095
+[txn-115] start 9 requests at key 112144
+[txn-122] start 8 requests at key 5511495
+[txn-115] start 10 requests at key 7953314
+[txn-122] start 9 requests at key 2275706
+[txn-122] start 10 requests at key 6240666
+[txn-122] start 11 requests at key 9216171
+[txn-115] start 11 requests at key 4439885
+[txn-122] start 12 requests at key 5908234
+[txn-115] start 12 requests at key 9506156
+[txn-115] start 13 requests at key 9095957
+[txn-122] start 13 requests at key 6635777
+[txn-115] start 14 requests at key 1093819
+[txn-115] aborted
+[txn-122] start 14 requests at key 7480339
+[txn-122] start 15 requests at key 9999998
+[txn-122] committed
+[txn-124] start 0 requests at key 9999999
+[txn-124] retire 0 requests
+[txn-124] start 1 requests at key 4540325
+[txn-124] start 2 requests at key 8367804
+[txn-124] start 3 requests at key 136148
+[txn-124] start 4 requests at key 1391628
+[txn-124] start 5 requests at key 2096549
+[txn-124] start 6 requests at key 9079488
+[txn-124] start 7 requests at key 1755712
+[txn-124] start 8 requests at key 4174766
+[txn-124] start 9 requests at key 3899979
+[txn-117] start 0 requests at key 9999999
+[txn-117] retire 0 requests
+[txn-117] start 1 requests at key 8577739
+[txn-117] start 2 requests at key 2037617
+[txn-117] start 3 requests at key 8248335
+[txn-124] start 10 requests at key 9426142
+[txn-117] start 4 requests at key 8093561
+[txn-117] start 5 requests at key 730226
+[txn-117] start 6 requests at key 782415
+[txn-117] start 7 requests at key 4837086
+[txn-117] start 8 requests at key 7412279
+[txn-117] start 9 requests at key 112144
+[txn-124] start 11 requests at key 2830691
+[txn-117] start 10 requests at key 7953314
+[txn-117] start 11 requests at key 4439885
+[txn-117] start 12 requests at key 9506156
+[txn-117] start 13 requests at key 9095957
+[txn-117] start 14 requests at key 1093819
+[txn-124] start 12 requests at key 9194140
+[txn-124] start 13 requests at key 9613652
+[txn-124] start 14 requests at key 7995776
+[txn-124] start 15 requests at key 9999998
+[txn-124] committed
+[txn-117] committed
+[txn-126] start 0 requests at key 9999999
+[txn-126] retire 0 requests
+[txn-119] start 0 requests at key 9999999
+[txn-119] retire 0 requests
+[txn-126] start 1 requests at key 3186534
+[txn-119] start 1 requests at key 431743
+[txn-126] start 2 requests at key 5128102
+[txn-126] start 3 requests at key 9103236
+[txn-119] start 2 requests at key 3851058
+[txn-126] start 4 requests at key 5435234
+[txn-119] start 3 requests at key 8408005
+[txn-126] start 5 requests at key 5911122
+[txn-119] start 4 requests at key 1470965
+[txn-126] start 6 requests at key 6195407
+[txn-119] start 5 requests at key 2247041
+[txn-126] start 7 requests at key 7028575
+[txn-126] start 8 requests at key 4264085
+[txn-126] start 9 requests at key 9572048
+[txn-119] start 6 requests at key 364479
+[txn-126] start 10 requests at key 9223948
+[txn-126] start 11 requests at key 7975555
+[txn-119] start 7 requests at key 8676890
+[txn-126] start 12 requests at key 9671155
+[txn-126] start 13 requests at key 68705
+[txn-119] start 8 requests at key 5718815
+[txn-126] start 14 requests at key 581507
+[txn-119] start 9 requests at key 9212066
+[txn-119] start 10 requests at key 4870534
+[txn-126] committed
+[txn-119] start 11 requests at key 8744696
+[txn-128] start 0 requests at key 9999998
+[txn-128] retire 0 requests
+[txn-128] start 1 requests at key 2193857
+[txn-128] start 2 requests at key 7010142
+[txn-128] start 3 requests at key 4562662
+[txn-119] start 12 requests at key 6535403
+[txn-128] start 4 requests at key 1580501
+[txn-128] start 5 requests at key 1406163
+[txn-119] start 13 requests at key 8019095
+[txn-128] start 6 requests at key 841267
+[txn-128] start 7 requests at key 1495300
+[txn-119] start 14 requests at key 8075292
+[txn-128] start 8 requests at key 5223769
+[txn-119] committed
+[txn-128] start 9 requests at key 5472775
+[txn-121] start 0 requests at key 9999999
+[txn-121] retire 0 requests
+[txn-121] start 1 requests at key 3112076
+[txn-121] start 2 requests at key 195345
+[txn-128] start 10 requests at key 5392381
+[txn-121] start 3 requests at key 1666809
+[txn-128] start 11 requests at key 8942909
+[txn-121] start 4 requests at key 8398191
+[txn-128] start 12 requests at key 1929933
+[txn-121] start 5 requests at key 8457690
+[txn-128] start 13 requests at key 7029367
+[txn-128] start 14 requests at key 5999817
+[txn-128] start 15 requests at key 9999999
+[txn-128] committed
+[txn-130] start 0 requests at key 9999999
+[txn-130] retire 0 requests
+[txn-130] start 1 requests at key 6043799
+[txn-121] start 6 requests at key 5383146
+[txn-130] start 2 requests at key 7825973
+[txn-130] start 3 requests at key 4459487
+[txn-121] start 7 requests at key 8281315
+[txn-130] start 4 requests at key 456258
+[txn-121] start 8 requests at key 5150230
+[txn-130] start 5 requests at key 712216
+[txn-130] start 6 requests at key 2016184
+[txn-121] start 9 requests at key 7863163
+[txn-130] start 7 requests at key 1741903
+[txn-130] start 8 requests at key 2558484
+[txn-130] start 9 requests at key 1510129
+[txn-121] start 10 requests at key 6519002
+[txn-130] start 10 requests at key 2281842
+[txn-121] start 11 requests at key 3419171
+[txn-130] start 11 requests at key 7807897
+[txn-121] start 12 requests at key 8371655
+[txn-130] start 12 requests at key 1799108
+[txn-121] start 13 requests at key 9974776
+[txn-121] start 14 requests at key 4155573
+[txn-121] committed
+[txn-123] start 0 requests at key 9999998
+[txn-123] retire 0 requests
+[txn-130] start 13 requests at key 8249683
+[txn-123] start 1 requests at key 6283536
+[txn-123] start 2 requests at key 5934418
+[txn-130] start 14 requests at key 6802518
+[txn-130] start 15 requests at key 9999998
+[txn-130] committed
+[txn-132] start 0 requests at key 9999998
+[txn-132] retire 0 requests
+[txn-123] start 3 requests at key 794427
+[txn-123] aborted
+[txn-132] start 1 requests at key 1230221
+[txn-132] start 2 requests at key 1583062
+[txn-132] start 3 requests at key 7373714
+[txn-132] start 4 requests at key 876385
+[txn-132] start 5 requests at key 5333722
+[txn-132] start 6 requests at key 8875461
+[txn-132] start 7 requests at key 4590598
+[txn-132] start 8 requests at key 3829828
+[txn-125] start 0 requests at key 9999998
+[txn-125] retire 0 requests
+[txn-125] start 1 requests at key 6283536
+[txn-125] start 2 requests at key 5934418
+[txn-125] start 3 requests at key 794427
+[txn-132] start 9 requests at key 7174423
+[txn-132] start 10 requests at key 5773589
+[txn-125] start 4 requests at key 1341598
+[txn-125] start 5 requests at key 8171082
+[txn-132] start 11 requests at key 2395313
+[txn-132] start 12 requests at key 1057707
+[txn-125] start 6 requests at key 9881903
+[txn-125] start 7 requests at key 6224532
+[txn-132] start 13 requests at key 542040
+[txn-125] start 8 requests at key 2598992
+[txn-125] start 9 requests at key 4825380
+[txn-125] start 10 requests at key 895158
+[txn-132] start 14 requests at key 6499543
+[txn-132] committed
+[txn-134] start 0 requests at key 9999998
+[txn-134] retire 0 requests
+[txn-134] start 1 requests at key 6413215
+[txn-125] start 11 requests at key 5138531
+[txn-134] start 2 requests at key 7740491
+[txn-125] start 12 requests at key 9178447
+[txn-125] start 13 requests at key 8233705
+[txn-134] start 3 requests at key 7288044
+[txn-134] start 4 requests at key 818066
+[txn-125] start 14 requests at key 4112897
+[txn-125] committed
+[txn-127] start 0 requests at key 9999999
+[txn-127] retire 0 requests
+[txn-127] start 1 requests at key 581420
+[txn-134] start 5 requests at key 6359619
+[txn-127] start 2 requests at key 4554299
+[txn-134] start 6 requests at key 118541
+[txn-127] start 3 requests at key 9203628
+[txn-127] start 4 requests at key 466911
+[txn-134] start 7 requests at key 6101974
+[txn-134] start 8 requests at key 4811863
+[txn-134] start 9 requests at key 1635787
+[txn-134] start 10 requests at key 4708182
+[txn-127] start 5 requests at key 4976259
+[txn-134] start 11 requests at key 1172167
+[txn-127] start 6 requests at key 395876
+[txn-134] start 12 requests at key 1866162
+[txn-134] start 13 requests at key 7695197
+[txn-127] start 7 requests at key 99961
+[txn-134] start 14 requests at key 7310455
+[txn-134] committed
+[txn-136] start 0 requests at key 9999998
+[txn-136] retire 0 requests
+[txn-136] start 1 requests at key 3813599
+[txn-127] start 8 requests at key 4373159
+[txn-127] start 9 requests at key 1763191
+[txn-136] start 2 requests at key 7111790
+[txn-136] start 3 requests at key 7302400
+[txn-127] start 10 requests at key 5416995
+[txn-136] start 4 requests at key 1422160
+[txn-127] start 11 requests at key 4220675
+[txn-136] start 5 requests at key 7909752
+[txn-127] start 12 requests at key 3404030
+[txn-127] start 13 requests at key 4558498
+[txn-136] start 6 requests at key 9830247
+[txn-136] start 7 requests at key 4834767
+[txn-127] start 14 requests at key 8379616
+[txn-136] start 8 requests at key 5131528
+[txn-127] start 15 requests at key 9999998
+[txn-127] committed
+[txn-129] start 0 requests at key 9999998
+[txn-129] retire 0 requests
+[txn-136] start 9 requests at key 8047153
+[txn-129] start 1 requests at key 399993
+[txn-136] start 10 requests at key 4589246
+[txn-129] start 2 requests at key 7331397
+[txn-136] start 11 requests at key 7722322
+[txn-129] start 3 requests at key 4308560
+[txn-129] start 4 requests at key 3607563
+[txn-129] start 5 requests at key 9595209
+[txn-129] start 6 requests at key 9416692
+[txn-129] start 7 requests at key 6725830
+[txn-136] start 12 requests at key 6309782
+[txn-136] start 13 requests at key 4356695
+[txn-129] start 8 requests at key 6636609
+[txn-136] start 14 requests at key 7345126
+[txn-129] start 9 requests at key 1849238
+[txn-129] start 10 requests at key 5490023
+[txn-136] start 15 requests at key 9999999
+[txn-136] committed
+[txn-138] start 0 requests at key 9999999
+[txn-138] retire 0 requests
+[txn-138] start 1 requests at key 2447183
+[txn-138] start 2 requests at key 9611835
+[txn-138] start 3 requests at key 1450098
+[txn-138] start 4 requests at key 4387092
+[txn-129] start 11 requests at key 5807294
+[txn-138] start 5 requests at key 1643372
+[txn-138] start 6 requests at key 2426938
+[txn-138] start 7 requests at key 6757382
+[txn-129] start 12 requests at key 2471420
+[txn-138] start 8 requests at key 9858954
+[txn-129] start 13 requests at key 8103574
+[txn-138] start 9 requests at key 828605
+[txn-129] start 14 requests at key 1853856
+[txn-129] committed
+[txn-138] start 10 requests at key 1125698
+[txn-131] start 0 requests at key 9999998
+[txn-131] retire 0 requests
+[txn-138] start 11 requests at key 7203502
+[txn-131] start 1 requests at key 5191639
+[txn-138] start 12 requests at key 9451198
+[txn-138] start 13 requests at key 3463060
+[txn-138] start 14 requests at key 4703494
+[txn-138] start 15 requests at key 9999998
+[txn-138] committed
+[txn-140] start 0 requests at key 9999999
+[txn-140] retire 0 requests
+[txn-140] start 1 requests at key 4038465
+[txn-140] start 2 requests at key 5780363
+[txn-131] start 2 requests at key 2120638
+[txn-131] start 3 requests at key 2449420
+[txn-131] start 4 requests at key 4665695
+[txn-131] start 5 requests at key 9222914
+[txn-131] start 6 requests at key 9577867
+[txn-140] start 3 requests at key 190309
+[txn-131] start 7 requests at key 1676639
+[txn-131] start 8 requests at key 4600271
+[txn-131] start 9 requests at key 7312190
+[txn-140] start 4 requests at key 1934586
+[txn-131] start 10 requests at key 5494702
+[txn-140] start 5 requests at key 1722105
+[txn-140] start 6 requests at key 1916019
+[txn-140] start 7 requests at key 7565182
+[txn-131] start 11 requests at key 7823753
+[txn-140] start 8 requests at key 4819436
+[txn-140] start 9 requests at key 3721864
+[txn-131] start 12 requests at key 1742689
+[txn-140] start 10 requests at key 7584133
+[txn-131] start 13 requests at key 5921430
+[txn-131] start 14 requests at key 5723214
+[txn-140] start 11 requests at key 7455784
+[txn-131] committed
+[txn-133] start 0 requests at key 9999998
+[txn-133] retire 0 requests
+[txn-133] start 1 requests at key 3770257
+[txn-133] start 2 requests at key 6638882
+[txn-140] start 12 requests at key 534531
+[txn-133] start 3 requests at key 4696655
+[txn-133] start 4 requests at key 3212454
+[txn-133] start 5 requests at key 6715665
+[txn-140] start 13 requests at key 3202941
+[txn-140] start 14 requests at key 7219132
+[txn-140] committed
+[txn-142] start 0 requests at key 9999999
+[txn-142] retire 0 requests
+[txn-133] start 6 requests at key 8896173
+[txn-142] start 1 requests at key 1597202
+[txn-142] start 2 requests at key 9453093
+[txn-142] start 3 requests at key 9569959
+[txn-142] start 4 requests at key 9865863
+[txn-142] start 5 requests at key 4411218
+[txn-142] start 6 requests at key 8147520
+[txn-133] start 7 requests at key 5820318
+[txn-133] start 8 requests at key 9423082
+[txn-142] start 7 requests at key 7624478
+[txn-133] start 9 requests at key 7752364
+[txn-142] start 8 requests at key 7445911
+[txn-133] start 10 requests at key 8907045
+[txn-142] start 9 requests at key 2334156
+[txn-142] start 10 requests at key 1995834
+[txn-133] start 11 requests at key 3950648
+[txn-142] start 11 requests at key 2378902
+[txn-133] start 12 requests at key 5501574
+[txn-142] start 12 requests at key 5313149
+[txn-133] start 13 requests at key 9185786
+[txn-133] start 14 requests at key 3955686
+[txn-133] committed
+[txn-135] start 0 requests at key 9999998
+[txn-135] retire 0 requests
+[txn-135] start 1 requests at key 3703472
+[txn-142] start 13 requests at key 5066498
+[txn-135] start 2 requests at key 1280307
+[txn-135] start 3 requests at key 2005882
+[txn-142] start 14 requests at key 6951122
+[txn-142] start 15 requests at key 9999998
+[txn-142] committed
+[txn-135] start 4 requests at key 7370753
+[txn-144] start 0 requests at key 9999999
+[txn-144] retire 0 requests
+[txn-144] start 1 requests at key 7514479
+[txn-135] start 5 requests at key 6580305
+[txn-144] start 2 requests at key 2129349
+[txn-135] start 6 requests at key 94943
+[txn-144] start 3 requests at key 2121190
+[txn-144] start 4 requests at key 6233196
+[txn-135] start 7 requests at key 144177
+[txn-144] start 5 requests at key 9554631
+[txn-144] start 6 requests at key 9178191
+[txn-144] start 7 requests at key 1363394
+[txn-144] start 8 requests at key 6656798
+[txn-135] start 8 requests at key 8416279
+[txn-144] start 9 requests at key 5427452
+[txn-135] start 9 requests at key 8484668
+[txn-144] start 10 requests at key 2652735
+[txn-144] start 11 requests at key 3912906
+[txn-144] start 12 requests at key 330076
+[txn-135] start 10 requests at key 8798092
+[txn-144] start 13 requests at key 6558694
+[txn-144] start 14 requests at key 5370573
+[txn-135] start 11 requests at key 8704636
+[txn-144] start 15 requests at key 9999998
+[txn-144] committed
+[txn-146] start 0 requests at key 9999999
+[txn-146] retire 0 requests
+[txn-146] start 1 requests at key 7302523
+[txn-135] start 12 requests at key 9501513
+[txn-146] start 2 requests at key 1104075
+[txn-135] start 13 requests at key 8936866
+[txn-146] start 3 requests at key 9687007
+[txn-146] start 4 requests at key 8512142
+[txn-135] start 14 requests at key 7000661
+[txn-135] committed
+[txn-146] start 5 requests at key 6699719
+[txn-137] start 0 requests at key 9999998
+[txn-137] retire 0 requests
+[txn-146] start 6 requests at key 4184780
+[txn-146] start 7 requests at key 9377712
+[txn-137] start 1 requests at key 9006126
+[txn-146] start 8 requests at key 3333678
+[txn-146] start 9 requests at key 6777780
+[txn-146] start 10 requests at key 8993666
+[txn-137] start 2 requests at key 5534017
+[txn-146] start 11 requests at key 1360157
+[txn-137] start 3 requests at key 5530604
+[txn-146] start 12 requests at key 294058
+[txn-137] start 4 requests at key 2671261
+[txn-146] start 13 requests at key 2388483
+[txn-146] start 14 requests at key 9767496
+[txn-146] committed
+[txn-148] start 0 requests at key 9999999
+[txn-148] retire 0 requests
+[txn-137] start 5 requests at key 5532048
+[txn-148] start 1 requests at key 1846753
+[txn-148] start 2 requests at key 2260186
+[txn-148] start 3 requests at key 3740928
+[txn-148] start 4 requests at key 4953813
+[txn-148] start 5 requests at key 1748242
+[txn-137] start 6 requests at key 132922
+[txn-148] start 6 requests at key 2292371
+[txn-148] start 7 requests at key 4595580
+[txn-148] start 8 requests at key 3497560
+[txn-137] start 7 requests at key 4203380
+[txn-137] start 8 requests at key 6649876
+[txn-148] start 9 requests at key 2409037
+[txn-137] start 9 requests at key 978403
+[txn-148] start 10 requests at key 881921
+[txn-148] start 11 requests at key 6811100
+[txn-137] start 10 requests at key 570253
+[txn-148] start 12 requests at key 3103381
+[txn-148] start 13 requests at key 3899128
+[txn-137] start 11 requests at key 2866214
+[txn-148] start 14 requests at key 7838738
+[txn-137] start 12 requests at key 608368
+[txn-148] start 15 requests at key 9999998
+[txn-148] committed
+[txn-150] start 0 requests at key 9999999
+[txn-150] retire 0 requests
+[txn-150] start 1 requests at key 1426823
+[txn-150] start 2 requests at key 7446338
+[txn-137] start 13 requests at key 1524378
+[txn-137] start 14 requests at key 4202833
+[txn-137] start 15 requests at key 9999999
+[txn-137] committed
+[txn-139] start 0 requests at key 9999999
+[txn-139] retire 0 requests
+[txn-150] start 3 requests at key 1605880
+[txn-150] aborted
+[txn-139] start 1 requests at key 2822527
+[txn-139] start 2 requests at key 4235918
+[txn-139] start 3 requests at key 5040052
+[txn-139] start 4 requests at key 90769
+[txn-139] start 5 requests at key 8981583
+[txn-139] start 6 requests at key 7444396
+[txn-139] start 7 requests at key 3180726
+[txn-139] start 8 requests at key 2524665
+[txn-139] start 9 requests at key 1641381
+[txn-139] start 10 requests at key 2797223
+[txn-152] start 0 requests at key 9999999
+[txn-152] retire 0 requests
+[txn-152] start 1 requests at key 1426823
+[txn-152] start 2 requests at key 7446338
+[txn-152] start 3 requests at key 1605880
+[txn-139] start 11 requests at key 538486
+[txn-152] start 4 requests at key 6681216
+[txn-152] start 5 requests at key 1507791
+[txn-139] start 12 requests at key 6856508
+[txn-152] start 6 requests at key 744766
+[txn-139] start 13 requests at key 8098942
+[txn-152] start 7 requests at key 1130888
+[txn-152] start 8 requests at key 6278732
+[txn-139] start 14 requests at key 8543830
+[txn-152] start 9 requests at key 2413627
+[txn-152] start 10 requests at key 1185635
+[txn-139] start 15 requests at key 9999998
+[txn-139] committed
+[txn-152] start 11 requests at key 785157
+[txn-141] start 0 requests at key 9999998
+[txn-141] retire 0 requests
+[txn-141] start 1 requests at key 7488639
+[txn-152] start 12 requests at key 6873571
+[txn-152] start 13 requests at key 2380297
+[txn-141] start 2 requests at key 6566154
+[txn-152] start 14 requests at key 2877664
+[txn-152] start 15 requests at key 9999998
+[txn-141] start 3 requests at key 4982689
+[txn-152] committed
+[txn-141] aborted
+[txn-154] start 0 requests at key 9999999
+[txn-154] retire 0 requests
+[txn-154] start 1 requests at key 498039
+[txn-154] start 2 requests at key 3554385
+[txn-154] start 3 requests at key 8893285
+[txn-154] start 4 requests at key 3919921
+[txn-154] start 5 requests at key 8415622
+[txn-154] start 6 requests at key 5546084
+[txn-154] start 7 requests at key 6894935
+[txn-154] start 8 requests at key 242435
+[txn-143] start 0 requests at key 9999998
+[txn-143] retire 0 requests
+[txn-143] start 1 requests at key 7488639
+[txn-143] start 2 requests at key 6566154
+[txn-143] start 3 requests at key 4982689
+[txn-143] start 4 requests at key 1452005
+[txn-154] start 9 requests at key 904163
+[txn-143] start 5 requests at key 5257245
+[txn-154] start 10 requests at key 8874008
+[txn-154] start 11 requests at key 9593565
+[txn-154] start 12 requests at key 5242242
+[txn-143] start 6 requests at key 8443453
+[txn-154] start 13 requests at key 2385754
+[txn-143] start 7 requests at key 3525005
+[txn-154] start 14 requests at key 6543440
+[txn-154] start 15 requests at key 9999998
+[txn-154] committed
+[txn-143] start 8 requests at key 8769787
+[txn-156] start 0 requests at key 9999998
+[txn-156] retire 0 requests
+[txn-156] start 1 requests at key 8662673
+[txn-143] start 9 requests at key 3891179
+[txn-143] start 10 requests at key 9819494
+[txn-143] start 11 requests at key 4998028
+[txn-156] start 2 requests at key 3513488
+[txn-156] start 3 requests at key 3094431
+[txn-143] start 12 requests at key 8497413
+[txn-156] start 4 requests at key 2858721
+[txn-156] start 5 requests at key 9420280
+[txn-143] start 13 requests at key 4090000
+[txn-143] start 14 requests at key 4477866
+[txn-143] committed
+[txn-156] start 6 requests at key 5533654
+[txn-145] start 0 requests at key 9999998
+[txn-145] retire 0 requests
+[txn-145] start 1 requests at key 4176187
+[txn-145] start 2 requests at key 4133827
+[txn-145] start 3 requests at key 9976172
+[txn-156] start 7 requests at key 9937777
+[txn-156] start 8 requests at key 2333907
+[txn-145] start 4 requests at key 8116083
+[txn-156] start 9 requests at key 5755442
+[txn-145] start 5 requests at key 3004426
+[txn-145] start 6 requests at key 2597661
+[txn-156] start 10 requests at key 8263576
+[txn-145] start 7 requests at key 3815574
+[txn-145] start 8 requests at key 3078131
+[txn-145] start 9 requests at key 2039640
+[txn-156] start 11 requests at key 3003606
+[txn-145] start 10 requests at key 3851297
+[txn-156] start 12 requests at key 3200351
+[txn-145] start 11 requests at key 1587984
+[txn-156] start 13 requests at key 5455976
+[txn-145] start 12 requests at key 811416
+[txn-156] start 14 requests at key 7819726
+[txn-145] start 13 requests at key 79964
+[txn-156] committed
+[txn-158] start 0 requests at key 9999998
+[txn-158] retire 0 requests
+[txn-158] start 1 requests at key 5768842
+[txn-145] start 14 requests at key 1057795
+[txn-145] committed
+[txn-147] start 0 requests at key 9999999
+[txn-147] retire 0 requests
+[txn-158] start 2 requests at key 1997461
+[txn-147] start 1 requests at key 222180
+[txn-158] start 3 requests at key 3897887
+[txn-158] start 4 requests at key 5771867
+[txn-147] start 2 requests at key 4811978
+[txn-147] start 3 requests at key 8930728
+[txn-158] start 5 requests at key 543246
+[txn-147] start 4 requests at key 1372019
+[txn-147] start 5 requests at key 1253683
+[txn-147] start 6 requests at key 229229
+[txn-158] start 6 requests at key 5226161
+[txn-147] start 7 requests at key 2475441
+[txn-158] start 7 requests at key 302723
+[txn-147] start 8 requests at key 271586
+[txn-158] start 8 requests at key 1289276
+[txn-158] start 9 requests at key 1412435
+[txn-147] start 9 requests at key 3204928
+[txn-147] start 10 requests at key 6310436
+[txn-158] start 10 requests at key 8071311
+[txn-147] start 11 requests at key 8859550
+[txn-158] start 11 requests at key 414497
+[txn-147] start 12 requests at key 3915252
+[txn-147] start 13 requests at key 5310706
+[txn-158] start 12 requests at key 723242
+[txn-158] start 13 requests at key 2712270
+[txn-147] start 14 requests at key 5310573
+[txn-158] start 14 requests at key 6712993
+[txn-158] committed
+[txn-160] start 0 requests at key 9999999
+[txn-160] retire 0 requests
+[txn-160] start 1 requests at key 9379630
+[txn-147] committed
+[txn-160] start 2 requests at key 7251401
+[txn-149] start 0 requests at key 9999998
+[txn-149] retire 0 requests
+[txn-160] start 3 requests at key 4319488
+[txn-160] start 4 requests at key 3048065
+[txn-149] start 1 requests at key 5565990
+[txn-160] start 5 requests at key 959647
+[txn-160] start 6 requests at key 6403535
+[txn-149] start 2 requests at key 1734039
+[txn-160] start 7 requests at key 8536337
+[txn-149] start 3 requests at key 7781224
+[txn-160] start 8 requests at key 5421718
+[txn-149] start 4 requests at key 754168
+[txn-160] start 9 requests at key 3601959
+[txn-160] start 10 requests at key 4735292
+[txn-160] start 11 requests at key 3885448
+[txn-160] start 12 requests at key 4529817
+[txn-149] start 5 requests at key 3645922
+[txn-160] start 13 requests at key 5337548
+[txn-149] start 6 requests at key 5713996
+[txn-160] start 14 requests at key 7057659
+[txn-160] committed
+[txn-162] start 0 requests at key 9999999
+[txn-162] retire 0 requests
+[txn-149] start 7 requests at key 5749694
+[txn-162] start 1 requests at key 6835775
+[txn-162] start 2 requests at key 7544495
+[txn-149] start 8 requests at key 7874607
+[txn-162] start 3 requests at key 1038513
+[txn-162] start 4 requests at key 2873430
+[txn-162] start 5 requests at key 1926009
+[txn-149] start 9 requests at key 5447636
+[txn-162] start 6 requests at key 5880518
+[txn-162] start 7 requests at key 3249623
+[txn-162] start 8 requests at key 4122006
+[txn-162] start 9 requests at key 1144647
+[txn-149] start 10 requests at key 5042735
+[txn-162] start 10 requests at key 7987273
+[txn-149] start 11 requests at key 5580664
+[txn-162] start 11 requests at key 7952087
+[txn-149] start 12 requests at key 3475484
+[txn-149] start 13 requests at key 1027873
+[txn-162] start 12 requests at key 3266445
+[txn-149] start 14 requests at key 4733286
+[txn-149] start 15 requests at key 9999999
+[txn-149] committed
+[txn-151] start 0 requests at key 9999999
+[txn-151] retire 0 requests
+[txn-162] start 13 requests at key 744414
+[txn-151] start 1 requests at key 7616393
+[txn-162] start 14 requests at key 1270615
+[txn-162] committed
+[txn-164] start 0 requests at key 9999998
+[txn-164] retire 0 requests
+[txn-164] start 1 requests at key 4685472
+[txn-164] start 2 requests at key 5130525
+[txn-151] start 2 requests at key 5139767
+[txn-164] start 3 requests at key 2685023
+[txn-151] start 3 requests at key 7812659
+[txn-164] start 4 requests at key 933502
+[txn-164] start 5 requests at key 9119370
+[txn-164] start 6 requests at key 7409141
+[txn-151] start 4 requests at key 9886906
+[txn-151] start 5 requests at key 4976433
+[txn-151] start 6 requests at key 3322496
+[txn-164] start 7 requests at key 9707580
+[txn-151] start 7 requests at key 3196908
+[txn-164] start 8 requests at key 8494791
+[txn-151] start 8 requests at key 571941
+[txn-164] start 9 requests at key 5608215
+[txn-151] start 9 requests at key 1528814
+[txn-151] start 10 requests at key 4537394
+[txn-151] start 11 requests at key 3516753
+[txn-151] start 12 requests at key 4559728
+[txn-151] start 13 requests at key 7235783
+[txn-164] start 10 requests at key 8529419
+[txn-151] start 14 requests at key 6618022
+[txn-151] start 15 requests at key 9999998
+[txn-151] committed
+[txn-153] start 0 requests at key 9999999
+[txn-153] retire 0 requests
+[txn-153] start 1 requests at key 3935684
+[txn-164] start 11 requests at key 4230813
+[txn-164] aborted
+[txn-153] start 2 requests at key 32019
+[txn-153] start 3 requests at key 1507045
+[txn-153] start 4 requests at key 4944958
+[txn-153] start 5 requests at key 7140179
+[txn-153] start 6 requests at key 2821892
+[txn-153] start 7 requests at key 3087138
+[txn-153] start 8 requests at key 4745868
+[txn-153] start 9 requests at key 8987941
+[txn-153] start 10 requests at key 3574849
+[txn-153] start 11 requests at key 483409
+[txn-153] start 12 requests at key 1961899
+[txn-153] start 13 requests at key 3209237
+[txn-166] start 0 requests at key 9999998
+[txn-166] retire 0 requests
+[txn-153] start 14 requests at key 2294275
+[txn-166] start 1 requests at key 4685472
+[txn-166] start 2 requests at key 5130525
+[txn-166] start 3 requests at key 2685023
+[txn-166] start 4 requests at key 933502
+[txn-166] start 5 requests at key 9119370
+[txn-166] start 6 requests at key 7409141
+[txn-166] start 7 requests at key 9707580
+[txn-166] start 8 requests at key 8494791
+[txn-153] start 15 requests at key 9999998
+[txn-166] start 9 requests at key 5608215
+[txn-153] committed
+[txn-166] start 10 requests at key 8529419
+[txn-166] start 11 requests at key 4230813
+[txn-155] start 0 requests at key 9999999
+[txn-155] retire 0 requests
+[txn-166] start 12 requests at key 946314
+[txn-155] start 1 requests at key 3023938
+[txn-166] start 13 requests at key 2088881
+[txn-155] start 2 requests at key 267693
+[txn-166] start 14 requests at key 8964112
+[txn-166] start 15 requests at key 9999999
+[txn-166] committed
+[txn-168] start 0 requests at key 9999999
+[txn-168] retire 0 requests
+[txn-168] start 1 requests at key 1543489
+[txn-155] start 3 requests at key 7437175
+[txn-155] aborted
+[txn-168] start 2 requests at key 6703762
+[txn-168] start 3 requests at key 3274585
+[txn-168] start 4 requests at key 3417135
+[txn-168] start 5 requests at key 3522231
+[txn-168] start 6 requests at key 3620289
+[txn-168] start 7 requests at key 8156555
+[txn-168] start 8 requests at key 2057356
+[txn-168] start 9 requests at key 2098149
+[txn-168] start 10 requests at key 6435114
+[txn-168] start 11 requests at key 5999159
+[txn-168] start 12 requests at key 8527032
+[txn-157] start 0 requests at key 9999999
+[txn-157] retire 0 requests
+[txn-157] start 1 requests at key 3023938
+[txn-157] start 2 requests at key 267693
+[txn-157] start 3 requests at key 7437175
+[txn-168] start 13 requests at key 7101473
+[txn-157] start 4 requests at key 6585477
+[txn-168] start 14 requests at key 5679
+[txn-157] start 5 requests at key 6066592
+[txn-157] start 6 requests at key 1151535
+[txn-168] committed
+[txn-170] start 0 requests at key 9999998
+[txn-170] retire 0 requests
+[txn-157] start 7 requests at key 6644054
+[txn-170] start 1 requests at key 1069744
+[txn-170] start 2 requests at key 9235035
+[txn-157] start 8 requests at key 1667566
+[txn-170] start 3 requests at key 2876125
+[txn-157] start 9 requests at key 7154544
+[txn-170] start 4 requests at key 8268395
+[txn-157] start 10 requests at key 291838
+[txn-170] start 5 requests at key 3406238
+[txn-170] start 6 requests at key 193848
+[txn-157] start 11 requests at key 5277347
+[txn-170] start 7 requests at key 8173639
+[txn-157] start 12 requests at key 24629
+[txn-170] start 8 requests at key 9048792
+[txn-157] start 13 requests at key 5991657
+[txn-157] start 14 requests at key 5970287
+[txn-157] committed
+[txn-170] start 9 requests at key 2482816
+[txn-159] start 0 requests at key 9999998
+[txn-159] retire 0 requests
+[txn-159] start 1 requests at key 9416520
+[txn-170] start 10 requests at key 240082
+[txn-159] start 2 requests at key 215686
+[txn-159] start 3 requests at key 4093571
+[txn-170] start 11 requests at key 7559421
+[txn-159] start 4 requests at key 2604423
+[txn-159] start 5 requests at key 8824911
+[txn-170] start 12 requests at key 3402120
+[txn-170] start 13 requests at key 8840910
+[txn-159] start 6 requests at key 2007356
+[txn-159] start 7 requests at key 1453633
+[txn-159] start 8 requests at key 1454516
+[txn-170] start 14 requests at key 94399
+[txn-159] start 9 requests at key 1234327
+[txn-170] committed
+[txn-159] start 10 requests at key 5270186
+[txn-172] start 0 requests at key 9999998
+[txn-172] retire 0 requests
+[txn-172] start 1 requests at key 2015659
+[txn-172] start 2 requests at key 6242461
+[txn-159] start 11 requests at key 4932996
+[txn-172] start 3 requests at key 4463306
+[txn-159] start 12 requests at key 1469440
+[txn-172] start 4 requests at key 6192088
+[txn-159] start 13 requests at key 9287688
+[txn-159] start 14 requests at key 3232239
+[txn-172] start 5 requests at key 2378614
+[txn-159] start 15 requests at key 9999999
+[txn-159] committed
+[txn-172] start 6 requests at key 3493050
+[txn-161] start 0 requests at key 9999998
+[txn-161] retire 0 requests
+[txn-172] start 7 requests at key 916284
+[txn-161] start 1 requests at key 8128840
+[txn-172] start 8 requests at key 3113879
+[txn-172] start 9 requests at key 9490359
+[txn-172] start 10 requests at key 7878214
+[txn-161] start 2 requests at key 8725167
+[txn-172] start 11 requests at key 8002054
+[txn-161] start 3 requests at key 5774950
+[txn-172] start 12 requests at key 9193308
+[txn-172] start 13 requests at key 9366656
+[txn-172] start 14 requests at key 6589369
+[txn-172] committed
+[txn-174] start 0 requests at key 9999999
+[txn-174] retire 0 requests
+[txn-174] start 1 requests at key 2889925
+[txn-161] start 4 requests at key 8433007
+[txn-174] start 2 requests at key 4119605
+[txn-174] start 3 requests at key 8463882
+[txn-161] start 5 requests at key 6677491
+[txn-174] start 4 requests at key 4768393
+[txn-161] start 6 requests at key 6009039
+[txn-174] start 5 requests at key 1000842
+[txn-161] start 7 requests at key 4396602
+[txn-161] start 8 requests at key 9865225
+[txn-161] start 9 requests at key 9108567
+[txn-174] start 6 requests at key 3812948
+[txn-161] start 10 requests at key 7185009
+[txn-174] start 7 requests at key 6292846
+[txn-174] start 8 requests at key 2748014
+[txn-161] start 11 requests at key 5457286
+[txn-174] start 9 requests at key 5845815
+[txn-161] start 12 requests at key 2479021
+[txn-174] start 10 requests at key 5731556
+[txn-161] start 13 requests at key 9316456
+[txn-161] start 14 requests at key 3899947
+[txn-161] committed
+[txn-163] start 0 requests at key 9999999
+[txn-163] retire 0 requests
+[txn-163] start 1 requests at key 3060796
+[txn-174] start 11 requests at key 4453799
+[txn-174] start 12 requests at key 7046348
+[txn-163] start 2 requests at key 2922453
+[txn-174] start 13 requests at key 3619410
+[txn-174] start 14 requests at key 3754140
+[txn-163] start 3 requests at key 7634606
+[txn-174] start 15 requests at key 9999998
+[txn-174] committed
+[txn-176] start 0 requests at key 9999999
+[txn-176] retire 0 requests
+[txn-176] start 1 requests at key 3168943
+[txn-176] start 2 requests at key 3698970
+[txn-176] start 3 requests at key 6080287
+[txn-163] start 4 requests at key 5171233
+[txn-176] start 4 requests at key 5287904
+[txn-163] start 5 requests at key 6965589
+[txn-176] start 5 requests at key 914877
+[txn-163] start 6 requests at key 1203132
+[txn-163] start 7 requests at key 2094190
+[txn-176] start 6 requests at key 5180070
+[txn-163] start 8 requests at key 6530589
+[txn-163] start 9 requests at key 172311
+[txn-176] start 7 requests at key 6604690
+[txn-176] start 8 requests at key 4235063
+[txn-176] start 9 requests at key 5575202
+[txn-163] start 10 requests at key 8765680
+[txn-176] start 10 requests at key 8221794
+[txn-163] start 11 requests at key 5146622
+[txn-176] start 11 requests at key 5224629
+[txn-163] start 12 requests at key 7745424
+[txn-176] start 12 requests at key 4116653
+[txn-176] start 13 requests at key 590456
+[txn-163] start 13 requests at key 6829439
+[txn-163] start 14 requests at key 1573511
+[txn-163] start 15 requests at key 9999998
+[txn-163] committed
+[txn-176] start 14 requests at key 8193933
+[txn-165] start 0 requests at key 9999998
+[txn-165] retire 0 requests
+[txn-165] start 1 requests at key 8536278
+[txn-176] start 15 requests at key 9999998
+[txn-176] committed
+[txn-178] start 0 requests at key 9999998
+[txn-178] retire 0 requests
+[txn-178] start 1 requests at key 4348879
+[txn-178] start 2 requests at key 1619646
+[txn-165] start 2 requests at key 346993
+[txn-178] start 3 requests at key 1158467
+[txn-178] start 4 requests at key 469772
+[txn-165] start 3 requests at key 5995465
+[txn-165] start 4 requests at key 9501936
+[txn-165] start 5 requests at key 5786811
+[txn-178] start 5 requests at key 5667421
+[txn-165] start 6 requests at key 3150536
+[txn-178] start 6 requests at key 5638632
+[txn-165] start 7 requests at key 9223348
+[txn-165] start 8 requests at key 2417093
+[txn-178] start 7 requests at key 5315917
+[txn-165] start 9 requests at key 356633
+[txn-178] start 8 requests at key 2636097
+[txn-178] start 9 requests at key 3218078
+[txn-165] start 10 requests at key 9009862
+[txn-178] start 10 requests at key 7282061
+[txn-178] start 11 requests at key 692013
+[txn-165] start 11 requests at key 5227750
+[txn-178] start 12 requests at key 2842036
+[txn-165] start 12 requests at key 5885786
+[txn-178] start 13 requests at key 8318340
+[txn-165] start 13 requests at key 6803208
+[txn-178] start 14 requests at key 2525465
+[txn-178] committed
+[txn-180] start 0 requests at key 9999998
+[txn-180] retire 0 requests
+[txn-180] start 1 requests at key 4382502
+[txn-165] start 14 requests at key 7905030
+[txn-180] start 2 requests at key 3252030
+[txn-180] start 3 requests at key 3616930
+[txn-180] start 4 requests at key 4681297
+[txn-165] aborted
+[txn-180] start 5 requests at key 6702741
+[txn-180] start 6 requests at key 5008204
+[txn-180] start 7 requests at key 9652970
+[txn-180] start 8 requests at key 4408501
+[txn-180] start 9 requests at key 919700
+[txn-180] start 10 requests at key 1005946
+[txn-180] start 11 requests at key 2319466
+[txn-180] start 12 requests at key 9577667
+[txn-180] start 13 requests at key 7042404
+[txn-180] start 14 requests at key 4049339
+[txn-180] committed
+[txn-182] start 0 requests at key 9999999
+[txn-182] retire 0 requests
+[txn-182] start 1 requests at key 421200
+[txn-167] start 0 requests at key 9999998
+[txn-167] retire 0 requests
+[txn-167] start 1 requests at key 8536278
+[txn-167] start 2 requests at key 346993
+[txn-167] start 3 requests at key 5995465
+[txn-167] start 4 requests at key 9501936
+[txn-167] start 5 requests at key 5786811
+[txn-167] start 6 requests at key 3150536
+[txn-167] start 7 requests at key 9223348
+[txn-167] start 8 requests at key 2417093
+[txn-167] start 9 requests at key 356633
+[txn-167] start 10 requests at key 9009862
+[txn-167] start 11 requests at key 5227750
+[txn-182] start 2 requests at key 130637
+[txn-167] start 12 requests at key 5885786
+[txn-167] start 13 requests at key 6803208
+[txn-167] start 14 requests at key 7905030
+[txn-167] committed
+[txn-169] start 0 requests at key 9999998
+[txn-169] retire 0 requests
+[txn-169] start 1 requests at key 1078911
+[txn-169] start 2 requests at key 2108213
+[txn-182] start 3 requests at key 2696881
+[txn-169] start 3 requests at key 4549236
+[txn-182] start 4 requests at key 1311976
+[txn-169] start 4 requests at key 251124
+[txn-182] start 5 requests at key 853513
+[txn-182] start 6 requests at key 2203934
+[txn-182] start 7 requests at key 8757501
+[txn-169] start 5 requests at key 1357587
+[txn-169] start 6 requests at key 922664
+[txn-182] start 8 requests at key 1226967
+[txn-169] start 7 requests at key 9006307
+[txn-182] start 9 requests at key 3704183
+[txn-182] start 10 requests at key 3323092
+[txn-169] start 8 requests at key 9567033
+[txn-169] start 9 requests at key 2784521
+[txn-182] start 11 requests at key 368220
+[txn-169] start 10 requests at key 3184715
+[txn-169] start 11 requests at key 9355509
+[txn-169] start 12 requests at key 8915695
+[txn-182] start 12 requests at key 6097526
+[txn-182] start 13 requests at key 3516128
+[txn-182] start 14 requests at key 6739794
+[txn-182] start 15 requests at key 9999998
+[txn-182] committed
+[txn-169] start 13 requests at key 7548106
+[txn-184] start 0 requests at key 9999998
+[txn-184] retire 0 requests
+[txn-184] start 1 requests at key 365403
+[txn-169] start 14 requests at key 2675340
+[txn-169] committed
+[txn-184] start 2 requests at key 8951231
+[txn-171] start 0 requests at key 9999998
+[txn-171] retire 0 requests
+[txn-171] start 1 requests at key 5208339
+[txn-184] start 3 requests at key 2546565
+[txn-184] start 4 requests at key 5252479
+[txn-171] start 2 requests at key 8377316
+[txn-184] start 5 requests at key 3519551
+[txn-184] start 6 requests at key 5147184
+[txn-171] start 3 requests at key 9789062
+[txn-171] start 4 requests at key 3486007
+[txn-171] start 5 requests at key 9823279
+[txn-171] start 6 requests at key 2561574
+[txn-171] start 7 requests at key 4643713
+[txn-184] start 7 requests at key 547218
+[txn-171] start 8 requests at key 5250973
+[txn-184] start 8 requests at key 765624
+[txn-171] start 9 requests at key 187139
+[txn-184] start 9 requests at key 7750873
+[txn-171] start 10 requests at key 3275147
+[txn-171] start 11 requests at key 8946483
+[txn-184] start 10 requests at key 1797757
+[txn-184] start 11 requests at key 7076725
+[txn-171] start 12 requests at key 4512342
+[txn-184] start 12 requests at key 3808334
+[txn-171] start 13 requests at key 4464448
+[txn-184] start 13 requests at key 9617968
+[txn-184] start 14 requests at key 9597611
+[txn-184] committed
+[txn-171] start 14 requests at key 1579779
+[txn-186] start 0 requests at key 9999998
+[txn-186] retire 0 requests
+[txn-186] start 1 requests at key 9558525
+[txn-171] start 15 requests at key 9999999
+[txn-171] committed
+[txn-173] start 0 requests at key 9999998
+[txn-173] retire 0 requests
+[txn-186] start 2 requests at key 8560002
+[txn-173] start 1 requests at key 1150369
+[txn-173] start 2 requests at key 7579678
+[txn-186] start 3 requests at key 7622891
+[txn-173] start 3 requests at key 4546709
+[txn-173] start 4 requests at key 9155313
+[txn-186] start 4 requests at key 6606282
+[txn-186] start 5 requests at key 9285002
+[txn-186] start 6 requests at key 6781468
+[txn-173] start 5 requests at key 5168948
+[txn-186] start 7 requests at key 1841781
+[txn-186] start 8 requests at key 2815144
+[txn-186] start 9 requests at key 4069952
+[txn-186] start 10 requests at key 7301056
+[txn-173] start 6 requests at key 7979706
+[txn-186] start 11 requests at key 7518254
+[txn-173] start 7 requests at key 6762960
+[txn-186] start 12 requests at key 6004740
+[txn-173] start 8 requests at key 868295
+[txn-186] start 13 requests at key 6026294
+[txn-173] start 9 requests at key 3582603
+[txn-173] start 10 requests at key 9251989
+[txn-186] start 14 requests at key 2168594
+[txn-186] committed
+[txn-188] start 0 requests at key 9999998
+[txn-173] start 11 requests at key 586437
+[txn-188] retire 0 requests
+[txn-188] start 1 requests at key 614287
+[txn-173] start 12 requests at key 46859
+[txn-188] start 2 requests at key 8825430
+[txn-188] start 3 requests at key 9490389
+[txn-173] start 13 requests at key 311530
+[txn-188] start 4 requests at key 7339953
+[txn-173] start 14 requests at key 3752135
+[txn-173] committed
+[txn-175] start 0 requests at key 9999998
+[txn-175] retire 0 requests
+[txn-175] start 1 requests at key 989882
+[txn-188] start 5 requests at key 7467582
+[txn-175] start 2 requests at key 6683340
+[txn-188] start 6 requests at key 3481344
+[txn-188] start 7 requests at key 2537285
+[txn-175] start 3 requests at key 7652634
+[txn-188] start 8 requests at key 5679446
+[txn-175] start 4 requests at key 6322418
+[txn-188] start 9 requests at key 7185669
+[txn-175] start 5 requests at key 2810003
+[txn-175] start 6 requests at key 2186977
+[txn-188] start 10 requests at key 8335742
+[txn-175] start 7 requests at key 6286225
+[txn-175] start 8 requests at key 7435895
+[txn-188] start 11 requests at key 7743799
+[txn-175] start 9 requests at key 2728211
+[txn-188] start 12 requests at key 5225863
+[txn-175] start 10 requests at key 4012048
+[txn-175] start 11 requests at key 626402
+[txn-188] start 13 requests at key 9233015
+[txn-188] start 14 requests at key 8829023
+[txn-175] start 12 requests at key 4641044
+[txn-175] start 13 requests at key 5996022
+[txn-188] committed
+[txn-175] start 14 requests at key 2169374
+[txn-190] start 0 requests at key 9999999
+[txn-190] retire 0 requests
+[txn-175] start 15 requests at key 9999999
+[txn-175] committed
+[txn-190] start 1 requests at key 2800916
+[txn-190] aborted
+[txn-177] start 0 requests at key 9999998
+[txn-177] retire 0 requests
+[txn-177] start 1 requests at key 7749110
+[txn-177] start 2 requests at key 6969180
+[txn-177] start 3 requests at key 8547321
+[txn-177] start 4 requests at key 7671766
+[txn-177] start 5 requests at key 9048470
+[txn-177] start 6 requests at key 4099343
+[txn-177] start 7 requests at key 4161673
+[txn-177] start 8 requests at key 4291500
+[txn-177] start 9 requests at key 3692589
+[txn-192] start 0 requests at key 9999999
+[txn-192] retire 0 requests
+[txn-192] start 1 requests at key 2800916
+[txn-177] start 10 requests at key 1850459
+[txn-177] start 11 requests at key 5836875
+[txn-192] start 2 requests at key 343865
+[txn-192] start 3 requests at key 4783489
+[txn-177] start 12 requests at key 185193
+[txn-192] start 4 requests at key 5265071
+[txn-177] start 13 requests at key 9472730
+[txn-177] start 14 requests at key 8066403
+[txn-192] start 5 requests at key 8269151
+[txn-192] start 6 requests at key 4424148
+[txn-177] start 15 requests at key 9999999
+[txn-192] start 7 requests at key 1048057
+[txn-177] committed
+[txn-179] start 0 requests at key 9999998
+[txn-179] retire 0 requests
+[txn-192] start 8 requests at key 1940445
+[txn-179] start 1 requests at key 2359844
+[txn-179] start 2 requests at key 2244382
+[txn-192] start 9 requests at key 213707
+[txn-179] start 3 requests at key 4368995
+[txn-179] start 4 requests at key 76698
+[txn-192] start 10 requests at key 4643268
+[txn-192] start 11 requests at key 8616533
+[txn-179] start 5 requests at key 3508872
+[txn-179] start 6 requests at key 7605203
+[txn-192] start 12 requests at key 37211
+[txn-179] start 7 requests at key 3176883
+[txn-192] start 13 requests at key 3044356
+[txn-192] start 14 requests at key 8963858
+[txn-179] start 8 requests at key 8018139
+[txn-192] start 15 requests at key 9999998
+[txn-192] committed
+[txn-194] start 0 requests at key 9999998
+[txn-179] start 9 requests at key 9508229
+[txn-194] retire 0 requests
+[txn-179] aborted
+[txn-194] start 1 requests at key 3672467
+[txn-194] start 2 requests at key 896031
+[txn-194] start 3 requests at key 1449242
+[txn-194] start 4 requests at key 9966426
+[txn-194] start 5 requests at key 6359183
+[txn-194] start 6 requests at key 1065739
+[txn-194] start 7 requests at key 6427700
+[txn-194] start 8 requests at key 2828279
+[txn-194] start 9 requests at key 6187310
+[txn-194] start 10 requests at key 7842601
+[txn-181] start 0 requests at key 9999998
+[txn-181] retire 0 requests
+[txn-181] start 1 requests at key 2359844
+[txn-181] start 2 requests at key 2244382
+[txn-181] start 3 requests at key 4368995
+[txn-181] start 4 requests at key 76698
+[txn-181] start 5 requests at key 3508872
+[txn-181] start 6 requests at key 7605203
+[txn-181] start 7 requests at key 3176883
+[txn-194] start 11 requests at key 287092
+[txn-181] start 8 requests at key 8018139
+[txn-181] start 9 requests at key 9508229
+[txn-181] start 10 requests at key 8448709
+[txn-194] start 12 requests at key 6241888
+[txn-194] start 13 requests at key 2221876
+[txn-194] start 14 requests at key 6220280
+[txn-181] start 11 requests at key 5590808
+[txn-194] start 15 requests at key 9999999
+[txn-194] committed
+[txn-196] start 0 requests at key 9999998
+[txn-196] retire 0 requests
+[txn-196] start 1 requests at key 1223184
+[txn-196] start 2 requests at key 7471890
+[txn-181] start 12 requests at key 327282
+[txn-196] start 3 requests at key 2371402
+[txn-181] start 13 requests at key 4026240
+[txn-196] start 4 requests at key 3111886
+[txn-181] start 14 requests at key 7426191
+[txn-196] start 5 requests at key 3071913
+[txn-196] start 6 requests at key 1105934
+[txn-196] start 7 requests at key 9780227
+[txn-196] start 8 requests at key 6138240
+[txn-181] committed
+[txn-183] start 0 requests at key 9999998
+[txn-183] retire 0 requests
+[txn-183] start 1 requests at key 2442140
+[txn-196] start 9 requests at key 8817536
+[txn-183] start 2 requests at key 9711253
+[txn-183] start 3 requests at key 7422084
+[txn-196] start 10 requests at key 7362294
+[txn-183] start 4 requests at key 8217837
+[txn-196] start 11 requests at key 1082346
+[txn-196] start 12 requests at key 4288795
+[txn-196] start 13 requests at key 3954543
+[txn-196] start 14 requests at key 2354559
+[txn-196] committed
+[txn-198] start 0 requests at key 9999998
+[txn-198] retire 0 requests
+[txn-198] start 1 requests at key 4065868
+[txn-183] start 5 requests at key 163756
+[txn-198] start 2 requests at key 6538444
+[txn-198] start 3 requests at key 7637609
+[txn-183] start 6 requests at key 548332
+[txn-198] start 4 requests at key 826234
+[txn-183] start 7 requests at key 4923611
+[txn-183] start 8 requests at key 9387053
+[txn-183] start 9 requests at key 2393499
+[txn-183] start 10 requests at key 9214846
+[txn-198] start 5 requests at key 877167
+[txn-183] start 11 requests at key 2195526
+[txn-198] start 6 requests at key 2333314
+[txn-183] start 12 requests at key 9872860
+[txn-183] start 13 requests at key 9064213
+[txn-198] start 7 requests at key 5354468
+[txn-198] start 8 requests at key 6756878
+[txn-183] start 14 requests at key 4418608
+[txn-183] committed
+[txn-198] start 9 requests at key 8577088
+[txn-185] start 0 requests at key 9999999
+[txn-185] retire 0 requests
+[txn-185] start 1 requests at key 9931638
+[txn-185] start 2 requests at key 2977274
+[txn-198] start 10 requests at key 7050617
+[txn-185] start 3 requests at key 7642298
+[txn-198] start 11 requests at key 8490245
+[txn-198] start 12 requests at key 1711440
+[txn-185] start 4 requests at key 2925564
+[txn-185] start 5 requests at key 2072095
+[txn-198] start 13 requests at key 7948080
+[txn-185] start 6 requests at key 2667199
+[txn-185] start 7 requests at key 2596396
+[txn-185] start 8 requests at key 4575222
+[txn-198] start 14 requests at key 1725982
+[txn-185] start 9 requests at key 1405635
+[txn-198] committed
+[txn-200] start 0 requests at key 9999998
+[txn-200] retire 0 requests
+[txn-185] start 10 requests at key 4606631
+[txn-185] start 11 requests at key 6425967
+[txn-200] start 1 requests at key 250586
+[txn-185] start 12 requests at key 6078583
+[txn-200] start 2 requests at key 456792
+[txn-185] start 13 requests at key 5268427
+[txn-200] start 3 requests at key 8648137
+[txn-185] start 14 requests at key 1307354
+[txn-185] start 15 requests at key 9999998
+[txn-185] committed
+[txn-187] start 0 requests at key 9999999
+[txn-187] retire 0 requests
+[txn-200] start 4 requests at key 2414112
+[txn-187] start 1 requests at key 6289017
+[txn-200] start 5 requests at key 2060664
+[txn-200] start 6 requests at key 1695974
+[txn-187] start 2 requests at key 8446510
+[txn-200] start 7 requests at key 1098717
+[txn-200] start 8 requests at key 1170788
+[txn-187] start 3 requests at key 5604458
+[txn-200] start 9 requests at key 8290039
+[txn-200] start 10 requests at key 6811301
+[txn-187] start 4 requests at key 195912
+[txn-200] start 11 requests at key 8739477
+[txn-187] start 5 requests at key 3178909
+[txn-187] start 6 requests at key 3650428
+[txn-200] start 12 requests at key 7922147
+[txn-187] start 7 requests at key 548860
+[txn-200] start 13 requests at key 6466883
+[txn-187] start 8 requests at key 3255602
+[txn-200] start 14 requests at key 248283
+[txn-187] start 9 requests at key 61422
+[txn-200] start 15 requests at key 9999999
+[txn-200] committed
+[txn-202] start 0 requests at key 9999998
+[txn-202] retire 0 requests
+[txn-202] start 1 requests at key 5646885
+[txn-187] start 10 requests at key 596875
+[txn-202] start 2 requests at key 4334537
+[txn-202] start 3 requests at key 470450
+[txn-187] start 11 requests at key 565381
+[txn-202] start 4 requests at key 6955251
+[txn-202] start 5 requests at key 4700229
+[txn-187] start 12 requests at key 4120583
+[txn-202] start 6 requests at key 5814304
+[txn-187] start 13 requests at key 2685942
+[txn-187] start 14 requests at key 5144745
+[txn-202] start 7 requests at key 3555976
+[txn-202] start 8 requests at key 4707825
+[txn-202] start 9 requests at key 2966865
+[txn-187] start 15 requests at key 9999998
+[txn-187] aborted
+[txn-202] start 10 requests at key 7504820
+[txn-202] start 11 requests at key 4009063
+[txn-202] start 12 requests at key 8269270
+[txn-202] start 13 requests at key 6260356
+[txn-202] start 14 requests at key 3252932
+[txn-202] committed
+[txn-204] start 0 requests at key 9999999
+[txn-204] retire 0 requests
+[txn-204] start 1 requests at key 8304743
+[txn-204] start 2 requests at key 6419223
+[txn-204] start 3 requests at key 5166574
+[txn-204] start 4 requests at key 4838832
+[txn-204] start 5 requests at key 7941377
+[txn-189] start 0 requests at key 9999999
+[txn-189] retire 0 requests
+[txn-189] start 1 requests at key 6289017
+[txn-189] start 2 requests at key 8446510
+[txn-189] start 3 requests at key 5604458
+[txn-189] start 4 requests at key 195912
+[txn-189] start 5 requests at key 3178909
+[txn-189] start 6 requests at key 3650428
+[txn-189] start 7 requests at key 548860
+[txn-189] start 8 requests at key 3255602
+[txn-189] start 9 requests at key 61422
+[txn-189] start 10 requests at key 596875
+[txn-189] start 11 requests at key 565381
+[txn-189] start 12 requests at key 4120583
+[txn-189] start 13 requests at key 2685942
+[txn-189] start 14 requests at key 5144745
+[txn-189] start 15 requests at key 9999998
+[txn-204] start 6 requests at key 8703028
+[txn-204] start 7 requests at key 1490131
+[txn-204] start 8 requests at key 853738
+[txn-204] start 9 requests at key 6242591
+[txn-204] start 10 requests at key 1557026
+[txn-204] start 11 requests at key 7343108
+[txn-204] start 12 requests at key 955779
+[txn-204] start 13 requests at key 5159678
+[txn-204] start 14 requests at key 6873208
+[txn-204] committed
+[txn-206] start 0 requests at key 9999998
+[txn-189] committed
+[txn-206] retire 0 requests
+[txn-206] start 1 requests at key 4938534
+[txn-191] start 0 requests at key 9999999
+[txn-191] retire 0 requests
+[txn-206] start 2 requests at key 2887035
+[txn-191] start 1 requests at key 9035266
+[txn-206] start 3 requests at key 5987831
+[txn-206] start 4 requests at key 5615979
+[txn-191] start 2 requests at key 9288630
+[txn-191] start 3 requests at key 6750932
+[txn-206] start 5 requests at key 773896
+[txn-191] start 4 requests at key 7871782
+[txn-191] start 5 requests at key 4516357
+[txn-206] start 6 requests at key 7531971
+[txn-191] start 6 requests at key 1832052
+[txn-191] start 7 requests at key 6935634
+[txn-191] start 8 requests at key 2657898
+[txn-206] start 7 requests at key 8025908
+[txn-191] start 9 requests at key 7425082
+[txn-206] start 8 requests at key 5447883
+[txn-191] start 10 requests at key 1750465
+[txn-191] start 11 requests at key 6304281
+[txn-206] start 9 requests at key 5128891
+[txn-191] start 12 requests at key 6955827
+[txn-191] start 13 requests at key 149213
+[txn-206] start 10 requests at key 9217877
+[txn-206] start 11 requests at key 9059263
+[txn-191] start 14 requests at key 2376735
+[txn-191] start 15 requests at key 9999998
+[txn-191] committed
+[txn-193] start 0 requests at key 9999998
+[txn-193] retire 0 requests
+[txn-193] start 1 requests at key 7259564
+[txn-206] start 12 requests at key 5124728
+[txn-193] start 2 requests at key 6732092
+[txn-193] start 3 requests at key 6341162
+[txn-206] start 13 requests at key 6269688
+[txn-206] start 14 requests at key 4692955
+[txn-206] start 15 requests at key 9999999
+[txn-206] committed
+[txn-208] start 0 requests at key 9999998
+[txn-208] retire 0 requests
+[txn-193] start 4 requests at key 7974159
+[txn-208] start 1 requests at key 3224835
+[txn-208] start 2 requests at key 1951959
+[txn-193] start 5 requests at key 827223
+[txn-208] start 3 requests at key 5175403
+[txn-193] start 6 requests at key 8932402
+[txn-208] start 4 requests at key 2408519
+[txn-193] start 7 requests at key 4269431
+[txn-208] start 5 requests at key 2231982
+[txn-193] start 8 requests at key 3080860
+[txn-208] start 6 requests at key 6181494
+[txn-193] start 9 requests at key 4004205
+[txn-193] start 10 requests at key 6074839
+[txn-208] start 7 requests at key 2732432
+[txn-208] start 8 requests at key 1570074
+[txn-193] start 11 requests at key 634747
+[txn-208] start 9 requests at key 3663877
+[txn-208] start 10 requests at key 3534132
+[txn-208] start 11 requests at key 1870819
+[txn-193] start 12 requests at key 8831645
+[txn-208] start 12 requests at key 7979959
+[txn-208] start 13 requests at key 6816175
+[txn-193] start 13 requests at key 368768
+[txn-208] start 14 requests at key 7316474
+[txn-193] start 14 requests at key 6156921
+[txn-193] committed
+[txn-208] committed
+[txn-195] start 0 requests at key 9999998
+[txn-195] retire 0 requests
+[txn-210] start 0 requests at key 9999998
+[txn-210] retire 0 requests
+[txn-210] start 1 requests at key 4721551
+[txn-195] start 1 requests at key 5086204
+[txn-210] start 2 requests at key 8838500
+[txn-195] start 2 requests at key 1432501
+[txn-210] start 3 requests at key 8803531
+[txn-195] start 3 requests at key 1350388
+[txn-195] start 4 requests at key 727977
+[txn-210] start 4 requests at key 4700196
+[txn-210] start 5 requests at key 8116798
+[txn-195] start 5 requests at key 9200205
+[txn-195] start 6 requests at key 2870238
+[txn-210] start 6 requests at key 3389695
+[txn-195] start 7 requests at key 8382916
+[txn-210] start 7 requests at key 2061622
+[txn-210] start 8 requests at key 6978919
+[txn-210] start 9 requests at key 2119319
+[txn-195] start 8 requests at key 5334369
+[txn-210] start 10 requests at key 812274
+[txn-210] start 11 requests at key 6894870
+[txn-195] start 9 requests at key 1876070
+[txn-210] start 12 requests at key 977396
+[txn-195] start 10 requests at key 6092916
+[txn-210] start 13 requests at key 2344584
+[txn-195] start 11 requests at key 5070332
+[txn-210] start 14 requests at key 8093346
+[txn-210] start 15 requests at key 9999999
+[txn-195] start 12 requests at key 2064140
+[txn-195] start 13 requests at key 5678986
+[txn-195] start 14 requests at key 57712
+[txn-195] start 15 requests at key 9999999
+[txn-195] committed
+[txn-210] aborted
+[txn-197] start 0 requests at key 9999999
+[txn-197] retire 0 requests
+[txn-197] start 1 requests at key 8937138
+[txn-197] start 2 requests at key 3450380
+[txn-197] start 3 requests at key 1088100
+[txn-197] start 4 requests at key 6476002
+[txn-197] start 5 requests at key 4744830
+[txn-197] start 6 requests at key 4264811
+[txn-197] start 7 requests at key 6456872
+[txn-197] start 8 requests at key 4230796
+[txn-197] start 9 requests at key 5874480
+[txn-197] start 10 requests at key 2935858
+[txn-197] start 11 requests at key 7364373
+[txn-212] start 0 requests at key 9999998
+[txn-212] retire 0 requests
+[txn-212] start 1 requests at key 4721551
+[txn-212] start 2 requests at key 8838500
+[txn-212] start 3 requests at key 8803531
+[txn-212] start 4 requests at key 4700196
+[txn-212] start 5 requests at key 8116798
+[txn-212] start 6 requests at key 3389695
+[txn-212] start 7 requests at key 2061622
+[txn-212] start 8 requests at key 6978919
+[txn-212] start 9 requests at key 2119319
+[txn-212] start 10 requests at key 812274
+[txn-212] start 11 requests at key 6894870
+[txn-212] start 12 requests at key 977396
+[txn-212] start 13 requests at key 2344584
+[txn-212] start 14 requests at key 8093346
+[txn-212] start 15 requests at key 9999999
+[txn-212] committed
+[txn-214] start 0 requests at key 9999998
+[txn-214] retire 0 requests
+[txn-197] start 12 requests at key 8007931
+[txn-214] start 1 requests at key 1905673
+[txn-214] start 2 requests at key 9915066
+[txn-214] start 3 requests at key 9947129
+[txn-214] start 4 requests at key 6525300
+[txn-197] start 13 requests at key 9620760
+[txn-214] start 5 requests at key 2181113
+[txn-197] start 14 requests at key 8486067
+[txn-214] start 6 requests at key 8756923
+[txn-197] start 15 requests at key 9999998
+[txn-197] committed
+[txn-199] start 0 requests at key 9999999
+[txn-199] retire 0 requests
+[txn-214] start 7 requests at key 3184168
+[txn-199] start 1 requests at key 243156
+[txn-214] start 8 requests at key 525056
+[txn-199] start 2 requests at key 9940665
+[txn-199] start 3 requests at key 125476
+[txn-214] start 9 requests at key 8876813
+[txn-199] start 4 requests at key 6118826
+[txn-214] start 10 requests at key 7571162
+[txn-199] start 5 requests at key 6392201
+[txn-199] start 6 requests at key 2536665
+[txn-214] start 11 requests at key 1538124
+[txn-199] start 7 requests at key 7344121
+[txn-214] start 12 requests at key 1103592
+[txn-214] start 13 requests at key 1496988
+[txn-214] start 14 requests at key 9382610
+[txn-214] aborted
+[txn-199] start 8 requests at key 646677
+[txn-199] start 9 requests at key 6828052
+[txn-199] start 10 requests at key 2611803
+[txn-199] start 11 requests at key 2331038
+[txn-199] start 12 requests at key 7161379
+[txn-199] start 13 requests at key 7301429
+[txn-199] start 14 requests at key 2643485
+[txn-199] start 15 requests at key 9999998
+[txn-199] committed
+[txn-201] start 0 requests at key 9999999
+[txn-201] retire 0 requests
+[txn-201] start 1 requests at key 3593644
+[txn-201] start 2 requests at key 1817891
+[txn-201] start 3 requests at key 2792402
+[txn-201] start 4 requests at key 2385990
+[txn-201] start 5 requests at key 1640516
+[txn-201] start 6 requests at key 5782461
+[txn-216] start 0 requests at key 9999998
+[txn-216] retire 0 requests
+[txn-216] start 1 requests at key 1905673
+[txn-216] start 2 requests at key 9915066
+[txn-216] start 3 requests at key 9947129
+[txn-216] start 4 requests at key 6525300
+[txn-216] start 5 requests at key 2181113
+[txn-216] start 6 requests at key 8756923
+[txn-216] start 7 requests at key 3184168
+[txn-216] start 8 requests at key 525056
+[txn-216] start 9 requests at key 8876813
+[txn-216] start 10 requests at key 7571162
+[txn-216] start 11 requests at key 1538124
+[txn-216] start 12 requests at key 1103592
+[txn-216] start 13 requests at key 1496988
+[txn-216] start 14 requests at key 9382610
+[txn-216] committed
+[txn-218] start 0 requests at key 9999998
+[txn-218] retire 0 requests
+[txn-218] start 1 requests at key 9798278
+[txn-218] start 2 requests at key 4335283
+[txn-201] start 7 requests at key 6432203
+[txn-218] start 3 requests at key 2345186
+[txn-218] start 4 requests at key 6225268
+[txn-201] start 8 requests at key 8770052
+[txn-218] start 5 requests at key 9357134
+[txn-218] start 6 requests at key 1671438
+[txn-218] start 7 requests at key 8032524
+[txn-201] start 9 requests at key 3379443
+[txn-201] start 10 requests at key 6921709
+[txn-218] start 8 requests at key 871257
+[txn-201] start 11 requests at key 8237039
+[txn-218] start 9 requests at key 4921651
+[txn-218] start 10 requests at key 7932642
+[txn-201] start 12 requests at key 476585
+[txn-218] start 11 requests at key 706610
+[txn-201] start 13 requests at key 3547451
+[txn-201] start 14 requests at key 9621994
+[txn-201] start 15 requests at key 9999998
+[txn-201] committed
+[txn-218] start 12 requests at key 6170024
+[txn-203] start 0 requests at key 9999998
+[txn-203] retire 0 requests
+[txn-218] start 13 requests at key 5847872
+[txn-203] start 1 requests at key 5158601
+[txn-218] start 14 requests at key 3062988
+[txn-218] start 15 requests at key 9999999
+[txn-218] committed
+[txn-220] start 0 requests at key 9999999
+[txn-220] retire 0 requests
+[txn-220] start 1 requests at key 2277422
+[txn-220] start 2 requests at key 3751992
+[txn-203] start 2 requests at key 943915
+[txn-220] start 3 requests at key 4763190
+[txn-203] start 3 requests at key 5996434
+[txn-220] start 4 requests at key 758409
+[txn-203] start 4 requests at key 5696919
+[txn-220] start 5 requests at key 4462519
+[txn-220] start 6 requests at key 6487851
+[txn-203] start 5 requests at key 5171191
+[txn-220] start 7 requests at key 8146836
+[txn-203] start 6 requests at key 3726555
+[txn-203] start 7 requests at key 2494478
+[txn-220] start 8 requests at key 2883015
+[txn-203] start 8 requests at key 6985474
+[txn-220] start 9 requests at key 9202326
+[txn-220] start 10 requests at key 7239179
+[txn-203] start 9 requests at key 6503438
+[txn-220] start 11 requests at key 9429265
+[txn-203] start 10 requests at key 4388292
+[txn-203] start 11 requests at key 4563027
+[txn-203] start 12 requests at key 9340126
+[txn-220] start 12 requests at key 7764001
+[txn-203] start 13 requests at key 2660694
+[txn-203] start 14 requests at key 9446148
+[txn-203] start 15 requests at key 9999999
+[txn-203] committed
+[txn-205] start 0 requests at key 9999998
+[txn-205] retire 0 requests
+[txn-205] start 1 requests at key 4386698
+[txn-220] start 13 requests at key 1130572
+[txn-220] start 14 requests at key 4939951
+[txn-220] aborted
+[txn-205] start 2 requests at key 5312653
+[txn-205] start 3 requests at key 4472076
+[txn-205] start 4 requests at key 1937534
+[txn-205] start 5 requests at key 186089
+[txn-205] start 6 requests at key 8626259
+[txn-205] start 7 requests at key 9457077
+[txn-205] start 8 requests at key 5790155
+[txn-222] start 0 requests at key 9999999
+[txn-222] retire 0 requests
+[txn-205] start 9 requests at key 7491367
+[txn-222] start 1 requests at key 2277422
+[txn-222] start 2 requests at key 3751992
+[txn-222] start 3 requests at key 4763190
+[txn-222] start 4 requests at key 758409
+[txn-222] start 5 requests at key 4462519
+[txn-222] start 6 requests at key 6487851
+[txn-222] start 7 requests at key 8146836
+[txn-222] start 8 requests at key 2883015
+[txn-222] start 9 requests at key 9202326
+[txn-222] start 10 requests at key 7239179
+[txn-222] start 11 requests at key 9429265
+[txn-222] start 12 requests at key 7764001
+[txn-222] start 13 requests at key 1130572
+[txn-222] start 14 requests at key 4939951
+[txn-222] committed
+[txn-224] start 0 requests at key 9999998
+[txn-224] retire 0 requests
+[txn-224] start 1 requests at key 9819931
+[txn-224] start 2 requests at key 9653253
+[txn-224] start 3 requests at key 4499291
+[txn-205] start 10 requests at key 757678
+[txn-224] start 4 requests at key 91889
+[txn-205] start 11 requests at key 1038876
+[txn-224] start 5 requests at key 2940240
+[txn-205] start 12 requests at key 2076775
+[txn-224] start 6 requests at key 8617711
+[txn-205] start 13 requests at key 5130026
+[txn-224] start 7 requests at key 9097679
+[txn-224] start 8 requests at key 3428473
+[txn-205] start 14 requests at key 4977022
+[txn-205] committed
+[txn-207] start 0 requests at key 9999999
+[txn-207] retire 0 requests
+[txn-224] start 9 requests at key 7947373
+[txn-207] start 1 requests at key 6231491
+[txn-207] start 2 requests at key 4195701
+[txn-207] start 3 requests at key 1888349
+[txn-224] start 10 requests at key 3446285
+[txn-207] start 4 requests at key 1588983
+[txn-207] start 5 requests at key 3224805
+[txn-224] start 11 requests at key 9064791
+[txn-207] start 6 requests at key 722540
+[txn-224] start 12 requests at key 5077065
+[txn-207] start 7 requests at key 5275626
+[txn-224] start 13 requests at key 7565253
+[txn-207] start 8 requests at key 6453687
+[txn-224] start 14 requests at key 7673538
+[txn-207] start 9 requests at key 4594816
+[txn-207] start 10 requests at key 1853949
+[txn-207] start 11 requests at key 9056152
+[txn-224] start 15 requests at key 9999999
+[txn-224] committed
+[txn-226] start 0 requests at key 9999998
+[txn-226] retire 0 requests
+[txn-226] start 1 requests at key 7013651
+[txn-226] start 2 requests at key 9978294
+[txn-226] start 3 requests at key 3169221
+[txn-207] start 12 requests at key 3827210
+[txn-226] start 4 requests at key 8585124
+[txn-207] start 13 requests at key 5831729
+[txn-226] start 5 requests at key 1167538
+[txn-207] start 14 requests at key 4108800
+[txn-207] start 15 requests at key 9999998
+[txn-207] aborted
+[txn-226] start 6 requests at key 1030588
+[txn-226] start 7 requests at key 8399733
+[txn-226] start 8 requests at key 4001225
+[txn-226] start 9 requests at key 6158061
+[txn-226] start 10 requests at key 693414
+[txn-226] start 11 requests at key 6436313
+[txn-226] start 12 requests at key 8966004
+[txn-226] start 13 requests at key 7800430
+[txn-209] start 0 requests at key 9999999
+[txn-209] retire 0 requests
+[txn-209] start 1 requests at key 6231491
+[txn-209] start 2 requests at key 4195701
+[txn-209] start 3 requests at key 1888349
+[txn-209] start 4 requests at key 1588983
+[txn-209] start 5 requests at key 3224805
+[txn-209] start 6 requests at key 722540
+[txn-209] start 7 requests at key 5275626
+[txn-209] start 8 requests at key 6453687
+[txn-226] start 14 requests at key 7892532
+[txn-209] start 9 requests at key 4594816
+[txn-209] start 10 requests at key 1853949
+[txn-209] start 11 requests at key 9056152
+[txn-209] start 12 requests at key 3827210
+[txn-209] start 13 requests at key 5831729
+[txn-209] start 14 requests at key 4108800
+[txn-209] start 15 requests at key 9999998
+[txn-209] committed
+[txn-211] start 0 requests at key 9999999
+[txn-211] retire 0 requests
+[txn-211] start 1 requests at key 7285044
+[txn-226] start 15 requests at key 9999999
+[txn-226] committed
+[txn-211] start 2 requests at key 537875
+[txn-211] aborted
+PASS! SimTime = 36242300
+[tid=0] txn_cnt=100,abort_cnt=14, user_abort_cnt=0
+[tid=1] txn_cnt=90,abort_cnt=16, user_abort_cnt=0
+[summary] throughput=5259.75, txn_cnt= 190, abort_cnt= 30, user_abort_cnt= 0, run_time= 0.0722467, time_abort= 0.0039241, time_cleanup= 0.000923415, time_query= 0.00234875, time_get_latch= 0.00696156, time_get_cs= 0.000344464, time_retire_latch= 1.1577e-05, time_retire_cs= 9.57e-06, time_release_latch= 0.000189922, time_release_cs= 6.0738e-05, time_commit= 0.000455801, time_ts_alloc= 0, wait_cnt= 1, latency= 380177, commit_latency= 359592, abort_length= 30, cascading_abort_times= 30, max_abort_length= 1, time_wait= 8.12e-07, time_man= 0.0188944, time_index= 0.0089708, deadlock_cnt=0, cycle_detect=0, dl_detect_time=0, dl_wait_time=0
+{"MAX_TXN_PER_PART": "100", "DEBUG_CS_PROFILING": "true", "BB_OPT_MAX_WAITER": "0", "ZIPF_THETA": "0", "LATCH": "LH_MCSLOCK", "SYNTH_TABLE_SIZE": "10000000", "CC_ALG": "BAMBOO", "WORKLOAD": "YCSB", "READ_PERC": "1", "ABORT_PENALTY": "50000", "WW_STARV_FREE": "false", "SECOND_HS": "WR", "NUM_HS": "2", "DEBUG_PROFILING": "true", "REQ_PER_QUERY": "16", "SPECIFIED_RATIO": "1", "THREAD_CNT": "2", "BB_OPT_RAW": "true", "FIXED_HS": "1", "KEY_ORDER": "false", "DEBUG_ABORT_LENGTH": "true", "FIRST_HS": "WR", "POS_HS": "SPECIFIED", "RETIRE_ON": "true", "DYNAMIC_TS": "true", "FLIP_RATIO": "0.5", "SYNTHETIC_YCSB": "true"}
+

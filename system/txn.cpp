@@ -415,6 +415,10 @@ RC txn_man::finish(RC rc) {
     if (!ATOM_CAS(status, RUNNING, COMMITED))
       rc = Abort;
   }
+if (rc == Abort)
+  printf("[txn-%lu] aborted\n", get_txn_id());
+else
+  printf("[txn-%lu] committed\n", get_txn_id());
   cleanup(rc);
 #else
   cleanup(rc);
