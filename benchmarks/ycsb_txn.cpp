@@ -51,7 +51,7 @@ RC ycsb_txn_man::run_txn(base_query * query) {
             row_t * row = ((row_t *)m_item->location);
             row_t * row_local;
             access_t type = req->rtype;
-            printf("[txn-%lu] start %d requests at key %lu\n", get_txn_id(), rid, req->key);
+            //printf("[txn-%lu] start %d requests at key %lu\n", get_txn_id(), rid, req->key);
             row_local = get_row(row, type);
             if (row_local == NULL) {
                 rc = Abort;
@@ -91,7 +91,7 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 #if (CC_ALG == BAMBOO) && RETIRE_ON && (THREAD_CNT != 1)
             // retire write txn
             if (finish_req && (req->rtype == WR) && (rid <= retire_threshold)) {
-            	printf("[txn-%lu] retire %d requests\n", get_txn_id(), rid);
+            	//printf("[txn-%lu] retire %d requests\n", get_txn_id(), rid);
                 if (retire_row(access_id) == Abort)
                   return finish(Abort);
             }
