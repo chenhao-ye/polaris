@@ -117,9 +117,7 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
 #if BB_OPT_RAW
           // add before owner
           access->data->copy(owners->access->orig_data);
-          UPDATE_RETIRE_INFO(to_insert, retired_tail);
-          ADD_TO_RETIRED_TAIL(to_insert);
-          owners->delta = true;
+          INSERT_TO_RETIRED_TAIL(to_insert);
           rc = FINISH;
 #else
           // wound owner
@@ -151,11 +149,12 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
           access->data->copy(en->access->orig_data);
           INSERT_TO_RETIRED(to_insert, en);
         } else {
-          UPDATE_RETIRE_INFO(to_insert, retired_tail);
-          ADD_TO_RETIRED_TAIL(to_insert);
           if (owners) {
+            INSERT_TO_RETIRED_TAIL(to_insert);
             access->data->copy(owners->access->orig_data);
-            owners->delta = true;
+          } else { 
+            UPDATE_RETIRE_INFO(to_insert, retired_tail);
+            ADD_TO_RETIRED_TAIL(to_insert);
           }
         }
         rc = FINISH;
@@ -338,6 +337,7 @@ bool Row_bamboo_pt::bring_next(txn_man * txn) {
         UPDATE_RETIRE_INFO(owners, retired_tail);
       } else {
         // add to retired
+        UPDATE_RETIRE_INFO(entry, retired_tail);
         ADD_TO_RETIRED_TAIL(entry);
       }
       entry->txn->lock_ready = true;
@@ -393,8 +393,9 @@ void Row_bamboo_pt::return_entry(BBLockEntry * entry) {
 
 inline 
 void Row_bamboo_pt::update_entry(BBLockEntry * entry) {
-  if (!entry->next && !owners)
+  if (!entry->next && !owners) {
     return; // nothing to update
+  }
   if (entry->type == LOCK_SH) {
     // cohead: no need to update
     // delta: update next entry only
@@ -412,8 +413,11 @@ void Row_bamboo_pt::update_entry(BBLockEntry * entry) {
   //  the loop)
   ASSERT(entry->is_cohead);
   BBLockEntry * en = entry->next;
-  if (!en)
+  bool checked_owners = false;
+  if (!en) {
     en = owners;
+    checked_owners = true;
+  }
   if (entry->prev) {
     // prev can only be reads
     // cohead: whatever it is, it becomes NEW cohead and decrement barrier
@@ -427,8 +431,10 @@ void Row_bamboo_pt::update_entry(BBLockEntry * entry) {
       en->is_cohead = true;
       en->txn->decrement_commit_barriers();
       en = en->next;
-      if (!en)
+      if (!en && !checked_owners) {
+        checked_owners = true;
         en = owners;
+      }
     }
   } else {
     // cohead: whatever it is becomes cohead
@@ -438,8 +444,10 @@ void Row_bamboo_pt::update_entry(BBLockEntry * entry) {
       en->is_cohead = true;
       en->txn->decrement_commit_barriers();
       en = en->next;
-      if (!en)
+      if (!en && !checked_owners) {
+        checked_owners = true;
         en = owners;
+      }
     } while(en && !(en->delta));
   }
 }

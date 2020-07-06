@@ -45,6 +45,15 @@
   to_retire->status = LOCK_RETIRED; \
   retired_cnt++; }
 
+
+#define INSERT_TO_RETIRED_TAIL(to_insert) { \
+  UPDATE_RETIRE_INFO(to_insert, retired_tail); \
+  RECHECK_RETIRE_INFO(owners, to_insert); \
+  LIST_PUT_TAIL(retired_head, retired_tail, to_insert); \
+  to_insert->status = LOCK_RETIRED; \
+  retired_cnt++; }
+
+
 #define INSERT_TO_RETIRED(to_insert, en) { \
   UPDATE_RETIRE_INFO(to_insert, en->prev); \
   RECHECK_RETIRE_INFO(en, to_insert); \
