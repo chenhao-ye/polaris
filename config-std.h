@@ -4,34 +4,34 @@
 /***********************************************/
 // Simulation + Hardware
 /***********************************************/
-#define THREAD_CNT					4
-#define PART_CNT					1 
+#define THREAD_CNT					20
+#define PART_CNT					1
 // each transaction only accesses 1 virtual partition. But the lock/ts manager and index are not aware of such partitioning. VIRTUAL_PART_CNT describes the request distribution and is only used to generate queries. For HSTORE, VIRTUAL_PART_CNT should be the same as PART_CNT.
 #define VIRTUAL_PART_CNT			1
-#define PAGE_SIZE					4096 
+#define PAGE_SIZE					4096
 #define CL_SIZE						64
-// CPU_FREQ is used to get accurate timing info 
-#define CPU_FREQ 					2 	// in GHz/s
+// CPU_FREQ is used to get accurate timing info
+#define CPU_FREQ 					2.6 // in GHz/s
 
 // # of transactions to run for warmup
 #define WARMUP						0
 // YCSB or TPCC
-#define WORKLOAD 					YCSB
+#define WORKLOAD                    YCSB
 // print the transaction latency distribution
 #define PRT_LAT_DISTR				false
 #define STATS_ENABLE				true
-#define TIME_ENABLE					true 
+#define TIME_ENABLE					true
 
-#define MEM_ALLIGN					8 
+#define MEM_ALLIGN					8
 
 // [THREAD_ALLOC]
 #define THREAD_ALLOC				false
-#define THREAD_ARENA_SIZE			(1UL << 22) 
+#define THREAD_ARENA_SIZE			(1UL << 22)
 #define MEM_PAD 					true
 
-// [PART_ALLOC] 
+// [PART_ALLOC]
 #define PART_ALLOC 					false
-#define MEM_SIZE					(1UL << 30) 
+#define MEM_SIZE					(1UL << 30)
 #define NO_FREE						false
 
 /***********************************************/
@@ -39,8 +39,12 @@
 /***********************************************/
 // WAIT_DIE, NO_WAIT, DL_DETECT, TIMESTAMP, MVCC, HEKATON, HSTORE, OCC, VLL, TICTOC, SILO
 // TODO TIMESTAMP does not work at this moment
-#define CC_ALG 						TICTOC
+//#define CC_ALG WOUND_WAIT
+#define CC_ALG                      BAMBOO
 #define ISOLATION_LEVEL 			SERIALIZABLE
+
+// latch options
+#define LATCH					    LH_SPINLOCK
 
 // all transactions acquire tuples according to the primary key order.
 #define KEY_ORDER					false
@@ -49,8 +53,8 @@
 // per-row lock/ts management or central lock/ts management
 #define CENTRAL_MAN					false
 #define BUCKET_CNT					31
-#define ABORT_PENALTY 				100000
-#define ABORT_BUFFER_SIZE			10
+#define ABORT_PENALTY 				10000
+#define ABORT_BUFFER_SIZE			1
 #define ABORT_BUFFER_ENABLE			true
 // [ INDEX ]
 #define ENABLE_LATCH				false
@@ -59,7 +63,7 @@
 #define INDEX_STRUCT				IDX_HASH
 #define BTREE_ORDER 				16
 
-// [DL_DETECT] 
+// [DL_DETECT]
 #define DL_LOOP_DETECT				1000 	// 100 us
 #define DL_LOOP_TRIAL				100	// 1 us
 #define NO_DL						KEY_ORDER
@@ -72,8 +76,8 @@
 // [MVCC]
 // when read/write history is longer than HIS_RECYCLE_LEN
 // the history should be recycled.
-//#define HIS_RECYCLE_LEN				10
-//#define MAX_PRE_REQ					1024
+//#define HIS_RECYCLE_LEN		    10
+//#define MAX_PRE_REQ				1024
 //#define MAX_READ_REQ				1024
 #define MIN_TS_INTVL				5000000 //5 ms. In nanoseconds
 // [OCC]
@@ -91,10 +95,18 @@
 #define ATOMIC_WORD					true
 // [HSTORE]
 // when set to true, hstore will not access the global timestamp.
-// This is fine for single partition transactions. 
+// This is fine for single partition transactions.
 #define HSTORE_LOCAL_TS				false
-// [VLL] 
+// [VLL]
 #define TXN_QUEUE_SIZE_LIMIT		THREAD_CNT
+// [BAMBOO]
+#define DYNAMIC_TS					true
+#define RETIRE_ON 					true
+#define BB_OPT_RAW                  true
+#define BB_OPT_MAX_WAITER           0
+#define LAST_RETIRE                 0.15
+// [WW]
+#define WW_STARV_FREE               false // set false if compared w/ bamboo
 
 /***********************************************/
 // Logging
@@ -106,41 +118,52 @@
 /***********************************************/
 // Benchmark
 /***********************************************/
+#define THINKTIME				    0
 // max number of rows touched per transaction
 #define MAX_ROW_PER_TXN				64
 #define QUERY_INTVL 				1UL
-#define MAX_TXN_PER_PART 			100
+#define MAX_TXN_PER_PART 			10000
 #define FIRST_PART_LOCAL 			true
 #define MAX_TUPLE_SIZE				1024 // in bytes
 // ==== [YCSB] ====
 #define INIT_PARALLELISM			40
-#define SYNTH_TABLE_SIZE 			(1024 * 40)
-#define ZIPF_THETA 					0.6
-#define READ_PERC 					0.9
-#define WRITE_PERC 					0.1
+#define SYNTH_TABLE_SIZE 			(1024 * 5)
+#define ZIPF_THETA 					0.9
+#define READ_PERC 					1
+#define WRITE_PERC 					1  // if want no scan, write + read >= 1
 #define SCAN_PERC 					0
 #define SCAN_LEN					20
 #define PART_PER_TXN 				1
 #define PERC_MULTI_PART				1
 #define REQ_PER_QUERY				16
 #define FIELD_PER_TUPLE				10
+// ==== [YCSB-synthetic] ====
+#define SYNTHETIC_YCSB              true
+#define POS_HS                      TOP
+#define SPECIFIED_RATIO             0
+#define FLIP_RATIO                  0
+#define NUM_HS                      1
+#define FIRST_HS                    WR
+#define SECOND_HS                   WR
+#define FIXED_HS                    0
+
 // ==== [TPCC] ====
 // For large warehouse count, the tables do not fit in memory
 // small tpcc schemas shrink the table size.
 #define TPCC_SMALL					false
-// Some of the transactions read the data but never use them. 
+// Some of the transactions read the data but never use them.
 // If TPCC_ACCESS_ALL == fales, then these parts of the transactions
 // are not modeled.
-#define TPCC_ACCESS_ALL 			false 
+#define TPCC_ACCESS_ALL 			false
 #define WH_UPDATE					true
 #define NUM_WH 						1
 //
-enum TPCCTxnType {TPCC_ALL, 
-				TPCC_PAYMENT, 
-				TPCC_NEW_ORDER, 
-				TPCC_ORDER_STATUS, 
-				TPCC_DELIVERY, 
-				TPCC_STOCK_LEVEL};
+enum TPCCTxnType {TPCC_ALL,
+  TPCC_PAYMENT,
+  TPCC_NEW_ORDER,
+  TPCC_ORDER_STATUS,
+  TPCC_DELIVERY,
+  TPCC_STOCK_LEVEL};
 extern TPCCTxnType 					g_tpcc_txn_type;
 
 //#define TXN_TYPE					TPCC_ALL
@@ -150,13 +173,19 @@ extern TPCCTxnType 					g_tpcc_txn_type;
 #define LASTNAME_LEN 				16
 
 #define DIST_PER_WARE				10
+// enable user-initiated aborts in new-order txn according to TPC-C doc.
+#define TPCC_USER_ABORT             true
+
+// Optimizations used in IC3
+#define COMMUTATIVE_OPS          false
+#define COMMUTATIVE_LATCH        false
 
 /***********************************************/
-// TODO centralized CC management. 
+// TODO centralized CC management.
 /***********************************************/
-#define MAX_LOCK_CNT				(20 * THREAD_CNT) 
+#define MAX_LOCK_CNT				(20 * THREAD_CNT)
 #define TSTAB_SIZE                  50 * THREAD_CNT
-#define TSTAB_FREE                  TSTAB_SIZE 
+#define TSTAB_FREE                  TSTAB_SIZE
 #define TSREQ_FREE                  4 * TSTAB_FREE
 #define MVHIS_FREE                  4 * TSTAB_FREE
 #define SPIN                        false
@@ -166,10 +195,11 @@ extern TPCCTxnType 					g_tpcc_txn_type;
 /***********************************************/
 #define TEST_ALL					true
 enum TestCases {
-	READ_WRITE,
-	CONFLICT
+  READ_WRITE,
+  CONFLICT
 };
 extern TestCases					g_test_case;
+
 /***********************************************/
 // DEBUG info
 /***********************************************/
@@ -180,8 +210,15 @@ extern TestCases					g_test_case;
 #define DEBUG_LOCK					false
 #define DEBUG_TIMESTAMP				false
 #define DEBUG_SYNTH					false
-#define DEBUG_ASSERT				false
-#define DEBUG_CC					false //true
+#define DEBUG_ASSERT                false
+#define DEBUG_CC					false
+#define DEBUG_WW                    false
+#define DEBUG_BENCHMARK             false
+#define DEBUG_BAMBOO                false
+#define DEBUG_TMP					false
+#define DEBUG_PROFILING				false
+#define DEBUG_CS_PROFILING          false // profiling inside critical path
+#define DEBUG_ABORT_LENGTH          false
 
 /***********************************************/
 // Constant
@@ -193,6 +230,10 @@ extern TestCases					g_test_case;
 #define YCSB						1
 #define TPCC						2
 #define TEST						3
+// latch options
+#define LH_SPINLOCK                   1
+#define LH_MUTEX                      2
+#define LH_MCSLOCK                    3
 // Concurrency Control Algorithm
 #define NO_WAIT						1
 #define WAIT_DIE					2
@@ -205,7 +246,10 @@ extern TestCases					g_test_case;
 #define SILO						9
 #define VLL							10
 #define HEKATON 					11
-//Isolation Levels 
+#define WOUND_WAIT                  12
+#define BAMBOO                      13
+#define IC3                         14
+//Isolation Levels
 #define SERIALIZABLE				1
 #define SNAPSHOT					2
 #define REPEATABLE_READ				3
@@ -214,5 +258,12 @@ extern TestCases					g_test_case;
 #define TS_CAS						2
 #define TS_HW						3
 #define TS_CLOCK					4
+// Synthetic YCSB - HOTSPOT POSITION
+#define TOP                         1
+#define MID                         2
+#define BOT                         3
+#define TM                          4
+#define MB                          5
+#define SPECIFIED                   6
 
 #endif

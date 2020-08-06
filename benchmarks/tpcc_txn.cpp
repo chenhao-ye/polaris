@@ -34,6 +34,8 @@ RC tpcc_txn_man::run_txn(base_query * query) {
 }
 
 RC tpcc_txn_man::run_payment(tpcc_query * query) {
+
+#if CC_ALG != IC3
 #if CC_ALG == BAMBOO && RETIRE_ON && THREAD_CNT > 1
   int access_cnt;
 #endif
@@ -299,6 +301,10 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 
   assert( rc == RCOK );
   return finish(rc);
+
+#else // IC3
+
+#endif
 }
 
 RC tpcc_txn_man::run_new_order(tpcc_query * query) {
