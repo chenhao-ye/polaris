@@ -7,7 +7,6 @@ RC IndexHash::init(uint64_t bucket_cnt, int part_cnt) {
   _bucket_cnt = bucket_cnt;
   _bucket_cnt_per_part = bucket_cnt / part_cnt;
   _buckets = new BucketHeader * [part_cnt];
-  rwlock = (pthread_rwlock_t **) _mm_malloc(sizeof(void *) * part_cnt);
   for (int i = 0; i < part_cnt; i++) {
     _buckets[i] = (BucketHeader *) _mm_malloc(sizeof(BucketHeader) * _bucket_cnt_per_part, 64);
     for (uint32_t n = 0; n < _bucket_cnt_per_part; n ++)
@@ -37,7 +36,7 @@ IndexHash::release_latch(BucketHeader * bucket) {
 //  bool ok = ATOM_CAS(bucket->locked, true, false);
 //  assert(ok);
   // XXX(zhihan): change to read/write lock
-  pthread_rwlock_unlock();
+  pthread_rwlock_unlock(bucket->rwlock);
 }
 
 void
@@ -73,7 +72,7 @@ RC IndexHash::index_read(idx_key_t key, itemid_t * &item, int part_id) {
   get_latch(cur_bkt, RD);
   cur_bkt->read_item(key, item, table->get_table_name());
   // 3. release the latch
-  release_latch(cur_bkt, RD);
+  release_latch(cur_bkt);
   return rc;
 
 }

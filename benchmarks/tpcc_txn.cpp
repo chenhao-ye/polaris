@@ -58,11 +58,12 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
   row_t * r_cust_local;
   row_t * r_hist;
   // values
-  double w_ytd;
+#if !COMMUTATIVE_OPS
+  double tmp_value;
+#endif
   char w_name[11];
   char * tmp_str;
   char d_name[11];
-  double d_ytd;
   double c_balance;
   double c_ytd_payment;
   double c_payment_cnt;
@@ -93,10 +94,9 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
   assert(item != NULL);
   r_wh = ((row_t *)item->location);
 #if !COMMUTATIVE_OPS
-  if (g_wh_update)
-    r_wh_local = get_row(r_wh, r_wh_type, WR);
+  r_wh_local = get_row(r_wh, WR);
 #else
-  r_wh_local = get_row(r_wh, r_wh_type, RD);
+  r_wh_local = get_row(r_wh, RD);
 #endif
   if (r_wh_local == NULL) {
     return finish(Abort);
@@ -112,7 +112,7 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
   inc_value(W_YTD, query->h_amount); // will increment at commit time
 #endif
   // bamboo: retire lock for wh
-#if (CC_ALG == BAMBOO) && RETIRE_ON && (THREAD_CNT > 1)
+#if (CC_ALG == BAMBOO) && RETIRE_ON && (THREAD_CNT > 1) && !COMMUTATIVE_OPS
   RETIRE_ROW(row_cnt)
 #endif
   //get a copy of warehouse name
@@ -136,17 +136,21 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
   item = index_read(_wl->i_district, key, wh_to_part(w_id));
   assert(item != NULL);
   row_t * r_dist = ((row_t *)item->location);
+#if !COMMUTATIVE_OPS
   row_t * r_dist_local = get_row(r_dist, WR);
+#else
+  row_t * r_dist_local = get_row(r_dist, RD);
+#endif
   if (r_dist_local == NULL) {
     return finish(Abort);
   }
 #if !COMMUTATIVE_OPS
-  r_dist_local->get_value(D_YTD, d_ytd);
-  r_dist_local->set_value(D_YTD, d_ytd + query->h_amount);
+  r_dist_local->get_value(D_YTD, tmp_value);
+  r_dist_local->set_value(D_YTD, tmp_value + query->h_amount);
 #else
   inc_value(D_YTD, query->h_amount); // will increment at commit time
 #endif
-#if (CC_ALG == BAMBOO) && RETIRE_ON && (THREAD_CNT > 1)
+#if (CC_ALG == BAMBOO) && RETIRE_ON && (THREAD_CNT > 1) && !COMMUTATIVE_OPS
   RETIRE_ROW(row_cnt)
 #endif
   tmp_str = r_dist_local->get_value(D_NAME);
@@ -280,16 +284,12 @@ warehouse_piece:
 
 #if !COMMUTATIVE_OPS
   //update the balance to the warehouse
-  r_wh_local->get_value(W_YTD, w_ytd);
+  r_wh_local->get_value(W_YTD, tmp_value);
   if (g_wh_update) {
-    r_wh_local->set_value(W_YTD, w_ytd + query->h_amount);
+    r_wh_local->set_value(W_YTD, tmp_value + query->h_amount);
   }
 #else
   inc_value(W_YTD, query->h_amount); // will increment at commit time
-#endif
-  // bamboo: retire lock for wh
-#if (CC_ALG == BAMBOO) && RETIRE_ON && (THREAD_CNT > 1)
-  RETIRE_ROW(row_cnt)
 #endif
   //get a copy of warehouse name
   tmp_str = r_wh_local->get_value(W_NAME);
@@ -322,9 +322,6 @@ district_piece:
   r_dist_local->set_value(D_YTD, d_ytd + query->h_amount);
 #else
   inc_value(D_YTD, query->h_amount); // will increment at commit time
-#endif
-#if (CC_ALG == BAMBOO) && RETIRE_ON && (THREAD_CNT > 1)
-  RETIRE_ROW(row_cnt)
 #endif
   tmp_str = r_dist_local->get_value(D_NAME);
   memcpy(d_name, tmp_str, 10);
