@@ -138,6 +138,7 @@ class txn_man
 
  protected:
   void 			    insert_row(row_t * row, table_t * table);
+  void              index_insert(row_t * row, INDEX * index, idx_key_t key);
  private:
 #if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT || CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT
   void              assign_lock_entry(Access * access);

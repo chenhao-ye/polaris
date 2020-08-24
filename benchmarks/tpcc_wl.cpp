@@ -88,9 +88,6 @@ void tpcc_wl::init_tab_item() {
 	for (UInt32 i = 1; i <= g_max_items; i++) {
 		row_t * row;
 		uint64_t row_id;
-#if DEBUG_WW || DEBUG_BAMBOO
-		row_id = get_sys_clock();
-#endif
 		t_item->get_new_row(row, 0, row_id);
 		row->set_primary_key(i);
 		row->set_value(I_ID, i);

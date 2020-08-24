@@ -359,7 +359,7 @@ district_piece:
 #if !TPCC_SMALL
   r_hist->set_value(H_DATA, h_data);
 #endif
-  insert_row(r_hist, _wl->t_history);
+  // XXX(zhihan): no index maintained for history table.
   //END: [HISTORY] - WR
   assert( rc == RCOK );
   return finish(rc);

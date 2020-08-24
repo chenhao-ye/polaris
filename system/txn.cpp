@@ -348,6 +348,17 @@ void txn_man::insert_row(row_t * row, table_t * table) {
   insert_rows[insert_cnt ++] = row;
 }
 
+void txn_man::index_insert(row_t * row, INDEX * index, idx_key_t key) {
+  //TODO(zhihan): insert row in the index.
+  uint64_t part_id = get_part_id(row);
+  itemid_t * m_item = (itemid_t *) mem_allocator.alloc( sizeof(itemid_t), pid );
+  m_item->init();
+  m_item->type = DT_row;
+  m_item->location = row;
+  m_item->valid = true;
+  assert(index->index_insert(key, m_item, part_id) == RCOK);
+}
+
 itemid_t *
 txn_man::index_read(INDEX * index, idx_key_t key, int part_id) {
   uint64_t starttime = get_sys_clock();
