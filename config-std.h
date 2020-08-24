@@ -146,7 +146,6 @@
 #define FIRST_HS                    WR
 #define SECOND_HS                   WR
 #define FIXED_HS                    0
-
 // ==== [TPCC] ====
 // For large warehouse count, the tables do not fit in memory
 // small tpcc schemas shrink the table size.
@@ -178,7 +177,6 @@ extern TPCCTxnType 					g_tpcc_txn_type;
 
 // Optimizations used in IC3
 #define COMMUTATIVE_OPS          false
-#define COMMUTATIVE_LATCH        false
 
 /***********************************************/
 // TODO centralized CC management.

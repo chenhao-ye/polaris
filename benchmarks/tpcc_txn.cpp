@@ -10,6 +10,13 @@
 #include "index_btree.h"
 #include "tpcc_const.h"
 
+#define RETIRE_ROW(row_cnt) { \
+  access_cnt = row_cnt - 1; \
+  if (retire_row(access_cnt) == Abort) \
+    return \
+  finish(Abort); \
+}
+
 void tpcc_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
   txn_man::init(h_thd, h_wl, thd_id);
   _wl = (tpcc_wl *) h_wl;
@@ -35,13 +42,31 @@ RC tpcc_txn_man::run_txn(base_query * query) {
 
 RC tpcc_txn_man::run_payment(tpcc_query * query) {
 
-#if CC_ALG != IC3
-#if CC_ALG == BAMBOO && RETIRE_ON && THREAD_CNT > 1
+#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT > 1)
   int access_cnt;
 #endif
+  // declare all variables
   RC rc = RCOK;
   uint64_t key;
   itemid_t * item;
+  int cnt;
+  uint64_t row_id;
+  // rows
+  row_t * r_wh;
+  row_t * r_wh_local;
+  row_t * r_cust;
+  row_t * r_cust_local;
+  row_t * r_hist;
+  // values
+  double w_ytd;
+  char w_name[11];
+  char * tmp_str;
+  char d_name[11];
+  double d_ytd;
+  double c_balance;
+  double c_ytd_payment;
+  double c_payment_cnt;
+  char * c_credit;
 
   uint64_t w_id = query->w_id;
   uint64_t c_w_id = query->c_w_id;
@@ -56,34 +81,29 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
       WHERE w_id=:w_id;
   +===================================================================*/
 
-  // TODO for variable length variable (string). Should store the size of
-  // the variable.
+  // TODO: for variable length variable (string). Should store the size of
+  //  the variable.
+
+#if CC_ALG != IC3
+  //BEGIN: [WAREHOUSE] RW
+  //use index to retrieve that warehouse
   key = query->w_id;
   INDEX * index = _wl->i_warehouse;
   item = index_read(index, key, wh_to_part(w_id));
   assert(item != NULL);
-  row_t * r_wh = ((row_t *)item->location);
-  access_t r_wh_type;
-  row_t * r_wh_local;
+  r_wh = ((row_t *)item->location);
 #if !COMMUTATIVE_OPS
   if (g_wh_update)
-    r_wh_type = WR;
-  else
-    r_wh_type = RD;
+    r_wh_local = get_row(r_wh, r_wh_type, WR);
 #else
-#if COMMUTATIVE_LATCH
-  r_wh_type = RD;
-#else
-  r_wh_type = CM;
+  r_wh_local = get_row(r_wh, r_wh_type, RD);
 #endif
-#endif
-
-  r_wh_local = get_row(r_wh, r_wh_type);
   if (r_wh_local == NULL) {
     return finish(Abort);
   }
+
 #if !COMMUTATIVE_OPS
-  double w_ytd;
+  //update the balance to the warehouse
   r_wh_local->get_value(W_YTD, w_ytd);
   if (g_wh_update) {
     r_wh_local->set_value(W_YTD, w_ytd + query->h_amount);
@@ -91,21 +111,23 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
 #else
   inc_value(W_YTD, query->h_amount); // will increment at commit time
 #endif
-  char w_name[11];
-  char * tmp_str = r_wh_local->get_value(W_NAME);
+  // bamboo: retire lock for wh
+#if (CC_ALG == BAMBOO) && RETIRE_ON && (THREAD_CNT > 1)
+  RETIRE_ROW(row_cnt)
+#endif
+  //get a copy of warehouse name
+  tmp_str = r_wh_local->get_value(W_NAME);
   memcpy(w_name, tmp_str, 10);
   w_name[10] = '\0';
+  //END: [WAREHOUSE] RW
 
-  // retire wh
-#if !COMMUTATIVE_OPS
-#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
-  access_cnt = row_cnt - 1;
-  if (r_wh_type != RD) {
-    if (retire_row(access_cnt) == Abort)
-      return finish(Abort);
-  }
-#endif
-#endif
+  //BEGIN: [DISTRICT] RW
+  /*====================================================================+
+    EXEC SQL SELECT d_street_1, d_street_2, d_city, d_state, d_zip, d_name
+    INTO :d_street_1, :d_street_2, :d_city, :d_state, :d_zip, :d_name
+    FROM district
+    WHERE d_w_id=:w_id AND d_id=:d_id;
+  +====================================================================*/
   /*=====================================================+
       EXEC SQL UPDATE district SET d_ytd = d_ytd + :h_amount
       WHERE d_w_id=:w_id AND d_id=:d_id;
@@ -113,55 +135,30 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
   key = distKey(query->d_id, query->d_w_id);
   item = index_read(_wl->i_district, key, wh_to_part(w_id));
   assert(item != NULL);
-  row_t * r_dist_local;
   row_t * r_dist = ((row_t *)item->location);
-
-#if !COMMUTATIVE_OPS
-  r_dist_local = get_row(r_dist, WR);
-  //sleep(1);
+  row_t * r_dist_local = get_row(r_dist, WR);
   if (r_dist_local == NULL) {
     return finish(Abort);
   }
-  double d_ytd;
+#if !COMMUTATIVE_OPS
   r_dist_local->get_value(D_YTD, d_ytd);
   r_dist_local->set_value(D_YTD, d_ytd + query->h_amount);
-  char d_name[11];
-
+#else
+  inc_value(D_YTD, query->h_amount); // will increment at commit time
+#endif
+#if (CC_ALG == BAMBOO) && RETIRE_ON && (THREAD_CNT > 1)
+  RETIRE_ROW(row_cnt)
+#endif
   tmp_str = r_dist_local->get_value(D_NAME);
   memcpy(d_name, tmp_str, 10);
   d_name[10] = '\0';
-  // retire dist
-#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
-  access_cnt = row_cnt - 1;
-  if (retire_row(access_cnt) == Abort)
-    return finish(Abort);
-#endif
+  //END: [DISTRICT] RW
+
 #else
-#if COMMUTATIVE_LATCH
-  r_dist_local = get_row(r_dist, RD);
-#else
-  r_dist_local = get_row(r_dist, CM);
-#endif
-  //sleep(1);
-  if (r_dist_local == NULL) {
-    return finish(Abort);
-  }
-  inc_value(D_YTD, query->h_amount);
-  char d_name[11];
-
-  tmp_str = r_dist_local->get_value(D_NAME);
-  memcpy(d_name, tmp_str, 10);
-  d_name[10] = '\0';
+customer_piece:
 #endif
 
-  /*====================================================================+
-      EXEC SQL SELECT d_street_1, d_street_2, d_city, d_state, d_zip, d_name
-      INTO :d_street_1, :d_street_2, :d_city, :d_state, :d_zip, :d_name
-      FROM district
-      WHERE d_w_id=:w_id AND d_id=:d_id;
-  +====================================================================*/
-
-  row_t * r_cust;
+  //BEGIN: [CUSTOMER] RW
   if (query->by_last_name) {
     /*==========================================================+
         EXEC SQL SELECT count(c_id) INTO :namecnt
@@ -177,15 +174,23 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
         ORDER BY c_first;
         EXEC SQL OPEN c_byname;
     +===========================================================================*/
-
+    /*============================================================================+
+    for (n=0; n<namecnt/2; n++) {
+        EXEC SQL FETCH c_byname
+        INTO :c_first, :c_middle, :c_id,
+             :c_street_1, :c_street_2, :c_city, :c_state, :c_zip,
+             :c_phone, :c_credit, :c_credit_lim, :c_discount, :c_balance, :c_since;
+    }
+    EXEC SQL CLOSE c_byname;
++=============================================================================*/
+    // XXX: we don't retrieve all the info, just the tuple we are interested in
     uint64_t key = custNPKey(query->c_last, query->c_d_id, query->c_w_id);
     // XXX: the list is not sorted. But let's assume it's sorted...
     // The performance won't be much different.
     INDEX * index = _wl->i_customer_last;
     item = index_read(index, key, wh_to_part(c_w_id));
     assert(item != NULL);
-
-    int cnt = 0;
+    cnt = 0;
     itemid_t * it = item;
     itemid_t * mid = item;
     while (it != NULL) {
@@ -194,18 +199,8 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
       if (cnt % 2 == 0)
         mid = mid->next;
     }
+    //get the center one, as in spec
     r_cust = ((row_t *)mid->location);
-
-    /*============================================================================+
-        for (n=0; n<namecnt/2; n++) {
-            EXEC SQL FETCH c_byname
-            INTO :c_first, :c_middle, :c_id,
-                 :c_street_1, :c_street_2, :c_city, :c_state, :c_zip,
-                 :c_phone, :c_credit, :c_credit_lim, :c_discount, :c_balance, :c_since;
-        }
-        EXEC SQL CLOSE c_byname;
-    +=============================================================================*/
-    // XXX: we don't retrieve all the info, just the tuple we are interested in
   }
   else { // search customers by cust_id
     /*=====================================================================+
@@ -224,19 +219,14 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
     assert(item != NULL);
     r_cust = (row_t *) item->location;
   }
-
   /*======================================================================+
        EXEC SQL UPDATE customer SET c_balance = :c_balance, c_data = :c_new_data
        WHERE c_w_id = :c_w_id AND c_d_id = :c_d_id AND c_id = :c_id;
    +======================================================================*/
-  row_t * r_cust_local = get_row(r_cust, WR);
+  r_cust_local = get_row(r_cust, WR);
   if (r_cust_local == NULL) {
     return finish(Abort);
   }
-  double c_balance;
-  double c_ytd_payment;
-  double c_payment_cnt;
-
   r_cust_local->get_value(C_BALANCE, c_balance);
   r_cust_local->set_value(C_BALANCE, c_balance - query->h_amount);
   r_cust_local->get_value(C_YTD_PAYMENT, c_ytd_payment);
@@ -244,32 +234,106 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
   r_cust_local->get_value(C_PAYMENT_CNT, c_payment_cnt);
   r_cust_local->set_value(C_PAYMENT_CNT, c_payment_cnt + 1);
 
-  // retire cust
-#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
-  access_cnt = row_cnt - 1;
-  if (retire_row(access_cnt) == Abort)
-    return finish(Abort);
-#endif
-
-  char * c_credit = r_cust_local->get_value(C_CREDIT);
-
-  if ( strstr(c_credit, "BC") ) {
-
+  c_credit = r_cust_local->get_value(C_CREDIT);
+  if ( strstr(c_credit, "BC") && !TPCC_SMALL ) {
     /*=====================================================+
         EXEC SQL SELECT c_data
         INTO :c_data
         FROM customer
         WHERE c_w_id=:c_w_id AND c_d_id=:c_d_id AND c_id=:c_id;
     +=====================================================*/
-//	  	char c_new_data[501];
-//	  	sprintf(c_new_data,"| %4d %2d %4d %2d %4d $%7.2f",
-//	      	c_id, c_d_id, c_w_id, d_id, w_id, query->h_amount);
-//		char * c_data = r_cust->get_value("C_DATA");
-//	  	strncat(c_new_data, c_data, 500 - strlen(c_new_data));
-//		r_cust->set_value("C_DATA", c_new_data);
+    char c_new_data[501];
+    sprintf(c_new_data,"| %zu %zu %zu %zu %zu $%7.2f %d",
+            query->c_id, query->c_d_id, c_w_id, query->d_id, w_id, query->h_amount,'\0');
+    //char * c_data = r_cust->get_value("C_DATA");
+    //need to fix this line
+    //strncat(c_new_data, c_data, 500 - strlen(c_new_data));
+    //c_new_data[500]='\0';
+    r_cust->set_value("C_DATA", c_new_data);
+#if (CC_ALG == BAMBOO) && RETIRE_ON && (THREAD_CNT > 1)
+  RETIRE_ROW(row_cnt)
+#endif
+  }
+  //END: [CUSTOMER] - RW
 
+#if CC_ALG == IC3
+  // IC3: customer -> warehouse -> district
+
+warehouse_piece:
+  //BEGIN: [WAREHOUSE] RW
+  //use index to retrieve that warehouse
+  key = query->w_id;
+  INDEX * index = _wl->i_warehouse;
+  item = index_read(index, key, wh_to_part(w_id));
+  assert(item != NULL);
+  row_t * r_wh = ((row_t *)item->location);
+  row_t * r_wh_local;
+  int r_wh_type = RD;
+#if !COMMUTATIVE_OPS
+  if (g_wh_update)
+    r_wh_type = WR;
+#endif
+  r_wh_local = get_row(r_wh, r_wh_type)
+  if (r_wh_local == NULL) {
+    return finish(Abort);
   }
 
+#if !COMMUTATIVE_OPS
+  //update the balance to the warehouse
+  r_wh_local->get_value(W_YTD, w_ytd);
+  if (g_wh_update) {
+    r_wh_local->set_value(W_YTD, w_ytd + query->h_amount);
+  }
+#else
+  inc_value(W_YTD, query->h_amount); // will increment at commit time
+#endif
+  // bamboo: retire lock for wh
+#if (CC_ALG == BAMBOO) && RETIRE_ON && (THREAD_CNT > 1)
+  RETIRE_ROW(row_cnt)
+#endif
+  //get a copy of warehouse name
+  tmp_str = r_wh_local->get_value(W_NAME);
+  memcpy(w_name, tmp_str, 10);
+  w_name[10] = '\0';
+  //END: [WAREHOUSE] RW
+
+district_piece:
+  //BEGIN: [DISTRICT] RW
+  /*====================================================================+
+    EXEC SQL SELECT d_street_1, d_street_2, d_city, d_state, d_zip, d_name
+    INTO :d_street_1, :d_street_2, :d_city, :d_state, :d_zip, :d_name
+    FROM district
+    WHERE d_w_id=:w_id AND d_id=:d_id;
+  +====================================================================*/
+  /*=====================================================+
+      EXEC SQL UPDATE district SET d_ytd = d_ytd + :h_amount
+      WHERE d_w_id=:w_id AND d_id=:d_id;
+  +=====================================================*/
+  key = distKey(query->d_id, query->d_w_id);
+  item = index_read(_wl->i_district, key, wh_to_part(w_id));
+  assert(item != NULL);
+  row_t * r_dist = ((row_t *)item->location);
+  row_t * r_dist_local = get_row(r_dist, WR);
+  if (r_dist_local == NULL) {
+    return finish(Abort);
+  }
+#if !COMMUTATIVE_OPS
+  r_dist_local->get_value(D_YTD, d_ytd);
+  r_dist_local->set_value(D_YTD, d_ytd + query->h_amount);
+#else
+  inc_value(D_YTD, query->h_amount); // will increment at commit time
+#endif
+#if (CC_ALG == BAMBOO) && RETIRE_ON && (THREAD_CNT > 1)
+  RETIRE_ROW(row_cnt)
+#endif
+  tmp_str = r_dist_local->get_value(D_NAME);
+  memcpy(d_name, tmp_str, 10);
+  d_name[10] = '\0';
+  //END: [DISTRICT] RW
+#endif
+
+  //START: [HISTORY] - WR
+  //update h_data according to spec
   char h_data[25];
   strncpy(h_data, w_name, 10);
   int length = strlen(h_data);
@@ -277,34 +341,28 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
   strcpy(&h_data[length], "    ");
   strncpy(&h_data[length + 4], d_name, 10);
   h_data[length+14] = '\0';
-
   /*=============================================================================+
     EXEC SQL INSERT INTO
     history (h_c_d_id, h_c_w_id, h_c_id, h_d_id, h_w_id, h_date, h_amount, h_data)
     VALUES (:c_d_id, :c_w_id, :c_id, :d_id, :w_id, :datetime, :h_amount, :h_data);
     +=============================================================================*/
-//	row_t * r_hist;
-//	uint64_t row_id;
-//	_wl->t_history->get_new_row(r_hist, 0, row_id);
-//	r_hist->set_value(H_C_ID, c_id);
-//	r_hist->set_value(H_C_D_ID, c_d_id);
-//	r_hist->set_value(H_C_W_ID, c_w_id);
-//	r_hist->set_value(H_D_ID, d_id);
-//	r_hist->set_value(H_W_ID, w_id);
-//	int64_t date = 2013;		
-//	r_hist->set_value(H_DATE, date);
-//	r_hist->set_value(H_AMOUNT, h_amount);
+  //not causing the buffer overflow
+  _wl->t_history->get_new_row(r_hist, 0, row_id);
+  r_hist->set_value(H_C_ID, query->c_id);
+  r_hist->set_value(H_C_D_ID, query->c_d_id);
+  r_hist->set_value(H_C_W_ID, c_w_id);
+  r_hist->set_value(H_D_ID, query->d_id);
+  r_hist->set_value(H_W_ID, w_id);
+  int64_t date = 2013;
+  r_hist->set_value(H_DATE, date);
+  r_hist->set_value(H_AMOUNT, query->h_amount);
 #if !TPCC_SMALL
-//	r_hist->set_value(H_DATA, h_data);
+  r_hist->set_value(H_DATA, h_data);
 #endif
-//	insert_row(r_hist, _wl->t_history);
-
+  insert_row(r_hist, _wl->t_history);
+  //END: [HISTORY] - WR
   assert( rc == RCOK );
   return finish(rc);
-
-#else // IC3
-
-#endif
 }
 
 RC tpcc_txn_man::run_new_order(tpcc_query * query) {
