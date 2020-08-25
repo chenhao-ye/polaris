@@ -26,6 +26,9 @@ RC tpcc_wl::init() {
 	cout << "TPCC schema initialized" << endl;
 	init_table();
 	next_tid = 0;
+#if CC_ALG == IC3
+	init_scgraph();
+#endif
 	return RCOK;
 }
 
@@ -428,4 +431,155 @@ void * tpcc_wl::threadInitWarehouse(void * This) {
 			wl->init_tab_hist(cid, did, wid);
 	}
 	return NULL;
+}
+
+void
+tpcc_wl::init_scgraph() {
+  // XXX(zhihan): hard code sc-graph
+  // for each pair of txn, there has a list of pieces
+  // for each piece of each txn, there has a list of conflicting piece
+  sc_graph = (SC_PIECE ***) _mm_malloc(sizeof(void *) * TPCC_ALL, 64);
+  // percentage MUST MATCH order of TPCCTxnType in config file
+  double[TPCC_ALL] percentage = {g_perc_payment, g_perc_neworder,
+                                 g_perc_delivery, g_perc_orderstatus,
+                                 g_perc_stocklevel};
+  int i, j;
+  for (i = 0; i < TPCC_ALL; i++) {
+    // for each txn
+    if (i == TPCC_PAYMENT && (g_perc_payment > 0)) {
+      sc_graph[i] = (SC_PIECE **) _mm_malloc(sizeof(void *) * 4, 64);
+      // for each piece of txn type payment
+      for (j = 0; j < 4; j++) {
+        // has up to TPCC_ALL conflicting pieces
+        sc_graph[i][j] = (SC_PIECE *) _mm_malloc(sizeof(SC_PIECE) * TPCC_ALL,
+                                                 64);
+        if (j == 2) { // customer piece
+          sc_graph[i][j][0].txn_type = TPCC_PAYMENT;
+          sc_graph[i][j][0].piece_id = 2;
+          sc_graph[i][j][1].txn_type = TPCC_DELIVERY;
+          sc_graph[i][j][1].piece_id = 3;
+          sc_graph[i][j][2] = NULL;
+#if !COMMUTATIVE_OPS
+        } else if (j == 0) { // warehouse
+          sc_graph[i][j][0].txn_type = TPCC_PAYMENT;
+          sc_graph[i][j][0].piece_id = 0;
+          sc_graph[i][j][1].txn_type = TPCC_NEW_ORDER;
+          sc_graph[i][j][1].piece_id = 0;
+          sc_graph[i][j][2] = NULL;
+        } else if (j == 1) { // district
+          sc_graph[i][j][0].txn_type = TPCC_PAYMENT;
+          sc_graph[i][j][0].piece_id = 1;
+          sc_graph[i][j][1].txn_type = TPCC_NEW_ORDER;
+          sc_graph[i][j][1].piece_id = 1;
+          sc_graph[i][j][2] = NULL;
+#endif
+        } else {
+          sc_graph[i][j] = NULL;
+        }
+      }
+    } else if (i == TPCC_NEWORDER && (g_perc_neworder > 0)) {
+      sc_graph[i] = (SC_PIECE **) _mm_malloc(sizeof(void *) * 8, 64);
+      // for each piece of txn type payment
+      for (j = 0; j < 8; j++) {
+        // has up to TPCC_ALL conflicting pieces
+        sc_graph[i][j] = (SC_PIECE *) _mm_malloc(sizeof(SC_PIECE) * TPCC_ALL,
+                                                 64);
+        if (j == 3) { // neworder piece
+          sc_graph[i][j][0].txn_type = TPCC_NEW_ORDER;
+          sc_graph[i][j][0].piece_id = 3;
+          sc_graph[i][j][1].txn_type = TPCC_DELIVERY;
+          sc_graph[i][j][1].piece_id = 0;
+          sc_graph[i][j][2] = NULL;
+        } else if (j == 4) { // order piece
+          sc_graph[i][j][0].txn_type = TPCC_NEW_ORDER;
+          sc_graph[i][j][0].piece_id = 4;
+          sc_graph[i][j][1].txn_type = TPCC_DELIVERY;
+          sc_graph[i][j][1].piece_id = 1;
+          sc_graph[i][j][2] = NULL;
+        } else if (j == 6) { // stock piece
+          sc_graph[i][j][0].txn_type = TPCC_NEW_ORDER;
+          sc_graph[i][j][0].piece_id = 6;
+          sc_graph[i][j][1] = NULL;
+        } else if (j == 7) { // order line piece
+          sc_graph[i][j][0].txn_type = TPCC_NEW_ORDER;
+          sc_graph[i][j][0].piece_id = 7;
+          sc_graph[i][j][1].txn_type = TPCC_DELIVERY;
+          sc_graph[i][j][1].piece_id = 2;
+          sc_graph[i][j][2] = NULL;
+#if !COMMUTATIVE_OPS
+        } else if (j == 0) { // warehouse
+          sc_graph[i][j][0].txn_type = TPCC_PAYMENT;
+          sc_graph[i][j][0].piece_id = 0;
+          sc_graph[i][j][1].txn_type = TPCC_NEW_ORDER;
+          sc_graph[i][j][1].piece_id = 0;
+          sc_graph[i][j][2] = NULL;
+        } else if (j == 1) { // district
+          sc_graph[i][j][0].txn_type = TPCC_PAYMENT;
+          sc_graph[i][j][0].piece_id = 1;
+          sc_graph[i][j][1].txn_type = TPCC_NEW_ORDER;
+          sc_graph[i][j][1].piece_id = 1;
+          sc_graph[i][j][2] = NULL;
+#else
+          } else if (j == 1) { // district
+            sc_graph[i][j][0].txn_type = TPCC_NEW_ORDER;
+            sc_graph[i][j][0].piece_id = 1;
+            sc_graph[i][j][1] = NULL;
+#endif
+        } else {
+          sc_graph[i][j] = NULL;
+        }
+      }
+    } else if (i == TPCC_DELIVERY && (g_perc_delivery > 0)) {
+      sc_graph[i] = (SC_PIECE **) _mm_malloc(sizeof(void *) * 4, 64);
+      // for each piece of txn type payment
+      for (j = 0; j < 4; j++) {
+        // has up to TPCC_ALL conflicting pieces
+        sc_graph[i][j] = (SC_PIECE *) _mm_malloc(sizeof(SC_PIECE) * TPCC_ALL,
+                                                 64);
+        if (j == 0) { // new order
+          sc_graph[i][j][0].txn_type = TPCC_NEW_ORDER;
+          sc_graph[i][j][0].piece_id = 3;
+          sc_graph[i][j][1].txn_type = TPCC_DELIVERY;
+          sc_graph[i][j][1].piece_id = 0;
+          sc_graph[i][j][2] = NULL;
+        } else if (j == 1) { // order
+          sc_graph[i][j][0].txn_type = TPCC_NEW_ORDER;
+          sc_graph[i][j][0].piece_id = 4;
+          sc_graph[i][j][1].txn_type = TPCC_DELIVERY;
+          sc_graph[i][j][1].piece_id = 1;
+          sc_graph[i][j][2] = NULL;
+        } else if (j == 2) { // order line
+          sc_graph[i][j][0].txn_type = TPCC_NEW_ORDER;
+          sc_graph[i][j][0].piece_id = 7;
+          sc_graph[i][j][1].txn_type = TPCC_DELIVERY;
+          sc_graph[i][j][1].piece_id = 2;
+          sc_graph[i][j][2] = NULL;
+        } else if (j == 3) { // customer
+          sc_graph[i][j][0].txn_type = TPCC_PAYMENT;
+          sc_graph[i][j][0].piece_id = 2;
+          sc_graph[i][j][1].txn_type = TPCC_DELIVERY;
+          sc_graph[i][j][1].piece_id = 3;
+          sc_graph[i][j][2] = NULL;
+        } else {
+          assert(false);
+        }
+      }
+    } else {
+      sc_graph[i] = NULL;
+    }
+  }
+
+
+  sc_graph = (bool ***) _mm_malloc(sizeof(void *) * TPCC_ALL, 64);
+  int i, j;
+  for (i = 0; i < TPCC_ALL; i++) {
+    sc_graph[i] = (bool **) _mm_malloc(sizeof(void *) * TPCC_ALL, 64);
+    for (j = 0; j < TPCC_ALL; j++)
+      sc_graph[i][j] = NULL;
+    if (i == TPCC_PAYMENT && (TPCC_PAYMENT > 0)) {
+      // only conflict with self and delivery
+      sc_graph[i][TPCC_PAYMENT] = (bool *) _mm_malloc(sizeof(bool)*, 64);
+    }
+      sc_graph[i] = (bool *) _mm_malloc(sizeof(bool) * 4)
+  }
 }

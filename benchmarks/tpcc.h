@@ -36,6 +36,14 @@ public:
 	
 	bool ** delivering;
 	uint32_t next_tid;
+#if CC_ALG == IC3
+	struct SC_PIECE {
+	  int txn_type;
+	  int piece_id;
+	};
+	void init_scgraph();
+	int *** sc_graph;
+#endif
 private:
 	uint64_t num_wh;
 	void init_tab_item();
@@ -76,10 +84,6 @@ private:
 	        if ((type == local_type) || (local_type == WR)) {
 	            return true;
 	        } else if (type == WR) {
-	            // upgrade lock
-#if DEBUG_BENCHMARK
-    printf("upgrade lock \n");
-#endif
                 return false;
 	        }
 	    }

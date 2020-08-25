@@ -157,16 +157,21 @@
 #define WH_UPDATE					true
 #define NUM_WH 						1
 //
-enum TPCCTxnType {TPCC_ALL,
+enum TPCCTxnType {
   TPCC_PAYMENT,
   TPCC_NEW_ORDER,
-  TPCC_ORDER_STATUS,
   TPCC_DELIVERY,
-  TPCC_STOCK_LEVEL};
+  TPCC_ORDER_STATUS,
+  TPCC_STOCK_LEVEL,
+  TPCC_ALL};
 extern TPCCTxnType 					g_tpcc_txn_type;
 
 //#define TXN_TYPE					TPCC_ALL
 #define PERC_PAYMENT 				0.5
+#define PERC_DELIVERY               0
+#define PERC_ORDERSTATUS            0
+#define PERC_STOCKLEVEL             0
+// PERC_NEWORDER is (1 - the sum of above).
 #define FIRSTNAME_MINLEN 			8
 #define FIRSTNAME_LEN 				16
 #define LASTNAME_LEN 				16

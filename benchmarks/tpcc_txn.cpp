@@ -29,12 +29,12 @@ RC tpcc_txn_man::run_txn(base_query * query) {
       return run_payment(m_query); break;
     case TPCC_NEW_ORDER :
       return run_new_order(m_query); break;
-/*		case TPCC_ORDER_STATUS :
-			return run_order_status(m_query); break;
-		case TPCC_DELIVERY :
-			return run_delivery(m_query); break;
-		case TPCC_STOCK_LEVEL :
-			return run_stock_level(m_query); break;*/
+    case TPCC_ORDER_STATUS :
+      return run_order_status(m_query); break;
+    case TPCC_DELIVERY :
+      return run_delivery(m_query); break;
+    case TPCC_STOCK_LEVEL :
+      return run_stock_level(m_query); break;
     default:
       assert(false);
   }
