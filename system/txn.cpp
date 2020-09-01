@@ -36,21 +36,23 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
   num_accesses_alloc = 0;
 #if CC_ALG == TICTOC || CC_ALG == SILO
   _pre_abort = (g_params["pre_abort"] == "true");
-	if (g_params["validation_lock"] == "no-wait")
-		_validation_no_wait = true;
-	else if (g_params["validation_lock"] == "waiting")
-		_validation_no_wait = false;
-	else 
-		assert(false);
+  if (g_params["validation_lock"] == "no-wait")
+    _validation_no_wait = true;
+  else if (g_params["validation_lock"] == "waiting")
+    _validation_no_wait = false;
+  else
+    assert(false);
 #endif
 #if CC_ALG == TICTOC
   _max_wts = 0;
-	_write_copy_ptr = (g_params["write_copy_form"] == "ptr");
-	_atomic_timestamp = (g_params["atomic_timestamp"] == "true");
+  _write_copy_ptr = (g_params["write_copy_form"] == "ptr");
+  _atomic_timestamp = (g_params["atomic_timestamp"] == "true");
 #elif CC_ALG == SILO
   _cur_tid = 0;
+#elif CC_ALG == IC3
+  depqueue = (txn_man *) _mm_malloc(sizeof(void *)*THREAD_CNT, 64);
+  depqueue_sz = 0;
 #endif
-
 }
 
 void txn_man::set_txn_id(txnid_t txn_id) {
@@ -108,9 +110,9 @@ void txn_man::cleanup(RC rc) {
 
 #if CC_ALG == HEKATON
   row_cnt = 0;
-	wr_cnt = 0;
-	insert_cnt = 0;
-	return;
+  wr_cnt = 0;
+  insert_cnt = 0;
+  return;
 #endif
 
   // go through accesses and release
@@ -136,8 +138,8 @@ void txn_man::cleanup(RC rc) {
       type = XP;
 #if (CC_ALG == NO_WAIT || CC_ALG == DL_DETECT) && ISOLATION_LEVEL == REPEATABLE_READ
     if (type == RD) {
-	accesses[rid]->data = NULL;
-	continue;
+      accesses[rid]->data = NULL;
+      continue;
     }
 #endif
 
@@ -145,10 +147,10 @@ void txn_man::cleanup(RC rc) {
     if (type != CM) {
 #endif
 #if CC_ALG == BAMBOO
-      orig_r->return_row(accesses[rid]->lock_entry, rc);
-      accesses[rid]->orig_row = NULL;
+    orig_r->return_row(accesses[rid]->lock_entry, rc);
+    accesses[rid]->orig_row = NULL;
 #elif CC_ALG == WOUND_WAIT
-      orig_r->return_row(type, accesses[rid]->data, accesses[rid]->lock_entry);
+    orig_r->return_row(type, accesses[rid]->data, accesses[rid]->lock_entry);
       accesses[rid]->orig_row = NULL;
 #else
       if (ROLL_BACK && type == XP && (CC_ALG == DL_DETECT || CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE))
@@ -194,7 +196,7 @@ void txn_man::cleanup(RC rc) {
 
 
 #if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT || CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT
-inline 
+inline
 void txn_man::assign_lock_entry(Access * access) {
 #if CC_ALG == BAMBOO
   auto lock_entry = (BBLockEntry *) _mm_malloc(sizeof(BBLockEntry), 64);
@@ -222,14 +224,17 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
     Access *access = (Access *) _mm_malloc(sizeof(Access), 64);
 #if COMMUTATIVE_OPS
     // init
-    access->com_op= COM_NONE;
+    access->com_op = COM_NONE;
 #endif
     accesses[row_cnt] = access;
-#if (CC_ALG == SILO || CC_ALG == TICTOC)
+#if (CC_ALG == SILO || CC_ALG == TICTOC || CC_ALG == IC3)
     access->data = (row_t *) _mm_malloc(sizeof(row_t), 64);
     access->data->init(MAX_TUPLE_SIZE);
     access->orig_data = (row_t *) _mm_malloc(sizeof(row_t), 64);
     access->orig_data->init(MAX_TUPLE_SIZE);
+#if CC_ALG == IC3
+    access->tids = (ts_t *) _mm_malloc(sizeof(ts_t) * row->get_field_cnt(), 64);
+#endif
 #elif (CC_ALG == WOUND_WAIT)
     // allocate lock entry as well
     assign_lock_entry(access);
@@ -257,7 +262,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
   }
 #if (CC_ALG == WOUND_WAIT) || (CC_ALG == BAMBOO)
   rc = row->get_row(type, this, accesses[ row_cnt ]->orig_row,
-      accesses[row_cnt]);
+                    accesses[row_cnt]);
   if (rc == Abort) {
     accesses[row_cnt]->orig_row = NULL;
     return NULL;
@@ -267,6 +272,11 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
   if (rc == Abort)
     return NULL;
   accesses[row_cnt]->orig_row = row;
+#elif CC_ALG == IC3
+  accesses[row_cnt]->orig_row = row;
+  accesses[row_cnt]->data->init_accesses(this);
+  accesses[row_cnt]->data->manager = row->manager;
+  accesses[row_cnt]->data->table = row->get_table();
 #else
   rc = row->get_row(type, this, accesses[ row_cnt ]->data);
   if (rc == Abort)
@@ -285,7 +295,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
 #if CC_ALG == TICTOC
   accesses[row_cnt]->wts = last_wts;
   accesses[row_cnt]->rts = last_rts;
-#elif CC_ALG == SILO
+#elif CC_ALG == SILO || CC_ALG == IC3
   accesses[row_cnt]->tid = last_tid;
 #elif CC_ALG == HEKATON
   accesses[row_cnt]->history_entry = history_entry;
@@ -327,7 +337,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
   else
     return accesses[row_cnt - 1]->orig_row;
 #elif CC_ALG == BAMBOO
-//printf("txn %lu got row %p at %d-th access %p\n", get_txn_id(), (void *)accesses[row_cnt - 1]->orig_row, row_cnt - 1, (void *)accesses[row_cnt - 1]);
+  //printf("txn %lu got row %p at %d-th access %p\n", get_txn_id(), (void *)accesses[row_cnt - 1]->orig_row, row_cnt - 1, (void *)accesses[row_cnt - 1]);
   if (type == WR)
     return accesses[row_cnt - 1]->data;
   else {
@@ -336,6 +346,8 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
     else
       return accesses[row_cnt - 1]->data; // RAW
   }
+#elif CC_ALG == IC3
+  return accesses[row_cnt - 1]->data;
 #else
   return accesses[row_cnt - 1]->data;
 #endif
@@ -390,9 +402,9 @@ RC txn_man::finish(RC rc) {
   uint64_t starttime = get_sys_clock();
 #if CC_ALG == OCC
   if (rc == RCOK)
-		rc = occ_man.validate(this);
-	else 
-		cleanup(rc);
+    rc = occ_man.validate(this);
+  else
+    cleanup(rc);
 #elif CC_ALG == TICTOC
   if (rc == RCOK)
 		rc = validate_tictoc();
@@ -450,25 +462,6 @@ txn_man::release() {
     mem_allocator.free(accesses[i], 0);
   mem_allocator.free(accesses, 0);
 }
-
-void
-txn_man::decrement_commit_barriers() {
-  ATOM_SUB(this->commit_barriers, 1);
-}
-
-void
-txn_man::increment_commit_barriers() {
-  // not necessarily atomic, called in critical section only
-  ATOM_ADD(this->commit_barriers, 1);
-}
-
-#if CC_ALG == BAMBOO
-RC
-txn_man::retire_row(int access_cnt){
-//printf("txn %lu try retire row %p at %d-th access %p\n", get_txn_id(), (void *)(accesses[access_cnt]->orig_row), access_cnt, (void *)accesses[access_cnt]);
-  return accesses[access_cnt]->orig_row->retire_row(accesses[access_cnt]->lock_entry);
-}
-#endif
 
 #if COMMUTATIVE_OPS
 void txn_man::inc_value(int col, uint64_t val) {

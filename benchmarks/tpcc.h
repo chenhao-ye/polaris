@@ -42,7 +42,8 @@ public:
 	  int piece_id;
 	};
 	void init_scgraph();
-	int *** sc_graph;
+	SC_PIECE * get_cedges(TPCCTXNType txn_type, int piece_id);
+	SC_PIECE *** sc_graph;
 #endif
 private:
 	uint64_t num_wh;

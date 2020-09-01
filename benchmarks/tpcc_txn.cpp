@@ -24,6 +24,10 @@ void tpcc_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 
 RC tpcc_txn_man::run_txn(base_query * query) {
   tpcc_query * m_query = (tpcc_query *) query;
+#if CC_ALG == IC3
+  curr_type = m_query->type;
+  curr_piece = 0;
+#endif
   switch (m_query->type) {
     case TPCC_PAYMENT :
       return run_payment(m_query); break;
@@ -85,8 +89,11 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
   // TODO: for variable length variable (string). Should store the size of
   //  the variable.
 
-#if CC_ALG != IC3
   //BEGIN: [WAREHOUSE] RW
+#if CC_ALG == IC3
+warehouse_piece:
+  begin_piece(0);
+#endif
   //use index to retrieve that warehouse
   key = query->w_id;
   INDEX * index = _wl->i_warehouse;
@@ -119,9 +126,17 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
   tmp_str = r_wh_local->get_value(W_NAME);
   memcpy(w_name, tmp_str, 10);
   w_name[10] = '\0';
+#if CC_ALG == IC3
+  if (end_piece(0) != RCOK)
+    goto warehouse_piece;
+#endif
   //END: [WAREHOUSE] RW
 
   //BEGIN: [DISTRICT] RW
+#if CC_ALG == IC3
+district_piece:
+  begin_piece(1);
+#endif
   /*====================================================================+
     EXEC SQL SELECT d_street_1, d_street_2, d_city, d_state, d_zip, d_name
     INTO :d_street_1, :d_street_2, :d_city, :d_state, :d_zip, :d_name
@@ -156,13 +171,17 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
   tmp_str = r_dist_local->get_value(D_NAME);
   memcpy(d_name, tmp_str, 10);
   d_name[10] = '\0';
+#if CC_ALG == IC3
+  if(end_piece(1) != RCOK)
+    goto district_piece;
+#endif
   //END: [DISTRICT] RW
 
-#else
-customer_piece:
-#endif
-
   //BEGIN: [CUSTOMER] RW
+#if CC_ALG == IC3
+  customer_piece:
+  begin_piece(2);
+#endif
   if (query->by_last_name) {
     /*==========================================================+
         EXEC SQL SELECT count(c_id) INTO :namecnt
@@ -258,76 +277,11 @@ customer_piece:
   RETIRE_ROW(row_cnt)
 #endif
   }
-  //END: [CUSTOMER] - RW
-
 #if CC_ALG == IC3
-  // IC3: customer -> warehouse -> district
-
-warehouse_piece:
-  //BEGIN: [WAREHOUSE] RW
-  //use index to retrieve that warehouse
-  key = query->w_id;
-  INDEX * index = _wl->i_warehouse;
-  item = index_read(index, key, wh_to_part(w_id));
-  assert(item != NULL);
-  row_t * r_wh = ((row_t *)item->location);
-  row_t * r_wh_local;
-  int r_wh_type = RD;
-#if !COMMUTATIVE_OPS
-  if (g_wh_update)
-    r_wh_type = WR;
+  customer_piece:
+  end_piece(2);
 #endif
-  r_wh_local = get_row(r_wh, r_wh_type)
-  if (r_wh_local == NULL) {
-    return finish(Abort);
-  }
-
-#if !COMMUTATIVE_OPS
-  //update the balance to the warehouse
-  r_wh_local->get_value(W_YTD, tmp_value);
-  if (g_wh_update) {
-    r_wh_local->set_value(W_YTD, tmp_value + query->h_amount);
-  }
-#else
-  inc_value(W_YTD, query->h_amount); // will increment at commit time
-#endif
-  //get a copy of warehouse name
-  tmp_str = r_wh_local->get_value(W_NAME);
-  memcpy(w_name, tmp_str, 10);
-  w_name[10] = '\0';
-  //END: [WAREHOUSE] RW
-
-district_piece:
-  //BEGIN: [DISTRICT] RW
-  /*====================================================================+
-    EXEC SQL SELECT d_street_1, d_street_2, d_city, d_state, d_zip, d_name
-    INTO :d_street_1, :d_street_2, :d_city, :d_state, :d_zip, :d_name
-    FROM district
-    WHERE d_w_id=:w_id AND d_id=:d_id;
-  +====================================================================*/
-  /*=====================================================+
-      EXEC SQL UPDATE district SET d_ytd = d_ytd + :h_amount
-      WHERE d_w_id=:w_id AND d_id=:d_id;
-  +=====================================================*/
-  key = distKey(query->d_id, query->d_w_id);
-  item = index_read(_wl->i_district, key, wh_to_part(w_id));
-  assert(item != NULL);
-  row_t * r_dist = ((row_t *)item->location);
-  row_t * r_dist_local = get_row(r_dist, WR);
-  if (r_dist_local == NULL) {
-    return finish(Abort);
-  }
-#if !COMMUTATIVE_OPS
-  r_dist_local->get_value(D_YTD, d_ytd);
-  r_dist_local->set_value(D_YTD, d_ytd + query->h_amount);
-#else
-  inc_value(D_YTD, query->h_amount); // will increment at commit time
-#endif
-  tmp_str = r_dist_local->get_value(D_NAME);
-  memcpy(d_name, tmp_str, 10);
-  d_name[10] = '\0';
-  //END: [DISTRICT] RW
-#endif
+  //END: [CUSTOMER] - RW
 
   //START: [HISTORY] - WR
   //update h_data according to spec
