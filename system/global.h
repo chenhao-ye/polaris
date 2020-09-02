@@ -111,6 +111,7 @@ extern double g_perc_payment;
 extern double g_perc_delivery;
 extern double g_perc_orderstatus;
 extern double g_perc_stocklevel;
+extern double g_perc_neworder;
 extern bool g_wh_update;
 extern char * output_file;
 extern UInt32 g_max_items;

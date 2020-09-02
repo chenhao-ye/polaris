@@ -16,10 +16,11 @@
 
 #define GET_VALUE(type)\
 	void row_t::get_value(int col_id, type & value) { \
-        value = *(type *)get_value(int col_id); \
+        value = *(type *)get_value(col_id); \
     }
-//		int pos = get_schema()->get_field_index(col_id);\
-//		value = *(type *)&data[pos];\
+
+//		int pos = get_schema()->get_field_index(col_id);
+//		value = *(type *)&data[pos];
 //	}
 
 class Access;

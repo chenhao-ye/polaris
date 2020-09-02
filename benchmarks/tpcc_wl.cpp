@@ -26,6 +26,7 @@ RC tpcc_wl::init() {
 	cout << "TPCC schema initialized" << endl;
 	init_table();
 	next_tid = 0;
+	ASSERT(g_perc_neworder >= 0);
 #if CC_ALG == IC3
 	init_scgraph();
 #endif
@@ -454,6 +455,7 @@ void * tpcc_wl::threadInitWarehouse(void * This) {
     sc_graph[i][j][k].txn_type = TPCC_ALL; \
 }
 
+#if CC_ALG == IC3
 void
 tpcc_wl::init_scgraph() {
   // XXX(zhihan): hard code sc-graph
@@ -611,3 +613,4 @@ tpcc_wl::init_scgraph() {
     return sc_graph[txn_type][piece_id];
   }
 }
+#endif

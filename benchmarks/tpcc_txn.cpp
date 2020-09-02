@@ -111,9 +111,9 @@ warehouse_piece:
 
 #if !COMMUTATIVE_OPS
   //update the balance to the warehouse
-  r_wh_local->get_value(W_YTD, w_ytd);
+  r_wh_local->get_value(W_YTD, tmp_value);
   if (g_wh_update) {
-    r_wh_local->set_value(W_YTD, w_ytd + query->h_amount);
+    r_wh_local->set_value(W_YTD, tmp_value + query->h_amount);
   }
 #else
   inc_value(W_YTD, query->h_amount); // will increment at commit time

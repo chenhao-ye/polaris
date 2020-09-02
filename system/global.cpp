@@ -59,9 +59,7 @@ double g_perc_payment = PERC_PAYMENT;
 double g_perc_delivery = PERC_DELIVERY;
 double g_perc_orderstatus = PERC_ORDERSTATUS;
 double g_perc_stocklevel = PERC_STOCKLEVEL;
-double g_perc_neworder = 1 - (g_perc_payment + g_perc_delivery +
-    g_perc_orderstatus + g_perc_stocklevel)
-assert(g_perc_neworder >= 0);
+double g_perc_neworder = 1 - (g_perc_payment + g_perc_delivery + g_perc_orderstatus + g_perc_stocklevel);
 bool g_wh_update = WH_UPDATE;
 char * output_file = NULL;
 
