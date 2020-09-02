@@ -9,6 +9,7 @@ class row_t;
 class table_t;
 class base_query;
 class INDEX;
+class txn_man;
 
 // each thread has a txn_man. 
 // a txn_man corresponds to a single transaction.
@@ -126,7 +127,7 @@ class txn_man
 #elif CC_ALG == SILO
   ts_t 			last_tid;
 #elif CC_ALG == IC3
-  TPCCTXNType   curr_type;
+  TPCCTxnType           curr_type;
   volatile int  curr_piece;
   void          begin_piece(int piece_id);
   RC            end_piece(int piece_id);
@@ -188,8 +189,6 @@ class txn_man
   TxnEntry **       depqueue;
   int               depqueue_sz;
   RC                validate_ic3();
-  void              begin_piece(int piece_id);
-  RC                end_piece(int piece_id);
 #endif
 };
 

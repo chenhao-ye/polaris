@@ -124,4 +124,9 @@ void workload::index_insert(INDEX * index, uint64_t key, row_t * row, int64_t pa
     assert( index->index_insert(key, m_item, pid) == RCOK );
 }
 
+SC_PIECE * workload::get_cedges(TPCCTxnType type, int idx) {
+	assert(false);
+	return NULL;
+}
+
 

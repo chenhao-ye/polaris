@@ -1,18 +1,18 @@
 #include "txn.h"
 #include "row.h"
-#include "row_silo.h"
+#include "row_ic3.h"
 #include "mem_alloc.h"
 
 #if CC_ALG==IC3
 void
 Cell_ic3::init(row_t * orig_row, int id) {
   _row = orig_row;
-  row_manager = orig_row->row_manager;
+  row_manager = orig_row->manager;
   _tid_word = 0;
   idx = id;
 }
 
-RC
+void
 Cell_ic3::access(row_t * local_row, Access * txn_access) {
   // called only if using cell-level locks
   uint64_t v = 0;
@@ -31,7 +31,7 @@ Cell_ic3::access(row_t * local_row, Access * txn_access) {
   txn_access->tids[idx] = _tid_word;
 }
 
-RC
+bool
 Cell_ic3::try_lock() {
   uint64_t v = _tid_word;
   if (v & LOCK_BIT) // already locked
@@ -40,9 +40,9 @@ Cell_ic3::try_lock() {
 }
 
 void
-Cell_ic3::add_to_acclist(txn_man * txn, TsType type) {
+Cell_ic3::add_to_acclist(txn_man * txn, access_t type) {
   // get new lock entry
-  LockEntry * new_entry = (LockEntry *) mem_allocator.alloc(sizeof(LockEntry),
+  IC3LockEntry * new_entry = (IC3LockEntry *) mem_allocator.alloc(sizeof(IC3LockEntry),
       _row->get_part_id());
   new_entry->type = type;
   new_entry->txn_id = txn->get_txn_id();
@@ -51,9 +51,9 @@ Cell_ic3::add_to_acclist(txn_man * txn, TsType type) {
   LIST_PUT_TAIL(acclist, acclist_tail, new_entry);
 }
 
-LockEntry *
+IC3LockEntry *
 Cell_ic3::get_last_writer() {
-  LockEntry * en = acclist_tail;
+  IC3LockEntry * en = acclist_tail;
   while(en != NULL) {
     if (en->type == WR)
       break;
@@ -62,10 +62,10 @@ Cell_ic3::get_last_writer() {
   return en;
 }
 
-LockEntry *
-Cell_ic3::get_last_writer() {
+IC3LockEntry *
+Cell_ic3::get_last_accessor() {
   if (acclist_tail)
-    return acclist_tail->txn;
+    return acclist_tail;
   return NULL;
 }
 
@@ -76,17 +76,16 @@ Cell_ic3::release() {
 }
 
 void
-Cell_ic3::rm_from_acclist(uint64_t txn_id) {
-  LockEntry * en = acclist;
+Cell_ic3::rm_from_acclist(txn_man * txn) {
+  IC3LockEntry * en = acclist;
   while(en != NULL) {
-    if (en->txn_id == txn_id)
+    if (en->txn == txn)
       break;
     en = en->next;
   }
   if (en) {
     LIST_REMOVE_HT(en, acclist, acclist_tail);
   }
-  return NULL;
 }
 
 //////////////////////// ROW_IC3 ////////////////////////
@@ -96,9 +95,9 @@ Row_ic3::init(row_t * row)
   _row = row;
   _tid_word = 0; // not used by cell-level lock
   cell_managers = (Cell_ic3 *) _mm_malloc(sizeof(Cell_ic3)
-      *row->get_field_cnt, 64);
-  for (int i = 0; i < row->get_field_cnt(); i++) {
-    cell_managers[i].init(this, i);
+      *row->get_field_cnt(), 64);
+  for (UInt32 i = 0; i < row->get_field_cnt(); i++) {
+    cell_managers[i].init(_row,(int)i);
   }
 }
 
@@ -117,16 +116,16 @@ Row_ic3::access(txn_man * txn, row_t * local_row) {
     COMPILER_BARRIER
     v2 = _tid_word;
   }
-  txn->last_tid = _tid_word;
+  //txn->last_tid = _tid_word;
   return RCOK;
 }
 
-RC
+void
 Row_ic3::access(row_t * local_row, int idx, Access * txn_access) {
-  return cell_managers[idx].access(local_row, txn_access);
+  cell_managers[idx].access(local_row, txn_access);
 }
 
-RC
+bool
 Row_ic3::try_lock(int idx) {
   return cell_managers[idx].try_lock();
 }
@@ -134,6 +133,7 @@ Row_ic3::try_lock(int idx) {
 
 ///////////////////  fen ge xian ///////////////////
 
+/*
 bool
 Row_ic3::validate(ts_t tid, bool in_write_set) {
   uint64_t v = _tid_word;
@@ -194,5 +194,6 @@ Row_silo::get_tid()
   assert(ATOMIC_WORD);
   return _tid_word & (~LOCK_BIT);
 }
+*/
 
 #endif

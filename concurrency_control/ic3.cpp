@@ -4,6 +4,7 @@
 #include "txn.h"
 #include "row.h"
 #include "row_ic3.h"
+#include "tpcc.h"
 
 #define APPEND_TO_DEPQ(T) { \
   if (depqueue[depqueue_sz] == NULL) \
@@ -21,12 +22,12 @@ void txn_man::begin_piece(int piece_id) {
     return; // skip to execute phase
   }
   int i;
-  SC_piece * p_prime;
+  SC_PIECE * p_prime;
   for (i = 0; i < depqueue_sz; i++) { // for T' in T's depqueue
     p_prime = &(cedges[depqueue[i]->txn->curr_type]);
     if (p_prime->txn_type != TPCC_ALL) {
       // exist c-edge with T'. wait for p' to commit
-      while(p_prime <= depqueue[i]->txn->curr_piece)
+      while(p_prime->piece_id <= depqueue[i]->txn->curr_piece)
         continue;
     } else {
       // wait for T' to commit
@@ -64,9 +65,9 @@ RC txn_man::end_piece(int piece_id) {
   // read set; validate p’s readset
   Access * access;
   for (int i = 0; i < piece_access_cnt; i++) {
-    access = accesses[read_set[i]]
+    access = accesses[read_set[i]];
     row_t * row = access->orig_row;
-    for (int j = 0; j < row->get_field_cnt(); j++) {
+    for (UInt32 j = 0; j < row->get_field_cnt(); j++) {
       if (access->rd_accesses & (1 << j)) {
         if (!row->manager->try_lock(i) || (row->manager->get_tid(i) !=
         access->tids[i])) {
@@ -78,14 +79,14 @@ RC txn_man::end_piece(int piece_id) {
   }
   // foreach d in p.readset/p.writeset:
   for (int i = 0; i < piece_access_cnt; i++) {
-    access = accesses[read_set[i]]
+    access = accesses[read_set[i]];
     row_t * row = access->orig_row;
-    for (int j = 0; j < row->get_field_cnt(); j++) {
+    for (UInt32 j = 0; j < row->get_field_cnt(); j++) {
       if (access->rd_accesses & (1 << j)) {
-        LockEntry * Tw = row->manager->get_last_writer(i);
+        IC3LockEntry * Tw = row->manager->get_last_writer(i);
         APPEND_TO_DEPQ(Tw)
         if (access->wr_accesses & (1 << j)) {
-          LockEntry * Trw = row->manager->get_last_accessor(i);
+          IC3LockEntry * Trw = row->manager->get_last_accessor(i);
           APPEND_TO_DEPQ(Trw)
           row->manager->add_to_acclist(i, this, WR);
           //TODO: DB[d.key].stash = d.val
@@ -97,9 +98,9 @@ RC txn_man::end_piece(int piece_id) {
   }
   // release grabbed locks
   for (int i = 0; i < piece_access_cnt; i++) {
-    access = accesses[read_set[i]]
+    access = accesses[read_set[i]];
     row_t * row = access->orig_row;
-    for (int j = 0; j < row->get_field_cnt(); j++) {
+    for (UInt32 j = 0; j < row->get_field_cnt(); j++) {
       if (accesses[read_set[i]]->rd_accesses & (1 << j))
         row->manager->release(i);
     }
@@ -124,17 +125,17 @@ txn_man::validate_ic3() {
       PAUSE
       continue;
     }
-    if (depqueue[i]->txn->status == Abort) {
+    if (depqueue[i]->txn->status == ABORTED) {
       return Abort;
     }
   }
   Access * access;
   for (int i = 0; i < row_cnt; i++) {
     access = accesses[i];
-    for (int j = 0; j < access->orig_row->get_field_cnt(); j++) {
+    for (UInt32 j = 0; j < access->orig_row->get_field_cnt(); j++) {
       if (access->wr_accesses & (1 << j)) {
         access->orig_row->set_value(j, access->data->get_value(j));
-        access->orig_row->rm_from_acclist(j, this);
+        access->orig_row->manager->rm_from_acclist(j, this);
       }
     }
   }

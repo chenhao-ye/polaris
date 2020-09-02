@@ -337,6 +337,7 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row, Access * access) {
 	return rc;
 #else
 	assert(false);
+	return rc;
 #endif
 }
 

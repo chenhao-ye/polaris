@@ -16,6 +16,9 @@ public:
 	void tick() { time = get_sys_clock(); };
 	INDEX * the_index;
 	table_t * the_table;
+#if CC_ALG == IC3
+	SC_PIECE * get_cedges(TPCCTxnType type, int idx) {return NULL;};
+#endif
 private:
 	uint64_t time;
 };

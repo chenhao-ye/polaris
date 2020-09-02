@@ -7,6 +7,7 @@
 class table_t;
 class INDEX;
 class tpcc_query;
+	
 
 class tpcc_wl : public workload {
 public:
@@ -37,12 +38,8 @@ public:
 	bool ** delivering;
 	uint32_t next_tid;
 #if CC_ALG == IC3
-	struct SC_PIECE {
-	  int txn_type;
-	  int piece_id;
-	};
 	void init_scgraph();
-	SC_PIECE * get_cedges(TPCCTXNType txn_type, int piece_id);
+	SC_PIECE * get_cedges(TPCCTxnType txn_type, int piece_id);
 	SC_PIECE *** sc_graph;
 #endif
 private:

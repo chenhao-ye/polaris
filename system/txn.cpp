@@ -282,6 +282,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
     return NULL;
   accesses[row_cnt]->orig_row = row;
 #elif CC_ALG == IC3
+  assert(rc == RCOK);
   accesses[row_cnt]->orig_row = row;
   accesses[row_cnt]->data->init_accesses(accesses[row_cnt]);
   accesses[row_cnt]->data->manager = row->manager;

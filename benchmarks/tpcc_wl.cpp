@@ -434,26 +434,23 @@ void * tpcc_wl::threadInitWarehouse(void * This) {
 	return NULL;
 }
 
-#define ADD_SELF_EDGE(tpe, pid) { \
+#define ADD_SELF_EDGE(tpe, pid) \
   if (k == TPCC_ ## tpe) { \
     sc_graph[i][j][k].txn_type = TPCC_ ## tpe; \
     sc_graph[i][j][k].piece_id = pid; \
     cnt++; \
-  } \
-}
+  }
 
-#define ADD_EDGE(tpe, ptpe, pid) { \
+#define ADD_EDGE(tpe, ptpe, pid) \
   else if (k == TPCC_ ## tpe && (g_perc_ ## ptpe > 0)) { \
     sc_graph[i][j][k].txn_type = TPCC_ ## tpe; \
     sc_graph[i][j][k].piece_id = pid; \
     cnt++; \
-  } \
-}
+  } 
 
-#define ADD_OTHER_EDGE() { \
+#define ADD_OTHER_EDGE() \
   else \
-    sc_graph[i][j][k].txn_type = TPCC_ALL; \
-}
+    sc_graph[i][j][k].txn_type = TPCC_ALL; 
 
 #if CC_ALG == IC3
 void
@@ -463,9 +460,11 @@ tpcc_wl::init_scgraph() {
   // for each piece of each txn, there has a list of conflicting piece
   sc_graph = (SC_PIECE ***) _mm_malloc(sizeof(void *) * TPCC_ALL, 64);
   // percentage MUST MATCH order of TPCCTxnType in config file
-  double[TPCC_ALL] percentage = {g_perc_payment, g_perc_neworder,
+  /*
+  double percentage[TPCC_ALL] = {g_perc_payment, g_perc_neworder,
                                  g_perc_delivery, g_perc_orderstatus,
                                  g_perc_stocklevel};
+  */
   int i, j, k, cnt;
   for (i = 0; i < TPCC_ALL; i++) {
     // for each txn
@@ -479,22 +478,22 @@ tpcc_wl::init_scgraph() {
         cnt = 0;
         if (j == 2) { // customer piece
           for (k = 0; k < TPCC_ALL; k++) {
-            ADD_SELF_EDGE(PAYMENT, 2);
-            ADD_EDGE(DELIVERY, delivery, 3);
-            ADD_OTHER_EDGE();
+            ADD_SELF_EDGE(PAYMENT, 2)
+            ADD_EDGE(DELIVERY, delivery, 3)
+            ADD_OTHER_EDGE()
           }
 #if !COMMUTATIVE_OPS
         } else if (j == 0) { // warehouse
           for (k = 0; k < TPCC_ALL; k++) {
-            ADD_SELF_EDGE(PAYMENT, 0);
-            ADD_EDGE(NEW_ORDER, neworder, 0);
-            ADD_OTHER_EDGE();
+            ADD_SELF_EDGE(PAYMENT, 0)
+            ADD_EDGE(NEW_ORDER, neworder, 0)
+            ADD_OTHER_EDGE()
           }
         } else if (j == 1) { // district
           for (k = 0; k < TPCC_ALL; k++) {
-            ADD_SELF_EDGE(PAYMENT, 1);
-            ADD_EDGE(NEW_ORDER, neworder, 1);
-            ADD_OTHER_EDGE();
+            ADD_SELF_EDGE(PAYMENT, 1)
+            ADD_EDGE(NEW_ORDER, neworder, 1)
+            ADD_OTHER_EDGE()
           }
 #endif
         } else {
@@ -503,7 +502,7 @@ tpcc_wl::init_scgraph() {
         sc_graph[i][j][TPCC_ALL].txn_type = TPCC_ALL;
         sc_graph[i][j][TPCC_ALL].piece_id = cnt;
       }
-    } else if (i == TPCC_NEWORDER && (g_perc_neworder > 0)) {
+    } else if (i == TPCC_NEW_ORDER && (g_perc_neworder > 0)) {
       sc_graph[i] = (SC_PIECE **) _mm_malloc(sizeof(void *) * 8, 64);
       // for each piece of txn type payment
       for (j = 0; j < 8; j++) {
@@ -513,45 +512,45 @@ tpcc_wl::init_scgraph() {
         cnt = 0;
         if (j == 3) { // neworder piece
           for (k = 0; k < TPCC_ALL; k++) {
-            ADD_SELF_EDGE(NEW_ORDER, 3);
-            ADD_EDGE(DELIVERY, delivery, 0);
-            ADD_OTHER_EDGE();
+            ADD_SELF_EDGE(NEW_ORDER, 3)
+            ADD_EDGE(DELIVERY, delivery, 0)
+            ADD_OTHER_EDGE()
           }
         } else if (j == 4) { // order piece
           for (k = 0; k < TPCC_ALL; k++) {
-            ADD_SELF_EDGE(NEW_ORDER, 4);
-            ADD_EDGE(DELIVERY, delivery, 1);
-            ADD_OTHER_EDGE();
+            ADD_SELF_EDGE(NEW_ORDER, 4)
+            ADD_EDGE(DELIVERY, delivery, 1)
+            ADD_OTHER_EDGE()
           }
         } else if (j == 6) { // stock piece
           for (k = 0; k < TPCC_ALL; k++) {
-            ADD_SELF_EDGE(NEW_ORDER, 6);
-            ADD_OTHER_EDGE();
+            ADD_SELF_EDGE(NEW_ORDER, 6)
+            ADD_OTHER_EDGE()
           }
         } else if (j == 7) { // order line piece
           for (k = 0; k < TPCC_ALL; k++) {
-            ADD_SELF_EDGE(NEW_ORDER, 7);
-            ADD_EDGE(DELIVERY, delivery, 2);
-            ADD_OTHER_EDGE();
+            ADD_SELF_EDGE(NEW_ORDER, 7)
+            ADD_EDGE(DELIVERY, delivery, 2)
+            ADD_OTHER_EDGE()
           }
 #if !COMMUTATIVE_OPS
         } else if (j == 0) { // warehouse
           for (k = 0; k < TPCC_ALL; k++) {
-            ADD_SELF_EDGE(NEW_ORDER, 0);
-            ADD_EDGE(PAYMENT, payment, 0);
-            ADD_OTHER_EDGE();
+            ADD_SELF_EDGE(NEW_ORDER, 0)
+            ADD_EDGE(PAYMENT, payment, 0)
+            ADD_OTHER_EDGE()
           }
         } else if (j == 1) { // district
           for (k = 0; k < TPCC_ALL; k++) {
-            ADD_SELF_EDGE(NEW_ORDER, 1);
-            ADD_EDGE(PAYMENT, payment, 1);
-            ADD_OTHER_EDGE();
+            ADD_SELF_EDGE(NEW_ORDER, 1)
+            ADD_EDGE(PAYMENT, payment, 1)
+            ADD_OTHER_EDGE()
           }
 #else
         } else if (j == 1) { // district
           for (k = 0; k < TPCC_ALL; k++) {
-              ADD_SELF_EDGE(NEW_ORDER, 1);
-              ADD_OTHER_EDGE();
+              ADD_SELF_EDGE(NEW_ORDER, 1)
+              ADD_OTHER_EDGE()
           }
 #endif
         } else {
@@ -570,27 +569,27 @@ tpcc_wl::init_scgraph() {
             + 1), 64);
         if (j == 0) { // new order
           for (k = 0; k < TPCC_ALL; k++) {
-            ADD_SELF_EDGE(DELIVERY, 0);
-            ADD_EDGE(NEW_ORDER, neworder, 3);
-            ADD_OTHER_EDGE();
+            ADD_SELF_EDGE(DELIVERY, 0)
+            ADD_EDGE(NEW_ORDER, neworder, 3)
+            ADD_OTHER_EDGE()
           }
         } else if (j == 1) { // order
           for (k = 0; k < TPCC_ALL; k++) {
-            ADD_SELF_EDGE(DELIVERY, 1);
-            ADD_EDGE(NEW_ORDER, neworder, 4);
-            ADD_OTHER_EDGE();
+            ADD_SELF_EDGE(DELIVERY, 1)
+            ADD_EDGE(NEW_ORDER, neworder, 4)
+            ADD_OTHER_EDGE()
           }
         } else if (j == 2) { // order line
           for (k = 0; k < TPCC_ALL; k++) {
-            ADD_SELF_EDGE(DELIVERY, 2);
-            ADD_EDGE(NEW_ORDER, neworder, 7);
-            ADD_OTHER_EDGE();
+            ADD_SELF_EDGE(DELIVERY, 2)
+            ADD_EDGE(NEW_ORDER, neworder, 7)
+            ADD_OTHER_EDGE()
           }
         } else if (j == 3) { // customer
           for (k = 0; k < TPCC_ALL; k++) {
-            ADD_SELF_EDGE(DELIVERY, 3);
-            ADD_EDGE(PAYMENT, payment, 3);
-            ADD_OTHER_EDGE();
+            ADD_SELF_EDGE(DELIVERY, 3)
+            ADD_EDGE(PAYMENT, payment, 3)
+            ADD_OTHER_EDGE()
           }
         } else {
           sc_graph[i][j][k].txn_type = TPCC_ALL;
@@ -602,8 +601,10 @@ tpcc_wl::init_scgraph() {
       sc_graph[i] = NULL;
     }
   }
+}
 
-  SC_PIECE * get_cedges(TPCCTXNType txn_type, int piece_id) {
+SC_PIECE * 
+tpcc_wl::get_cedges(TPCCTxnType txn_type, int piece_id) {
     if (sc_graph == NULL)
       return NULL;
     if (sc_graph[txn_type] == NULL)
@@ -612,5 +613,4 @@ tpcc_wl::init_scgraph() {
       return NULL;
     return sc_graph[txn_type][piece_id];
   }
-}
 #endif

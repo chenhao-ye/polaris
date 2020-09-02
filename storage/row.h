@@ -94,7 +94,7 @@ class row_t
 #if CC_ALG == BAMBOO
   RC retire_row(void * lock_entry);
 #elif CC_ALG == IC3
-  void init_accesses();
+  void init_accesses(Access * access);
   Access * txn_access; // only used when row is a local copy
 #endif
   RC get_row(access_t type, txn_man * txn, row_t *& row, Access *access=NULL);
