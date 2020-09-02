@@ -5,6 +5,14 @@
 #include "row.h"
 #include "row_ic3.h"
 
+#define APPEND_TO_DEPQ(T) { \
+  if (depqueue[depqueue_sz] == NULL) \
+    depqueue[depqueue_sz] = (TxnEntry *)_mm_malloc(sizeof(TxnEntry),64); \
+  depqueue[depqueue_sz]->txn = T->txn; \
+  depqueue[depqueue_sz]->txn_id = T->txn_id; \
+  depqueue_sz++; \
+}
+
 #if CC_ALG == IC3
 void txn_man::begin_piece(int piece_id) {
   access_marker = row_cnt;
@@ -15,14 +23,14 @@ void txn_man::begin_piece(int piece_id) {
   int i;
   SC_piece * p_prime;
   for (i = 0; i < depqueue_sz; i++) { // for T' in T's depqueue
-    p_prime = &(cedges[depqueue[i]->curr_type]);
+    p_prime = &(cedges[depqueue[i]->txn->curr_type]);
     if (p_prime->txn_type != TPCC_ALL) {
       // exist c-edge with T'. wait for p' to commit
-      while(p_prime <= depqueue[i]->curr_piece)
+      while(p_prime <= depqueue[i]->txn->curr_piece)
         continue;
     } else {
       // wait for T' to commit
-      while(depqueue[i]->status == RUNNING)
+      while(depqueue[i]->txn->status == RUNNING)
         continue;
     }
   }
@@ -74,17 +82,11 @@ RC txn_man::end_piece(int piece_id) {
     row_t * row = access->orig_row;
     for (int j = 0; j < row->get_field_cnt(); j++) {
       if (access->rd_accesses & (1 << j)) {
-        txn_man * Tw = row->manager->get_last_writer(i);
-        if (depqueue[depqueue_sz] == NULL)
-          depqueue[depqueue_sz] = (txn_man *)_mm_malloc(sizeof(void *), 64);
-        depqueue[depqueue_sz] = Tw;
-        depqueue_sz++;
+        LockEntry * Tw = row->manager->get_last_writer(i);
+        APPEND_TO_DEPQ(Tw)
         if (access->wr_accesses & (1 << j)) {
-          txn_man * Trw = row->manager->get_last_accessor(i);
-          if (depqueue[depqueue_sz] == NULL)
-            depqueue[depqueue_sz] = (txn_man *)_mm_malloc(sizeof(void *), 64);
-          depqueue[depqueue_sz] = Trw;
-          depqueue_sz++;
+          LockEntry * Trw = row->manager->get_last_accessor(i);
+          APPEND_TO_DEPQ(Trw)
           row->manager->add_to_acclist(i, this, WR);
           //TODO: DB[d.key].stash = d.val
         } else {
@@ -117,11 +119,12 @@ txn_man::validate_ic3() {
   // for T' in depqueue, wait till T' commit
   for (int i = 0; i < depqueue_sz; i++) {
     // TODO: what if committed and started next txn?
-    while (depqueue[i]->status == RUNNING) {
+    while (depqueue[i]->txn->get_txn_id() == depqueue[i]->txn_id &&
+    depqueue[i]->txn->status == RUNNING) {
       PAUSE
       continue;
     }
-    if (depqueue[i]->status == Abort) {
+    if (depqueue[i]->txn->status == Abort) {
       return Abort;
     }
   }

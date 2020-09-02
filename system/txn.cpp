@@ -51,7 +51,9 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
   _cur_tid = 0;
 #elif CC_ALG == IC3
   piece_wr_cnt = 0;
-  depqueue = (txn_man **) _mm_malloc(sizeof(void *)*THREAD_CNT, 64);
+  depqueue = (TxnEntry **) _mm_malloc(sizeof(void *)*THREAD_CNT, 64);
+  for (int i = 0; i < THREAD_CNT; i++)
+    depqueue[i] = NULL;
   depqueue_sz = 0;
 #endif
 }

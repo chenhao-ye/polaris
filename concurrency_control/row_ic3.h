@@ -12,6 +12,7 @@ class Row_ic3;
 struct LockEntry {
   TsType               type;
   txn_man *            txn;
+  uint64_t             txn_id;
   LockEntry *          prev;
   LockEntry *          next;
 };
@@ -24,8 +25,8 @@ class Cell_ic3 {
   RC                    try_lock();
   uint64_t              get_tid() {return _tid_word;};
   void                  add_to_acclist(txn_man * txn, TsType type);
-  txn_man *             get_last_writer();
-  txn_man *             get_last_accessor();
+  LockEntry *           get_last_writer();
+  LockEntry *           get_last_accessor();
   void                  release();
  private:
   row_t * 			    _row;
@@ -47,9 +48,9 @@ class Row_ic3 {
   void              add_to_acclist(int idx, txn_man * txn, TsType type) {
     cell_managers[idx].add_to_acclist(txn, type);
   };
-  txn_man *         get_last_writer(int idx) {
+  LockEntry *       get_last_writer(int idx) {
     return cell_managers[idx].get_last_writer();};
-  txn_man *         get_last_accessor(int idx) {
+  LockEntry *       get_last_accessor(int idx) {
     return cell_managers[idx].get_last_accessor();};
   void              release(int idx) {return cell_managers[idx].release();};
   void              rm_from_acclist(int idx, txn_man * txn) {

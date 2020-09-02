@@ -37,7 +37,7 @@ class Access {
   ts_t 		epoch;
 #elif CC_ALG == HEKATON
   void * 	history_entry;
-#elif CC_ALG == IC3;
+#elif CC_ALG == IC3
   ts_t *    tids;
   ts_t      epochs;
   uint64_t  rd_accesses;
@@ -45,6 +45,13 @@ class Access {
 #endif
   void * lock_entry;
 };
+
+#if CC_ALG == IC3
+struct TxnEntry {
+  txn_man * txn;
+  uint64_t txn_id;
+};
+#endif
 
 class txn_man
 {
@@ -178,9 +185,11 @@ class txn_man
 #elif CC_ALG == IC3
   int               piece_wr_cnt;
   int               access_marker;
-  txn_man **        depqueue;
+  TxnEntry **       depqueue;
   int               depqueue_sz;
   RC                validate_ic3();
+  void              begin_piece(int piece_id);
+  RC                end_piece(int piece_id);
 #endif
 };
 

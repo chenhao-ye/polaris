@@ -44,22 +44,25 @@ Cell_ic3::add_to_acclist(txn_man * txn, TsType type) {
   // get new lock entry
   LockEntry * new_entry = (LockEntry *) mem_allocator.alloc(sizeof(LockEntry),
       _row->get_part_id());
+  new_entry->type = type;
+  new_entry->txn_id = txn->get_txn_id();
+  new_entry->txn = txn;
   // add to tail
   LIST_PUT_TAIL(acclist, acclist_tail, new_entry);
 }
 
-txn_man *
+LockEntry *
 Cell_ic3::get_last_writer() {
   LockEntry * en = acclist_tail;
   while(en != NULL) {
     if (en->type == WR)
-      return en->txn;
+      break;
     en = en->prev;
   }
-  return NULL;
+  return en;
 }
 
-txn_man *
+LockEntry *
 Cell_ic3::get_last_writer() {
   if (acclist_tail)
     return acclist_tail->txn;
@@ -73,10 +76,10 @@ Cell_ic3::release() {
 }
 
 void
-Cell_ic3::rm_from_acclist(txn_man * txn) {
+Cell_ic3::rm_from_acclist(uint64_t txn_id) {
   LockEntry * en = acclist;
   while(en != NULL) {
-    if (en->txn == txn)
+    if (en->txn_id == txn_id)
       break;
     en = en->next;
   }
