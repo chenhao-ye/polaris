@@ -5,11 +5,13 @@
 
 #if CC_ALG==IC3
 void
-Cell_ic3::init(row_t * orig_row, int id) {
+Cell_ic3::init(row_t * orig_row, uint64_t id) {
   _row = orig_row;
   row_manager = orig_row->manager;
   _tid = 0;
   idx = id;
+  acclist = NULL;
+  acclist_tail = NULL;
 #if LATCH == LH_SPINLOCK
   latch = new pthread_spinlock_t;
   pthread_spin_init(latch, PTHREAD_PROCESS_SHARED);
@@ -34,6 +36,7 @@ Cell_ic3::access(row_t * local_row, Access * txn_access) {
     v2 = _tid;
   }
   txn_access->tids[idx] = v;
+  //printf("access row %lu cell %d v = %lu, _tid = %lu\n", _row->get_row_id(), idx, v, _tid);
 }
 
 bool
@@ -49,6 +52,7 @@ Cell_ic3::try_lock() {
   //latch->acquire(en->m_node);
 #endif
 #endif
+  return true;
 }
 
 void
@@ -74,6 +78,8 @@ Cell_ic3::add_to_acclist(txn_man * txn, access_t type) {
   new_entry->type = type;
   new_entry->txn_id = txn->get_txn_id();
   new_entry->txn = txn;
+  new_entry->prev = NULL;
+  new_entry->next = NULL;
   // add to tail
   LIST_PUT_TAIL(acclist, acclist_tail, new_entry);
 }
@@ -143,12 +149,12 @@ Row_ic3::access(txn_man * txn, row_t * local_row) {
 }*/
 
 void
-Row_ic3::access(row_t * local_row, int idx, Access * txn_access) {
+Row_ic3::access(row_t * local_row, uint64_t idx, Access * txn_access) {
   cell_managers[idx].access(local_row, txn_access);
 }
 
 bool
-Row_ic3::try_lock(int idx) {
+Row_ic3::try_lock(uint64_t idx) {
   return cell_managers[idx].try_lock();
 }
 

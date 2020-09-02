@@ -115,7 +115,7 @@ ts_t txn_man::get_ts() {
 
 void txn_man::cleanup(RC rc) {
 
-#if CC_ALG == HEKATON
+#if CC_ALG == HEKATON || CC_ALG == IC3
   row_cnt = 0;
   wr_cnt = 0;
   insert_cnt = 0;
@@ -175,7 +175,7 @@ void txn_man::cleanup(RC rc) {
     }
 #endif
 
-#if CC_ALG != TICTOC && (CC_ALG != SILO) && (CC_ALG != WOUND_WAIT) && (CC_ALG!= BAMBOO) && CC_ALG != IC3
+#if CC_ALG != TICTOC && (CC_ALG != SILO) && (CC_ALG != WOUND_WAIT) && (CC_ALG!= BAMBOO) 
     // invalidate ptr for cc keeping globally visible ptr
     accesses[rid]->data = NULL;
 #endif
@@ -433,9 +433,9 @@ RC txn_man::finish(RC rc) {
 	if (rc == RCOK) {
 	  rc = validate_ic3();
 	  if (rc == RCOK)
-	    status = COMMITTED;
+	    status = COMMITED;
 	  else
-	    status == ABORTED;
+	    status = ABORTED;
 	} else {
 	  status = ABORTED;
 	}

@@ -165,7 +165,7 @@ char * row_t::get_value(int id) {
 #if CC_ALG == IC3
   // try to acquire read access
   this->manager->access(this, id, txn_access);
-  txn_access->rd_accesses = (txn_access->rd_accesses || (1UL << id));
+  txn_access->rd_accesses = (txn_access->rd_accesses | (1UL << id));
 #endif
   return get_value_plain(id);
 }
@@ -179,7 +179,7 @@ char * row_t::get_value(char * col_name) {
 #if CC_ALG == IC3
   uint64_t id = get_schema()->get_field_id(col_name);
   this->manager->access(this, id, txn_access);
-  this->txn_access->rd_accesses = (txn_access->rd_accesses || (1UL << id));
+  this->txn_access->rd_accesses = (txn_access->rd_accesses | (1UL << id));
   // copy data from orig row
 #endif
   uint64_t pos = get_schema()->get_field_index(col_name);
