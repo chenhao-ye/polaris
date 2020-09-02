@@ -278,8 +278,8 @@ district_piece:
 #endif
   }
 #if CC_ALG == IC3
-  customer_piece:
-  end_piece(2);
+  if(end_piece(2) != RCOK)
+    goto customer_piece;
 #endif
   //END: [CUSTOMER] - RW
 

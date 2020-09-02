@@ -94,7 +94,7 @@ class row_t
   RC retire_row(void * lock_entry);
 #elif CC_ALG == IC3
   void init_accesses();
-    Access * txn_access; // only used when row is a local copy
+  Access * txn_access; // only used when row is a local copy
 #endif
   RC get_row(access_t type, txn_man * txn, row_t *& row, Access *access=NULL);
 
@@ -136,9 +136,4 @@ class row_t
   uint64_t 		_primary_key;
   uint64_t		_part_id;
   uint64_t 		_row_id;
-#if CC_ALG == IC3
-  uint64_t *      tids;
-  uint64_t        read_accesses;
-  uint64_t        write_accesses;
-#endif
 };

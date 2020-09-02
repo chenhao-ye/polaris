@@ -33,10 +33,8 @@ row_t::init(table_t * host_table, uint64_t part_id, uint64_t row_id) {
 
 #if CC_ALG == IC3
 void
-row_t::init_accesses(txn_man * txn) {
-  _txn = txn;
-  read_accesses = 0;
-  write_accesses = 0;
+row_t::init_accesses(Access * access) {
+  txn_access = access;
 }
 #endif
 
@@ -123,7 +121,7 @@ void row_t::set_value(int id, void * ptr) {
   int pos = get_schema()->get_field_index(id);
   memcpy( &data[pos], ptr, datasize);
 #if CC_ALG == IC3
-  this->write_accesses = (write_accesses || (1UL << id));
+  txn_access->wr_accesses = (txn_access->wr_accesses || (1UL << id));
 #endif
 }
 
@@ -131,14 +129,14 @@ void row_t::set_value(int id, void * ptr, int size) {
   int pos = get_schema()->get_field_index(id);
   memcpy( &data[pos], ptr, size);
 #if CC_ALG == IC3
-  this->write_accesses = (write_accesses || (1UL << id));
+  txn_access->wr_accesses = (txn_access->wr_accesses || (1UL << id));
 #endif
 }
 
 void row_t::set_value(const char * col_name, void * ptr) {
   uint64_t id = get_schema()->get_field_id(col_name);
 #if CC_ALG == IC3
-  this->write_accesses = (write_accesses || (1UL << id));
+  txn_access->wr_accesses = (txn_access->wr_accesses || (1UL << id));
 #endif
   set_value(id, ptr);
 }
@@ -160,7 +158,7 @@ char * row_t::get_value(int id) {
 #if CC_ALG == IC3
   // try to acquire read access
   this->manager->access(this, id, txn_access);
-  this->read_accesses = (read_accesses || (1UL << id));
+  txn_access->rd_accesses = (txn_access->rd_accesses || (1UL << id));
 #endif
   return &data[pos];
 }
@@ -169,7 +167,7 @@ char * row_t::get_value(char * col_name) {
 #if CC_ALG == IC3
   uint64_t id = get_schema()->get_field_id(col_name);
   this->manager->access(this, id, txn_access);
-  this->read_accesses = (read_accesses || (1UL << id));
+  this->txn_access->rd_accesses = (txn_access->rd_accesses || (1UL << id));
   // copy data from orig row
 #endif
   uint64_t pos = get_schema()->get_field_index(col_name);

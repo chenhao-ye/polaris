@@ -40,6 +40,8 @@ class Access {
 #elif CC_ALG == IC3;
   ts_t *    tids;
   ts_t      epochs;
+  uint64_t  rd_accesses;
+  uint64_t  wr_accesses;
 #endif
   void * lock_entry;
 };
@@ -174,7 +176,9 @@ class txn_man
 #elif CC_ALG == HEKATON
   RC 				validate_hekaton(RC rc);
 #elif CC_ALG == IC3
-  txn_man *         depqueue;
+  int               piece_wr_cnt;
+  int               access_marker;
+  txn_man **        depqueue;
   int               depqueue_sz;
   RC                validate_ic3();
 #endif

@@ -50,7 +50,8 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 #elif CC_ALG == SILO
   _cur_tid = 0;
 #elif CC_ALG == IC3
-  depqueue = (txn_man *) _mm_malloc(sizeof(void *)*THREAD_CNT, 64);
+  piece_wr_cnt = 0;
+  depqueue = (txn_man **) _mm_malloc(sizeof(void *)*THREAD_CNT, 64);
   depqueue_sz = 0;
 #endif
 }
@@ -63,6 +64,10 @@ void txn_man::set_txn_id(txnid_t txn_id) {
 #if CC_ALG == BAMBOO
   commit_barriers = 0;
 #endif
+#endif
+#if CC_ALG == IC3
+  status = RUNNING;
+  depqueue_sz = 0;
 #endif
   this->txn_id = txn_id;
 }
@@ -234,6 +239,8 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
     access->orig_data->init(MAX_TUPLE_SIZE);
 #if CC_ALG == IC3
     access->tids = (ts_t *) _mm_malloc(sizeof(ts_t) * row->get_field_cnt(), 64);
+    access->rd_accesses = 0;
+    access->wr_accesses = 0;
 #endif
 #elif (CC_ALG == WOUND_WAIT)
     // allocate lock entry as well
@@ -274,7 +281,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
   accesses[row_cnt]->orig_row = row;
 #elif CC_ALG == IC3
   accesses[row_cnt]->orig_row = row;
-  accesses[row_cnt]->data->init_accesses(this);
+  accesses[row_cnt]->data->init_accesses(accesses[row_cnt]);
   accesses[row_cnt]->data->manager = row->manager;
   accesses[row_cnt]->data->table = row->get_table();
 #else
@@ -295,7 +302,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
 #if CC_ALG == TICTOC
   accesses[row_cnt]->wts = last_wts;
   accesses[row_cnt]->rts = last_rts;
-#elif CC_ALG == SILO || CC_ALG == IC3
+#elif CC_ALG == SILO
   accesses[row_cnt]->tid = last_tid;
 #elif CC_ALG == HEKATON
   accesses[row_cnt]->history_entry = history_entry;
@@ -325,8 +332,12 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
 #endif
 
   row_cnt ++;
-  if (type == WR)
-    wr_cnt ++;
+  if (type == WR) {
+    wr_cnt++;
+#if CC_ALG == IC3
+    piece_wr_cnt++;
+#endif
+  }
 
   uint64_t timespan = get_sys_clock() - starttime;
   INC_TMP_STATS(get_thd_id(), time_man, timespan);
@@ -415,6 +426,11 @@ RC txn_man::finish(RC rc) {
 		rc = validate_silo();
 	else 
 		cleanup(rc);
+#elif CC_ALG == IC3
+	if (rc == RCOK)
+	  rc = validate_ic3();
+	else
+	  cleanup(rc);
 #elif CC_ALG == HEKATON
   rc = validate_hekaton(rc);
 	cleanup(rc);

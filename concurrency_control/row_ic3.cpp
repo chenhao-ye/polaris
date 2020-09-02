@@ -14,7 +14,7 @@ Cell_ic3::init(row_t * orig_row, int id) {
 
 RC
 Cell_ic3::access(row_t * local_row, Access * txn_access) {
-  // called only if using tuple-level locks
+  // called only if using cell-level locks
   uint64_t v = 0;
   uint64_t v2 = 1;
   while (v2 != v) {
@@ -31,6 +31,62 @@ Cell_ic3::access(row_t * local_row, Access * txn_access) {
   txn_access->tids[idx] = _tid_word;
 }
 
+RC
+Cell_ic3::try_lock() {
+  uint64_t v = _tid_word;
+  if (v & LOCK_BIT) // already locked
+    return false;
+  return __sync_bool_compare_and_swap(&_tid_word, v, (v | LOCK_BIT));
+}
+
+void
+Cell_ic3::add_to_acclist(txn_man * txn, TsType type) {
+  // get new lock entry
+  LockEntry * new_entry = (LockEntry *) mem_allocator.alloc(sizeof(LockEntry),
+      _row->get_part_id());
+  // add to tail
+  LIST_PUT_TAIL(acclist, acclist_tail, new_entry);
+}
+
+txn_man *
+Cell_ic3::get_last_writer() {
+  LockEntry * en = acclist_tail;
+  while(en != NULL) {
+    if (en->type == WR)
+      return en->txn;
+    en = en->prev;
+  }
+  return NULL;
+}
+
+txn_man *
+Cell_ic3::get_last_writer() {
+  if (acclist_tail)
+    return acclist_tail->txn;
+  return NULL;
+}
+
+void
+Cell_ic3::release() {
+  assert(_tid_word & LOCK_BIT);
+  _tid_word = _tid_word & (~LOCK_BIT);
+}
+
+void
+Cell_ic3::rm_from_acclist(txn_man * txn) {
+  LockEntry * en = acclist;
+  while(en != NULL) {
+    if (en->txn == txn)
+      break;
+    en = en->next;
+  }
+  if (en) {
+    LIST_REMOVE_HT(en, acclist, acclist_tail);
+  }
+  return NULL;
+}
+
+//////////////////////// ROW_IC3 ////////////////////////
 void
 Row_ic3::init(row_t * row)
 {
@@ -39,7 +95,7 @@ Row_ic3::init(row_t * row)
   cell_managers = (Cell_ic3 *) _mm_malloc(sizeof(Cell_ic3)
       *row->get_field_cnt, 64);
   for (int i = 0; i < row->get_field_cnt(); i++) {
-    cell_managers[i]->init(this, i);
+    cell_managers[i].init(this, i);
   }
 }
 
@@ -64,8 +120,16 @@ Row_ic3::access(txn_man * txn, row_t * local_row) {
 
 RC
 Row_ic3::access(row_t * local_row, int idx, Access * txn_access) {
-  return cell_managers[idx]->access(local_row, txn_access);
+  return cell_managers[idx].access(local_row, txn_access);
 }
+
+RC
+Row_ic3::try_lock(int idx) {
+  return cell_managers[idx].try_lock();
+}
+
+
+///////////////////  fen ge xian ///////////////////
 
 bool
 Row_ic3::validate(ts_t tid, bool in_write_set) {
