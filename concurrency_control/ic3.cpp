@@ -16,6 +16,7 @@
 
 #if CC_ALG == IC3
 void txn_man::begin_piece(int piece_id) {
+  curr_piece = piece_id;
   access_marker = row_cnt;
   SC_PIECE * cedges = h_wl->get_cedges(curr_type, piece_id);
   if (cedges == NULL) {
@@ -134,7 +135,7 @@ txn_man::validate_ic3() {
     access = accesses[i];
     for (UInt32 j = 0; j < access->orig_row->get_field_cnt(); j++) {
       if (access->wr_accesses & (1 << j)) {
-        access->orig_row->set_value(j, access->data->get_value(j));
+        access->orig_row->set_value_plain(j, access->data->get_value_plain(j));
         access->orig_row->manager->rm_from_acclist(j, this);
       }
     }

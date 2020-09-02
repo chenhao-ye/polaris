@@ -65,9 +65,11 @@ class row_t
   uint64_t 	get_part_id() { return _part_id; };
 
   void set_value(int id, void * ptr);
+  void set_value_plain(int id, void * ptr);
   void set_value(int id, void * ptr, int size);
   void set_value(const char * col_name, void * ptr);
   char * get_value(int id);
+  char * get_value_plain(int id);
   char * get_value(char * col_name);
   void inc_value(int id, uint64_t val);
   void dec_value(int id, uint64_t val);

@@ -36,16 +36,18 @@ IndexHash::release_latch(BucketHeader * bucket) {
 //  bool ok = ATOM_CAS(bucket->locked, true, false);
 //  assert(ok);
   // XXX(zhihan): change to read/write lock
-  pthread_rwlock_unlock(bucket->rwlock);
+  //pthread_rwlock_unlock(bucket->rwlock);
 }
 
 void
 IndexHash::get_latch(BucketHeader * bucket, access_t access) {
+  /*
   // XXX(zhihan): rwlock
   if (access == RD)
     pthread_rwlock_rdlock(bucket->rwlock);
   else
     pthread_rwlock_wrlock(bucket->rwlock);
+  */
 }
 
 RC IndexHash::index_insert(idx_key_t key, itemid_t * item, int part_id) {

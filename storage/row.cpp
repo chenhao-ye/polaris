@@ -27,6 +27,9 @@ row_t::init(table_t * host_table, uint64_t part_id, uint64_t row_id) {
   Catalog * schema = host_table->get_schema();
   int tuple_size = schema->get_tuple_size();
   data = (char *) _mm_malloc(sizeof(char) * tuple_size, 64);
+#if CC_ALG == IC3
+  txn_access = NULL;
+#endif
   return RCOK;
 }
 
@@ -35,6 +38,8 @@ row_t::init(table_t * host_table, uint64_t part_id, uint64_t row_id) {
 void
 row_t::init_accesses(Access * access) {
   txn_access = access;
+  txn_access->rd_accesses = 0;
+  txn_access->wr_accesses = 0;
 }
 #endif
 
@@ -121,7 +126,8 @@ void row_t::set_value(int id, void * ptr) {
   int pos = get_schema()->get_field_index(id);
   memcpy( &data[pos], ptr, datasize);
 #if CC_ALG == IC3
-  txn_access->wr_accesses = (txn_access->wr_accesses || (1UL << id));
+  if (txn_access)
+    txn_access->wr_accesses = (txn_access->wr_accesses || (1UL << id));
 #endif
 }
 
@@ -129,14 +135,16 @@ void row_t::set_value(int id, void * ptr, int size) {
   int pos = get_schema()->get_field_index(id);
   memcpy( &data[pos], ptr, size);
 #if CC_ALG == IC3
-  txn_access->wr_accesses = (txn_access->wr_accesses || (1UL << id));
+  if (txn_access)
+    txn_access->wr_accesses = (txn_access->wr_accesses || (1UL << id));
 #endif
 }
 
 void row_t::set_value(const char * col_name, void * ptr) {
   uint64_t id = get_schema()->get_field_id(col_name);
 #if CC_ALG == IC3
-  txn_access->wr_accesses = (txn_access->wr_accesses || (1UL << id));
+  if (txn_access)
+    txn_access->wr_accesses = (txn_access->wr_accesses || (1UL << id));
 #endif
   set_value(id, ptr);
 }
@@ -154,12 +162,16 @@ GET_VALUE(UInt32);
 GET_VALUE(SInt32);
 
 char * row_t::get_value(int id) {
-  int pos = get_schema()->get_field_index(id);
 #if CC_ALG == IC3
   // try to acquire read access
   this->manager->access(this, id, txn_access);
   txn_access->rd_accesses = (txn_access->rd_accesses || (1UL << id));
 #endif
+  return get_value_plain(id);
+}
+
+char * row_t::get_value_plain(int id) {
+  int pos = get_schema()->get_field_index(id);
   return &data[pos];
 }
 
@@ -184,8 +196,15 @@ void row_t::copy(row_t * src) {
   set_data(src->get_data(), src->get_tuple_size());
 }
 
+void row_t::set_value_plain(int idx, void * ptr) {
+  int datasize = get_schema()->get_field_size(idx);
+  int pos = get_schema()->get_field_index(idx);
+  memcpy(&data[pos], ptr, datasize);
+}
+
 void row_t::copy(row_t * src, int idx) {
-  set_value(idx, src->get_value(idx));
+  char * ptr = src->get_value_plain(idx);
+  set_value_plain(idx, ptr);
 }
 
 void row_t::free_row() {

@@ -175,7 +175,7 @@ void txn_man::cleanup(RC rc) {
     }
 #endif
 
-#if CC_ALG != TICTOC && (CC_ALG != SILO) && (CC_ALG != WOUND_WAIT) && (CC_ALG!= BAMBOO)
+#if CC_ALG != TICTOC && (CC_ALG != SILO) && (CC_ALG != WOUND_WAIT) && (CC_ALG!= BAMBOO) && CC_ALG != IC3
     // invalidate ptr for cc keeping globally visible ptr
     accesses[rid]->data = NULL;
 #endif
