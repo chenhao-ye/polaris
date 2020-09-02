@@ -64,6 +64,7 @@ RC txn_man::end_piece(int piece_id) {
   }
   // lock record's read+write set cell, as write is the subset, just lock
   // read set; validate p’s readset
+  int num_locked = 0;
   Access * access;
   for (int i = 0; i < piece_access_cnt; i++) {
     access = accesses[read_set[i]];
@@ -75,6 +76,7 @@ RC txn_man::end_piece(int piece_id) {
           rc = Abort;
           goto final;
         }
+        num_locked++;
       }
     }
   }
@@ -112,6 +114,21 @@ final:
   if (rc == Abort) {
     // reset access marker
     row_cnt = access_marker;
+    // unlock locked entries
+    for (int i = 0; i < piece_access_cnt; i++) {
+      access = accesses[read_set[i]];
+      row_t * row = access->orig_row;
+      for (UInt32 j = 0; j < row->get_field_cnt(); j++) {
+        if (access->rd_accesses & (1 << j)) {
+          if (!row->manager->try_lock(i) || (row->manager->get_tid(i) !=
+              access->tids[i])) {
+            rc = Abort;
+            goto final;
+          }
+          num_locked++;
+        }
+      }
+    }
   }
   return rc;
 }
@@ -120,7 +137,6 @@ RC
 txn_man::validate_ic3() {
   // for T' in depqueue, wait till T' commit
   for (int i = 0; i < depqueue_sz; i++) {
-    // TODO: what if committed and started next txn?
     while (depqueue[i]->txn->get_txn_id() == depqueue[i]->txn_id &&
     depqueue[i]->txn->status == RUNNING) {
       PAUSE
@@ -135,6 +151,7 @@ txn_man::validate_ic3() {
     access = accesses[i];
     for (UInt32 j = 0; j < access->orig_row->get_field_cnt(); j++) {
       if (access->wr_accesses & (1 << j)) {
+        access->orig_row->update_version(j, this->get_txn_id());
         access->orig_row->set_value_plain(j, access->data->get_value_plain(j));
         access->orig_row->manager->rm_from_acclist(j, this);
       }

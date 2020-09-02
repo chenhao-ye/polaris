@@ -8,8 +8,17 @@ void
 Cell_ic3::init(row_t * orig_row, int id) {
   _row = orig_row;
   row_manager = orig_row->manager;
-  _tid_word = 0;
+  _tid = 0;
   idx = id;
+#if LATCH == LH_SPINLOCK
+  latch = new pthread_spinlock_t;
+  pthread_spin_init(latch, PTHREAD_PROCESS_SHARED);
+#elif LATCH == LH_MUTEX
+  latch = new pthread_mutex_t;
+  pthread_mutex_init(latch, NULL);
+#else
+  latch = new mcslock();
+#endif
 }
 
 void
@@ -18,25 +27,43 @@ Cell_ic3::access(row_t * local_row, Access * txn_access) {
   uint64_t v = 0;
   uint64_t v2 = 1;
   while (v2 != v) {
-    v = _tid_word;
-    while (v & LOCK_BIT) {
-      PAUSE
-      v = _tid_word;
-    }
+    v = _tid;
     // copy cell value from orig row
     local_row->copy(_row, idx);
     COMPILER_BARRIER
-    v2 = _tid_word;
+    v2 = _tid;
   }
-  txn_access->tids[idx] = _tid_word;
+  txn_access->tids[idx] = v;
 }
 
 bool
 Cell_ic3::try_lock() {
-  uint64_t v = _tid_word;
-  if (v & LOCK_BIT) // already locked
-    return false;
-  return __sync_bool_compare_and_swap(&_tid_word, v, (v | LOCK_BIT));
+#if THREAD_CNT > 1
+#if LATCH == LH_SPINLOCK
+  pthread_spin_lock( latch );
+#elif LATCH == LH_MUTEX
+  pthread_mutex_lock( latch );
+#else
+  printf("MCS Lock is not supported for IC3 yet.\n");
+  assert(false);
+  //latch->acquire(en->m_node);
+#endif
+#endif
+}
+
+void
+Cell_ic3::release() {
+#if THREAD_CNT > 1
+#if LATCH == LH_SPINLOCK
+  pthread_spin_unlock( latch );
+#elif LATCH == LH_MUTEX
+  pthread_mutex_unlock( latch );
+#else
+  printf("MCS Lock is not supported for IC3 yet.\n");
+  assert(false);
+  //latch->release(en->m_node);
+#endif
+#endif
 }
 
 void
@@ -70,12 +97,6 @@ Cell_ic3::get_last_accessor() {
 }
 
 void
-Cell_ic3::release() {
-  assert(_tid_word & LOCK_BIT);
-  _tid_word = _tid_word & (~LOCK_BIT);
-}
-
-void
 Cell_ic3::rm_from_acclist(txn_man * txn) {
   IC3LockEntry * en = acclist;
   while(en != NULL) {
@@ -93,7 +114,7 @@ void
 Row_ic3::init(row_t * row)
 {
   _row = row;
-  _tid_word = 0; // not used by cell-level lock
+  //_tid_word = 0; // not used by cell-level lock
   cell_managers = (Cell_ic3 *) _mm_malloc(sizeof(Cell_ic3)
       *row->get_field_cnt(), 64);
   for (UInt32 i = 0; i < row->get_field_cnt(); i++) {
@@ -101,6 +122,7 @@ Row_ic3::init(row_t * row)
   }
 }
 
+/*
 RC
 Row_ic3::access(txn_man * txn, row_t * local_row) {
   // called only if using tuple-level locks
@@ -118,7 +140,7 @@ Row_ic3::access(txn_man * txn, row_t * local_row) {
   }
   //txn->last_tid = _tid_word;
   return RCOK;
-}
+}*/
 
 void
 Row_ic3::access(row_t * local_row, int idx, Access * txn_access) {

@@ -22,20 +22,28 @@ class Cell_ic3 {
   void                  init(row_t * orig_row, int id);
   /* copy to corresponding col of local row */
   void                  access(row_t * local_row, Access *txn_access);
-  bool                  try_lock();
   uint64_t              get_tid() {return _tid_word;};
   void                  add_to_acclist(txn_man * txn, access_t type);
   void                  rm_from_acclist(txn_man * txn);
-  IC3LockEntry *           get_last_writer();
-  IC3LockEntry *           get_last_accessor();
+  IC3LockEntry *        get_last_writer();
+  IC3LockEntry *        get_last_accessor();
+  bool                  try_lock();
   void                  release();
+  void                  update_version(uint64_t txn_id) {_tid = txn_id;};
  private:
   row_t * 			    _row;
   Row_ic3 *             row_manager;
-  volatile uint64_t	    _tid_word;
+  volatile uint64_t	    _tid;
   int                   idx;
-  IC3LockEntry *           acclist;
-  IC3LockEntry *           acclist_tail;
+  IC3LockEntry *        acclist;
+  IC3LockEntry *        acclist_tail;
+#if LATCH == LH_SPINLOCK
+  pthread_spinlock_t *  latch;
+#elif LATCH == LH_MUTEX
+  pthread_mutex_t *     latch;
+#else
+  mcslock *             latch;
+#endif
 };
 
 class Row_ic3 {
@@ -57,9 +65,11 @@ class Row_ic3 {
   void              rm_from_acclist(int idx, txn_man * txn) {
     cell_managers[idx].rm_from_acclist(txn);
   };
+  void              update_version(int idx, uint64_t txn_id) {
+    cell_managers[idx].update_version(txn_id);
+  };
  private:
   Cell_ic3 *        cell_managers;
-  volatile uint64_t	_tid_word;
   row_t * 			_row;
 };
 

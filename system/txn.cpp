@@ -430,10 +430,16 @@ RC txn_man::finish(RC rc) {
 	else 
 		cleanup(rc);
 #elif CC_ALG == IC3
-	if (rc == RCOK)
+	if (rc == RCOK) {
 	  rc = validate_ic3();
-	else
-	  cleanup(rc);
+	  if (rc == RCOK)
+	    status = COMMITTED;
+	  else
+	    status == ABORTED;
+	} else {
+	  status = ABORTED;
+	}
+	cleanup(rc);
 #elif CC_ALG == HEKATON
   rc = validate_hekaton(rc);
 	cleanup(rc);
