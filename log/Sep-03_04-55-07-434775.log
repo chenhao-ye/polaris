@@ -2,13 +2,13 @@
 mem_allocator initialized!
 IC3
 reading schema file: ./benchmarks/TPCC_full_schema.txt
-init table WAREHOUSE at 0x7f2425838300
-init table DISTRICT at 0x7f2425838380
-init table CUSTOMER at 0x7f2425838400
-init table HISTORY at 0x7f2425838480
-init table NEW-ORDER at 0x7f2425838500
-init table ORDER at 0x7f2425838580
-init table ORDER-LINE at 0x7f2425838600
-init table ITEM at 0x7f2425838680
-init table STOCK at 0x7f2425838700
+init table WAREHOUSE at 0x7f54e2c38300
+init table DISTRICT at 0x7f54e2c38380
+init table CUSTOMER at 0x7f54e2c38400
+init table HISTORY at 0x7f54e2c38480
+init table NEW-ORDER at 0x7f54e2c38500
+init table ORDER at 0x7f54e2c38580
+init table ORDER-LINE at 0x7f54e2c38600
+init table ITEM at 0x7f54e2c38680
+init table STOCK at 0x7f54e2c38700
 TPCC schema initialized
