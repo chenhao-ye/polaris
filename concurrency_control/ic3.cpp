@@ -27,23 +27,21 @@ void txn_man::begin_piece(int piece_id) {
   }
   int i;
   SC_PIECE * p_prime;
-  uint64_t starttime;
+  uint64_t starttime = get_sys_clock();
   for (i = 0; i < depqueue_sz; i++) { // for T' in T's depqueue
     p_prime = &(cedges[depqueue[i]->txn->curr_type]);
     if (p_prime->txn_type != TPCC_ALL) {
       // exist c-edge with T'. wait for p' to commit
-      starttime = get_sys_clock();
       while(depqueue[i]->txn_id == depqueue[i]->txn->get_txn_id() && ( p_prime->piece_id >=  depqueue[i]->txn->curr_piece))
         continue;
-      INC_TMP_STATS(get_thd_id(), time_wait, get_sys_clock() - starttime);
     } else {
       // wait for T' to commit
       starttime = get_sys_clock();
       while(depqueue[i]->txn_id == depqueue[i]->txn->get_txn_id() && (depqueue[i]->txn->status == RUNNING))
         continue;
-      INC_TMP_STATS(get_thd_id(), time_wait, get_sys_clock() - starttime);
     }
   }
+  INC_TMP_STATS(get_thd_id(), time_wait, get_sys_clock() - starttime);
 }
 
 RC txn_man::end_piece(int piece_id) {
