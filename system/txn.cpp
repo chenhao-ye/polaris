@@ -237,13 +237,14 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
 #if (CC_ALG == SILO || CC_ALG == TICTOC || CC_ALG == IC3)
     access->data = (row_t *) _mm_malloc(sizeof(row_t), 64);
     access->data->init(MAX_TUPLE_SIZE);
-    access->orig_data = (row_t *) _mm_malloc(sizeof(row_t), 64);
-    access->orig_data->init(MAX_TUPLE_SIZE);
 #if CC_ALG == IC3
     access->tids = (ts_t *) _mm_malloc(sizeof(ts_t) * row->get_field_cnt(), 64);
     access->rd_accesses = 0;
     access->wr_accesses = 0;
     access->lk_accesses = 0;
+#else
+    access->orig_data = (row_t *) _mm_malloc(sizeof(row_t), 64);
+    access->orig_data->init(MAX_TUPLE_SIZE);
 #endif
 #elif (CC_ALG == WOUND_WAIT)
     // allocate lock entry as well
@@ -284,10 +285,11 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
   accesses[row_cnt]->orig_row = row;
 #elif CC_ALG == IC3
   assert(rc == RCOK);
-  accesses[row_cnt]->orig_row = row;
   accesses[row_cnt]->data->init_accesses(accesses[row_cnt]);
   accesses[row_cnt]->data->manager = row->manager;
   accesses[row_cnt]->data->table = row->get_table();
+  accesses[row_cnt]->data->orig = row;
+  accesses[row_cnt]->orig_row = row;
 #else
   rc = row->get_row(type, this, accesses[ row_cnt ]->data);
   if (rc == Abort)

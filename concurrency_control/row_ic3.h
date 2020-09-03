@@ -71,9 +71,9 @@ class Row_ic3 {
   void              update_version(uint64_t idx, uint64_t txn_id) {
     cell_managers[idx].update_version(txn_id);
   };
+  row_t * 			_row;
  private:
   Cell_ic3 *        cell_managers;
-  row_t * 			_row;
 };
 
 #endif

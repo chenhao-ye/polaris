@@ -29,6 +29,7 @@ row_t::init(table_t * host_table, uint64_t part_id, uint64_t row_id) {
   data = (char *) _mm_malloc(sizeof(char) * tuple_size, 64);
 #if CC_ALG == IC3
   txn_access = NULL;
+  orig = NULL;
 #endif
   return RCOK;
 }
