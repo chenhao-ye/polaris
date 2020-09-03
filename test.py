@@ -59,8 +59,8 @@ def parse_output(job):
 				key, val = token.strip().split('=')
 				job[key] = val
 			break
-	output.close()
         if success:
+	    output.close()
 	    os.system("rm -f temp.out")
             return job
         errlog = open("log/{}.log".format(datetime.datetime.now().strftime("%b-%d_%H-%M-%S-%f")), 'a+')
@@ -68,6 +68,9 @@ def parse_output(job):
         output = open("temp.out")
         for line in output: 
             errlog.write(line)
+        errlog.close()
+        output.close()
+	os.system("rm -f temp.out")
 	return job
 
 if __name__ == "__main__":

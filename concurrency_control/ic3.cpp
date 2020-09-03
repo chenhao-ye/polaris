@@ -166,13 +166,13 @@ txn_man::validate_ic3() {
       PAUSE
       continue;
     }
-#if DEBUG_PROFILING
-    INC_STATS(get_thd_id(), time_commit, get_sys_clock() - starttime);
-#endif
     if (depqueue[i]->txn->status == ABORTED) {
       return Abort;
     }
   }
+#if DEBUG_PROFILING
+    INC_STATS(get_thd_id(), time_commit, get_sys_clock() - starttime);
+#endif
   Access * access;
   for (int i = 0; i < row_cnt; i++) {
     access = accesses[i];
