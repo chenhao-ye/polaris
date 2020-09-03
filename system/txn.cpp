@@ -50,7 +50,6 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 #elif CC_ALG == SILO
   _cur_tid = 0;
 #elif CC_ALG == IC3
-  piece_wr_cnt = 0;
   depqueue = (TxnEntry **) _mm_malloc(sizeof(void *)*THREAD_CNT, 64);
   for (int i = 0; i < THREAD_CNT; i++)
     depqueue[i] = NULL;
@@ -243,6 +242,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
     access->tids = (ts_t *) _mm_malloc(sizeof(ts_t) * row->get_field_cnt(), 64);
     access->rd_accesses = 0;
     access->wr_accesses = 0;
+    access->lk_accesses = 0;
 #endif
 #elif (CC_ALG == WOUND_WAIT)
     // allocate lock entry as well
@@ -337,9 +337,6 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
   row_cnt ++;
   if (type == WR) {
     wr_cnt++;
-#if CC_ALG == IC3
-    piece_wr_cnt++;
-#endif
   }
 
   uint64_t timespan = get_sys_clock() - starttime;
@@ -439,6 +436,7 @@ RC txn_man::finish(RC rc) {
 	} else {
 	  status = ABORTED;
 	}
+	//printf("txn-%lu finished status=%d\n", txn_id, status);
 	cleanup(rc);
 #elif CC_ALG == HEKATON
   rc = validate_hekaton(rc);

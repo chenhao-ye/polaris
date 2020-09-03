@@ -12,6 +12,9 @@ Cell_ic3::init(row_t * orig_row, uint64_t id) {
   idx = id;
   acclist = NULL;
   acclist_tail = NULL;
+  acclist_cnt = 0;
+  lock = 0;
+  /*
 #if LATCH == LH_SPINLOCK
   latch = new pthread_spinlock_t;
   pthread_spin_init(latch, PTHREAD_PROCESS_SHARED);
@@ -21,6 +24,7 @@ Cell_ic3::init(row_t * orig_row, uint64_t id) {
 #else
   latch = new mcslock();
 #endif
+*/
 }
 
 void
@@ -41,6 +45,7 @@ Cell_ic3::access(row_t * local_row, Access * txn_access) {
 
 bool
 Cell_ic3::try_lock() {
+/*
 #if THREAD_CNT > 1
 #if LATCH == LH_SPINLOCK
   pthread_spin_lock( latch );
@@ -52,11 +57,15 @@ Cell_ic3::try_lock() {
   //latch->acquire(en->m_node);
 #endif
 #endif
-  return true;
+*/
+  if (lock == 1)
+    return false;
+  return ATOM_CAS(lock, 0, 1);
 }
 
 void
 Cell_ic3::release() {
+	/*
 #if THREAD_CNT > 1
 #if LATCH == LH_SPINLOCK
   pthread_spin_unlock( latch );
@@ -68,13 +77,14 @@ Cell_ic3::release() {
   //latch->release(en->m_node);
 #endif
 #endif
+*/
+  lock = 0;
 }
 
 void
 Cell_ic3::add_to_acclist(txn_man * txn, access_t type) {
   // get new lock entry
-  IC3LockEntry * new_entry = (IC3LockEntry *) mem_allocator.alloc(sizeof(IC3LockEntry),
-      _row->get_part_id());
+  IC3LockEntry * new_entry = (IC3LockEntry *) mem_allocator.alloc(sizeof(IC3LockEntry), _row->get_part_id());
   new_entry->type = type;
   new_entry->txn_id = txn->get_txn_id();
   new_entry->txn = txn;
@@ -82,6 +92,7 @@ Cell_ic3::add_to_acclist(txn_man * txn, access_t type) {
   new_entry->next = NULL;
   // add to tail
   LIST_PUT_TAIL(acclist, acclist_tail, new_entry);
+  acclist_cnt++;
 }
 
 IC3LockEntry *
@@ -104,6 +115,9 @@ Cell_ic3::get_last_accessor() {
 
 void
 Cell_ic3::rm_from_acclist(txn_man * txn) {
+  // modifying acclist, acquire latch
+  while(try_lock() == false)
+	  continue;
   IC3LockEntry * en = acclist;
   while(en != NULL) {
     if (en->txn == txn)
@@ -112,7 +126,10 @@ Cell_ic3::rm_from_acclist(txn_man * txn) {
   }
   if (en) {
     LIST_REMOVE_HT(en, acclist, acclist_tail);
+    acclist_cnt--;
+    free(en);
   }
+  release();
 }
 
 //////////////////////// ROW_IC3 ////////////////////////

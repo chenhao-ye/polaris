@@ -30,11 +30,11 @@ void txn_man::begin_piece(int piece_id) {
     p_prime = &(cedges[depqueue[i]->txn->curr_type]);
     if (p_prime->txn_type != TPCC_ALL) {
       // exist c-edge with T'. wait for p' to commit
-      while(p_prime->piece_id <= depqueue[i]->txn->curr_piece)
+      while(depqueue[i]->txn_id == depqueue[i]->txn->get_txn_id() && ( p_prime->piece_id >=  depqueue[i]->txn->curr_piece))
         continue;
     } else {
       // wait for T' to commit
-      while(depqueue[i]->txn->status == RUNNING)
+      while(depqueue[i]->txn_id == depqueue[i]->txn->get_txn_id() && (depqueue[i]->txn->status == RUNNING))
         continue;
     }
   }
@@ -51,9 +51,10 @@ RC txn_man::end_piece(int piece_id) {
   // read set is a superset of write set.
   for (int rid = access_marker; rid < row_cnt; rid ++) {
     read_set[cur_rd_idx ++] = rid;
+    accesses[rid]->lk_accesses = 0;
   }
   // bubble sort the read_set, in primary key order
-  for (int i = piece_access_cnt - piece_wr_cnt - 1; i >= 1; i--) {
+  for (int i = piece_access_cnt - 1; i >= 1; i--) {
     for (int j = 0; j < i; j++) {
       if (accesses[ read_set[j] ]->orig_row->get_primary_key() >
           accesses[ read_set[j + 1] ]->orig_row->get_primary_key())
@@ -67,18 +68,24 @@ RC txn_man::end_piece(int piece_id) {
   // lock record's read+write set cell, as write is the subset, just lock
   // read set; validate p’s readset
   int num_locked = 0;
+  bool acquired = false;
   Access * access;
   for (int i = 0; i < piece_access_cnt; i++) {
     access = accesses[read_set[i]];
     row_t * row = access->orig_row;
     for (UInt32 j = 0; j < row->get_field_cnt(); j++) {
       if (access->rd_accesses & (1 << j)) {
-        if (!row->manager->try_lock(j) || (row->manager->get_tid(j) !=
-        access->tids[i])) {
+	acquired = row->manager->try_lock(j);
+	if (acquired) {
+            num_locked++;
+	    access->lk_accesses = (access->lk_accesses | (1UL << j));
+	    //printf("txn-%lu locked %lu-%u\n", txn_id, row->get_row_id(), j);
+	}
+        if (!acquired || (row->manager->get_tid(j) != access->tids[j])) {
+          //printf("txn-%lu aborted piece %d at %lu-%u (code=%d)\n", get_txn_id(), curr_piece, row->get_row_id(), j, fail_code);
           rc = Abort;
           goto final;
         }
-        num_locked++;
       }
     }
   }
@@ -89,13 +96,15 @@ RC txn_man::end_piece(int piece_id) {
     for (UInt32 j = 0; j < row->get_field_cnt(); j++) {
       if (access->rd_accesses & (1 << j)) {
         IC3LockEntry * Tw = row->manager->get_last_writer(j);
-        APPEND_TO_DEPQ(Tw)
+        APPEND_TO_DEPQ(Tw);
         if (access->wr_accesses & (1 << j)) {
           IC3LockEntry * Trw = row->manager->get_last_accessor(j);
-          APPEND_TO_DEPQ(Trw)
+          APPEND_TO_DEPQ(Trw);
           row->manager->add_to_acclist(j, this, WR);
+	  //printf("txn-%lu add to %lu-%u acclist\n", txn_id, row->get_row_id(), j);
           //TODO: DB[d.key].stash = d.val
         } else {
+	  //printf("txn-%lu add to %lu-%u acclist\n", txn_id, row->get_row_id(), j);
           row->manager->add_to_acclist(j, this, RD);
         }
       }
@@ -106,10 +115,14 @@ RC txn_man::end_piece(int piece_id) {
     access = accesses[read_set[i]];
     row_t * row = access->orig_row;
     for (UInt32 j = 0; j < row->get_field_cnt(); j++) {
-      if (accesses[read_set[i]]->rd_accesses & (1 << j))
+      if (access->lk_accesses & (1 << j)) {
         row->manager->release(j);
+	//printf("txn-%lu released %lu-%u\n", txn_id, row->get_row_id(), j);
+	num_locked--;
+      }
     }
   }
+  assert(num_locked == 0);
   curr_piece++;
 
 final:
@@ -120,18 +133,16 @@ final:
     for (int i = 0; i < piece_access_cnt; i++) {
       access = accesses[read_set[i]];
       row_t * row = access->orig_row;
-      if (num_locked == 0)
-	  break;
       for (UInt32 j = 0; j < row->get_field_cnt(); j++) {
-	if (num_locked == 0)
-	  break;
-        if (access->rd_accesses & (1 << j)) {
+        if (access->lk_accesses & (1 << j)) {
           row->manager->release(j);
+	  //printf("txn-%lu released %lu-%u\n", txn_id, row->get_row_id(), j);
           num_locked--;
         }
       }
     }
-    //printf("txn-%lu aborted piece %d\n", get_txn_id(), curr_piece);
+    assert(num_locked == 0);
+    //assert(false);
   }
   return rc;
 }
@@ -153,11 +164,13 @@ txn_man::validate_ic3() {
   for (int i = 0; i < row_cnt; i++) {
     access = accesses[i];
     for (UInt32 j = 0; j < access->orig_row->get_field_cnt(); j++) {
-      if (access->wr_accesses & (1 << j)) {
-        access->orig_row->manager->update_version(j, this->get_txn_id());
-        access->orig_row->set_value_plain(j, access->data->get_value_plain(j));
-        access->orig_row->manager->rm_from_acclist(j, this);
-	//printf("txn-%lu updated row %lu cell %d 's version\n", this->get_txn_id(), access->orig_row->get_row_id(), j);
+      if (access->rd_accesses & (1 << j)) {
+        if (access->wr_accesses & (1 << j)) {
+          access->orig_row->manager->update_version(j, this->get_txn_id());
+          access->orig_row->set_value_plain(j, access->data->get_value_plain(j));
+        }
+      access->orig_row->manager->rm_from_acclist(j, this);
+      //printf("txn-%lu removed from  %lu-%u acclist\n", txn_id, access->orig_row->get_row_id(), j);
       }
     }
   }

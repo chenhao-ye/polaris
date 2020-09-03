@@ -34,10 +34,9 @@ public:
 	virtual RC init_table()=0;
 	virtual RC get_txn_man(txn_man *& txn_manager, thread_t * h_thd)=0;
 
-#if CC_ALG == IC3
 	// ic3 helpers
 	virtual SC_PIECE * get_cedges(TPCCTxnType txn_type, int piece_id); 
-#endif
+
 	bool sim_done;
 protected:
 	void index_insert(string index_name, uint64_t key, row_t * row);

@@ -34,9 +34,11 @@ class Cell_ic3 {
   row_t * 			    _row;
   Row_ic3 *             row_manager;
   volatile uint64_t	    _tid;
-  int                   idx;
+  uint64_t              idx;
+  int                   acclist_cnt;
   IC3LockEntry *        acclist;
   IC3LockEntry *        acclist_tail;
+  /*
 #if LATCH == LH_SPINLOCK
   pthread_spinlock_t *  latch;
 #elif LATCH == LH_MUTEX
@@ -44,6 +46,8 @@ class Cell_ic3 {
 #else
   mcslock *             latch;
 #endif
+*/
+  volatile int                   lock;
 };
 
 class Row_ic3 {
