@@ -141,7 +141,7 @@ Row_ic3::init(row_t * row)
   cell_managers = (Cell_ic3 *) _mm_malloc(sizeof(Cell_ic3)
       *row->get_field_cnt(), 64);
   for (UInt32 i = 0; i < row->get_field_cnt(); i++) {
-    cell_managers[i].init(_row,(int)i);
+    cell_managers[i].init(row,(int)i);
   }
 }
 

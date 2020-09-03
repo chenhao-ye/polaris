@@ -35,13 +35,13 @@ void txn_man::begin_piece(int piece_id) {
       starttime = get_sys_clock();
       while(depqueue[i]->txn_id == depqueue[i]->txn->get_txn_id() && ( p_prime->piece_id >=  depqueue[i]->txn->curr_piece))
         continue;
-      INC_TMP_STATS(thd_id, time_wait, get_sys_clock() - starttime);
+      INC_TMP_STATS(get_thd_id(), time_wait, get_sys_clock() - starttime);
     } else {
       // wait for T' to commit
       starttime = get_sys_clock();
       while(depqueue[i]->txn_id == depqueue[i]->txn->get_txn_id() && (depqueue[i]->txn->status == RUNNING))
         continue;
-      INC_TMP_STATS(thd_id, time_wait, get_sys_clock() - starttime);
+      INC_TMP_STATS(get_thd_id(), time_wait, get_sys_clock() - starttime);
     }
   }
 }
