@@ -189,6 +189,7 @@ class txn_man
   TxnEntry **       depqueue;
   int               depqueue_sz;
   RC                validate_ic3();
+  uint64_t          piece_starttime;
 #endif
 };
 

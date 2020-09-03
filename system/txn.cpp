@@ -54,6 +54,7 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
   for (int i = 0; i < THREAD_CNT; i++)
     depqueue[i] = NULL;
   depqueue_sz = 0;
+  piece_starttime = 0;
 #endif
 }
 

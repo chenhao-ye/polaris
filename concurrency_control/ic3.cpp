@@ -18,6 +18,7 @@
 
 #if CC_ALG == IC3
 void txn_man::begin_piece(int piece_id) {
+  piece_starttime = get_sys_clock();
   curr_piece = piece_id;
   access_marker = row_cnt;
   SC_PIECE * cedges = h_wl->get_cedges(curr_type, piece_id);
@@ -26,16 +27,21 @@ void txn_man::begin_piece(int piece_id) {
   }
   int i;
   SC_PIECE * p_prime;
+  uint64_t starttime;
   for (i = 0; i < depqueue_sz; i++) { // for T' in T's depqueue
     p_prime = &(cedges[depqueue[i]->txn->curr_type]);
     if (p_prime->txn_type != TPCC_ALL) {
       // exist c-edge with T'. wait for p' to commit
+      starttime = get_sys_clock();
       while(depqueue[i]->txn_id == depqueue[i]->txn->get_txn_id() && ( p_prime->piece_id >=  depqueue[i]->txn->curr_piece))
         continue;
+      INC_TMP_STATS(thd_id, time_wait, get_sys_clock() - starttime);
     } else {
       // wait for T' to commit
+      starttime = get_sys_clock();
       while(depqueue[i]->txn_id == depqueue[i]->txn->get_txn_id() && (depqueue[i]->txn->status == RUNNING))
         continue;
+      INC_TMP_STATS(thd_id, time_wait, get_sys_clock() - starttime);
     }
   }
 }
@@ -140,6 +146,7 @@ final:
           num_locked--;
         }
       }
+      INC_STATS(get_thd_id(), time_abort, get_sys_clock() - piece_starttime);
     }
     assert(num_locked == 0);
     //assert(false);
@@ -150,12 +157,18 @@ final:
 RC
 txn_man::validate_ic3() {
   // for T' in depqueue, wait till T' commit
+#if DEBUG_PROFILING
+  uint64_t starttime = get_sys_clock();
+#endif
   for (int i = 0; i < depqueue_sz; i++) {
     while (depqueue[i]->txn->get_txn_id() == depqueue[i]->txn_id &&
     depqueue[i]->txn->status == RUNNING) {
       PAUSE
       continue;
     }
+#if DEBUG_PROFILING
+    INC_STATS(get_thd_id(), time_commit, get_sys_clock() - starttime);
+#endif
     if (depqueue[i]->txn->status == ABORTED) {
       return Abort;
     }
