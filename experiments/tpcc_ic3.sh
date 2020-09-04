@@ -1,6 +1,7 @@
 cd ../
 rm outputs/stats.json
 cp -r config-std.h config.h
+fname="tpcc_ic3_payment_only"
 
 ## algorithm
 alg=BAMBOO
@@ -44,9 +45,9 @@ done
 
 cd outputs/
 python3 collect_stats.py
-mv stats.csv tpcc_ic3.csv
-mv stats.json tpcc_ic3.json
+mv stats.csv ${fname}.csv
+mv stats.json ${fname}.json
 cd ..
 
 cd experiments/
-python3 send_email.py tpcc_ic3
+python3 send_email.py ${fname}
