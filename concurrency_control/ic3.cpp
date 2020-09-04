@@ -7,12 +7,22 @@
 #include "tpcc.h"
 
 #define APPEND_TO_DEPQ(T) { \
+  appended = false; \
   if (T != NULL) { \
-  if (depqueue[depqueue_sz] == NULL) \
-    depqueue[depqueue_sz] = (TxnEntry *)_mm_malloc(sizeof(TxnEntry),64); \
-  depqueue[depqueue_sz]->txn = T->txn; \
-  depqueue[depqueue_sz]->txn_id = T->txn_id; \
-  depqueue_sz++; \
+  for (int k = 0; k < depqueue_sz; k++) { \
+	  if (depqueue[k]->txn == T->txn) { \
+		  appended = true; \
+		  break; \
+	  } \
+  } \
+  if (!appended) { \
+    assert(depqueue_sz < THREAD_CNT); \
+    if (depqueue[depqueue_sz] == NULL) \
+      depqueue[depqueue_sz] = (TxnEntry *)_mm_malloc(sizeof(TxnEntry),64); \
+    depqueue[depqueue_sz]->txn = T->txn; \
+    depqueue[depqueue_sz]->txn_id = T->txn_id; \
+    depqueue_sz++; \
+  } \
   } \
 }
 
@@ -73,10 +83,13 @@ RC txn_man::end_piece(int piece_id) {
   // read set; validate p’s readset
   int num_locked = 0;
   bool acquired = false;
+  bool appended = false;
   Access * access;
+  row_t * row;
   for (int i = 0; i < piece_access_cnt; i++) {
     access = accesses[read_set[i]];
-    row_t * row = access->orig_row;
+    assert(read_set[i] < row_cnt && (read_set[i] >= access_marker));
+    row = access->orig_row;
     for (UInt32 j = 0; j < row->get_field_cnt(); j++) {
       if (access->rd_accesses & (1 << j)) {
 	acquired = row->manager->try_lock(j);
@@ -96,7 +109,8 @@ RC txn_man::end_piece(int piece_id) {
   // foreach d in p.readset/p.writeset:
   for (int i = 0; i < piece_access_cnt; i++) {
     access = accesses[read_set[i]];
-    row_t * row = access->orig_row;
+    assert(read_set[i] < row_cnt && (read_set[i] >= access_marker));
+    row = access->orig_row;
     for (UInt32 j = 0; j < row->get_field_cnt(); j++) {
       if (access->rd_accesses & (1 << j)) {
         IC3LockEntry * Tw = row->manager->get_last_writer(j);
@@ -117,7 +131,8 @@ RC txn_man::end_piece(int piece_id) {
   // release grabbed locks
   for (int i = 0; i < piece_access_cnt; i++) {
     access = accesses[read_set[i]];
-    row_t * row = access->orig_row;
+    assert(read_set[i] < row_cnt && (read_set[i] >= access_marker));
+    row = access->orig_row;
     for (UInt32 j = 0; j < row->get_field_cnt(); j++) {
       if (access->lk_accesses & (1 << j)) {
         row->manager->release(j);
@@ -131,12 +146,11 @@ RC txn_man::end_piece(int piece_id) {
 
 final:
   if (rc == Abort) {
-    // reset access marker
-    row_cnt = access_marker;
     // unlock locked entries
     for (int i = 0; i < piece_access_cnt; i++) {
       access = accesses[read_set[i]];
-      row_t * row = access->orig_row;
+      assert(read_set[i] < row_cnt && (read_set[i] >= access_marker));
+      row = access->orig_row;
       for (UInt32 j = 0; j < row->get_field_cnt(); j++) {
         if (access->lk_accesses & (1 << j)) {
           row->manager->release(j);
@@ -147,6 +161,8 @@ final:
       INC_STATS(get_thd_id(), time_abort, get_sys_clock() - piece_starttime);
     }
     assert(num_locked == 0);
+    // reset access marker
+    row_cnt = access_marker;
     //assert(false);
   }
   return rc;
@@ -174,6 +190,7 @@ txn_man::validate_ic3() {
   Access * access;
   for (int i = 0; i < row_cnt; i++) {
     access = accesses[i];
+    assert(access->orig_row == access->data->orig);
     for (UInt32 j = 0; j < access->orig_row->get_field_cnt(); j++) {
       if (access->rd_accesses & (1 << j)) {
         if (access->wr_accesses & (1 << j)) {
