@@ -14,13 +14,13 @@ max_waiter=0
 
 ## workload
 wl="TPCC"
-wh=1
+wh=16
 perc=1 # payment percentage
 user_abort="true"
 com="false"
 
 ## other
-threads=2
+threads=16
 profile="true"
 cnt=100000
 penalty=50000 
