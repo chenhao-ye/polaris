@@ -355,17 +355,16 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
   int64_t i_price;
   char * i_name;
   char * i_data;
-  uint64_t stock_key；
-  INDEX * stock_index；
+  uint64_t stock_key;
+  INDEX * stock_index;
   itemid_t * stock_item;
   UInt64 s_quantity;
   int64_t s_remote_cnt;
   int64_t s_ytd;
   int64_t s_order_cnt;
   uint64_t quantity;
-  int64_t ol_amount；
+  int64_t ol_amount;
   row_t * r_ol;
-  uint64_t row_id;
 
   char* s_dist_01;
   char* s_dist_02;
@@ -484,8 +483,8 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
   if (!end_piece(3))
     goto neworder_piece;
 
-  order_piece: // 4
-  begin_piece(4):
+order_piece: // 4
+  begin_piece(4);
 #endif
   /*========================================================================================+
   EXEC SQL INSERT INTO ORDERS (o_id, o_d_id, o_w_id, o_c_id, o_entry_d, o_ol_cnt, o_all_local)
@@ -507,8 +506,8 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
   if (!end_piece(4))
     goto order_piece;
 
-  item_piece: // 5
-  begin_piece(5)
+item_piece: // 5
+  begin_piece(5);
   for (UInt32 ol_number = 0; ol_number < ol_cnt; ol_number++) {
     ol_i_id = query->items[ol_number].ol_i_id;
 #if TPCC_USER_ABORT
@@ -545,8 +544,8 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
     goto item_piece;
 
 
-  stock_piece: // 6
-  begin_piece(6)
+stock_piece: // 6
+  begin_piece(6);
   for (UInt32 ol_number = 0; ol_number < ol_cnt; ol_number++) {
     ol_i_id = query->items[ol_number].ol_i_id;
     ol_supply_w_id = query->items[ol_number].ol_supply_w_id;
@@ -612,8 +611,8 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
   if (!end_piece(6))
     goto stock_piece;
 
-  orderline_piece: // 7
-  begin_piece(7)
+orderline_piece: // 7
+  begin_piece(7);
   for (UInt32 ol_number = 0; ol_number < ol_cnt; ol_number++) {
     ol_i_id = query->items[ol_number].ol_i_id;
     ol_supply_w_id = query->items[ol_number].ol_supply_w_id;
