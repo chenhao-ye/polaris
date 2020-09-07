@@ -482,7 +482,7 @@ RC txn_man::finish(RC rc) {
   INC_STATS(get_thd_id(), time_cleanup,  timespan);
 #if TPCC_USER_ABORT
   if (rc == Abort && (ret_rc == ERROR)) {
-  printf("txn-%lu user init abort! \n", txn_id);
+  //printf("txn-%lu user init abort! \n", txn_id);
     return ret_rc;
   }
 #endif

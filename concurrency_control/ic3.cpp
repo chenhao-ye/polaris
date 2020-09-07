@@ -43,7 +43,7 @@ void txn_man::begin_piece(int piece_id) {
     p_prime = &(cedges[depqueue[i]->txn->curr_type]);
     if (p_prime->txn_type != TPCC_ALL) {
       // exist c-edge with T'. wait for p' to commit
-      while(depqueue[i]->txn_id == depqueue[i]->txn->get_txn_id() && ( p_prime->piece_id >=  depqueue[i]->txn->curr_piece))
+      while(depqueue[i]->txn_id == depqueue[i]->txn->get_txn_id() && ( p_prime->piece_id >=  depqueue[i]->txn->curr_piece) && (depqueue[i]->txn->status == RUNNING))
         continue;
     } else {
       // wait for T' to commit
