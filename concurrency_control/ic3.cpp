@@ -202,14 +202,31 @@ txn_man::validate_ic3() {
       access->orig_row->manager->rm_from_acclist(j, this);
       }
     }
-    // debugging
-    assert(access->data->data);
   }
   return RCOK;
 }
 
 void
 txn_man::abort_ic3() {
-  
+  // cascading aborts
+  // 1. abort bit for each entry in the accessor list
+  // 2. when aborts, unlinks its own entry from the accessor list that it has
+  // updated and sets the abort bit for all entries appearing after itself.
+  // 3. before commits, check the abort bits of all accessor list entries.
+  // abort itself if has any abort bit set.
+  // XXX(zhihan): to simplify the process and reduce overheads, set one
+  // condition bit for each txn (status) and only check the status with atomic
+  // operation while committing.
+
+  // go through all accesses: rm self from acclist and set followers to abort
+  Access * access;
+  for (int i = 0; i < row_cnt; i++) {
+    access = accesses[i];
+    for (UInt32 j = 0; j < access->orig_row->get_field_cnt(); j++) {
+      if (access->rd_accesses & (1 << j)) {
+        access->orig_row->manager->rm_from_acclist(j, this, true); // aborted
+      }
+    }
+  }
 }
 #endif

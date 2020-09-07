@@ -740,6 +740,7 @@ orderline_piece: // 7
         s_quantity = *(int64_t *)r_stock_local->get_value(S_QUANTITY);
         //try to retrieve s_dist_xx
 #if !TPCC_SMALL
+        /*
         s_dist_01=(char *)r_stock_local->get_value(S_DIST_01);
         s_dist_02=(char *)r_stock_local->get_value(S_DIST_02);
         s_dist_03=(char *)r_stock_local->get_value(S_DIST_03);
@@ -750,6 +751,7 @@ orderline_piece: // 7
         s_dist_08=(char *)r_stock_local->get_value(S_DIST_08);
         s_dist_09=(char *)r_stock_local->get_value(S_DIST_09);
         s_dist_10=(char *)r_stock_local->get_value(S_DIST_10);
+        */
         //char * s_data = "test";
         r_stock_local->get_value(S_YTD, s_ytd);
         r_stock_local->set_value(S_YTD, s_ytd + ol_quantity);

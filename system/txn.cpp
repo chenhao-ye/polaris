@@ -437,15 +437,18 @@ RC txn_man::finish(RC rc) {
 #elif CC_ALG == IC3
   if (rc == RCOK) {
     rc = validate_ic3();
-    if (rc == RCOK)
-      status = COMMITED;
-    else
+    if (rc == RCOK) {
+      if (!ATOM_CAS(status, RUNNING, COMMITED))
+        rc = Abort;
+    } else {
       status = ABORTED;
+    }
   } else { // abort an txn
     // involve cascading aborts
-    status = ABORTED;
-    abort_ic3();
+    status = ABORTED; // may overwritten the aborts set by others.
   }
+  if (rc == Abort)
+    abort_ic3();
   cleanup(rc);
 #elif CC_ALG == HEKATON
   rc = validate_hekaton(rc);

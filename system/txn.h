@@ -84,7 +84,7 @@ class txn_man
   status_t          wound_txn(txn_man * txn);
   status_t          set_abort()
   {
-#if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT
+#if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT || CC_ALG == IC3
     if (ATOM_CAS(status, RUNNING, ABORTED)) {
       lock_abort = true;
       return ABORTED;

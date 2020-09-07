@@ -24,7 +24,7 @@ class Cell_ic3 {
   void                  access(row_t * local_row, Access *txn_access);
   uint64_t              get_tid() {return _tid;};
   void                  add_to_acclist(txn_man * txn, access_t type);
-  void                  rm_from_acclist(txn_man * txn);
+  void                  rm_from_acclist(txn_man * txn, bool aborted);
   IC3LockEntry *        get_last_writer();
   IC3LockEntry *        get_last_accessor();
   bool                  try_lock();
@@ -65,8 +65,8 @@ class Row_ic3 {
   IC3LockEntry *       get_last_accessor(uint64_t idx) {
     return cell_managers[idx].get_last_accessor();};
   void              release(uint64_t idx) {cell_managers[idx].release();};
-  void              rm_from_acclist(uint64_t idx, txn_man * txn) {
-    cell_managers[idx].rm_from_acclist(txn);
+  void              rm_from_acclist(uint64_t idx, txn_man * txn, bool aborted=false) {
+    cell_managers[idx].rm_from_acclist(txn, aborted);
   };
   void              update_version(uint64_t idx, uint64_t txn_id) {
     cell_managers[idx].update_version(txn_id);

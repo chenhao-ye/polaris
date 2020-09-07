@@ -114,20 +114,31 @@ Cell_ic3::get_last_accessor() {
 }
 
 void
-Cell_ic3::rm_from_acclist(txn_man * txn) {
+Cell_ic3::rm_from_acclist(txn_man * txn, bool aborted) {
   // modifying acclist, acquire latch
   while(try_lock() == false)
 	  continue;
   IC3LockEntry * en = acclist;
-  while(en != NULL) {
-    if (en->txn == txn)
-      break;
-    en = en->next;
-  }
-  if (en) {
-    LIST_REMOVE_HT(en, acclist, acclist_tail);
-    acclist_cnt--;
-    free(en);
+  IC3LockEntry * to_rm = NULL;
+  bool set_abort = false;
+  if (aborted) {
+    while(en != NULL) {
+      if (en->txn == txn) {
+        to_rm = en;
+        if (en->type == WR)
+          set_abort = true;
+        else
+          break;
+      } else if (set_abort) {
+        assert(en->txn->set_abort() == ABORTED);
+      }
+      en = en->next;
+    }
+    if (to_rm) {
+      LIST_REMOVE_HT(en, acclist, acclist_tail);
+      acclist_cnt--;
+      free(en);
+    }
   }
   release();
 }
