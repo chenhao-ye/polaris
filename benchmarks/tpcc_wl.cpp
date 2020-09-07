@@ -471,7 +471,7 @@ tpcc_wl::init_scgraph() {
     if (i == TPCC_PAYMENT && (g_perc_payment > 0)) {
       sc_graph[i] = (SC_PIECE **) _mm_malloc(sizeof(void *) * 4, 64);
       // for each piece of txn type payment
-      for (j = 0; j < 4; j++) {
+      for (j = 0; j < IC3_TPCC_PAYMENT_PIECES; j++) {
         // has up to TPCC_ALL conflicting pieces
         sc_graph[i][j] = (SC_PIECE *) _mm_malloc(sizeof(SC_PIECE) * (TPCC_ALL
             + 1), 64); // add one dummy node at the end for metadata
@@ -505,7 +505,7 @@ tpcc_wl::init_scgraph() {
     } else if (i == TPCC_NEW_ORDER && (g_perc_neworder > 0)) {
       sc_graph[i] = (SC_PIECE **) _mm_malloc(sizeof(void *) * 8, 64);
       // for each piece of txn type payment
-      for (j = 0; j < 8; j++) {
+      for (j = 0; j < IC3_TPCC_NEW_ORDER_PIECES; j++) {
         // has up to TPCC_ALL conflicting pieces
         sc_graph[i][j] = (SC_PIECE *) _mm_malloc(sizeof(SC_PIECE) *
             (TPCC_ALL + 1), 64);
@@ -561,8 +561,8 @@ tpcc_wl::init_scgraph() {
       }
     } else if (i == TPCC_DELIVERY && (g_perc_delivery > 0)) {
       sc_graph[i] = (SC_PIECE **) _mm_malloc(sizeof(void *) * 4, 64);
-      // for each piece of txn type payment
-      for (j = 0; j < 4; j++) {
+      // for each piece of txn type delivery
+      for (j = 0; j < IC3_TPCC_DELIVERY_PIECES; j++) {
         cnt = 0;
         // has up to TPCC_ALL conflicting pieces
         sc_graph[i][j] = (SC_PIECE *) _mm_malloc(sizeof(SC_PIECE) * (TPCC_ALL

@@ -26,12 +26,15 @@
   } \
 }
 
+#define GET_IC3_TPCC_PIECES(tpe) IC3_ ## tpe ## _PIECES
+
 #if CC_ALG == IC3
 void txn_man::begin_piece(int piece_id) {
   //printf("begin piece %d\n", piece_id);
   piece_starttime = get_sys_clock();
   curr_piece = piece_id;
   access_marker = row_cnt;
+#if !IC3_EAGER_EXEC
   SC_PIECE * cedges = h_wl->get_cedges(curr_type, piece_id);
   if (cedges == NULL) {
     return; // skip to execute phase
@@ -43,9 +46,34 @@ void txn_man::begin_piece(int piece_id) {
     p_prime = &(cedges[depqueue[i]->txn->curr_type]);
     if (p_prime->txn_type != TPCC_ALL) {
       // exist c-edge with T'. wait for p' to commit
-      while(depqueue[i]->txn_id == depqueue[i]->txn->get_txn_id() && ( p_prime->piece_id >=  depqueue[i]->txn->curr_piece) && (depqueue[i]->txn->status == RUNNING))
+      while(depqueue[i]->txn_id == depqueue[i]->txn->get_txn_id() &&
+      (p_prime->piece_id >= depqueue[i]->txn->curr_piece) &&
+      (depqueue[i]->txn->status == RUNNING))
         continue;
     } else {
+#if IC3_RENDEZVOUS
+      // find the next avaiable rendezvous piece in T'
+      if (piece_id + 1 != GET_IC3_TPCC_PIECES(curr_type)) {
+        bool rendezvous = false;
+        SC_PIECE * r;
+        for (int q = piece_id+1; npid < GET_IC3_TPCC_PIECES(curr_type); q++) {
+          SC_PIECE * next_cedges = h_wl->get_cedges(curr_type, npid);
+          r = &(next_cedges[depqueue[i]->txn->curr_type]);
+          if (r->txn_type != TPCC_ALL) {
+            rendezvous = true;
+            break;
+          }
+        }
+        if (rendezvous) {
+          // exist rendezvous piece, only need to wait till r commit
+          while(depqueue[i]->txn_id == depqueue[i]->txn->get_txn_id() &&
+          (r->piece_id >= depqueue[i]->txn->curr_piece) &&
+          (depqueue[i]->txn->status == RUNNING))
+            continue;
+          continue; // no need wait for T' to commit
+        }
+      }
+#endif
       // wait for T' to commit
       starttime = get_sys_clock();
       while(depqueue[i]->txn_id == depqueue[i]->txn->get_txn_id() && (depqueue[i]->txn->status == RUNNING))
@@ -53,9 +81,58 @@ void txn_man::begin_piece(int piece_id) {
     }
   }
   INC_TMP_STATS(get_thd_id(), time_wait, get_sys_clock() - starttime);
+#endif
 }
 
 RC txn_man::end_piece(int piece_id) {
+#if IC3_EAGER_EXEC
+  SC_PIECE * cedges = h_wl->get_cedges(curr_type, piece_id);
+  if (cedges == NULL) {
+    return; // skip to execute phase
+  }
+  int i;
+  SC_PIECE * p_prime;
+  uint64_t starttime = get_sys_clock();
+  for (i = 0; i < depqueue_sz; i++) { // for T' in T's depqueue
+    p_prime = &(cedges[depqueue[i]->txn->curr_type]);
+    if (p_prime->txn_type != TPCC_ALL) {
+      // exist c-edge with T'. wait for p' to commit
+      while(depqueue[i]->txn_id == depqueue[i]->txn->get_txn_id() &&
+      (p_prime->piece_id >= depqueue[i]->txn->curr_piece) &&
+      (depqueue[i]->txn->status == RUNNING))
+        continue;
+    } else {
+#if IC3_RENDEZVOUS
+      // find the next avaiable rendezvous piece in T'
+      if (piece_id + 1 != GET_IC3_TPCC_PIECES(curr_type)) {
+        bool rendezvous = false;
+        SC_PIECE * r;
+        for (int q = piece_id+1; npid < GET_IC3_TPCC_PIECES(curr_type); q++) {
+          SC_PIECE * next_cedges = h_wl->get_cedges(curr_type, npid);
+          r = &(next_cedges[depqueue[i]->txn->curr_type]);
+          if (r->txn_type != TPCC_ALL) {
+            rendezvous = true;
+            break;
+          }
+        }
+        if (rendezvous) {
+          // exist rendezvous piece, only need to wait till r commit
+          while(depqueue[i]->txn_id == depqueue[i]->txn->get_txn_id() &&
+          (r->piece_id >= depqueue[i]->txn->curr_piece) &&
+          (depqueue[i]->txn->status == RUNNING))
+            continue;
+          continue; // no need to wait till T' to commit
+        }
+      }
+#endif
+      // wait for T' to commit
+      starttime = get_sys_clock();
+      while(depqueue[i]->txn_id == depqueue[i]->txn->get_txn_id() && (depqueue[i]->txn->status == RUNNING))
+        continue;
+    }
+  }
+  INC_TMP_STATS(get_thd_id(), time_wait, get_sys_clock() - starttime);
+#endif
   RC rc = RCOK;
   int piece_access_cnt = row_cnt - access_marker;
   if (piece_access_cnt == 0)
@@ -201,6 +278,17 @@ txn_man::validate_ic3() {
         }
       access->orig_row->manager->rm_from_acclist(j, this);
       }
+#if COMMUTATIVE_OPS
+      // commutative ops
+      if (access->com_op != COM_NONE ) {
+        access->orig_row->manager->update_version(access->com_col, get_txn_id());
+        if (access->com_op == COM_INC)
+          access->orig_row->inc_value(access->com_col, access->com_val);
+        else
+          access->orig_row->dec_value(access->com_col, access->com_val);
+        access->com_op = COM_NONE;
+      }
+#endif
     }
   }
   return RCOK;

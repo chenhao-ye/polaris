@@ -135,12 +135,11 @@ void txn_man::cleanup(RC rc) {
 #if COMMUTATIVE_OPS
     if (accesses[rid]->com_op != COM_NONE && (rc != Abort)) {
       if (accesses[rid]->com_op == COM_INC)
-        inc_value(accesses[rid]->com_col, accesses[rid]->com_val);
+        orig_r->inc_value(accesses[rid]->com_col, accesses[rid]->com_val);
       else
-        dec_value(accesses[rid]->com_col, accesses[rid]->com_val);
+        orig_r->dec_value(accesses[rid]->com_col, accesses[rid]->com_val);
       accesses[rid]->com_op = COM_NONE;
     }
-
 #endif
     if (type == WR && rc == Abort)
       type = XP;
@@ -503,6 +502,7 @@ void txn_man::inc_value(int col, uint64_t val) {
   Access * access = accesses[row_cnt-1];
   access->com_op = COM_INC;
   access->com_val = val;
+  access->com_col = col;
 }
 
 void txn_man::dec_value(int col, uint64_t val) {
@@ -510,5 +510,6 @@ void txn_man::dec_value(int col, uint64_t val) {
   Access * access = accesses[row_cnt-1];
   access->com_op = COM_DEC;
   access->com_val = val;
+  access->com_col = col;
 }
 #endif

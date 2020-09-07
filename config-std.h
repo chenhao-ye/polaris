@@ -106,6 +106,9 @@
 #define LAST_RETIRE                 0.15
 // [WW]
 #define WW_STARV_FREE               false // set false if compared w/ bamboo
+// [IC3]
+#define IC3_EAGER_EXEC              false
+#define IC3_RENDEZVOUS              false
 
 /***********************************************/
 // Logging
