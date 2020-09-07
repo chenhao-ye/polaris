@@ -208,4 +208,8 @@ txn_man::validate_ic3() {
   return RCOK;
 }
 
+void
+txn_man::abort_ic3() {
+  
+}
 #endif

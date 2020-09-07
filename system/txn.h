@@ -132,6 +132,7 @@ class txn_man
   volatile int  curr_piece;
   void          begin_piece(int piece_id);
   RC            end_piece(int piece_id);
+  void          abort_ic3();
 #endif
 
   // For OCC
