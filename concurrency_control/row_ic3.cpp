@@ -134,9 +134,9 @@ Cell_ic3::rm_from_acclist(txn_man * txn, bool aborted) {
     en = en->next;
   }
   if (to_rm) {
-    LIST_REMOVE_HT(en, acclist, acclist_tail);
+    LIST_REMOVE_HT(to_rm, acclist, acclist_tail);
     acclist_cnt--;
-    free(en);
+    free(to_rm);
   }
   release();
 }
