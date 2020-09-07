@@ -26,7 +26,6 @@ RC tpcc_txn_man::run_txn(base_query * query) {
 #if CC_ALG == IC3
   curr_type = m_query->type;
   curr_piece = 0;
-  assert(curr_type != TPCC_PAYMENT);
 #endif
   switch (m_query->type) {
     case TPCC_PAYMENT :
