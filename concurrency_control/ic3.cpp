@@ -28,6 +28,7 @@
 
 #if CC_ALG == IC3
 void txn_man::begin_piece(int piece_id) {
+  //printf("begin piece %d\n", piece_id);
   piece_starttime = get_sys_clock();
   curr_piece = piece_id;
   access_marker = row_cnt;
@@ -57,8 +58,8 @@ void txn_man::begin_piece(int piece_id) {
 RC txn_man::end_piece(int piece_id) {
   RC rc = RCOK;
   int piece_access_cnt = row_cnt - access_marker;
-//  int write_set[piece_wr_cnt];
-//  int cur_wr_idx = 0;
+  if (piece_access_cnt == 0)
+	  return rc;
   int read_set[piece_access_cnt];
   int cur_rd_idx = 0;
   // lock records in p’s read+writeset (using a sorted order to avoid ddl)
@@ -91,15 +92,20 @@ RC txn_man::end_piece(int piece_id) {
     assert(read_set[i] < row_cnt && (read_set[i] >= access_marker));
     row = access->orig_row;
     for (UInt32 j = 0; j < row->get_field_cnt(); j++) {
-      if (access->rd_accesses & (1 << j)) {
+      if (access->rd_accesses & (1UL << j)) {
 	acquired = row->manager->try_lock(j);
 	if (acquired) {
             num_locked++;
 	    access->lk_accesses = (access->lk_accesses | (1UL << j));
-	    //printf("txn-%lu locked %lu-%u\n", txn_id, row->get_row_id(), j);
 	}
         if (!acquired || (row->manager->get_tid(j) != access->tids[j])) {
-          //printf("txn-%lu aborted piece %d at %lu-%u (code=%d)\n", get_txn_id(), curr_piece, row->get_row_id(), j, fail_code);
+/*
+          if (acquired)
+          printf("[version fail] txn-%lu[i=%d] aborted piece %d at %p-%u\n", get_txn_id(), i, curr_piece, row, j);
+	  else
+          printf("[lock fail] txn-%lu[i=%d] aborted piece %d at %p-%u\n", get_txn_id(), i, curr_piece, row, j);
+	  assert(false);
+*/
           rc = Abort;
           goto final;
         }
@@ -112,17 +118,15 @@ RC txn_man::end_piece(int piece_id) {
     assert(read_set[i] < row_cnt && (read_set[i] >= access_marker));
     row = access->orig_row;
     for (UInt32 j = 0; j < row->get_field_cnt(); j++) {
-      if (access->rd_accesses & (1 << j)) {
+      if (access->rd_accesses & (1UL << j)) {
         IC3LockEntry * Tw = row->manager->get_last_writer(j);
         APPEND_TO_DEPQ(Tw);
-        if (access->wr_accesses & (1 << j)) {
+        if (access->wr_accesses & (1UL << j)) {
           IC3LockEntry * Trw = row->manager->get_last_accessor(j);
           APPEND_TO_DEPQ(Trw);
           row->manager->add_to_acclist(j, this, WR);
-	  //printf("txn-%lu add to %lu-%u acclist\n", txn_id, row->get_row_id(), j);
           //TODO: DB[d.key].stash = d.val
         } else {
-	  //printf("txn-%lu add to %lu-%u acclist\n", txn_id, row->get_row_id(), j);
           row->manager->add_to_acclist(j, this, RD);
         }
       }
@@ -134,9 +138,8 @@ RC txn_man::end_piece(int piece_id) {
     assert(read_set[i] < row_cnt && (read_set[i] >= access_marker));
     row = access->orig_row;
     for (UInt32 j = 0; j < row->get_field_cnt(); j++) {
-      if (access->lk_accesses & (1 << j)) {
+      if (access->lk_accesses & (1UL << j)) {
         row->manager->release(j);
-	//printf("txn-%lu released %lu-%u\n", txn_id, row->get_row_id(), j);
 	num_locked--;
       }
     }
@@ -154,7 +157,6 @@ final:
       for (UInt32 j = 0; j < row->get_field_cnt(); j++) {
         if (access->lk_accesses & (1 << j)) {
           row->manager->release(j);
-	  //printf("txn-%lu released %lu-%u\n", txn_id, row->get_row_id(), j);
           num_locked--;
         }
       }
@@ -190,17 +192,18 @@ txn_man::validate_ic3() {
   Access * access;
   for (int i = 0; i < row_cnt; i++) {
     access = accesses[i];
-    assert(access->orig_row == access->data->orig);
     for (UInt32 j = 0; j < access->orig_row->get_field_cnt(); j++) {
       if (access->rd_accesses & (1 << j)) {
         if (access->wr_accesses & (1 << j)) {
           access->orig_row->manager->update_version(j, this->get_txn_id());
+	  //printf("txn-%lu update verison to its id for %p-%u\n", get_txn_id(), access->orig_row, j);
           access->orig_row->set_value_plain(j, access->data->get_value_plain(j));
         }
       access->orig_row->manager->rm_from_acclist(j, this);
-      //printf("txn-%lu removed from  %lu-%u acclist\n", txn_id, access->orig_row->get_row_id(), j);
       }
     }
+    // debugging
+    assert(access->data->data);
   }
   return RCOK;
 }

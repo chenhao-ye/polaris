@@ -119,6 +119,7 @@ void txn_man::cleanup(RC rc) {
   row_cnt = 0;
   wr_cnt = 0;
   insert_cnt = 0;
+  access_marker = 0;
   return;
 #endif
 
@@ -228,6 +229,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
   uint64_t starttime = get_sys_clock();
   RC rc = RCOK;
   if (accesses[row_cnt] == NULL) {
+    assert(row_cnt < MAX_ROW_PER_TXN);
     Access *access = (Access *) _mm_malloc(sizeof(Access), 64);
 #if COMMUTATIVE_OPS
     // init
@@ -238,10 +240,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
     access->data = (row_t *) _mm_malloc(sizeof(row_t), 64);
     access->data->init(MAX_TUPLE_SIZE);
 #if CC_ALG == IC3
-    access->tids = (ts_t *) _mm_malloc(sizeof(ts_t) * row->get_field_cnt(), 64);
-    access->rd_accesses = 0;
-    access->wr_accesses = 0;
-    access->lk_accesses = 0;
+    access->tids = (ts_t *) _mm_malloc(sizeof(ts_t) * MAX_FIELD_SIZE, 64);
 #else
     access->orig_data = (row_t *) _mm_malloc(sizeof(row_t), 64);
     access->orig_data->init(MAX_TUPLE_SIZE);
@@ -271,6 +270,8 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
 #endif
     num_accesses_alloc++;
   }
+  //printf("txn-%lu access(%p) row %p at access[%d]\n", txn_id, accesses[row_cnt], row , row_cnt);
+  assert(accesses[row_cnt]->data->data != NULL);
 #if (CC_ALG == WOUND_WAIT) || (CC_ALG == BAMBOO)
   rc = row->get_row(type, this, accesses[ row_cnt ]->orig_row,
                     accesses[row_cnt]);
@@ -285,6 +286,10 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
   accesses[row_cnt]->orig_row = row;
 #elif CC_ALG == IC3
   assert(rc == RCOK);
+  // re-initialize read/write sets for the tuple. 
+  accesses[row_cnt]->rd_accesses = 0;
+  accesses[row_cnt]->wr_accesses = 0;
+  accesses[row_cnt]->lk_accesses = 0;
   accesses[row_cnt]->data->init_accesses(accesses[row_cnt]);
   accesses[row_cnt]->data->manager = row->manager;
   accesses[row_cnt]->data->table = row->get_table();
@@ -439,7 +444,6 @@ RC txn_man::finish(RC rc) {
 	} else {
 	  status = ABORTED;
 	}
-	//printf("txn-%lu finished status=%d\n", txn_id, status);
 	cleanup(rc);
 #elif CC_ALG == HEKATON
   rc = validate_hekaton(rc);
@@ -476,9 +480,12 @@ RC txn_man::finish(RC rc) {
   INC_TMP_STATS(get_thd_id(), time_man,  timespan);
   INC_STATS(get_thd_id(), time_cleanup,  timespan);
 #if TPCC_USER_ABORT
-  if (rc == Abort && (ret_rc == ERROR))
+  if (rc == Abort && (ret_rc == ERROR)) {
+  printf("txn-%lu user init abort! \n", txn_id);
     return ret_rc;
+  }
 #endif
+  //printf("txn-%lu finished status=%d\n", txn_id, status);
   return rc;
 }
 

@@ -124,6 +124,7 @@
 #define MAX_TXN_PER_PART 			10000
 #define FIRST_PART_LOCAL 			true
 #define MAX_TUPLE_SIZE				1024 // in bytes
+#define MAX_FIELD_SIZE                          50
 // ==== [YCSB] ====
 #define INIT_PARALLELISM			40
 #define SYNTH_TABLE_SIZE 			(1024 * 5)

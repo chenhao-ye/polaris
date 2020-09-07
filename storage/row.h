@@ -16,8 +16,8 @@
 
 #define GET_VALUE(type)\
 	void row_t::get_value(int col_id, type & value) { \
-        value = *(type *)get_value(col_id); \
-    }
+          value = *(type *)get_value(col_id); \
+        }
 
 //		int pos = get_schema()->get_field_index(col_id);
 //		value = *(type *)&data[pos];
@@ -69,7 +69,7 @@ class row_t
   void set_value(int id, void * ptr, int size);
   void set_value(const char * col_name, void * ptr);
   char * get_value(int id);
-  char * get_value_plain(int id);
+  char * get_value_plain(uint64_t id);
   char * get_value(char * col_name);
   void inc_value(int id, uint64_t val);
   void dec_value(int id, uint64_t val);

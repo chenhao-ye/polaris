@@ -15,7 +15,7 @@ max_waiter=0
 ## workload
 wl="TPCC"
 wh=16
-perc=1 # payment percentage
+perc=0 # payment percentage
 user_abort="true"
 com="false"
 
@@ -24,6 +24,8 @@ threads=16
 profile="true"
 cnt=100000
 penalty=50000 
+
+#user_abort="false"
 
 python test_debug.py CC_ALG=$alg LATCH=$latch WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=$dynamic RETIRE_ON=$retire DEBUG_CS_PROFILING=${cs_pf} BB_OPT_RAW=${opt_raw} BB_OPT_MAX_WAITER=${max_waiter} WORKLOAD=${wl} NUM_WH=${wh} PERC_PAYMENT=$perc TPCC_USER_ABORT=${user_abort} COMMUTATIVE_OPS=$com THREAD_CNT=$threads DEBUG_PROFILING=${profile} MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty
 #

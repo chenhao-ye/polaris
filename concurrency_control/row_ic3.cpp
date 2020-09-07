@@ -40,7 +40,7 @@ Cell_ic3::access(row_t * local_row, Access * txn_access) {
     v2 = _tid;
   }
   txn_access->tids[idx] = v;
-  //printf("access row %lu cell %d v = %lu, _tid = %lu\n", _row->get_row_id(), idx, v, _tid);
+  //printf("access %p-%lu, v = %lu, _tid = %lu\n", _row, idx, v, _tid);
 }
 
 bool

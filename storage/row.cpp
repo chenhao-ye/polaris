@@ -123,20 +123,26 @@ void row_t::dec_value(int id, uint64_t val) {
 void row_t::set_value(int id, void * ptr) {
   int datasize = get_schema()->get_field_size(id);
   int pos = get_schema()->get_field_index(id);
-  memcpy( &data[pos], ptr, datasize);
 #if CC_ALG == IC3
   if (txn_access)
     txn_access->wr_accesses = (txn_access->wr_accesses | (1UL << id));
 #endif
+  memcpy( &data[pos], ptr, datasize);
+  //debugging
+  assert(data);
+  assert(ptr);
 }
 
 void row_t::set_value(int id, void * ptr, int size) {
   int pos = get_schema()->get_field_index(id);
-  memcpy( &data[pos], ptr, size);
 #if CC_ALG == IC3
   if (txn_access)
     txn_access->wr_accesses = (txn_access->wr_accesses | (1UL << id));
 #endif
+  memcpy( &data[pos], ptr, size);
+  //debugging
+  assert(data);
+  assert(ptr);
 }
 
 void row_t::set_value(const char * col_name, void * ptr) {
@@ -160,26 +166,31 @@ GET_VALUE(double);
 GET_VALUE(UInt32);
 GET_VALUE(SInt32);
 
-char * row_t::get_value(int id) {
+char * row_t::get_value(int idx) {
+  uint64_t id = (uint64_t) idx;
 #if CC_ALG == IC3
-  // try to acquire read access
-  this->manager->access(this, id, txn_access);
-  txn_access->rd_accesses = (txn_access->rd_accesses | (1UL << id));
+  if (txn_access) {
+    // try to acquire read access
+    this->manager->access(this, id, txn_access);
+    txn_access->rd_accesses = (txn_access->rd_accesses | (1UL << id));
+  }
 #endif
   return get_value_plain(id);
 }
 
-char * row_t::get_value_plain(int id) {
+char * row_t::get_value_plain(uint64_t id) {
   int pos = get_schema()->get_field_index(id);
   return &data[pos];
 }
 
 char * row_t::get_value(char * col_name) {
 #if CC_ALG == IC3
-  uint64_t id = get_schema()->get_field_id(col_name);
-  this->manager->access(this, id, txn_access);
-  txn_access->rd_accesses = (txn_access->rd_accesses | (1UL << id));
-  // copy data from orig row
+  if (txn_access) {
+    uint64_t id = get_schema()->get_field_id(col_name);
+    this->manager->access(this, id, txn_access);
+    txn_access->rd_accesses = (txn_access->rd_accesses | (1UL << id));
+    // copy data from orig row
+  }
 #endif
   uint64_t pos = get_schema()->get_field_index(col_name);
   return &data[pos];
@@ -189,6 +200,8 @@ char * row_t::get_data() { return data; }
 
 void row_t::set_data(char * data, uint64_t size) {
   memcpy(this->data, data, size);
+  assert(data);
+  assert(this->data);
 }
 // copy from the src to this
 void row_t::copy(row_t * src) {
@@ -199,11 +212,17 @@ void row_t::set_value_plain(int idx, void * ptr) {
   int datasize = get_schema()->get_field_size(idx);
   int pos = get_schema()->get_field_index(idx);
   memcpy(&data[pos], ptr, datasize);
+  //debugging
+  assert(data);
+  assert(ptr);
 }
 
 void row_t::copy(row_t * src, int idx) {
   char * ptr = src->get_value_plain(idx);
   set_value_plain(idx, ptr);
+  //debugging
+  assert(data);
+  assert(src->data);
 }
 
 void row_t::free_row() {

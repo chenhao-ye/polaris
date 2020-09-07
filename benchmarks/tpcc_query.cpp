@@ -10,9 +10,9 @@ void tpcc_query::init(uint64_t thd_id, workload * h_wl) {
   double x = (double)(rand() % 100) / 100.0;
   part_to_access = (uint64_t *)
       mem_allocator.alloc(sizeof(uint64_t) * g_part_cnt, thd_id);
-  if (x < g_perc_payment)
+  if (x < g_perc_payment) {
     gen_payment(thd_id);
-  else if (x < (g_perc_payment + g_perc_delivery))
+  } else if (x < (g_perc_payment + g_perc_delivery))
     gen_delivery(thd_id);
   else if (x < (g_perc_payment + g_perc_delivery + g_perc_orderstatus))
     gen_order_status(thd_id);

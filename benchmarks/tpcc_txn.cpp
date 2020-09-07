@@ -13,8 +13,7 @@
 #define RETIRE_ROW(row_cnt) { \
   access_cnt = row_cnt - 1; \
   if (retire_row(access_cnt) == Abort) \
-    return \
-  finish(Abort); \
+    return finish(Abort); \
 }
 
 void tpcc_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
@@ -338,11 +337,11 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
   row_t * r_dist_local;
   double d_tax;
   int64_t o_id;
-  int64_t o_d_id;
-  row_t * r_order;
+  //int64_t o_d_id;
   uint64_t row_id;
-  int64_t all_local;
-  row_t * r_no;
+  //row_t * r_order;
+  //int64_t all_local;
+  //row_t * r_no;
   // order
   int sum=0;
   uint64_t ol_i_id;
@@ -400,7 +399,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
   //retrieve the tax of warehouse
   r_wh_local->get_value(W_TAX, w_tax);
 #if CC_ALG == IC3
-  if (!end_piece(0))
+  if (end_piece(0) != RCOK)
     goto warehouse_piece;
 
   district_piece:
@@ -434,7 +433,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 #endif
 
 #if CC_ALG == IC3
-  if (!end_piece(1))
+  if (end_piece(1) != RCOK)
     goto district_piece;
 
   customer_piece:
@@ -463,7 +462,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 
 
 #if CC_ALG == IC3
-  if (!end_piece(2))
+  if (end_piece(2) != RCOK)
     goto customer_piece;
 
   neworder_piece: // 3
@@ -473,14 +472,15 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
   EXEC SQL INSERT INTO NEW_ORDER (no_o_id, no_d_id, no_w_id)
       VALUES (:o_id, :d_id, :w_id);
   +=======================================================*/
+  /*
   _wl->t_neworder->get_new_row(r_no, 0, row_id);
   r_no->set_value(NO_O_ID, o_id);
   r_no->set_value(NO_D_ID, d_id);
   r_no->set_value(NO_W_ID, w_id);
   //insert_row(r_no, _wl->t_neworder);
-
+  */
 #if CC_ALG == IC3
-  if (!end_piece(3))
+  if (end_piece(3) != RCOK)
     goto neworder_piece;
 
 order_piece: // 4
@@ -490,6 +490,7 @@ order_piece: // 4
   EXEC SQL INSERT INTO ORDERS (o_id, o_d_id, o_w_id, o_c_id, o_entry_d, o_ol_cnt, o_all_local)
       VALUES (:o_id, :d_id, :w_id, :c_id, :datetime, :o_ol_cnt, :o_all_local);
   +========================================================================================*/
+  /*
   _wl->t_order->get_new_row(r_order, 0, row_id);
   r_order->set_value(O_ID, o_id);
   r_order->set_value(O_C_ID, c_id);
@@ -497,34 +498,37 @@ order_piece: // 4
   r_order->set_value(O_W_ID, w_id);
   r_order->set_value(O_ENTRY_D, query->o_entry_d);
   r_order->set_value(O_OL_CNT, ol_cnt);
-  o_d_id=*(int64_t *) r_order->get_value(O_D_ID);
+  //o_d_id=*(int64_t *) r_order->get_value(O_D_ID);
+  o_d_id=d_id;
   all_local = (remote? 0 : 1);
   r_order->set_value(O_ALL_LOCAL, all_local);
   //insert_row(r_order, _wl->t_order);
   //may need to set o_ol_cnt=ol_cnt;
+  */
+  //o_d_id=d_id;
+
 #if CC_ALG == IC3
-  if (!end_piece(4))
+  if (end_piece(4) != RCOK)
     goto order_piece;
 
 item_piece: // 5
   begin_piece(5);
-  for (UInt32 ol_number = 0; ol_number < ol_cnt; ol_number++) {
-    ol_i_id = query->items[ol_number].ol_i_id;
-#if TPCC_USER_ABORT
-    // XXX(zhihan): if key is invalid, abort. user-initiated abort
-        // according to tpc-c documentation
-        if (ol_i_id == 0)
-          return finish(ERROR);
-#endif
-    ol_supply_w_id = query->items[ol_number].ol_supply_w_id;
-    ol_quantity = query->items[ol_number].ol_quantity;
-
     /*===========================================+
     EXEC SQL SELECT i_price, i_name , i_data
         INTO :i_price, :i_name, :i_data
         FROM item
         WHERE i_id = :ol_i_id;
     +===========================================*/
+  for (UInt32 ol_number = 0; ol_number < ol_cnt; ol_number++) {
+    ol_i_id = query->items[ol_number].ol_i_id;
+#if TPCC_USER_ABORT
+    // XXX(zhihan): if key is invalid, abort. user-initiated abort
+    // according to tpc-c documentation
+    if (ol_i_id == 0)
+      return finish(ERROR);
+#endif
+    ol_supply_w_id = query->items[ol_number].ol_supply_w_id;
+    ol_quantity = query->items[ol_number].ol_quantity;
     key = ol_i_id;
     item = index_read(_wl->i_item, key, 0);
     assert(item != NULL);
@@ -533,23 +537,22 @@ item_piece: // 5
     if (r_item_local == NULL) {
       return finish(Abort);
     }
-
     r_item_local->get_value(I_PRICE, i_price);
-    i_name = r_item_local->get_value(I_NAME);
-    i_data = r_item_local->get_value(I_DATA);
-    assert(i_name!=NULL);
-    assert(i_data!=NULL);
+    /*
+    //i_name = r_item_local->get_value(I_NAME);
+    //i_data = r_item_local->get_value(I_DATA);
+    //assert(i_name!=NULL);
+    //assert(i_data!=NULL);
+    assert(r_item_local->data);
+    */
   }
-  if (!end_piece(5))
+  
+  if (end_piece(5) != RCOK)
     goto item_piece;
 
 
 stock_piece: // 6
   begin_piece(6);
-  for (UInt32 ol_number = 0; ol_number < ol_cnt; ol_number++) {
-    ol_i_id = query->items[ol_number].ol_i_id;
-    ol_supply_w_id = query->items[ol_number].ol_supply_w_id;
-    ol_quantity = query->items[ol_number].ol_quantity;
     /*===================================================================+
     EXEC SQL SELECT s_quantity, s_data,
             s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05,
@@ -563,32 +566,37 @@ stock_piece: // 6
         WHERE s_i_id = :ol_i_id
         AND s_w_id = :ol_supply_w_id;
     +===============================================*/
-
+  for (UInt32 ol_number = 0; ol_number < ol_cnt; ol_number++) {
+    ol_i_id = query->items[ol_number].ol_i_id;
+    ol_supply_w_id = query->items[ol_number].ol_supply_w_id;
+    ol_quantity = query->items[ol_number].ol_quantity;
     stock_key = stockKey(ol_i_id, ol_supply_w_id);
     stock_index = _wl->i_stock;
     index_read(stock_index, stock_key, wh_to_part(ol_supply_w_id), stock_item);
-    assert(item != NULL);
+    assert(stock_item != NULL);
     r_stock = ((row_t *)stock_item->location);
     r_stock_local = get_row(r_stock, WR);
+    assert(r_stock_local->data);
     if (r_stock_local == NULL) {
       return finish(Abort);
     }
-
     // XXX s_dist_xx are not retrieved.
     s_quantity = *(int64_t *)r_stock_local->get_value(S_QUANTITY);
     //try to retrieve s_dist_xx
 #if !TPCC_SMALL
-    char* s_dist_01=(char *)r_stock_local->get_value(S_DIST_01);
-    char* s_dist_02=(char *)r_stock_local->get_value(S_DIST_02);
-    char* s_dist_03=(char *)r_stock_local->get_value(S_DIST_03);
-    char* s_dist_04=(char *)r_stock_local->get_value(S_DIST_04);
-    char* s_dist_05=(char *)r_stock_local->get_value(S_DIST_05);
-    char* s_dist_06=(char *)r_stock_local->get_value(S_DIST_06);
-    char* s_dist_07=(char *)r_stock_local->get_value(S_DIST_07);
-    char* s_dist_08=(char *)r_stock_local->get_value(S_DIST_08);
-    char* s_dist_09=(char *)r_stock_local->get_value(S_DIST_09);
-    char* s_dist_10=(char *)r_stock_local->get_value(S_DIST_10);
+    /*
+    s_dist_01=(char *)r_stock_local->get_value(S_DIST_01);
+    s_dist_02=(char *)r_stock_local->get_value(S_DIST_02);
+    s_dist_03=(char *)r_stock_local->get_value(S_DIST_03);
+    s_dist_04=(char *)r_stock_local->get_value(S_DIST_04);
+    s_dist_05=(char *)r_stock_local->get_value(S_DIST_05);
+    s_dist_06=(char *)r_stock_local->get_value(S_DIST_06);
+    s_dist_07=(char *)r_stock_local->get_value(S_DIST_07);
+    s_dist_08=(char *)r_stock_local->get_value(S_DIST_08);
+    s_dist_09=(char *)r_stock_local->get_value(S_DIST_09);
+    s_dist_10=(char *)r_stock_local->get_value(S_DIST_10);
     //char * s_data = "test";
+    */
     r_stock_local->get_value(S_YTD, s_ytd);
     r_stock_local->set_value(S_YTD, s_ytd + ol_quantity);
     r_stock_local->get_value(S_ORDER_CNT, s_order_cnt);
@@ -600,7 +608,6 @@ stock_piece: // 6
       s_remote_cnt ++;
       r_stock_local->set_value(S_REMOTE_CNT, &s_remote_cnt);
     }
-
     if (s_quantity > ol_quantity + 10) {
       quantity = s_quantity - ol_quantity;
     } else {
@@ -608,15 +615,11 @@ stock_piece: // 6
     }
     r_stock_local->set_value(S_QUANTITY, &quantity);
   }
-  if (!end_piece(6))
+  if (end_piece(6) != RCOK)
     goto stock_piece;
 
 orderline_piece: // 7
   begin_piece(7);
-  for (UInt32 ol_number = 0; ol_number < ol_cnt; ol_number++) {
-    ol_i_id = query->items[ol_number].ol_i_id;
-    ol_supply_w_id = query->items[ol_number].ol_supply_w_id;
-    ol_quantity = query->items[ol_number].ol_quantity;
     /*====================================================+
     EXEC SQL INSERT
         INTO order_line(ol_o_id, ol_d_id, ol_w_id, ol_number,
@@ -626,6 +629,11 @@ orderline_piece: // 7
             :ol_i_id, :ol_supply_w_id,
             :ol_quantity, :ol_amount, :ol_dist_info);
     +====================================================*/
+  /*
+  for (UInt32 ol_number = 0; ol_number < ol_cnt; ol_number++) {
+    ol_i_id = query->items[ol_number].ol_i_id;
+    ol_supply_w_id = query->items[ol_number].ol_supply_w_id;
+    ol_quantity = query->items[ol_number].ol_quantity;
     // XXX district info is not inserted.
     _wl->t_orderline->get_new_row(r_ol, 0, row_id);
     r_ol->set_value(OL_O_ID, &o_id);
@@ -668,7 +676,8 @@ orderline_piece: // 7
 #endif
     //insert_row(r_ol, _wl->t_orderline);
   }
-  if (!end_piece(7))
+    */
+  if (end_piece(7) != RCOK)
     goto orderline_piece;
 
 #else // if CC_ALG != IC3
@@ -731,16 +740,16 @@ orderline_piece: // 7
         s_quantity = *(int64_t *)r_stock_local->get_value(S_QUANTITY);
         //try to retrieve s_dist_xx
 #if !TPCC_SMALL
-        char* s_dist_01=(char *)r_stock_local->get_value(S_DIST_01);
-        char* s_dist_02=(char *)r_stock_local->get_value(S_DIST_02);
-        char* s_dist_03=(char *)r_stock_local->get_value(S_DIST_03);
-        char* s_dist_04=(char *)r_stock_local->get_value(S_DIST_04);
-        char* s_dist_05=(char *)r_stock_local->get_value(S_DIST_05);
-        char* s_dist_06=(char *)r_stock_local->get_value(S_DIST_06);
-        char* s_dist_07=(char *)r_stock_local->get_value(S_DIST_07);
-        char* s_dist_08=(char *)r_stock_local->get_value(S_DIST_08);
-        char* s_dist_09=(char *)r_stock_local->get_value(S_DIST_09);
-        char* s_dist_10=(char *)r_stock_local->get_value(S_DIST_10);
+        s_dist_01=(char *)r_stock_local->get_value(S_DIST_01);
+        s_dist_02=(char *)r_stock_local->get_value(S_DIST_02);
+        s_dist_03=(char *)r_stock_local->get_value(S_DIST_03);
+        s_dist_04=(char *)r_stock_local->get_value(S_DIST_04);
+        s_dist_05=(char *)r_stock_local->get_value(S_DIST_05);
+        s_dist_06=(char *)r_stock_local->get_value(S_DIST_06);
+        s_dist_07=(char *)r_stock_local->get_value(S_DIST_07);
+        s_dist_08=(char *)r_stock_local->get_value(S_DIST_08);
+        s_dist_09=(char *)r_stock_local->get_value(S_DIST_09);
+        s_dist_10=(char *)r_stock_local->get_value(S_DIST_10);
         //char * s_data = "test";
         r_stock_local->get_value(S_YTD, s_ytd);
         r_stock_local->set_value(S_YTD, s_ytd + ol_quantity);
@@ -776,6 +785,7 @@ orderline_piece: // 7
                 :ol_quantity, :ol_amount, :ol_dist_info);
         +====================================================*/
         // XXX district info is not inserted.
+	/*
         _wl->t_orderline->get_new_row(r_ol, 0, row_id);
         r_ol->set_value(OL_O_ID, &o_id);
         r_ol->set_value(OL_D_ID, &d_id);
@@ -812,6 +822,7 @@ orderline_piece: // 7
         r_ol->set_value(OL_QUANTITY, &ol_quantity);
         r_ol->set_value(OL_AMOUNT, &ol_amount);
 #endif
+        */
 #if !TPCC_SMALL
     sum+=ol_amount;
 #endif
