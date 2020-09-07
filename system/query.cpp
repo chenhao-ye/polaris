@@ -67,13 +67,12 @@ Query_queue::threadInitQuery(void * This) {
 
 void 
 Query_thd::init(workload * h_wl, int thread_id) {
-	uint64_t request_cnt;
 	q_idx = 0;
 #if TPCC_USER_ABORT
-	request_cnt = WARMUP / g_thread_cnt + MAX_TXN_PER_PART + 4 +
+	request_cnt = WARMUP / g_thread_cnt + MAX_TXN_PER_PART + 100 +
 	    MAX_TXN_PER_PART / 100;
 #else
-    request_cnt = WARMUP / g_thread_cnt + MAX_TXN_PER_PART + 4;
+    request_cnt = WARMUP / g_thread_cnt + MAX_TXN_PER_PART + 100;
 #endif
 #if ABORT_BUFFER_ENABLE
     request_cnt += ABORT_BUFFER_SIZE;
@@ -99,6 +98,8 @@ Query_thd::init(workload * h_wl, int thread_id) {
 
 base_query * 
 Query_thd::get_next_query() {
+	if (q_idx >= request_cnt-1)
+		return NULL;
 	base_query * query = &queries[q_idx++];
 	return query;
 }

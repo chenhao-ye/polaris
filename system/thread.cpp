@@ -96,6 +96,7 @@ RC thread_t::run() {
 			} else {
 				if (rc == RCOK) {
 					m_query = query_queue->get_next_query( _thd_id );
+					assert(m_query);
                                         txn_starttime = starttime;
                                 }
 			}
