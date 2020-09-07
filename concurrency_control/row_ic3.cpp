@@ -121,24 +121,22 @@ Cell_ic3::rm_from_acclist(txn_man * txn, bool aborted) {
   IC3LockEntry * en = acclist;
   IC3LockEntry * to_rm = NULL;
   bool set_abort = false;
-  if (aborted) {
-    while(en != NULL) {
-      if (en->txn == txn) {
-        to_rm = en;
-        if (en->type == WR)
-          set_abort = true;
-        else
-          break;
-      } else if (set_abort) {
-        assert(en->txn->set_abort() == ABORTED);
-      }
-      en = en->next;
+  while(en != NULL) {
+    if (en->txn == txn) {
+      to_rm = en;
+      if (aborted && (en->type == WR))
+        set_abort = true;
+      else
+        break;
+    } else if (set_abort) {
+      assert(en->txn->set_abort() == ABORTED);
     }
-    if (to_rm) {
-      LIST_REMOVE_HT(en, acclist, acclist_tail);
-      acclist_cnt--;
-      free(en);
-    }
+    en = en->next;
+  }
+  if (to_rm) {
+    LIST_REMOVE_HT(en, acclist, acclist_tail);
+    acclist_cnt--;
+    free(en);
   }
   release();
 }
