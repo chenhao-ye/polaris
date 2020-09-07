@@ -133,6 +133,7 @@ class txn_man
   void          begin_piece(int piece_id);
   RC            end_piece(int piece_id);
   void          abort_ic3();
+  int           get_txn_pieces(int tpe);
 #endif
 
   // For OCC

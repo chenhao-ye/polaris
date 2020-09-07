@@ -8,6 +8,9 @@ class table_t;
 class INDEX;
 class tpcc_query;
 	
+#define IC3_TPCC_NEW_ORDER_PIECES   8
+#define IC3_TPCC_PAYMENT_PIECES     4
+#define IC3_TPCC_DELIVERY_PIECES    4
 
 class tpcc_wl : public workload {
 public:

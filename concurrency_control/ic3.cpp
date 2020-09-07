@@ -26,9 +26,22 @@
   } \
 }
 
-#define GET_IC3_TPCC_PIECES(tpe) IC3_ ## tpe ## _PIECES
-
 #if CC_ALG == IC3
+int 
+txn_man::get_txn_pieces(int tpe) {
+  switch(tpe) {
+    case TPCC_PAYMENT :
+	    return IC3_TPCC_PAYMENT_PIECES;
+    case TPCC_NEW_ORDER:
+	    return IC3_TPCC_NEW_ORDER_PIECES;
+    case TPCC_DELIVERY:
+	    return IC3_TPCC_DELIVERY_PIECES;
+    default:
+	    assert(false);
+  }
+  return 0;
+}
+
 void txn_man::begin_piece(int piece_id) {
   //printf("begin piece %d\n", piece_id);
   piece_starttime = get_sys_clock();
@@ -53,11 +66,13 @@ void txn_man::begin_piece(int piece_id) {
     } else {
 #if IC3_RENDEZVOUS
       // find the next avaiable rendezvous piece in T'
-      if (piece_id + 1 != GET_IC3_TPCC_PIECES(curr_type)) {
+      if (piece_id + 1 != get_txn_pieces(curr_type)) {
         bool rendezvous = false;
         SC_PIECE * r;
-        for (int q = piece_id+1; npid < GET_IC3_TPCC_PIECES(curr_type); q++) {
-          SC_PIECE * next_cedges = h_wl->get_cedges(curr_type, npid);
+        for (int q = piece_id+1; q < get_txn_pieces(curr_type); q++) {
+          SC_PIECE * next_cedges = h_wl->get_cedges(curr_type, q);
+	  if (next_cedges == NULL)
+		  continue; // no conflicting edges
           r = &(next_cedges[depqueue[i]->txn->curr_type]);
           if (r->txn_type != TPCC_ALL) {
             rendezvous = true;
@@ -87,9 +102,7 @@ void txn_man::begin_piece(int piece_id) {
 RC txn_man::end_piece(int piece_id) {
 #if IC3_EAGER_EXEC
   SC_PIECE * cedges = h_wl->get_cedges(curr_type, piece_id);
-  if (cedges == NULL) {
-    return; // skip to execute phase
-  }
+  if (cedges != NULL) {
   int i;
   SC_PIECE * p_prime;
   uint64_t starttime = get_sys_clock();
@@ -104,11 +117,13 @@ RC txn_man::end_piece(int piece_id) {
     } else {
 #if IC3_RENDEZVOUS
       // find the next avaiable rendezvous piece in T'
-      if (piece_id + 1 != GET_IC3_TPCC_PIECES(curr_type)) {
+      if (piece_id + 1 != get_txn_pieces(curr_type)) {
         bool rendezvous = false;
         SC_PIECE * r;
-        for (int q = piece_id+1; npid < GET_IC3_TPCC_PIECES(curr_type); q++) {
-          SC_PIECE * next_cedges = h_wl->get_cedges(curr_type, npid);
+        for (int q = piece_id+1; q < get_txn_pieces(curr_type); q++) {
+          SC_PIECE * next_cedges = h_wl->get_cedges(curr_type, q);
+	  if (next_cedges == NULL)
+		  continue; // no conflicting edges
           r = &(next_cedges[depqueue[i]->txn->curr_type]);
           if (r->txn_type != TPCC_ALL) {
             rendezvous = true;
@@ -132,6 +147,7 @@ RC txn_man::end_piece(int piece_id) {
     }
   }
   INC_TMP_STATS(get_thd_id(), time_wait, get_sys_clock() - starttime);
+  } // if (cedges != NULL), skip to validate phase.
 #endif
   RC rc = RCOK;
   int piece_access_cnt = row_cnt - access_marker;
