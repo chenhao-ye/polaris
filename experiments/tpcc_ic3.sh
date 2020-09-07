@@ -1,7 +1,7 @@
 cd ../
 rm outputs/stats.json
 cp -r config-std.h config.h
-fname="tpcc_ic3_payment_only"
+fname="tpcc_ic3_base"
 
 ## algorithm
 alg=BAMBOO
@@ -19,7 +19,7 @@ max_waiter=0
 wl="TPCC"
 wh=2
 perc=1 # payment percentage
-user_abort="false"
+user_abort="true"
 com="false"
 
 #other
@@ -36,7 +36,10 @@ for threads in 1 2 4 8 16 32
 do
 for wh in 1 2 4 8 16
 do
+for perc in 0 0.5 1
+do
 timeout 100 python test.py CC_ALG=$alg LATCH=$latch WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=$dynamic RETIRE_ON=$retire DEBUG_CS_PROFILING=${cs_pf} BB_OPT_RAW=${opt_raw} BB_OPT_MAX_WAITER=${max_waiter} WORKLOAD=${wl} NUM_WH=${wh} PERC_PAYMENT=$perc TPCC_USER_ABORT=${user_abort} COMMUTATIVE_OPS=$com THREAD_CNT=$threads DEBUG_PROFILING=${profile} MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty
+done
 done
 done
 done
