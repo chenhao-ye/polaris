@@ -270,7 +270,6 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
     num_accesses_alloc++;
   }
   //printf("txn-%lu access(%p) row %p at access[%d]\n", txn_id, accesses[row_cnt], row , row_cnt);
-  assert(accesses[row_cnt]->data->data != NULL);
 #if (CC_ALG == WOUND_WAIT) || (CC_ALG == BAMBOO)
   rc = row->get_row(type, this, accesses[ row_cnt ]->orig_row,
                     accesses[row_cnt]);
