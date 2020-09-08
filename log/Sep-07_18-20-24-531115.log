@@ -1,0 +1,14 @@
+{"NUM_WH": "1", "WORKLOAD": "TPCC", "THREAD_CNT": "16", "BB_OPT_RAW": "true", "PERC_PAYMENT": "1", "WW_STARV_FREE": "false", "COMMUTATIVE_OPS": "false", "MAX_TXN_PER_PART": "100000", "ABORT_PENALTY": "50000", "DEBUG_CS_PROFILING": "false", "RETIRE_ON": "true", "DYNAMIC_TS": "true", "BB_OPT_MAX_WAITER": "0", "LATCH": "LH_MCSLOCK", "TPCC_USER_ABORT": "true", "DEBUG_PROFILING": "true", "CC_ALG": "WAIT_DIE"}
+mem_allocator initialized!
+WAIT_DIE
+reading schema file: ./benchmarks/TPCC_full_schema.txt
+init table WAREHOUSE at 0x7f73d6c45540
+init table DISTRICT at 0x7f73d6c455c0
+init table CUSTOMER at 0x7f73d6c45640
+init table HISTORY at 0x7f73d6c456c0
+init table NEW-ORDER at 0x7f73d6c45740
+init table ORDER at 0x7f73d6c457c0
+init table ORDER-LINE at 0x7f73d6c45840
+init table ITEM at 0x7f73d6c458c0
+init table STOCK at 0x7f73d6c45940
+TPCC schema initialized
