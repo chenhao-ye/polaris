@@ -298,10 +298,10 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
   accesses[row_cnt]->data->orig = row;
   accesses[row_cnt]->orig_row = row;
   #if !IC3_FIELD_LOCKING
-  accesses[row_cnt]->data->manager->access(accesses[row_cnt]->data, txn_access);
+  row->get_row(type, this, row, accesses[row_cnt]);
   #endif
 #else
-  rc = row->get_row(type, this, accesses[ row_cnt ]->data);
+  rc = row->get_row(type, this, accesses[ row_cnt ]->data, accesses[row_cnt]);
   if (rc == Abort)
     return NULL;
   accesses[row_cnt]->orig_row = row;

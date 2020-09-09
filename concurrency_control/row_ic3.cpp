@@ -202,7 +202,7 @@ Row_ic3::add_to_acclist(txn_man * txn, access_t type) {
 }
 
 void
-Row_ic3::rm_from_acclist(txn_man * txn, bool aborted=false) {
+Row_ic3::rm_from_acclist(txn_man * txn, bool aborted) {
   // modifying acclist, acquire latch
   while(try_lock() == false)
     continue;

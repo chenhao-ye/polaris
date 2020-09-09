@@ -329,6 +329,7 @@ txn_man::validate_ic3() {
         }
         access->orig_row->manager->rm_from_acclist(j, this);
       }
+    }
 #else
       if (access->type == WR) {
         access->orig_row->manager->update_version(this->get_txn_id());
@@ -356,7 +357,6 @@ txn_man::validate_ic3() {
         access->com_op = COM_NONE;
       }
 #endif
-    }
   }
   return RCOK;
 }

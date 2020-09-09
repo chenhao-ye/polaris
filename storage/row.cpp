@@ -240,7 +240,10 @@ RC row_t::retire_row(void * lock_entry) {
 
 RC row_t::get_row(access_t type, txn_man * txn, row_t *& row, Access * access) {
   RC rc = RCOK;
-#if CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT || CC_ALG == BAMBOO
+#if CC_ALG == IC3
+  this->manager->access(access->data, access);
+  return rc;
+#elif CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT || CC_ALG == BAMBOO
   uint64_t thd_id = txn->get_thd_id();
   lock_t lt = (type == RD || type == SCAN)? LOCK_SH : LOCK_EX;
   #if CC_ALG == DL_DETECT

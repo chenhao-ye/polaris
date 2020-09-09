@@ -84,8 +84,8 @@ class Row_ic3 {
   row_t * 			    _row;
 
  private:
-#if IC3_FIELD_LOCKING
-  volatile uint64_t	    _tid;
+#if !IC3_FIELD_LOCKING
+  volatile uint64_t	_tid;
   uint64_t              idx;
   int                   acclist_cnt;
   IC3LockEntry *        acclist;
