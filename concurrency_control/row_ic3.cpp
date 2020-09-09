@@ -146,108 +146,102 @@ void
 Row_ic3::init(row_t * row)
 {
   _row = row;
-  //_tid_word = 0; // not used by cell-level lock
+#if IC3_FIELD_LOCKING
   cell_managers = (Cell_ic3 *) _mm_malloc(sizeof(Cell_ic3)
       *row->get_field_cnt(), 64);
   for (UInt32 i = 0; i < row->get_field_cnt(); i++) {
     cell_managers[i].init(row,(int)i);
   }
+#else // tuple-level locking
+  _tid = 0;
+  acclist = NULL;
+  acclist_tail = NULL;
+  acclist_cnt = 0;
+  lock = 0;
+#endif
 }
 
-/*
-RC
-Row_ic3::access(txn_man * txn, row_t * local_row) {
-  // called only if using tuple-level locks
+#if !IC3_FIELD_LOCKING
+bool
+Row_ic3::try_lock() {
+  if (lock == 1)
+    return false;
+  return ATOM_CAS(lock, 0, 1);
+}
+
+IC3LockEntry *
+Row_ic3::get_last_writer() {
+  IC3LockEntry * en = acclist_tail;
+  while(en != NULL) {
+    if (en->type == WR)
+      break;
+    en = en->prev;
+  }
+  return en;
+}
+
+IC3LockEntry *
+Row_ic3::get_last_accessor() {
+  if (acclist_tail)
+    return acclist_tail;
+  return NULL;
+}
+
+void
+Row_ic3::add_to_acclist(txn_man * txn, access_t type) {
+  // get new lock entry
+  IC3LockEntry * new_entry = (IC3LockEntry *) mem_allocator.alloc(sizeof(IC3LockEntry), _row->get_part_id());
+  new_entry->type = type;
+  new_entry->txn_id = txn->get_txn_id();
+  new_entry->txn = txn;
+  new_entry->prev = NULL;
+  new_entry->next = NULL;
+  // add to tail
+  LIST_PUT_TAIL(acclist, acclist_tail, new_entry);
+  acclist_cnt++;
+}
+
+void
+Row_ic3::rm_from_acclist(txn_man * txn, bool aborted=false) {
+  // modifying acclist, acquire latch
+  while(try_lock() == false)
+    continue;
+  IC3LockEntry * en = acclist;
+  IC3LockEntry * to_rm = NULL;
+  bool set_abort = false;
+  while(en != NULL) {
+    if (en->txn == txn) {
+      to_rm = en;
+      if (aborted && (en->type == WR))
+        set_abort = true;
+      else
+        break;
+    } else if (set_abort) {
+      assert(en->txn->set_abort() == ABORTED);
+    }
+    en = en->next;
+  }
+  if (to_rm) {
+    LIST_REMOVE_HT(to_rm, acclist, acclist_tail);
+    acclist_cnt--;
+    free(to_rm);
+  }
+  release();
+}
+
+void
+Row_ic3::access(row_t * local_row, Access * txn_access) {
   uint64_t v = 0;
   uint64_t v2 = 1;
   while (v2 != v) {
-    v = _tid_word;
-    while (v & LOCK_BIT) {
-      PAUSE
-          v = _tid_word;
-    }
+    v = _tid;
+    // copy from orig row to local row
     local_row->copy(_row);
     COMPILER_BARRIER
-    v2 = _tid_word;
+    v2 = _tid;
   }
-  //txn->last_tid = _tid_word;
-  return RCOK;
-}*/
-
-void
-Row_ic3::access(row_t * local_row, uint64_t idx, Access * txn_access) {
-  cell_managers[idx].access(local_row, txn_access);
+  txn_access->tid = v;
 }
 
-bool
-Row_ic3::try_lock(uint64_t idx) {
-  return cell_managers[idx].try_lock();
-}
-
-
-///////////////////  fen ge xian ///////////////////
-
-/*
-bool
-Row_ic3::validate(ts_t tid, bool in_write_set) {
-  uint64_t v = _tid_word;
-  if (in_write_set)
-    return tid == (v & (~LOCK_BIT));
-
-  if (v & LOCK_BIT)
-    return false;
-  else if (tid != (v & (~LOCK_BIT)))
-    return false;
-  else
-    return true;
-}
-
-void
-Row_ic3::write(row_t * data, uint64_t tid) {
-  _row->copy(data);
-  uint64_t v = _tid_word;
-  M_ASSERT(tid > (v & (~LOCK_BIT)) && (v & LOCK_BIT), "tid=%ld, v & LOCK_BIT=%ld, v & (~LOCK_BIT)=%ld\n", tid, (v & LOCK_BIT), (v & (~LOCK_BIT)));
-  _tid_word = (tid | LOCK_BIT);
-}
-
-void
-Row_silo::lock() {
-  uint64_t v = _tid_word;
-  while ((v & LOCK_BIT) || !__sync_bool_compare_and_swap(&_tid_word, v, v | LOCK_BIT)) {
-    PAUSE
-        v = _tid_word;
-  }
-}
-
-void
-Row_silo::release() {
-#if ATOMIC_WORD
-  assert(_tid_word & LOCK_BIT);
-	_tid_word = _tid_word & (~LOCK_BIT);
-#else
-  pthread_mutex_unlock( _latch );
-#endif
-}
-
-bool
-Row_silo::try_lock()
-{
-#if ATOMIC_WORD
-  uint64_t v = _tid_word;
-	if (v & LOCK_BIT) // already locked
-		return false;
-	return __sync_bool_compare_and_swap(&_tid_word, v, (v | LOCK_BIT));
-#else
-  return pthread_mutex_trylock( _latch ) != EBUSY;
-#endif
-}
-
-uint64_t
-Row_silo::get_tid()
-{
-  assert(ATOMIC_WORD);
-  return _tid_word & (~LOCK_BIT);
-}
-*/
-
-#endif
+#endif // Tuple-level locking
+#endif // IC3

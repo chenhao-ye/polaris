@@ -41,6 +41,7 @@ class Access {
 #elif CC_ALG == IC3
   ts_t *    tids;
   ts_t      epochs;
+  uint64_t  tid;
   uint64_t  rd_accesses;
   uint64_t  wr_accesses;
   uint64_t  lk_accesses;

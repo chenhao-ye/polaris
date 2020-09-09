@@ -124,6 +124,7 @@ void row_t::set_value(int id, void * ptr) {
   int datasize = get_schema()->get_field_size(id);
   int pos = get_schema()->get_field_index(id);
 #if CC_ALG == IC3
+  // assume no blind writes.
   if (txn_access)
     txn_access->wr_accesses = (txn_access->wr_accesses | (1UL << id));
 #endif
@@ -136,6 +137,7 @@ void row_t::set_value(int id, void * ptr) {
 void row_t::set_value(int id, void * ptr, int size) {
   int pos = get_schema()->get_field_index(id);
 #if CC_ALG == IC3
+  // assume no blind writes.
   if (txn_access)
     txn_access->wr_accesses = (txn_access->wr_accesses | (1UL << id));
 #endif
@@ -148,6 +150,7 @@ void row_t::set_value(int id, void * ptr, int size) {
 void row_t::set_value(const char * col_name, void * ptr) {
   uint64_t id = get_schema()->get_field_id(col_name);
 #if CC_ALG == IC3
+  // assume no blind writes.
   if (txn_access)
     txn_access->wr_accesses = (txn_access->wr_accesses | (1UL << id));
 #endif
@@ -168,7 +171,7 @@ GET_VALUE(SInt32);
 
 char * row_t::get_value(int idx) {
   uint64_t id = (uint64_t) idx;
-#if CC_ALG == IC3
+#if CC_ALG == IC3 && IC3_FIELD_LOCKING
   if (txn_access) {
     // try to acquire read access
     this->manager->access(this, id, txn_access);
@@ -184,7 +187,7 @@ char * row_t::get_value_plain(uint64_t id) {
 }
 
 char * row_t::get_value(char * col_name) {
-#if CC_ALG == IC3
+#if CC_ALG == IC3 && IC3_FIELD_LOCKING
   if (txn_access) {
     uint64_t id = get_schema()->get_field_id(col_name);
     this->manager->access(this, id, txn_access);

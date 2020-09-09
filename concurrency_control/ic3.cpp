@@ -27,17 +27,17 @@
 }
 
 #if CC_ALG == IC3
-int 
+int
 txn_man::get_txn_pieces(int tpe) {
   switch(tpe) {
     case TPCC_PAYMENT :
-	    return IC3_TPCC_PAYMENT_PIECES;
+      return IC3_TPCC_PAYMENT_PIECES;
     case TPCC_NEW_ORDER:
-	    return IC3_TPCC_NEW_ORDER_PIECES;
+      return IC3_TPCC_NEW_ORDER_PIECES;
     case TPCC_DELIVERY:
-	    return IC3_TPCC_DELIVERY_PIECES;
+      return IC3_TPCC_DELIVERY_PIECES;
     default:
-	    assert(false);
+      assert(false);
   }
   return 0;
 }
@@ -60,8 +60,8 @@ void txn_man::begin_piece(int piece_id) {
     if (p_prime->txn_type != TPCC_ALL) {
       // exist c-edge with T'. wait for p' to commit
       while(depqueue[i]->txn_id == depqueue[i]->txn->get_txn_id() &&
-      (p_prime->piece_id >= depqueue[i]->txn->curr_piece) &&
-      (depqueue[i]->txn->status == RUNNING))
+          (p_prime->piece_id >= depqueue[i]->txn->curr_piece) &&
+          (depqueue[i]->txn->status == RUNNING))
         continue;
     } else {
 #if IC3_RENDEZVOUS
@@ -152,7 +152,7 @@ RC txn_man::end_piece(int piece_id) {
   RC rc = RCOK;
   int piece_access_cnt = row_cnt - access_marker;
   if (piece_access_cnt == 0)
-	  return rc;
+    return rc;
   int read_set[piece_access_cnt];
   int cur_rd_idx = 0;
   // lock records in p’s read+writeset (using a sorted order to avoid ddl)
@@ -173,7 +173,7 @@ RC txn_man::end_piece(int piece_id) {
       }
     }
   }
-  // lock record's read+write set cell, as write is the subset, just lock
+  // lock record's read+write set data, as write is the subset, just lock
   // read set; validate p’s readset
   int num_locked = 0;
   bool acquired = false;
@@ -182,34 +182,41 @@ RC txn_man::end_piece(int piece_id) {
   row_t * row;
   for (int i = 0; i < piece_access_cnt; i++) {
     access = accesses[read_set[i]];
-    assert(read_set[i] < row_cnt && (read_set[i] >= access_marker));
+    //assert(read_set[i] < row_cnt && (read_set[i] >= access_marker));
     row = access->orig_row;
+#if !IC3_FIELD_LOCKING
+    acquired = row->manager->try_lock();
+    if (acquired) {
+      num_locked++;
+      access->lk_accesses = 1;
+    }
+    if (!acquired || (row->manager->get_tid() != access->tid)) {
+      rc = Abort;
+      goto final;
+    }
+#else
     for (UInt32 j = 0; j < row->get_field_cnt(); j++) {
       if (access->rd_accesses & (1UL << j)) {
-	acquired = row->manager->try_lock(j);
-	if (acquired) {
-            num_locked++;
-	    access->lk_accesses = (access->lk_accesses | (1UL << j));
-	}
+        acquired = row->manager->try_lock(j);
+        if (acquired) {
+          num_locked++;
+          access->lk_accesses = (access->lk_accesses | (1UL << j));
+        }
         if (!acquired || (row->manager->get_tid(j) != access->tids[j])) {
-/*
-          if (acquired)
-          printf("[version fail] txn-%lu[i=%d] aborted piece %d at %p-%u\n", get_txn_id(), i, curr_piece, row, j);
-	  else
-          printf("[lock fail] txn-%lu[i=%d] aborted piece %d at %p-%u\n", get_txn_id(), i, curr_piece, row, j);
-	  assert(false);
-*/
           rc = Abort;
           goto final;
         }
       }
     }
+#endif
   }
+
   // foreach d in p.readset/p.writeset:
   for (int i = 0; i < piece_access_cnt; i++) {
     access = accesses[read_set[i]];
-    assert(read_set[i] < row_cnt && (read_set[i] >= access_marker));
+    //assert(read_set[i] < row_cnt && (read_set[i] >= access_marker));
     row = access->orig_row;
+#if IC3_FIELD_LOCKING
     for (UInt32 j = 0; j < row->get_field_cnt(); j++) {
       if (access->rd_accesses & (1UL << j)) {
         IC3LockEntry * Tw = row->manager->get_last_writer(j);
@@ -224,35 +231,63 @@ RC txn_man::end_piece(int piece_id) {
         }
       }
     }
+#else
+    IC3LockEntry * Tw = row->manager->get_last_writer();
+    APPEND_TO_DEPQ(Tw);
+    if (access->type == WR) {
+      IC3LockEntry * Trw = row->manager->get_last_accessor();
+      if (Trw != Tw) {
+        APPEND_TO_DEPQ(Trw);
+      }
+      row->manager->add_to_acclist(this, WR);
+    } else {
+      row->manager->add_to_acclist(this, RD);
+    }
+#endif
   }
+
   // release grabbed locks
   for (int i = 0; i < piece_access_cnt; i++) {
     access = accesses[read_set[i]];
-    assert(read_set[i] < row_cnt && (read_set[i] >= access_marker));
+    //assert(read_set[i] < row_cnt && (read_set[i] >= access_marker));
     row = access->orig_row;
+#if IC3_FIELD_LOCKING
     for (UInt32 j = 0; j < row->get_field_cnt(); j++) {
       if (access->lk_accesses & (1UL << j)) {
         row->manager->release(j);
-	num_locked--;
+        num_locked--;
       }
     }
+#else
+    if (access->lk_accesses) {
+      row->manager->release();
+      num_locked--;
+    }
+#endif
   }
   assert(num_locked == 0);
   curr_piece++;
 
-final:
+  final:
   if (rc == Abort) {
     // unlock locked entries
     for (int i = 0; i < piece_access_cnt; i++) {
       access = accesses[read_set[i]];
-      assert(read_set[i] < row_cnt && (read_set[i] >= access_marker));
+      //assert(read_set[i] < row_cnt && (read_set[i] >= access_marker));
       row = access->orig_row;
+#if IC3_FIELD_LOCKING
       for (UInt32 j = 0; j < row->get_field_cnt(); j++) {
-        if (access->lk_accesses & (1 << j)) {
+        if (access->lk_accesses & (1UL << j)) {
           row->manager->release(j);
           num_locked--;
         }
       }
+#else
+      if (access->lk_accesses) {
+        row->manager->release();
+        num_locked--;
+      }
+#endif
       INC_STATS(get_thd_id(), time_abort, get_sys_clock() - piece_starttime);
     }
     assert(num_locked == 0);
@@ -271,7 +306,7 @@ txn_man::validate_ic3() {
 #endif
   for (int i = 0; i < depqueue_sz; i++) {
     while (depqueue[i]->txn->get_txn_id() == depqueue[i]->txn_id &&
-    depqueue[i]->txn->status == RUNNING) {
+        depqueue[i]->txn->status == RUNNING) {
       PAUSE
       continue;
     }
@@ -280,24 +315,40 @@ txn_man::validate_ic3() {
     }
   }
 #if DEBUG_PROFILING
-    INC_STATS(get_thd_id(), time_commit, get_sys_clock() - starttime);
+  INC_STATS(get_thd_id(), time_commit, get_sys_clock() - starttime);
 #endif
   Access * access;
   for (int i = 0; i < row_cnt; i++) {
     access = accesses[i];
+#if IC3_FIELD_LOCKING
     for (UInt32 j = 0; j < access->orig_row->get_field_cnt(); j++) {
       if (access->rd_accesses & (1 << j)) {
         if (access->wr_accesses & (1 << j)) {
           access->orig_row->manager->update_version(j, this->get_txn_id());
-	  //printf("txn-%lu update verison to its id for %p-%u\n", get_txn_id(), access->orig_row, j);
           access->orig_row->set_value_plain(j, access->data->get_value_plain(j));
         }
-      access->orig_row->manager->rm_from_acclist(j, this);
+        access->orig_row->manager->rm_from_acclist(j, this);
       }
+#else
+      if (access->type == WR) {
+        access->orig_row->manager->update_version(this->get_txn_id());
+        // XXX(zhihan): copy modified fields only
+        for (UInt32 j = 0; j < access->orig_row->get_field_cnt(); j++) {
+          if (access->wr_accesses & (1 << j))
+            access->orig_row->set_value_plain(j, access->data->get_value_plain(j));
+        }
+      }
+    access->orig_row->manager->rm_from_acclist(this);
+#endif
 #if COMMUTATIVE_OPS
       // commutative ops
       if (access->com_op != COM_NONE ) {
+#if IC3_FIELD_LOCKING
         access->orig_row->manager->update_version(access->com_col, get_txn_id());
+#else
+        if (access->type == RD)
+          access->orig_row->manager->update_version(get_txn_id());
+#endif
         if (access->com_op == COM_INC)
           access->orig_row->inc_value(access->com_col, access->com_val);
         else
@@ -326,11 +377,16 @@ txn_man::abort_ic3() {
   Access * access;
   for (int i = 0; i < row_cnt; i++) {
     access = accesses[i];
+#if IC3_FIELD_LOCKING
     for (UInt32 j = 0; j < access->orig_row->get_field_cnt(); j++) {
       if (access->rd_accesses & (1 << j)) {
         access->orig_row->manager->rm_from_acclist(j, this, true); // aborted
       }
     }
+#else
+    access->orig_row->manager->rm_from_acclist(this, true);
+#endif
   }
+
 }
 #endif

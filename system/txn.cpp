@@ -235,15 +235,19 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
     access->com_op = COM_NONE;
 #endif
     accesses[row_cnt] = access;
-#if (CC_ALG == SILO || CC_ALG == TICTOC || CC_ALG == IC3)
+#if (CC_ALG == SILO || CC_ALG == TICTOC)
     access->data = (row_t *) _mm_malloc(sizeof(row_t), 64);
     access->data->init(MAX_TUPLE_SIZE);
-#if CC_ALG == IC3
-    access->tids = (ts_t *) _mm_malloc(sizeof(ts_t) * MAX_FIELD_SIZE, 64);
-#else
     access->orig_data = (row_t *) _mm_malloc(sizeof(row_t), 64);
     access->orig_data->init(MAX_TUPLE_SIZE);
-#endif
+#elif (CC_ALG == IC3)
+    access->data = (row_t *) _mm_malloc(sizeof(row_t), 64);
+    access->data->init(MAX_TUPLE_SIZE);
+    #if IC3_FIELD_LOCKING
+    access->tids = (ts_t *) _mm_malloc(sizeof(ts_t) * MAX_FIELD_SIZE, 64);
+    #else
+    access->tid = 0;
+    #endif
 #elif (CC_ALG == WOUND_WAIT)
     // allocate lock entry as well
     assign_lock_entry(access);
@@ -284,7 +288,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
   accesses[row_cnt]->orig_row = row;
 #elif CC_ALG == IC3
   assert(rc == RCOK);
-  // re-initialize read/write sets for the tuple. 
+  // re-initialize read/write sets for the tuple.
   accesses[row_cnt]->rd_accesses = 0;
   accesses[row_cnt]->wr_accesses = 0;
   accesses[row_cnt]->lk_accesses = 0;
@@ -293,6 +297,9 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
   accesses[row_cnt]->data->table = row->get_table();
   accesses[row_cnt]->data->orig = row;
   accesses[row_cnt]->orig_row = row;
+  #if !IC3_FIELD_LOCKING
+  accesses[row_cnt]->data->manager->access(accesses[row_cnt]->data, txn_access);
+  #endif
 #else
   rc = row->get_row(type, this, accesses[ row_cnt ]->data);
   if (rc == Abort)
