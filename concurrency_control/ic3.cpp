@@ -148,12 +148,15 @@ RC txn_man::end_piece(int piece_id) {
   }
   INC_TMP_STATS(get_thd_id(), time_wait, get_sys_clock() - starttime);
   } // if (cedges != NULL), skip to validate phase.
-#endif
-  RC rc = RCOK;
+  else
+	  return RCOK;
+#else
   SC_PIECE * cedges = h_wl->get_cedges(curr_type, piece_id);
   if (cedges == NULL) {
-    return rc; // skip commit phase
+    return RCOK; // skip commit phase
   }
+#endif
+  RC rc = RCOK;
   int piece_access_cnt = row_cnt - access_marker;
   if (piece_access_cnt == 0)
     return rc;
