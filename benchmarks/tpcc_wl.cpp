@@ -486,7 +486,7 @@ tpcc_wl::init_scgraph() {
         } else if (j == 0) { // warehouse
           for (k = 0; k < TPCC_ALL; k++) {
             ADD_SELF_EDGE(PAYMENT, 0)
-            ADD_EDGE(NEW_ORDER, neworder, 0)
+            //ADD_EDGE(NEW_ORDER, neworder, 0)
             ADD_OTHER_EDGE()
           }
         } else if (j == 1) { // district
@@ -534,16 +534,17 @@ tpcc_wl::init_scgraph() {
             ADD_OTHER_EDGE()
           }
 #if !COMMUTATIVE_OPS
+	/*
         } else if (j == 0) { // warehouse
           for (k = 0; k < TPCC_ALL; k++) {
             ADD_SELF_EDGE(NEW_ORDER, 0)
             ADD_EDGE(PAYMENT, payment, 0)
             ADD_OTHER_EDGE()
-          }
+          } */
         } else if (j == 1) { // district
           for (k = 0; k < TPCC_ALL; k++) {
             ADD_SELF_EDGE(NEW_ORDER, 1)
-            ADD_EDGE(PAYMENT, payment, 1)
+            //ADD_EDGE(PAYMENT, payment, 1)
             ADD_OTHER_EDGE()
           }
 #else
