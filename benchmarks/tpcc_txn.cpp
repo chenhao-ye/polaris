@@ -375,6 +375,9 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
   char* s_dist_08;
   char* s_dist_09;
   char* s_dist_10;
+#if IC3_MODIFIED_TPCC
+  double tmp_value;
+#endif
 
   /*=======================================================================+
   EXEC SQL SELECT c_discount, c_last, c_credit, w_tax
@@ -398,6 +401,9 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
   }
   //retrieve the tax of warehouse
   r_wh_local->get_value(W_TAX, w_tax);
+#if IC3_MODIFIED_TPCC
+  r_wh_local->get_value(W_YTD, tmp_value);
+#endif
 #if CC_ALG == IC3
   if (end_piece(0) != RCOK)
     goto warehouse_piece;

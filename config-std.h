@@ -110,6 +110,7 @@
 #define IC3_EAGER_EXEC              false
 #define IC3_RENDEZVOUS              false
 #define IC3_FIELD_LOCKING           false
+#define IC3_MODIFIED_TPCC           false
 
 /***********************************************/
 // Logging

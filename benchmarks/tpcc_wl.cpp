@@ -448,6 +448,13 @@ void * tpcc_wl::threadInitWarehouse(void * This) {
     cnt++; \
   } 
 
+#define ADD_ONLY_EDGE(tpe, ptpe, pid) \
+  if (k == TPCC_ ## tpe && (g_perc_ ## ptpe > 0)) { \
+    sc_graph[i][j][k].txn_type = TPCC_ ## tpe; \
+    sc_graph[i][j][k].piece_id = pid; \
+    cnt++; \
+  }
+
 #define ADD_OTHER_EDGE() \
   else \
     sc_graph[i][j][k].txn_type = TPCC_ALL; 
@@ -486,7 +493,9 @@ tpcc_wl::init_scgraph() {
         } else if (j == 0) { // warehouse
           for (k = 0; k < TPCC_ALL; k++) {
             ADD_SELF_EDGE(PAYMENT, 0)
-            //ADD_EDGE(NEW_ORDER, neworder, 0)
+#if IC3_MODIFIED_TPCC
+            ADD_EDGE(NEW_ORDER, neworder, 0)
+#endif
             ADD_OTHER_EDGE()
           }
         } else if (j == 1) { // district
@@ -534,13 +543,13 @@ tpcc_wl::init_scgraph() {
             ADD_OTHER_EDGE()
           }
 #if !COMMUTATIVE_OPS
-	/*
+#if IC3_MODIFIED_TPCC
         } else if (j == 0) { // warehouse
           for (k = 0; k < TPCC_ALL; k++) {
-            ADD_SELF_EDGE(NEW_ORDER, 0)
-            ADD_EDGE(PAYMENT, payment, 0)
+            ADD_ONLY_EDGE(PAYMENT, payment, 0)
             ADD_OTHER_EDGE()
-          } */
+          } 
+#endif
         } else if (j == 1) { // district
           for (k = 0; k < TPCC_ALL; k++) {
             ADD_SELF_EDGE(NEW_ORDER, 1)
