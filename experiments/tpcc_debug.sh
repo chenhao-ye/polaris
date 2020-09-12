@@ -15,6 +15,7 @@ max_waiter=0
 ic3_eager="false"
 ic3_rd="false"
 ic3_field="false"
+ic3_modify="true"
 
 ## workload
 wl="TPCC"
@@ -31,8 +32,6 @@ penalty=50000
 
 threads=16
 wh=1
-ic3_eager="true"
-ic3_rd="true"
 
-python test_debug.py CC_ALG=$alg LATCH=$latch WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=$dynamic RETIRE_ON=$retire DEBUG_CS_PROFILING=${cs_pf} BB_OPT_RAW=${opt_raw} BB_OPT_MAX_WAITER=${max_waiter} IC3_EAGER_EXEC=${ic3_eager} IC3_RENDEZVOUS=${ic3_rd} IC3_FIELD_LOCKING=${ic3_field} WORKLOAD=${wl} NUM_WH=${wh} PERC_PAYMENT=$perc TPCC_USER_ABORT=${user_abort} COMMUTATIVE_OPS=$com THREAD_CNT=$threads DEBUG_PROFILING=${profile} MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty
+python test_debug.py CC_ALG=$alg LATCH=$latch WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=$dynamic RETIRE_ON=$retire DEBUG_CS_PROFILING=${cs_pf} BB_OPT_RAW=${opt_raw} BB_OPT_MAX_WAITER=${max_waiter} IC3_EAGER_EXEC=${ic3_eager} IC3_RENDEZVOUS=${ic3_rd} IC3_FIELD_LOCKING=${ic3_field} IC3_MODIFIED_TPCC=${ic3_modify} WORKLOAD=${wl} NUM_WH=${wh} PERC_PAYMENT=$perc TPCC_USER_ABORT=${user_abort} COMMUTATIVE_OPS=$com THREAD_CNT=$threads DEBUG_PROFILING=${profile} MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty
 #
