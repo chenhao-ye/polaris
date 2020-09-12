@@ -41,7 +41,7 @@ for threads in 1 2 4 8 16 32
 do
 for wh in 1 2 4 8 16
 do
-if [ alg == IC3 ] then
+if [ $alg == "IC3" ]; then
 ic3_eager="true"
 ic3_rd="true"
 
