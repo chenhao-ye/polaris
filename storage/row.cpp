@@ -15,6 +15,7 @@
 #include "row_ww.h"
 #include "row_bamboo.h"
 #include "row_bamboo_pt.h"
+#include "row_ic3.h"
 #include "mem_alloc.h"
 #include "manager.h"
 
@@ -26,8 +27,20 @@ row_t::init(table_t * host_table, uint64_t part_id, uint64_t row_id) {
   Catalog * schema = host_table->get_schema();
   int tuple_size = schema->get_tuple_size();
   data = (char *) _mm_malloc(sizeof(char) * tuple_size, 64);
+#if CC_ALG == IC3
+  txn_access = NULL;
+  orig = NULL;
+#endif
   return RCOK;
 }
+
+
+#if CC_ALG == IC3
+void
+row_t::init_accesses(Access * access) {
+  txn_access = access;
+}
+#endif
 
 void
 row_t::init(int size)
@@ -69,6 +82,8 @@ void row_t::init_manager(row_t * row) {
   manager = (Row_bamboo_pt *) mem_allocator.alloc(sizeof(Row_bamboo_pt), _part_id);
   new(manager) Row_bamboo_pt();
 #endif
+#elif CC_ALG == IC3
+  manager = (Row_ic3 *) _mm_malloc(sizeof(Row_ic3), 64);
 #endif
 
 #if CC_ALG != HSTORE
@@ -108,16 +123,37 @@ void row_t::dec_value(int id, uint64_t val) {
 void row_t::set_value(int id, void * ptr) {
   int datasize = get_schema()->get_field_size(id);
   int pos = get_schema()->get_field_index(id);
+#if CC_ALG == IC3
+  // assume no blind writes.
+  if (txn_access)
+    txn_access->wr_accesses = (txn_access->wr_accesses | (1UL << id));
+#endif
   memcpy( &data[pos], ptr, datasize);
+  //debugging
+  assert(data);
+  assert(ptr);
 }
 
 void row_t::set_value(int id, void * ptr, int size) {
   int pos = get_schema()->get_field_index(id);
+#if CC_ALG == IC3
+  // assume no blind writes.
+  if (txn_access)
+    txn_access->wr_accesses = (txn_access->wr_accesses | (1UL << id));
+#endif
   memcpy( &data[pos], ptr, size);
+  //debugging
+  assert(data);
+  assert(ptr);
 }
 
 void row_t::set_value(const char * col_name, void * ptr) {
   uint64_t id = get_schema()->get_field_id(col_name);
+#if CC_ALG == IC3
+  // assume no blind writes.
+  if (txn_access)
+    txn_access->wr_accesses = (txn_access->wr_accesses | (1UL << id));
+#endif
   set_value(id, ptr);
 }
 
@@ -133,12 +169,32 @@ GET_VALUE(double);
 GET_VALUE(UInt32);
 GET_VALUE(SInt32);
 
-char * row_t::get_value(int id) {
+char * row_t::get_value(int idx) {
+  uint64_t id = (uint64_t) idx;
+#if CC_ALG == IC3 && IC3_FIELD_LOCKING
+  if (txn_access) {
+    // try to acquire read access
+    this->manager->access(this, id, txn_access);
+    txn_access->rd_accesses = (txn_access->rd_accesses | (1UL << id));
+  }
+#endif
+  return get_value_plain(id);
+}
+
+char * row_t::get_value_plain(uint64_t id) {
   int pos = get_schema()->get_field_index(id);
   return &data[pos];
 }
 
 char * row_t::get_value(char * col_name) {
+#if CC_ALG == IC3 && IC3_FIELD_LOCKING
+  if (txn_access) {
+    uint64_t id = get_schema()->get_field_id(col_name);
+    this->manager->access(this, id, txn_access);
+    txn_access->rd_accesses = (txn_access->rd_accesses | (1UL << id));
+    // copy data from orig row
+  }
+#endif
   uint64_t pos = get_schema()->get_field_index(col_name);
   return &data[pos];
 }
@@ -147,10 +203,29 @@ char * row_t::get_data() { return data; }
 
 void row_t::set_data(char * data, uint64_t size) {
   memcpy(this->data, data, size);
+  assert(data);
+  assert(this->data);
 }
 // copy from the src to this
 void row_t::copy(row_t * src) {
   set_data(src->get_data(), src->get_tuple_size());
+}
+
+void row_t::set_value_plain(int idx, void * ptr) {
+  int datasize = get_schema()->get_field_size(idx);
+  int pos = get_schema()->get_field_index(idx);
+  memcpy(&data[pos], ptr, datasize);
+  //debugging
+  assert(data);
+  assert(ptr);
+}
+
+void row_t::copy(row_t * src, int idx) {
+  char * ptr = src->get_value_plain(idx);
+  set_value_plain(idx, ptr);
+  //debugging
+  assert(data);
+  assert(src->data);
 }
 
 void row_t::free_row() {
@@ -165,28 +240,25 @@ RC row_t::retire_row(void * lock_entry) {
 
 RC row_t::get_row(access_t type, txn_man * txn, row_t *& row, Access * access) {
   RC rc = RCOK;
-#if CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT || CC_ALG == BAMBOO
+#if CC_ALG == IC3
+  this->manager->access(access->data, access);
+  return rc;
+#elif CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT || CC_ALG == WOUND_WAIT || CC_ALG == BAMBOO
   uint64_t thd_id = txn->get_thd_id();
   lock_t lt = (type == RD || type == SCAN)? LOCK_SH : LOCK_EX;
-#if COMMUTATIVE_OPS && !COMMUTATIVE_LATCH
-  if (type != CM) {
-#endif
-    #if CC_ALG == DL_DETECT
-    uint64_t * txnids;
-    int txncnt;
-    rc = this->manager->lock_get(lt, txn, txnids, txncnt);
-    #elif CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT
-    if (txn->lock_abort) {
-      row = NULL;
-      return Abort;
-    }
-    rc = this->manager->lock_get(lt, txn, access);
-    #else
-    rc = this->manager->lock_get(lt, txn, access);
-    #endif
-#if COMMUTATIVE_OPS && !COMMUTATIVE_LATCH
+  #if CC_ALG == DL_DETECT
+  uint64_t * txnids;
+  int txncnt;
+  rc = this->manager->lock_get(lt, txn, txnids, txncnt);
+  #elif CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT
+  if (txn->lock_abort) {
+    row = NULL;
+    return Abort;
   }
-#endif
+  rc = this->manager->lock_get(lt, txn, access);
+  #else
+  rc = this->manager->lock_get(lt, txn, access);
+  #endif
   if (rc == RCOK) {
   } else if (rc == Abort) {
     row = NULL;
@@ -308,6 +380,7 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row, Access * access) {
 	return rc;
 #else
 	assert(false);
+	return rc;
 #endif
 }
 

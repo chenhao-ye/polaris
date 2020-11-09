@@ -20,10 +20,10 @@ txn_man::validate_silo()
 			read_set[cur_rd_idx ++] = rid;
 	}
 
-	// bubble sort the write_set, in primary key order 
+	// bubble sort the write set, in primary key order
 	for (int i = wr_cnt - 1; i >= 1; i--) {
 		for (int j = 0; j < i; j++) {
-			if (accesses[ write_set[j] ]->orig_row->get_primary_key() > 
+			if (accesses[ write_set[j] ]->orig_row->get_primary_key() >
 				accesses[ write_set[j + 1] ]->orig_row->get_primary_key())
 			{
 				int tmp = write_set[j];

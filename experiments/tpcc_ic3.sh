@@ -1,6 +1,7 @@
 cd ../
 rm outputs/stats.json
-cp -r config-tpcc-std.h config.h
+cp -r config-std.h config.h
+fname="tpcc_ic3_payment"
 
 ## algorithm
 alg=BAMBOO
@@ -12,15 +13,18 @@ dynamic="true"
 retire="true"
 cs_pf="false"
 opt_raw="true"
-max_waiter=4
+max_waiter=0
+# ic3
+ic3_eager="true"
+ic3_rd="true"
+ic3_field="false"
 
 ## workload
 wl="TPCC"
 wh=2
 perc=0.5 # payment percentage
-user_abort="false"
+user_abort="true"
 com="false"
-com_latch="false"
 
 #other
 threads=8
@@ -28,40 +32,18 @@ profile="true"
 cnt=100000
 penalty=50000
 
-com="false"
-for i in 0 1 2 3 4
+perc=1 # payment percentage
+for i in 0 1 2 3 4 
 do
-#for com_latch in true
-#do
-for alg in BAMBOO #SILO WOUND_WAIT WAIT_DIE NO_WAIT
+for alg in IC3 BAMBOO SILO WOUND_WAIT WAIT_DIE NO_WAIT
 do
 for threads in 1 2 4 8 16 32
 do
 for wh in 1 2 4 8 16
 do
-if [ $threads -eq 32 ]; then
-
-for max_waiter in 0 4
-do
-timeout 100 python test.py CC_ALG=$alg LATCH=${latch} WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=$dynamic RETIRE_ON=$retire DEBUG_CS_PROFILING=${cs_pf} BB_OPT_RAW=${opt_raw} BB_OPT_MAX_WAITER=${max_waiter} WORKLOAD=${wl} NUM_WH=${wh} PERC_PAYMENT=$perc TPCC_USER_ABORT=${user_abort} COMMUTATIVE_OPS=$com COMMUTATIVE_LATCH=${com_latch} THREAD_CNT=$threads DEBUG_PROFILING=${profile} MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty
-done
-
-elif [ $threads -eq 16 ]; then
-
-for max_waiter in 0 12
-do
-timeout 100 python test.py CC_ALG=$alg LATCH=${latch} WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=$dynamic RETIRE_ON=$retire DEBUG_CS_PROFILING=${cs_pf} BB_OPT_RAW=${opt_raw} BB_OPT_MAX_WAITER=${max_waiter} WORKLOAD=${wl} NUM_WH=${wh} PERC_PAYMENT=$perc TPCC_USER_ABORT=${user_abort} COMMUTATIVE_OPS=$com COMMUTATIVE_LATCH=${com_latch} THREAD_CNT=$threads DEBUG_PROFILING=${profile} MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty
-done
-
-else 
-
-for max_waiter in 0
-do
-timeout 100 python test.py CC_ALG=$alg LATCH=${latch} WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=$dynamic RETIRE_ON=$retire DEBUG_CS_PROFILING=${cs_pf} BB_OPT_RAW=${opt_raw} BB_OPT_MAX_WAITER=${max_waiter} WORKLOAD=${wl} NUM_WH=${wh} PERC_PAYMENT=$perc TPCC_USER_ABORT=${user_abort} COMMUTATIVE_OPS=$com COMMUTATIVE_LATCH=${com_latch} THREAD_CNT=$threads DEBUG_PROFILING=${profile} MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty
-done
-
-fi
-#done
+ic3_eager="true"
+ic3_rd="true"
+timeout 200 python test.py CC_ALG=$alg LATCH=$latch WW_STARV_FREE=${ww_starv_free} DYNAMIC_TS=$dynamic RETIRE_ON=$retire DEBUG_CS_PROFILING=${cs_pf} BB_OPT_RAW=${opt_raw} BB_OPT_MAX_WAITER=${max_waiter} IC3_EAGER_EXEC=${ic3_eager} IC3_RENDEZVOUS=${ic3_rd} IC3_FIELD_LOCKING=${ic3_field} WORKLOAD=${wl} NUM_WH=${wh} PERC_PAYMENT=$perc TPCC_USER_ABORT=${user_abort} COMMUTATIVE_OPS=$com THREAD_CNT=$threads DEBUG_PROFILING=${profile} MAX_TXN_PER_PART=$cnt ABORT_PENALTY=$penalty
 done
 done
 done
@@ -70,9 +52,9 @@ done
 
 cd outputs/
 python3 collect_stats.py
-mv stats.csv tpcc_bb.csv
-mv stats.json tpcc_bb.json
+mv stats.csv ${fname}.csv
+mv stats.json ${fname}.json
 cd ..
 
 cd experiments/
-python3 send_email.py tpcc_bb
+python3 send_email.py ${fname}

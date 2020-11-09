@@ -96,6 +96,7 @@ RC thread_t::run() {
 			} else {
 				if (rc == RCOK) {
 					m_query = query_queue->get_next_query( _thd_id );
+					assert(m_query);
                                         txn_starttime = starttime;
                                 }
 			}
@@ -205,8 +206,12 @@ RC thread_t::run() {
                        m_txn->abort_cnt ++;
 		}
 
-		if (rc == FINISH)
+		if (rc == FINISH){
+#if CC_ALG == IC3
+		m_txn->set_txn_id(get_thd_id() + thd_txn_id * g_thread_cnt);
+#endif
 			return rc;
+		}
 		if (!warmup_finish && txn_cnt >= WARMUP / g_thread_cnt)
 		{
 			stats.clear( get_thd_id() );
@@ -220,6 +225,9 @@ RC thread_t::run() {
 		}
 
 		if (_wl->sim_done) {
+#if CC_ALG == IC3
+		m_txn->set_txn_id(get_thd_id() + thd_txn_id * g_thread_cnt);
+#endif
 			return FINISH;
 		}
 	}

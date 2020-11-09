@@ -17,6 +17,9 @@ public :
 	int key_to_part(uint64_t key);
 	INDEX * the_index;
 	table_t * the_table;
+#if CC_ALG == IC3
+	SC_PIECE * get_cedges(TPCCTxnType type, int idx) {return NULL;};
+#endif
 private:
 	void init_table_parallel();
 	void * init_table_slice();

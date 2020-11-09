@@ -26,6 +26,10 @@ RC tpcc_wl::init() {
 	cout << "TPCC schema initialized" << endl;
 	init_table();
 	next_tid = 0;
+	ASSERT(g_perc_neworder >= 0);
+#if CC_ALG == IC3
+	init_scgraph();
+#endif
 	return RCOK;
 }
 
@@ -88,9 +92,6 @@ void tpcc_wl::init_tab_item() {
 	for (UInt32 i = 1; i <= g_max_items; i++) {
 		row_t * row;
 		uint64_t row_id;
-#if DEBUG_WW || DEBUG_BAMBOO
-		row_id = get_sys_clock();
-#endif
 		t_item->get_new_row(row, 0, row_id);
 		row->set_primary_key(i);
 		row->set_value(I_ID, i);
@@ -432,3 +433,194 @@ void * tpcc_wl::threadInitWarehouse(void * This) {
 	}
 	return NULL;
 }
+
+#define ADD_SELF_EDGE(tpe, pid) \
+  if (k == TPCC_ ## tpe) { \
+    sc_graph[i][j][k].txn_type = TPCC_ ## tpe; \
+    sc_graph[i][j][k].piece_id = pid; \
+    cnt++; \
+  }
+
+#define ADD_EDGE(tpe, ptpe, pid) \
+  else if (k == TPCC_ ## tpe && (g_perc_ ## ptpe > 0)) { \
+    sc_graph[i][j][k].txn_type = TPCC_ ## tpe; \
+    sc_graph[i][j][k].piece_id = pid; \
+    cnt++; \
+  } 
+
+#define ADD_ONLY_EDGE(tpe, ptpe, pid) \
+  if (k == TPCC_ ## tpe && (g_perc_ ## ptpe > 0)) { \
+    sc_graph[i][j][k].txn_type = TPCC_ ## tpe; \
+    sc_graph[i][j][k].piece_id = pid; \
+    cnt++; \
+  }
+
+#define ADD_OTHER_EDGE() \
+  else \
+    sc_graph[i][j][k].txn_type = TPCC_ALL; 
+
+#if CC_ALG == IC3
+void
+tpcc_wl::init_scgraph() {
+  // XXX(zhihan): hard code sc-graph
+  // for each pair of txn, there has a list of pieces
+  // for each piece of each txn, there has a list of conflicting piece
+  sc_graph = (SC_PIECE ***) _mm_malloc(sizeof(void *) * TPCC_ALL, 64);
+  // percentage MUST MATCH order of TPCCTxnType in config file
+  /*
+  double percentage[TPCC_ALL] = {g_perc_payment, g_perc_neworder,
+                                 g_perc_delivery, g_perc_orderstatus,
+                                 g_perc_stocklevel};
+  */
+  int i, j, k, cnt;
+  for (i = 0; i < TPCC_ALL; i++) {
+    // for each txn
+    if (i == TPCC_PAYMENT && (g_perc_payment > 0)) {
+      sc_graph[i] = (SC_PIECE **) _mm_malloc(sizeof(void *) * 4, 64);
+      // for each piece of txn type payment
+      for (j = 0; j < IC3_TPCC_PAYMENT_PIECES; j++) {
+        // has up to TPCC_ALL conflicting pieces
+        sc_graph[i][j] = (SC_PIECE *) _mm_malloc(sizeof(SC_PIECE) * (TPCC_ALL
+            + 1), 64); // add one dummy node at the end for metadata
+        cnt = 0;
+        if (j == 2) { // customer piece
+          for (k = 0; k < TPCC_ALL; k++) {
+            ADD_SELF_EDGE(PAYMENT, 2)
+            ADD_EDGE(DELIVERY, delivery, 3)
+            ADD_OTHER_EDGE()
+          }
+#if !COMMUTATIVE_OPS
+        } else if (j == 0) { // warehouse
+          for (k = 0; k < TPCC_ALL; k++) {
+            ADD_SELF_EDGE(PAYMENT, 0)
+#if IC3_MODIFIED_TPCC
+            ADD_EDGE(NEW_ORDER, neworder, 0)
+#endif
+            ADD_OTHER_EDGE()
+          }
+        } else if (j == 1) { // district
+          for (k = 0; k < TPCC_ALL; k++) {
+            ADD_SELF_EDGE(PAYMENT, 1)
+            ADD_EDGE(NEW_ORDER, neworder, 1)
+            ADD_OTHER_EDGE()
+          }
+#endif
+        } else {
+          sc_graph[i][j][k].txn_type = TPCC_ALL;
+        }
+        sc_graph[i][j][TPCC_ALL].txn_type = TPCC_ALL;
+        sc_graph[i][j][TPCC_ALL].piece_id = cnt;
+      }
+    } else if (i == TPCC_NEW_ORDER && (g_perc_neworder > 0)) {
+      sc_graph[i] = (SC_PIECE **) _mm_malloc(sizeof(void *) * 8, 64);
+      // for each piece of txn type payment
+      for (j = 0; j < IC3_TPCC_NEW_ORDER_PIECES; j++) {
+        // has up to TPCC_ALL conflicting pieces
+        sc_graph[i][j] = (SC_PIECE *) _mm_malloc(sizeof(SC_PIECE) *
+            (TPCC_ALL + 1), 64);
+        cnt = 0;
+        if (j == 3) { // neworder piece
+          for (k = 0; k < TPCC_ALL; k++) {
+            ADD_SELF_EDGE(NEW_ORDER, 3)
+            ADD_EDGE(DELIVERY, delivery, 0)
+            ADD_OTHER_EDGE()
+          }
+        } else if (j == 4) { // order piece
+          for (k = 0; k < TPCC_ALL; k++) {
+            ADD_SELF_EDGE(NEW_ORDER, 4)
+            ADD_EDGE(DELIVERY, delivery, 1)
+            ADD_OTHER_EDGE()
+          }
+        } else if (j == 6) { // stock piece
+          for (k = 0; k < TPCC_ALL; k++) {
+            ADD_SELF_EDGE(NEW_ORDER, 6)
+            ADD_OTHER_EDGE()
+          }
+        } else if (j == 7) { // order line piece
+          for (k = 0; k < TPCC_ALL; k++) {
+            ADD_SELF_EDGE(NEW_ORDER, 7)
+            ADD_EDGE(DELIVERY, delivery, 2)
+            ADD_OTHER_EDGE()
+          }
+#if !COMMUTATIVE_OPS
+#if IC3_MODIFIED_TPCC
+        } else if (j == 0) { // warehouse
+          for (k = 0; k < TPCC_ALL; k++) {
+            ADD_ONLY_EDGE(PAYMENT, payment, 0)
+            ADD_OTHER_EDGE()
+          } 
+#endif
+        } else if (j == 1) { // district
+          for (k = 0; k < TPCC_ALL; k++) {
+            ADD_SELF_EDGE(NEW_ORDER, 1)
+            //ADD_EDGE(PAYMENT, payment, 1)
+            ADD_OTHER_EDGE()
+          }
+#else
+        } else if (j == 1) { // district
+          for (k = 0; k < TPCC_ALL; k++) {
+              ADD_SELF_EDGE(NEW_ORDER, 1)
+              ADD_OTHER_EDGE()
+          }
+#endif
+        } else {
+          sc_graph[i][j][k].txn_type = TPCC_ALL;
+        }
+        sc_graph[i][j][TPCC_ALL].txn_type = TPCC_ALL;
+        sc_graph[i][j][TPCC_ALL].piece_id = cnt;
+      }
+    } else if (i == TPCC_DELIVERY && (g_perc_delivery > 0)) {
+      sc_graph[i] = (SC_PIECE **) _mm_malloc(sizeof(void *) * 4, 64);
+      // for each piece of txn type delivery
+      for (j = 0; j < IC3_TPCC_DELIVERY_PIECES; j++) {
+        cnt = 0;
+        // has up to TPCC_ALL conflicting pieces
+        sc_graph[i][j] = (SC_PIECE *) _mm_malloc(sizeof(SC_PIECE) * (TPCC_ALL
+            + 1), 64);
+        if (j == 0) { // new order
+          for (k = 0; k < TPCC_ALL; k++) {
+            ADD_SELF_EDGE(DELIVERY, 0)
+            ADD_EDGE(NEW_ORDER, neworder, 3)
+            ADD_OTHER_EDGE()
+          }
+        } else if (j == 1) { // order
+          for (k = 0; k < TPCC_ALL; k++) {
+            ADD_SELF_EDGE(DELIVERY, 1)
+            ADD_EDGE(NEW_ORDER, neworder, 4)
+            ADD_OTHER_EDGE()
+          }
+        } else if (j == 2) { // order line
+          for (k = 0; k < TPCC_ALL; k++) {
+            ADD_SELF_EDGE(DELIVERY, 2)
+            ADD_EDGE(NEW_ORDER, neworder, 7)
+            ADD_OTHER_EDGE()
+          }
+        } else if (j == 3) { // customer
+          for (k = 0; k < TPCC_ALL; k++) {
+            ADD_SELF_EDGE(DELIVERY, 3)
+            ADD_EDGE(PAYMENT, payment, 3)
+            ADD_OTHER_EDGE()
+          }
+        } else {
+          sc_graph[i][j][k].txn_type = TPCC_ALL;
+        }
+        sc_graph[i][j][TPCC_ALL].txn_type = TPCC_ALL;
+        sc_graph[i][j][TPCC_ALL].piece_id = cnt;
+      }
+    } else {
+      sc_graph[i] = NULL;
+    }
+  }
+}
+
+SC_PIECE * 
+tpcc_wl::get_cedges(TPCCTxnType txn_type, int piece_id) {
+    if (sc_graph == NULL)
+      return NULL;
+    if (sc_graph[txn_type] == NULL)
+      return NULL;
+    if (sc_graph[txn_type][piece_id][TPCC_ALL].piece_id == 0)
+      return NULL;
+    return sc_graph[txn_type][piece_id];
+  }
+#endif

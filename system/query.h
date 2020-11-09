@@ -20,7 +20,7 @@ class Query_thd {
 public:
 	void init(workload * h_wl, int thread_id);
 	base_query * get_next_query(); 
-	int q_idx;
+	uint64_t q_idx;
 #if WORKLOAD == YCSB
 	ycsb_query * queries;
 #else 
@@ -28,6 +28,7 @@ public:
 #endif
 	char pad[CL_SIZE - sizeof(void *) - sizeof(int)];
 	drand48_data buffer;
+	uint64_t request_cnt;
 };
 
 // TODO we assume a separate task queue for each thread in order to avoid 

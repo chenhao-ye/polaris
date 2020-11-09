@@ -10,6 +10,12 @@
 #include "index_btree.h"
 #include "tpcc_const.h"
 
+#define RETIRE_ROW(row_cnt) { \
+  access_cnt = row_cnt - 1; \
+  if (retire_row(access_cnt) == Abort) \
+    return finish(Abort); \
+}
+
 void tpcc_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
   txn_man::init(h_thd, h_wl, thd_id);
   _wl = (tpcc_wl *) h_wl;
@@ -17,29 +23,54 @@ void tpcc_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 
 RC tpcc_txn_man::run_txn(base_query * query) {
   tpcc_query * m_query = (tpcc_query *) query;
+#if CC_ALG == IC3
+  curr_type = m_query->type;
+  curr_piece = 0;
+#endif
   switch (m_query->type) {
     case TPCC_PAYMENT :
       return run_payment(m_query); break;
     case TPCC_NEW_ORDER :
       return run_new_order(m_query); break;
-/*		case TPCC_ORDER_STATUS :
-			return run_order_status(m_query); break;
-		case TPCC_DELIVERY :
-			return run_delivery(m_query); break;
-		case TPCC_STOCK_LEVEL :
-			return run_stock_level(m_query); break;*/
+    case TPCC_ORDER_STATUS :
+      return run_order_status(m_query); break;
+    case TPCC_DELIVERY :
+      return run_delivery(m_query); break;
+    case TPCC_STOCK_LEVEL :
+      return run_stock_level(m_query); break;
     default:
       assert(false);
   }
 }
 
 RC tpcc_txn_man::run_payment(tpcc_query * query) {
-#if CC_ALG == BAMBOO && RETIRE_ON && THREAD_CNT > 1
+
+#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT > 1)
   int access_cnt;
 #endif
+  // declare all variables
   RC rc = RCOK;
   uint64_t key;
   itemid_t * item;
+  int cnt;
+  uint64_t row_id;
+  // rows
+  row_t * r_wh;
+  row_t * r_wh_local;
+  row_t * r_cust;
+  row_t * r_cust_local;
+  row_t * r_hist;
+  // values
+#if !COMMUTATIVE_OPS
+  double tmp_value;
+#endif
+  char w_name[11];
+  char * tmp_str;
+  char d_name[11];
+  double c_balance;
+  double c_ytd_payment;
+  double c_payment_cnt;
+  char * c_credit;
 
   uint64_t w_id = query->w_id;
   uint64_t c_w_id = query->c_w_id;
@@ -54,56 +85,63 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
       WHERE w_id=:w_id;
   +===================================================================*/
 
-  // TODO for variable length variable (string). Should store the size of
-  // the variable.
+  // TODO: for variable length variable (string). Should store the size of
+  //  the variable.
+
+  //BEGIN: [WAREHOUSE] RW
+#if CC_ALG == IC3
+warehouse_piece:
+  begin_piece(0);
+#endif
+  //use index to retrieve that warehouse
   key = query->w_id;
   INDEX * index = _wl->i_warehouse;
   item = index_read(index, key, wh_to_part(w_id));
   assert(item != NULL);
-  row_t * r_wh = ((row_t *)item->location);
-  access_t r_wh_type;
-  row_t * r_wh_local;
+  r_wh = ((row_t *)item->location);
 #if !COMMUTATIVE_OPS
-  if (g_wh_update)
-    r_wh_type = WR;
-  else
-    r_wh_type = RD;
+  r_wh_local = get_row(r_wh, WR);
 #else
-#if COMMUTATIVE_LATCH
-  r_wh_type = RD;
-#else
-  r_wh_type = CM;
+  r_wh_local = get_row(r_wh, RD);
 #endif
-#endif
-
-  r_wh_local = get_row(r_wh, r_wh_type);
   if (r_wh_local == NULL) {
     return finish(Abort);
   }
+
 #if !COMMUTATIVE_OPS
-  double w_ytd;
-  r_wh_local->get_value(W_YTD, w_ytd);
+  //update the balance to the warehouse
+  r_wh_local->get_value(W_YTD, tmp_value);
   if (g_wh_update) {
-    r_wh_local->set_value(W_YTD, w_ytd + query->h_amount);
+    r_wh_local->set_value(W_YTD, tmp_value + query->h_amount);
   }
 #else
   inc_value(W_YTD, query->h_amount); // will increment at commit time
 #endif
-  char w_name[11];
-  char * tmp_str = r_wh_local->get_value(W_NAME);
+  // bamboo: retire lock for wh
+#if (CC_ALG == BAMBOO) && RETIRE_ON && (THREAD_CNT > 1) && !COMMUTATIVE_OPS
+  RETIRE_ROW(row_cnt)
+#endif
+  //get a copy of warehouse name
+  tmp_str = r_wh_local->get_value(W_NAME);
   memcpy(w_name, tmp_str, 10);
   w_name[10] = '\0';
+#if CC_ALG == IC3
+  if (end_piece(0) != RCOK)
+    goto warehouse_piece;
+#endif
+  //END: [WAREHOUSE] RW
 
-  // retire wh
-#if !COMMUTATIVE_OPS
-#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
-  access_cnt = row_cnt - 1;
-  if (r_wh_type != RD) {
-    if (retire_row(access_cnt) == Abort)
-      return finish(Abort);
-  }
+  //BEGIN: [DISTRICT] RW
+#if CC_ALG == IC3
+district_piece:
+  begin_piece(1);
 #endif
-#endif
+  /*====================================================================+
+    EXEC SQL SELECT d_street_1, d_street_2, d_city, d_state, d_zip, d_name
+    INTO :d_street_1, :d_street_2, :d_city, :d_state, :d_zip, :d_name
+    FROM district
+    WHERE d_w_id=:w_id AND d_id=:d_id;
+  +====================================================================*/
   /*=====================================================+
       EXEC SQL UPDATE district SET d_ytd = d_ytd + :h_amount
       WHERE d_w_id=:w_id AND d_id=:d_id;
@@ -111,55 +149,38 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
   key = distKey(query->d_id, query->d_w_id);
   item = index_read(_wl->i_district, key, wh_to_part(w_id));
   assert(item != NULL);
-  row_t * r_dist_local;
   row_t * r_dist = ((row_t *)item->location);
-
 #if !COMMUTATIVE_OPS
-  r_dist_local = get_row(r_dist, WR);
-  //sleep(1);
+  row_t * r_dist_local = get_row(r_dist, WR);
+#else
+  row_t * r_dist_local = get_row(r_dist, RD);
+#endif
   if (r_dist_local == NULL) {
     return finish(Abort);
   }
-  double d_ytd;
-  r_dist_local->get_value(D_YTD, d_ytd);
-  r_dist_local->set_value(D_YTD, d_ytd + query->h_amount);
-  char d_name[11];
-
+#if !COMMUTATIVE_OPS
+  r_dist_local->get_value(D_YTD, tmp_value);
+  r_dist_local->set_value(D_YTD, tmp_value + query->h_amount);
+#else
+  inc_value(D_YTD, query->h_amount); // will increment at commit time
+#endif
+#if (CC_ALG == BAMBOO) && RETIRE_ON && (THREAD_CNT > 1) && !COMMUTATIVE_OPS
+  RETIRE_ROW(row_cnt)
+#endif
   tmp_str = r_dist_local->get_value(D_NAME);
   memcpy(d_name, tmp_str, 10);
   d_name[10] = '\0';
-  // retire dist
-#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
-  access_cnt = row_cnt - 1;
-  if (retire_row(access_cnt) == Abort)
-    return finish(Abort);
+#if CC_ALG == IC3
+  if(end_piece(1) != RCOK)
+    goto district_piece;
 #endif
-#else
-#if COMMUTATIVE_LATCH
-  r_dist_local = get_row(r_dist, RD);
-#else
-  r_dist_local = get_row(r_dist, CM);
+  //END: [DISTRICT] RW
+
+  //BEGIN: [CUSTOMER] RW
+#if CC_ALG == IC3
+  customer_piece:
+  begin_piece(2);
 #endif
-  //sleep(1);
-  if (r_dist_local == NULL) {
-    return finish(Abort);
-  }
-  inc_value(D_YTD, query->h_amount);
-  char d_name[11];
-
-  tmp_str = r_dist_local->get_value(D_NAME);
-  memcpy(d_name, tmp_str, 10);
-  d_name[10] = '\0';
-#endif
-
-  /*====================================================================+
-      EXEC SQL SELECT d_street_1, d_street_2, d_city, d_state, d_zip, d_name
-      INTO :d_street_1, :d_street_2, :d_city, :d_state, :d_zip, :d_name
-      FROM district
-      WHERE d_w_id=:w_id AND d_id=:d_id;
-  +====================================================================*/
-
-  row_t * r_cust;
   if (query->by_last_name) {
     /*==========================================================+
         EXEC SQL SELECT count(c_id) INTO :namecnt
@@ -175,15 +196,23 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
         ORDER BY c_first;
         EXEC SQL OPEN c_byname;
     +===========================================================================*/
-
+    /*============================================================================+
+    for (n=0; n<namecnt/2; n++) {
+        EXEC SQL FETCH c_byname
+        INTO :c_first, :c_middle, :c_id,
+             :c_street_1, :c_street_2, :c_city, :c_state, :c_zip,
+             :c_phone, :c_credit, :c_credit_lim, :c_discount, :c_balance, :c_since;
+    }
+    EXEC SQL CLOSE c_byname;
++=============================================================================*/
+    // XXX: we don't retrieve all the info, just the tuple we are interested in
     uint64_t key = custNPKey(query->c_last, query->c_d_id, query->c_w_id);
     // XXX: the list is not sorted. But let's assume it's sorted...
     // The performance won't be much different.
     INDEX * index = _wl->i_customer_last;
     item = index_read(index, key, wh_to_part(c_w_id));
     assert(item != NULL);
-
-    int cnt = 0;
+    cnt = 0;
     itemid_t * it = item;
     itemid_t * mid = item;
     while (it != NULL) {
@@ -192,18 +221,8 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
       if (cnt % 2 == 0)
         mid = mid->next;
     }
+    //get the center one, as in spec
     r_cust = ((row_t *)mid->location);
-
-    /*============================================================================+
-        for (n=0; n<namecnt/2; n++) {
-            EXEC SQL FETCH c_byname
-            INTO :c_first, :c_middle, :c_id,
-                 :c_street_1, :c_street_2, :c_city, :c_state, :c_zip,
-                 :c_phone, :c_credit, :c_credit_lim, :c_discount, :c_balance, :c_since;
-        }
-        EXEC SQL CLOSE c_byname;
-    +=============================================================================*/
-    // XXX: we don't retrieve all the info, just the tuple we are interested in
   }
   else { // search customers by cust_id
     /*=====================================================================+
@@ -222,19 +241,14 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
     assert(item != NULL);
     r_cust = (row_t *) item->location;
   }
-
   /*======================================================================+
        EXEC SQL UPDATE customer SET c_balance = :c_balance, c_data = :c_new_data
        WHERE c_w_id = :c_w_id AND c_d_id = :c_d_id AND c_id = :c_id;
    +======================================================================*/
-  row_t * r_cust_local = get_row(r_cust, WR);
+  r_cust_local = get_row(r_cust, WR);
   if (r_cust_local == NULL) {
     return finish(Abort);
   }
-  double c_balance;
-  double c_ytd_payment;
-  double c_payment_cnt;
-
   r_cust_local->get_value(C_BALANCE, c_balance);
   r_cust_local->set_value(C_BALANCE, c_balance - query->h_amount);
   r_cust_local->get_value(C_YTD_PAYMENT, c_ytd_payment);
@@ -242,32 +256,34 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
   r_cust_local->get_value(C_PAYMENT_CNT, c_payment_cnt);
   r_cust_local->set_value(C_PAYMENT_CNT, c_payment_cnt + 1);
 
-  // retire cust
-#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
-  access_cnt = row_cnt - 1;
-  if (retire_row(access_cnt) == Abort)
-    return finish(Abort);
-#endif
-
-  char * c_credit = r_cust_local->get_value(C_CREDIT);
-
-  if ( strstr(c_credit, "BC") ) {
-
+  c_credit = r_cust_local->get_value(C_CREDIT);
+  if ( strstr(c_credit, "BC") && !TPCC_SMALL ) {
     /*=====================================================+
         EXEC SQL SELECT c_data
         INTO :c_data
         FROM customer
         WHERE c_w_id=:c_w_id AND c_d_id=:c_d_id AND c_id=:c_id;
     +=====================================================*/
-//	  	char c_new_data[501];
-//	  	sprintf(c_new_data,"| %4d %2d %4d %2d %4d $%7.2f",
-//	      	c_id, c_d_id, c_w_id, d_id, w_id, query->h_amount);
-//		char * c_data = r_cust->get_value("C_DATA");
-//	  	strncat(c_new_data, c_data, 500 - strlen(c_new_data));
-//		r_cust->set_value("C_DATA", c_new_data);
-
+    char c_new_data[501];
+    sprintf(c_new_data,"| %zu %zu %zu %zu %zu $%7.2f %d",
+            query->c_id, query->c_d_id, c_w_id, query->d_id, w_id, query->h_amount,'\0');
+    //char * c_data = r_cust->get_value("C_DATA");
+    //need to fix this line
+    //strncat(c_new_data, c_data, 500 - strlen(c_new_data));
+    //c_new_data[500]='\0';
+    r_cust->set_value("C_DATA", c_new_data);
+#if (CC_ALG == BAMBOO) && RETIRE_ON && (THREAD_CNT > 1)
+  RETIRE_ROW(row_cnt)
+#endif
   }
+#if CC_ALG == IC3
+  if(end_piece(2) != RCOK)
+    goto customer_piece;
+#endif
+  //END: [CUSTOMER] - RW
 
+  //START: [HISTORY] - WR
+  //update h_data according to spec
   char h_data[25];
   strncpy(h_data, w_name, 10);
   int length = strlen(h_data);
@@ -275,28 +291,26 @@ RC tpcc_txn_man::run_payment(tpcc_query * query) {
   strcpy(&h_data[length], "    ");
   strncpy(&h_data[length + 4], d_name, 10);
   h_data[length+14] = '\0';
-
   /*=============================================================================+
     EXEC SQL INSERT INTO
     history (h_c_d_id, h_c_w_id, h_c_id, h_d_id, h_w_id, h_date, h_amount, h_data)
     VALUES (:c_d_id, :c_w_id, :c_id, :d_id, :w_id, :datetime, :h_amount, :h_data);
     +=============================================================================*/
-//	row_t * r_hist;
-//	uint64_t row_id;
-//	_wl->t_history->get_new_row(r_hist, 0, row_id);
-//	r_hist->set_value(H_C_ID, c_id);
-//	r_hist->set_value(H_C_D_ID, c_d_id);
-//	r_hist->set_value(H_C_W_ID, c_w_id);
-//	r_hist->set_value(H_D_ID, d_id);
-//	r_hist->set_value(H_W_ID, w_id);
-//	int64_t date = 2013;		
-//	r_hist->set_value(H_DATE, date);
-//	r_hist->set_value(H_AMOUNT, h_amount);
+  //not causing the buffer overflow
+  _wl->t_history->get_new_row(r_hist, 0, row_id);
+  r_hist->set_value(H_C_ID, query->c_id);
+  r_hist->set_value(H_C_D_ID, query->c_d_id);
+  r_hist->set_value(H_C_W_ID, c_w_id);
+  r_hist->set_value(H_D_ID, query->d_id);
+  r_hist->set_value(H_W_ID, w_id);
+  int64_t date = 2013;
+  r_hist->set_value(H_DATE, date);
+  r_hist->set_value(H_AMOUNT, query->h_amount);
 #if !TPCC_SMALL
-//	r_hist->set_value(H_DATA, h_data);
+  r_hist->set_value(H_DATA, h_data);
 #endif
-//	insert_row(r_hist, _wl->t_history);
-
+  // XXX(zhihan): no index maintained for history table.
+  //END: [HISTORY] - WR
   assert( rc == RCOK );
   return finish(rc);
 }
@@ -313,12 +327,69 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
   uint64_t c_id = query->c_id;
   uint64_t ol_cnt = query->ol_cnt;
 
+  // declare vars
+  double w_tax;
+  row_t * r_cust;
+  row_t * r_cust_local;
+  char * c_last;
+  char * c_credit;
+  row_t * r_dist;
+  row_t * r_dist_local;
+  double d_tax;
+  int64_t o_id;
+  //int64_t o_d_id;
+  uint64_t row_id;
+  //row_t * r_order;
+  //int64_t all_local;
+  //row_t * r_no;
+  // order
+  int sum=0;
+  uint64_t ol_i_id;
+  uint64_t ol_supply_w_id;
+  uint64_t ol_quantity;
+  row_t * r_item;
+  row_t * r_item_local;
+  row_t * r_stock;
+  row_t * r_stock_local;
+  int64_t i_price;
+  char * i_name;
+  char * i_data;
+  uint64_t stock_key;
+  INDEX * stock_index;
+  itemid_t * stock_item;
+  UInt64 s_quantity;
+  int64_t s_remote_cnt;
+  int64_t s_ytd;
+  int64_t s_order_cnt;
+  uint64_t quantity;
+  int64_t ol_amount;
+  row_t * r_ol;
+
+  char* s_dist_01;
+  char* s_dist_02;
+  char* s_dist_03;
+  char* s_dist_04;
+  char* s_dist_05;
+  char* s_dist_06;
+  char* s_dist_07;
+  char* s_dist_08;
+  char* s_dist_09;
+  char* s_dist_10;
+#if IC3_MODIFIED_TPCC
+  double tmp_value;
+#endif
+
   /*=======================================================================+
   EXEC SQL SELECT c_discount, c_last, c_credit, w_tax
       INTO :c_discount, :c_last, :c_credit, :w_tax
       FROM customer, warehouse
       WHERE w_id = :w_id AND c_w_id = w_id AND c_d_id = :d_id AND c_id = :c_id;
   +========================================================================*/
+
+#if CC_ALG == IC3
+  warehouse_piece: // 0
+  begin_piece(0);
+#endif
   key = w_id;
   index = _wl->i_warehouse;
   item = index_read(index, key, wh_to_part(w_id));
@@ -328,26 +399,18 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
   if (r_wh_local == NULL) {
     return finish(Abort);
   }
-
-  double w_tax;
+  //retrieve the tax of warehouse
   r_wh_local->get_value(W_TAX, w_tax);
+#if IC3_MODIFIED_TPCC
+  r_wh_local->get_value(W_YTD, tmp_value);
+#endif
+#if CC_ALG == IC3
+  if (end_piece(0) != RCOK)
+    goto warehouse_piece;
 
-  key = custKey(c_id, d_id, w_id);
-  index = _wl->i_customer_id;
-  item = index_read(index, key, wh_to_part(w_id));
-  assert(item != NULL);
-  row_t * r_cust = (row_t *) item->location;
-  row_t * r_cust_local = get_row(r_cust, RD);
-  if (r_cust_local == NULL) {
-    return finish(Abort);
-  }
-  uint64_t c_discount;
-  //char * c_last;
-  //char * c_credit;
-  r_cust_local->get_value(C_DISCOUNT, c_discount);
-  //c_last = r_cust_local->get_value(C_LAST);
-  //c_credit = r_cust_local->get_value(C_CREDIT);
-
+  district_piece:
+  begin_piece(1);
+#endif
   /*==================================================+
   EXEC SQL SELECT d_next_o_id, d_tax
       INTO :d_next_o_id, :d_tax
@@ -358,93 +421,144 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
   key = distKey(d_id, w_id);
   item = index_read(_wl->i_district, key, wh_to_part(w_id));
   assert(item != NULL);
-  row_t * r_dist = ((row_t *)item->location);
-#if !COMMUTATIVE_OPS
-  row_t * r_dist_local = get_row(r_dist, WR);
+  r_dist = ((row_t *)item->location);
+  r_dist_local = get_row(r_dist, WR);
   if (r_dist_local == NULL) {
     return finish(Abort);
   }
-  //double d_tax;
-  int64_t o_id;
-  //d_tax = *(double *) r_dist_local->get_value(D_TAX);
+
+  d_tax = *(double *) r_dist_local->get_value(D_TAX);
   o_id = *(int64_t *) r_dist_local->get_value(D_NEXT_O_ID);
+
   o_id ++;
   r_dist_local->set_value(D_NEXT_O_ID, o_id);
-  // retire dist
+
 #if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
   if (retire_row(row_cnt-1) == Abort)
-    return finish(Abort);
+      return finish(Abort);
 #endif
-#else
-#if COMMUTATIVE_LATCH
-  row_t * r_dist_local = get_row(r_dist, RD);
-#else
-  row_t * r_dist_local = get_row(r_dist, CM);
+
+#if CC_ALG == IC3
+  if (end_piece(1) != RCOK)
+    goto district_piece;
+
+  customer_piece:
+  begin_piece(2);
 #endif
-  if (r_dist_local == NULL) {
+  //select customer
+  key = custKey(c_id, d_id, w_id);
+  index = _wl->i_customer_id;
+  item = index_read(index, key, wh_to_part(w_id));
+  assert(item != NULL);
+  r_cust = (row_t *) item->location;
+  r_cust_local = get_row(r_cust, RD);
+  if (r_cust_local == NULL) {
     return finish(Abort);
   }
-  inc_value(D_NEXT_O_ID, 1);
+  //retrieve data
+  uint64_t c_discount;
+  if(!TPCC_SMALL) {
+    c_last = r_cust_local->get_value(C_LAST);
+    c_credit = r_cust_local->get_value(C_CREDIT);
+    //bypass warning checks
+    assert(c_last!=NULL);
+    assert(c_credit!=NULL);
+  }
+  r_cust_local->get_value(C_DISCOUNT, c_discount);
+
+
+#if CC_ALG == IC3
+  if (end_piece(2) != RCOK)
+    goto customer_piece;
+
+  neworder_piece: // 3
+  begin_piece(3);
+#endif
+  /*=======================================================+
+  EXEC SQL INSERT INTO NEW_ORDER (no_o_id, no_d_id, no_w_id)
+      VALUES (:o_id, :d_id, :w_id);
+  +=======================================================*/
+  /*
+  _wl->t_neworder->get_new_row(r_no, 0, row_id);
+  r_no->set_value(NO_O_ID, o_id);
+  r_no->set_value(NO_D_ID, d_id);
+  r_no->set_value(NO_W_ID, w_id);
+  //insert_row(r_no, _wl->t_neworder);
+  */
+#if CC_ALG == IC3
+  if (end_piece(3) != RCOK)
+    goto neworder_piece;
+
+order_piece: // 4
+  begin_piece(4);
 #endif
   /*========================================================================================+
   EXEC SQL INSERT INTO ORDERS (o_id, o_d_id, o_w_id, o_c_id, o_entry_d, o_ol_cnt, o_all_local)
       VALUES (:o_id, :d_id, :w_id, :c_id, :datetime, :o_ol_cnt, :o_all_local);
   +========================================================================================*/
-//	row_t * r_order;
-//	uint64_t row_id;
-//	_wl->t_order->get_new_row(r_order, 0, row_id);
-//	r_order->set_value(O_ID, o_id);
-//	r_order->set_value(O_C_ID, c_id);
-//	r_order->set_value(O_D_ID, d_id);
-//	r_order->set_value(O_W_ID, w_id);
-//	r_order->set_value(O_ENTRY_D, o_entry_d);
-//	r_order->set_value(O_OL_CNT, ol_cnt);
-//	int64_t all_local = (remote? 0 : 1);
-//	r_order->set_value(O_ALL_LOCAL, all_local);
-//	insert_row(r_order, _wl->t_order);
-  /*=======================================================+
-  EXEC SQL INSERT INTO NEW_ORDER (no_o_id, no_d_id, no_w_id)
-      VALUES (:o_id, :d_id, :w_id);
-  +=======================================================*/
-//	row_t * r_no;
-//	_wl->t_neworder->get_new_row(r_no, 0, row_id);
-//	r_no->set_value(NO_O_ID, o_id);
-//	r_no->set_value(NO_D_ID, d_id);
-//	r_no->set_value(NO_W_ID, w_id);
-//	insert_row(r_no, _wl->t_neworder);
-  for (UInt32 ol_number = 0; ol_number < ol_cnt; ol_number++) {
+  /*
+  _wl->t_order->get_new_row(r_order, 0, row_id);
+  r_order->set_value(O_ID, o_id);
+  r_order->set_value(O_C_ID, c_id);
+  r_order->set_value(O_D_ID, d_id);
+  r_order->set_value(O_W_ID, w_id);
+  r_order->set_value(O_ENTRY_D, query->o_entry_d);
+  r_order->set_value(O_OL_CNT, ol_cnt);
+  //o_d_id=*(int64_t *) r_order->get_value(O_D_ID);
+  o_d_id=d_id;
+  all_local = (remote? 0 : 1);
+  r_order->set_value(O_ALL_LOCAL, all_local);
+  //insert_row(r_order, _wl->t_order);
+  //may need to set o_ol_cnt=ol_cnt;
+  */
+  //o_d_id=d_id;
 
-    uint64_t ol_i_id = query->items[ol_number].ol_i_id;
-#if TPCC_USER_ABORT
-    // XXX(zhihan): if key is invalid, abort. user-initiated abort
-    // according to tpc-c documentation
-    if (ol_i_id == 0)
-      return finish(ERROR);
-#endif
-    uint64_t ol_supply_w_id = query->items[ol_number].ol_supply_w_id;
-    uint64_t ol_quantity = query->items[ol_number].ol_quantity;
+#if CC_ALG == IC3
+  if (end_piece(4) != RCOK)
+    goto order_piece;
+
+item_piece: // 5
+  begin_piece(5);
     /*===========================================+
     EXEC SQL SELECT i_price, i_name , i_data
         INTO :i_price, :i_name, :i_data
         FROM item
         WHERE i_id = :ol_i_id;
     +===========================================*/
+  for (UInt32 ol_number = 0; ol_number < ol_cnt; ol_number++) {
+    ol_i_id = query->items[ol_number].ol_i_id;
+#if TPCC_USER_ABORT
+    // XXX(zhihan): if key is invalid, abort. user-initiated abort
+    // according to tpc-c documentation
+    if (ol_i_id == 0)
+      return finish(ERROR);
+#endif
+    ol_supply_w_id = query->items[ol_number].ol_supply_w_id;
+    ol_quantity = query->items[ol_number].ol_quantity;
     key = ol_i_id;
     item = index_read(_wl->i_item, key, 0);
-    row_t * r_item = ((row_t *)item->location);
-
-    row_t * r_item_local = get_row(r_item, RD);
+    assert(item != NULL);
+    r_item = ((row_t *)item->location);
+    r_item_local = get_row(r_item, RD);
     if (r_item_local == NULL) {
       return finish(Abort);
     }
-    int64_t i_price;
-    //char * i_name;
-    //char * i_data;
     r_item_local->get_value(I_PRICE, i_price);
+    /*
     //i_name = r_item_local->get_value(I_NAME);
     //i_data = r_item_local->get_value(I_DATA);
+    //assert(i_name!=NULL);
+    //assert(i_data!=NULL);
+    assert(r_item_local->data);
+    */
+  }
+  
+  if (end_piece(5) != RCOK)
+    goto item_piece;
 
 
+stock_piece: // 6
+  begin_piece(6);
     /*===================================================================+
     EXEC SQL SELECT s_quantity, s_data,
             s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05,
@@ -458,27 +572,37 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
         WHERE s_i_id = :ol_i_id
         AND s_w_id = :ol_supply_w_id;
     +===============================================*/
-
-    uint64_t stock_key = stockKey(ol_i_id, ol_supply_w_id);
-    INDEX * stock_index = _wl->i_stock;
-    itemid_t * stock_item;
+  for (UInt32 ol_number = 0; ol_number < ol_cnt; ol_number++) {
+    ol_i_id = query->items[ol_number].ol_i_id;
+    ol_supply_w_id = query->items[ol_number].ol_supply_w_id;
+    ol_quantity = query->items[ol_number].ol_quantity;
+    stock_key = stockKey(ol_i_id, ol_supply_w_id);
+    stock_index = _wl->i_stock;
     index_read(stock_index, stock_key, wh_to_part(ol_supply_w_id), stock_item);
-    assert(item != NULL);
-    row_t * r_stock = ((row_t *)stock_item->location);
-    row_t * r_stock_local = get_row(r_stock, WR);
-
+    assert(stock_item != NULL);
+    r_stock = ((row_t *)stock_item->location);
+    r_stock_local = get_row(r_stock, WR);
+    assert(r_stock_local->data);
     if (r_stock_local == NULL) {
       return finish(Abort);
     }
-
     // XXX s_dist_xx are not retrieved.
-    UInt64 s_quantity;
-    int64_t s_remote_cnt;
     s_quantity = *(int64_t *)r_stock_local->get_value(S_QUANTITY);
+    //try to retrieve s_dist_xx
 #if !TPCC_SMALL
-    int64_t s_ytd;
-    int64_t s_order_cnt;
+    /*
+    s_dist_01=(char *)r_stock_local->get_value(S_DIST_01);
+    s_dist_02=(char *)r_stock_local->get_value(S_DIST_02);
+    s_dist_03=(char *)r_stock_local->get_value(S_DIST_03);
+    s_dist_04=(char *)r_stock_local->get_value(S_DIST_04);
+    s_dist_05=(char *)r_stock_local->get_value(S_DIST_05);
+    s_dist_06=(char *)r_stock_local->get_value(S_DIST_06);
+    s_dist_07=(char *)r_stock_local->get_value(S_DIST_07);
+    s_dist_08=(char *)r_stock_local->get_value(S_DIST_08);
+    s_dist_09=(char *)r_stock_local->get_value(S_DIST_09);
+    s_dist_10=(char *)r_stock_local->get_value(S_DIST_10);
     //char * s_data = "test";
+    */
     r_stock_local->get_value(S_YTD, s_ytd);
     r_stock_local->set_value(S_YTD, s_ytd + ol_quantity);
     r_stock_local->get_value(S_ORDER_CNT, s_order_cnt);
@@ -490,20 +614,18 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
       s_remote_cnt ++;
       r_stock_local->set_value(S_REMOTE_CNT, &s_remote_cnt);
     }
-    uint64_t quantity;
     if (s_quantity > ol_quantity + 10) {
       quantity = s_quantity - ol_quantity;
     } else {
       quantity = s_quantity - ol_quantity + 91;
     }
     r_stock_local->set_value(S_QUANTITY, &quantity);
+  }
+  if (end_piece(6) != RCOK)
+    goto stock_piece;
 
-    // retire stock
-#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
-    if (retire_row(row_cnt-1) == Abort)
-      return finish(Abort);
-#endif
-
+orderline_piece: // 7
+  begin_piece(7);
     /*====================================================+
     EXEC SQL INSERT
         INTO order_line(ol_o_id, ol_d_id, ol_w_id, ol_number,
@@ -513,25 +635,209 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
             :ol_i_id, :ol_supply_w_id,
             :ol_quantity, :ol_amount, :ol_dist_info);
     +====================================================*/
+  /*
+  for (UInt32 ol_number = 0; ol_number < ol_cnt; ol_number++) {
+    ol_i_id = query->items[ol_number].ol_i_id;
+    ol_supply_w_id = query->items[ol_number].ol_supply_w_id;
+    ol_quantity = query->items[ol_number].ol_quantity;
     // XXX district info is not inserted.
-//		row_t * r_ol;
-//		uint64_t row_id;
-//		_wl->t_orderline->get_new_row(r_ol, 0, row_id);
-//		r_ol->set_value(OL_O_ID, &o_id);
-//		r_ol->set_value(OL_D_ID, &d_id);
-//		r_ol->set_value(OL_W_ID, &w_id);
-//		r_ol->set_value(OL_NUMBER, &ol_number);
-//		r_ol->set_value(OL_I_ID, &ol_i_id);
+    _wl->t_orderline->get_new_row(r_ol, 0, row_id);
+    r_ol->set_value(OL_O_ID, &o_id);
+    r_ol->set_value(OL_D_ID, &d_id);
+    r_ol->set_value(OL_W_ID, &w_id);
+    r_ol->set_value(OL_NUMBER, &ol_number);
+    r_ol->set_value(OL_I_ID, &ol_i_id);
+    //deal with district
 #if !TPCC_SMALL
-//		int w_tax=1, d_tax=1;
-//		int64_t ol_amount = ol_quantity * i_price * (1 + w_tax + d_tax) * (1 - c_discount);
-//		r_ol->set_value(OL_SUPPLY_W_ID, &ol_supply_w_id);
-//		r_ol->set_value(OL_QUANTITY, &ol_quantity);
-//		r_ol->set_value(OL_AMOUNT, &ol_amount);
+    if(o_d_id==1){
+      r_ol->set_value(OL_DIST_INFO, &s_dist_01);
+    }else if(o_d_id==2){
+      r_ol->set_value(OL_DIST_INFO, &s_dist_02);
+    }else if(o_d_id==3){
+      r_ol->set_value(OL_DIST_INFO, &s_dist_03);
+    }else if(o_d_id==4){
+      r_ol->set_value(OL_DIST_INFO, &s_dist_04);
+    }else if(o_d_id==5){
+      r_ol->set_value(OL_DIST_INFO, &s_dist_05);
+    }else if(o_d_id==6){
+      r_ol->set_value(OL_DIST_INFO, &s_dist_06);
+    }else if(o_d_id==7){
+      r_ol->set_value(OL_DIST_INFO, &s_dist_07);
+    }else if(o_d_id==8){
+      r_ol->set_value(OL_DIST_INFO, &s_dist_08);
+    }else if(o_d_id==9){
+      r_ol->set_value(OL_DIST_INFO, &s_dist_09);
+    }else if(o_d_id==10){
+      r_ol->set_value(OL_DIST_INFO, &s_dist_10);
+    }
 #endif
-//		insert_row(r_ol, _wl->t_orderline);
+#if !TPCC_SMALL
+    ol_amount = ol_quantity * i_price * (1 + w_tax + d_tax) * (1 - c_discount);
+    r_ol->set_value(OL_SUPPLY_W_ID, &ol_supply_w_id);
+    r_ol->set_value(OL_QUANTITY, &ol_quantity);
+    r_ol->set_value(OL_AMOUNT, &ol_amount);
+#endif
+#if !TPCC_SMALL
+    sum+=ol_amount;
+#endif
+    //insert_row(r_ol, _wl->t_orderline);
   }
+    */
+  if (end_piece(7) != RCOK)
+    goto orderline_piece;
 
+#else // if CC_ALG != IC3
+
+  for (UInt32 ol_number = 0; ol_number < ol_cnt; ol_number++) {
+        ol_i_id = query->items[ol_number].ol_i_id;
+#if TPCC_USER_ABORT
+        // XXX(zhihan): if key is invalid, abort. user-initiated abort
+        // according to tpc-c documentation
+        if (ol_i_id == 0)
+          return finish(ERROR);
+#endif
+        ol_supply_w_id = query->items[ol_number].ol_supply_w_id;
+        ol_quantity = query->items[ol_number].ol_quantity;
+        /*===========================================+
+        EXEC SQL SELECT i_price, i_name , i_data
+            INTO :i_price, :i_name, :i_data
+            FROM item
+            WHERE i_id = :ol_i_id;
+        +===========================================*/
+        key = ol_i_id;
+        item = index_read(_wl->i_item, key, 0);
+        assert(item != NULL);
+        r_item = ((row_t *)item->location);
+        r_item_local = get_row(r_item, RD);
+        if (r_item_local == NULL) {
+            return finish(Abort);
+        }
+
+        r_item_local->get_value(I_PRICE, i_price);
+        i_name = r_item_local->get_value(I_NAME);
+        i_data = r_item_local->get_value(I_DATA);
+        assert(i_name!=NULL);
+        assert(i_data!=NULL);
+        /*===================================================================+
+        EXEC SQL SELECT s_quantity, s_data,
+                s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05,
+                s_dist_06, s_dist_07, s_dist_08, s_dist_09, s_dist_10
+            INTO :s_quantity, :s_data,
+                :s_dist_01, :s_dist_02, :s_dist_03, :s_dist_04, :s_dist_05,
+                :s_dist_06, :s_dist_07, :s_dist_08, :s_dist_09, :s_dist_10
+            FROM stock
+            WHERE s_i_id = :ol_i_id AND s_w_id = :ol_supply_w_id;
+        EXEC SQL UPDATE stock SET s_quantity = :s_quantity
+            WHERE s_i_id = :ol_i_id
+            AND s_w_id = :ol_supply_w_id;
+        +===============================================*/
+
+        stock_key = stockKey(ol_i_id, ol_supply_w_id);
+        stock_index = _wl->i_stock;
+        index_read(stock_index, stock_key, wh_to_part(ol_supply_w_id), stock_item);
+        assert(item != NULL);
+        r_stock = ((row_t *)stock_item->location);
+        r_stock_local = get_row(r_stock, WR);
+        if (r_stock_local == NULL) {
+            return finish(Abort);
+        }
+
+        // XXX s_dist_xx are not retrieved.
+        s_quantity = *(int64_t *)r_stock_local->get_value(S_QUANTITY);
+        //try to retrieve s_dist_xx
+#if !TPCC_SMALL
+        /*
+        s_dist_01=(char *)r_stock_local->get_value(S_DIST_01);
+        s_dist_02=(char *)r_stock_local->get_value(S_DIST_02);
+        s_dist_03=(char *)r_stock_local->get_value(S_DIST_03);
+        s_dist_04=(char *)r_stock_local->get_value(S_DIST_04);
+        s_dist_05=(char *)r_stock_local->get_value(S_DIST_05);
+        s_dist_06=(char *)r_stock_local->get_value(S_DIST_06);
+        s_dist_07=(char *)r_stock_local->get_value(S_DIST_07);
+        s_dist_08=(char *)r_stock_local->get_value(S_DIST_08);
+        s_dist_09=(char *)r_stock_local->get_value(S_DIST_09);
+        s_dist_10=(char *)r_stock_local->get_value(S_DIST_10);
+        */
+        //char * s_data = "test";
+        r_stock_local->get_value(S_YTD, s_ytd);
+        r_stock_local->set_value(S_YTD, s_ytd + ol_quantity);
+        r_stock_local->get_value(S_ORDER_CNT, s_order_cnt);
+        r_stock_local->set_value(S_ORDER_CNT, s_order_cnt + 1);
+        //s_data = r_stock_local->get_value(S_DATA);
+#endif
+        if (remote) {
+            s_remote_cnt = *(int64_t*)r_stock_local->get_value(S_REMOTE_CNT);
+            s_remote_cnt ++;
+            r_stock_local->set_value(S_REMOTE_CNT, &s_remote_cnt);
+        }
+
+        if (s_quantity > ol_quantity + 10) {
+            quantity = s_quantity - ol_quantity;
+        } else {
+            quantity = s_quantity - ol_quantity + 91;
+        }
+        r_stock_local->set_value(S_QUANTITY, &quantity);
+
+#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
+    if (retire_row(row_cnt-1) == Abort)
+      return finish(Abort);
+#endif
+
+        /*====================================================+
+        EXEC SQL INSERT
+            INTO order_line(ol_o_id, ol_d_id, ol_w_id, ol_number,
+                ol_i_id, ol_supply_w_id,
+                ol_quantity, ol_amount, ol_dist_info)
+            VALUES(:o_id, :d_id, :w_id, :ol_number,
+                :ol_i_id, :ol_supply_w_id,
+                :ol_quantity, :ol_amount, :ol_dist_info);
+        +====================================================*/
+        // XXX district info is not inserted.
+	/*
+        _wl->t_orderline->get_new_row(r_ol, 0, row_id);
+        r_ol->set_value(OL_O_ID, &o_id);
+        r_ol->set_value(OL_D_ID, &d_id);
+        r_ol->set_value(OL_W_ID, &w_id);
+        r_ol->set_value(OL_NUMBER, &ol_number);
+        r_ol->set_value(OL_I_ID, &ol_i_id);
+        //deal with district
+#if !TPCC_SMALL
+        if(o_d_id==1){
+            r_ol->set_value(OL_DIST_INFO, &s_dist_01);
+        }else if(o_d_id==2){
+            r_ol->set_value(OL_DIST_INFO, &s_dist_02);
+        }else if(o_d_id==3){
+            r_ol->set_value(OL_DIST_INFO, &s_dist_03);
+        }else if(o_d_id==4){
+            r_ol->set_value(OL_DIST_INFO, &s_dist_04);
+        }else if(o_d_id==5){
+            r_ol->set_value(OL_DIST_INFO, &s_dist_05);
+        }else if(o_d_id==6){
+            r_ol->set_value(OL_DIST_INFO, &s_dist_06);
+        }else if(o_d_id==7){
+            r_ol->set_value(OL_DIST_INFO, &s_dist_07);
+        }else if(o_d_id==8){
+            r_ol->set_value(OL_DIST_INFO, &s_dist_08);
+        }else if(o_d_id==9){
+            r_ol->set_value(OL_DIST_INFO, &s_dist_09);
+        }else if(o_d_id==10){
+            r_ol->set_value(OL_DIST_INFO, &s_dist_10);
+        }
+#endif
+#if !TPCC_SMALL
+        ol_amount = ol_quantity * i_price * (1 + w_tax + d_tax) * (1 - c_discount);
+        r_ol->set_value(OL_SUPPLY_W_ID, &ol_supply_w_id);
+        r_ol->set_value(OL_QUANTITY, &ol_quantity);
+        r_ol->set_value(OL_AMOUNT, &ol_amount);
+#endif
+        */
+#if !TPCC_SMALL
+    sum+=ol_amount;
+#endif
+        //insert_row(r_ol, _wl->t_orderline);
+    }
+
+#endif // if CC_ALG == IC3
   assert( rc == RCOK );
   return finish(rc);
 }

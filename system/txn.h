@@ -9,6 +9,7 @@ class row_t;
 class table_t;
 class base_query;
 class INDEX;
+class txn_man;
 
 // each thread has a txn_man. 
 // a txn_man corresponds to a single transaction.
@@ -36,10 +37,24 @@ class Access {
   ts_t 		tid;
   ts_t 		epoch;
 #elif CC_ALG == HEKATON
-  void * 		history_entry;
+  void * 	history_entry;
+#elif CC_ALG == IC3
+  ts_t *    tids;
+  ts_t      epochs;
+  uint64_t  tid;
+  uint64_t  rd_accesses;
+  uint64_t  wr_accesses;
+  uint64_t  lk_accesses;
 #endif
   void * lock_entry;
 };
+
+#if CC_ALG == IC3
+struct TxnEntry {
+  txn_man * txn;
+  uint64_t txn_id;
+};
+#endif
 
 class txn_man
 {
@@ -70,7 +85,7 @@ class txn_man
   status_t          wound_txn(txn_man * txn);
   status_t          set_abort()
   {
-#if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT
+#if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT || CC_ALG == IC3
     if (ATOM_CAS(status, RUNNING, ABORTED)) {
       lock_abort = true;
       return ABORTED;
@@ -96,8 +111,8 @@ class txn_man
   void * volatile history_entry;
 #endif
   // [DL_DETECT, NO_WAIT, WAIT_DIE, WOUND_WAIT, BAMBOO]
-  bool volatile 	lock_ready;
-  bool volatile 	lock_abort; // forces another waiting txn to abort.
+  volatile bool 	lock_ready;
+  volatile bool 	lock_abort; // forces another waiting txn to abort.
   // [BAMBOO]
   status_t          status; // RUNNING, COMMITED, ABORTED
   // [TIMESTAMP, MVCC]
@@ -108,11 +123,18 @@ class txn_man
   void 			    cleanup(RC rc);
 #if CC_ALG == TICTOC
   ts_t 			get_max_wts() 	{ return _max_wts; }
-    void 			update_max_wts(ts_t max_wts);
-    ts_t 			last_wts;
-    ts_t 			last_rts;
+  void 			update_max_wts(ts_t max_wts);
+  ts_t 			last_wts;
+  ts_t 			last_rts;
 #elif CC_ALG == SILO
   ts_t 			last_tid;
+#elif CC_ALG == IC3
+  TPCCTxnType           curr_type;
+  volatile int  curr_piece;
+  void          begin_piece(int piece_id);
+  RC            end_piece(int piece_id);
+  void          abort_ic3();
+  int           get_txn_pieces(int tpe);
 #endif
 
   // For OCC
@@ -128,7 +150,7 @@ class txn_man
   TxnType 		    vll_txn_type;
   itemid_t *	    index_read(INDEX * index, idx_key_t key, int part_id);
   void 			    index_read(INDEX * index, idx_key_t key, int part_id,
-      itemid_t *& item);
+                                 itemid_t *& item);
   row_t * 		    get_row(row_t * row, access_t type);
 
   // For BAMBOO
@@ -138,6 +160,7 @@ class txn_man
 
  protected:
   void 			    insert_row(row_t * row, table_t * table);
+  void              index_insert(row_t * row, INDEX * index, idx_key_t key);
  private:
 #if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT || CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT
   void              assign_lock_entry(Access * access);
@@ -151,19 +174,25 @@ class txn_man
 
   bool              _write_copy_ptr;
 #if CC_ALG == TICTOC || CC_ALG == SILO
-  bool 			_pre_abort;
-    bool 			_validation_no_wait;
+  bool 			    _pre_abort;
+  bool 			    _validation_no_wait;
 #endif
 #if CC_ALG == TICTOC
-  bool			_atomic_timestamp;
-    ts_t 			_max_wts;
-    // the following methods are defined in concurrency_control/tictoc.cpp
-    RC				validate_tictoc();
+  bool			    _atomic_timestamp;
+  ts_t 			    _max_wts;
+  // the following methods are defined in concurrency_control/tictoc.cpp
+  RC				validate_tictoc();
 #elif CC_ALG == SILO
-  ts_t 			_cur_tid;
-    RC				validate_silo();
+  ts_t 			    _cur_tid;
+  RC				validate_silo();
 #elif CC_ALG == HEKATON
   RC 				validate_hekaton(RC rc);
+#elif CC_ALG == IC3
+  int               access_marker;
+  TxnEntry **       depqueue;
+  int               depqueue_sz;
+  RC                validate_ic3();
+  uint64_t          piece_starttime;
 #endif
 };
 

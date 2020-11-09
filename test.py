@@ -50,14 +50,26 @@ def compile_and_run(job, unset_numa=False) :
 
 def parse_output(job):
 	output = open("temp.out")
+        success = False
 	for line in output:
 		line = line.strip()
 		if "[summary]" in line:
+                        success = True
 			for token in line.strip().split('[summary]')[-1].split(','):
 				key, val = token.strip().split('=')
 				job[key] = val
 			break
-	output.close()
+        if success:
+	    output.close()
+	    os.system("rm -f temp.out")
+            return job
+        errlog = open("log/{}.log".format(datetime.datetime.now().strftime("%b-%d_%H-%M-%S-%f")), 'a+')
+        errlog.write("{}\n".format(json.dumps(job)))
+        output = open("temp.out")
+        for line in output: 
+            errlog.write(line)
+        errlog.close()
+        output.close()
 	os.system("rm -f temp.out")
 	return job
 

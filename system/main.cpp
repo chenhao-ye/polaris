@@ -37,6 +37,10 @@ int main(int argc, char* argv[])
 	printf("WAIT_DIE\n");
 #elif CC_ALG == BAMBOO
 	printf("BAMBOO\n");
+#elif CC_ALG == SILO
+	printf("SILO\n");
+#elif CC_ALG == IC3
+	printf("IC3\n");
 #endif
 	
  

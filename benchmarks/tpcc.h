@@ -7,6 +7,10 @@
 class table_t;
 class INDEX;
 class tpcc_query;
+	
+#define IC3_TPCC_NEW_ORDER_PIECES   8
+#define IC3_TPCC_PAYMENT_PIECES     4
+#define IC3_TPCC_DELIVERY_PIECES    4
 
 class tpcc_wl : public workload {
 public:
@@ -36,6 +40,11 @@ public:
 	
 	bool ** delivering;
 	uint32_t next_tid;
+#if CC_ALG == IC3
+	void init_scgraph();
+	SC_PIECE * get_cedges(TPCCTxnType txn_type, int piece_id);
+	SC_PIECE *** sc_graph;
+#endif
 private:
 	uint64_t num_wh;
 	void init_tab_item();
@@ -76,10 +85,6 @@ private:
 	        if ((type == local_type) || (local_type == WR)) {
 	            return true;
 	        } else if (type == WR) {
-	            // upgrade lock
-#if DEBUG_BENCHMARK
-    printf("upgrade lock \n");
-#endif
                 return false;
 	        }
 	    }
