@@ -10,8 +10,12 @@ double ycsb_query::denom = 0;
 
 void ycsb_query::init(uint64_t thd_id, workload * h_wl, Query_thd * query_thd) {
 	_query_thd = query_thd;
+	local_req_per_query = REQ_PER_QUERY;
+	double x = (double)(rand() % 100) / 100.0;
+	if (x < LONG_TXN_RATIO)
+		local_req_per_query = MAX_ROW_PER_TXN;
 	requests = (ycsb_request *) 
-		mem_allocator.alloc(sizeof(ycsb_request) * g_req_per_query, thd_id);
+		mem_allocator.alloc(sizeof(ycsb_request) * local_req_per_query, thd_id);
 	part_to_access = (uint64_t *) 
 		mem_allocator.alloc(sizeof(uint64_t) * g_part_per_txn, thd_id);
 	zeta_2_theta = zeta(2, g_zipf_theta);
@@ -106,7 +110,7 @@ void ycsb_query::gen_requests(uint64_t thd_id, workload * h_wl) {
 uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 #endif
 	int rid = 0;
-	for (UInt32 tmp = 0; tmp < g_req_per_query; tmp ++) {		
+	for (UInt32 tmp = 0; tmp < local_req_per_query; tmp ++) {		
 		ycsb_request * req = &requests[rid];
 		// the request will access part_id.
 		uint64_t ith = tmp * part_num / g_req_per_query;
@@ -263,7 +267,7 @@ uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 		rid ++;
 	}
 	request_cnt = rid;
-	assert(request_cnt == g_req_per_query);
+	assert(request_cnt == local_req_per_query);
 
 	if (g_key_order) {
 	  // Sort the requests in key order.
