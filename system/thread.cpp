@@ -225,7 +225,7 @@ RC thread_t::run() {
 				assert( _wl->sim_done);
 		}
 #else
-		if (warmup_finish && (stats._stats[get_thd_id()]->run_time / BILLION >=
+		if (warmup_finish && (stats._stats[get_thd_id()]->run_time / 1000000000 >=
 		MAX_RUNTIME)) {
             if( !ATOM_CAS(_wl->sim_done, false, true) )
                 assert( _wl->sim_done);
