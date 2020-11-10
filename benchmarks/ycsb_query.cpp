@@ -109,13 +109,15 @@ void ycsb_query::gen_requests(uint64_t thd_id, workload * h_wl) {
 #if SYNTHETIC_YCSB
 uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 #endif
-	int rid = 0;
-	for (UInt32 tmp = 0; tmp < local_req_per_query; tmp ++) {		
+	uint64_t rid = 0;
+	uint64_t tmp;
+	for (tmp = 0; tmp < local_req_per_query; tmp ++) {		
+	assert(tmp == rid);
 		ycsb_request * req = &requests[rid];
 		// the request will access part_id.
-		uint64_t ith = tmp * part_num / g_req_per_query;
-		uint64_t part_id = 
-			part_to_access[ ith ];
+		//uint64_t ith = tmp * part_num / g_req_per_query;
+		uint64_t ith = tmp * part_num / local_req_per_query;
+		uint64_t part_id = part_to_access[ ith ];
 		uint64_t row_id; 
 #if SYNTHETIC_YCSB
 		assert(part_id == 0);
@@ -234,6 +236,14 @@ uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 #endif
 		uint64_t primary_key = row_id * g_virtual_part_cnt + part_id;
 		req->key = primary_key;
+		assert(req->key < (g_synth_table_size / g_virtual_part_cnt));
+		/*
+		if (req->key >= (g_synth_table_size / g_virtual_part_cnt)) {
+			printf("table size: %lu\n", g_synth_table_size / g_virtual_part_cnt);
+			printf("WRONG KEY: %lu, req->key: %lu, rowid=%lu\n", primary_key, req->key, row_id);
+			assert(false);
+		}
+		*/
 		int64_t rint64;
 		lrand48_r(&_query_thd->buffer, &rint64);
 		req->value = rint64 % (1<<8);
@@ -296,9 +306,9 @@ uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 				}
 #endif
 				if (requests[a].key > requests[b].key) {
-					ycsb_request tmp = requests[a];
+					ycsb_request tmp_req = requests[a];
 					requests[a] = requests[b];
-					requests[b] = tmp;
+					requests[b] = tmp_req;
 				}
 			}
 		}
