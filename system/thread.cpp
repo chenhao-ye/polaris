@@ -218,11 +218,19 @@ RC thread_t::run() {
 			return FINISH;
 		}
 
+#if TERMINIATE_BY_COUNT
 		if (warmup_finish && txn_cnt >= MAX_TXN_PER_PART) {
 			assert(txn_cnt == MAX_TXN_PER_PART);
 			if( !ATOM_CAS(_wl->sim_done, false, true) )
 				assert( _wl->sim_done);
 		}
+#else
+		if (warmup_finish && (stats._stats[get_thd_id()]->run_time / 1000000000 >=
+		MAX_RUNTIME)) {
+            if( !ATOM_CAS(_wl->sim_done, false, true) )
+                assert( _wl->sim_done);
+		}
+#endif
 
 		if (_wl->sim_done) {
 #if CC_ALG == IC3
