@@ -4,6 +4,7 @@
 /***********************************************/
 // Simulation + Hardware
 /***********************************************/
+#define TERMINIATE_BY_COUNT         true
 #define THREAD_CNT					20
 #define PART_CNT					1
 // each transaction only accesses 1 virtual partition. But the lock/ts manager and index are not aware of such partitioning. VIRTUAL_PART_CNT describes the request distribution and is only used to generate queries. For HSTORE, VIRTUAL_PART_CNT should be the same as PART_CNT.
@@ -123,6 +124,7 @@
 // Benchmark
 /***********************************************/
 #define THINKTIME				    0
+#define MAX_RUNTIME                 30 // in s, used only if !TERMINATE_BY_TIME
 // max number of rows touched per transaction
 #define MAX_ROW_PER_TXN				64
 #define QUERY_INTVL 				1UL
