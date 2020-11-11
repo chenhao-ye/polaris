@@ -37,7 +37,7 @@ threads=16
 profile="true"
 byc="false"
 runtime=10
-cnt=1000000
+cnt=1000
 penalty=50000
 chain="false"
 
