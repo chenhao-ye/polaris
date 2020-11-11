@@ -236,8 +236,15 @@ RC Row_bamboo_pt::lock_retire(void * addr) {
     // move to retired list
     RETIRE_ENTRY(entry);
     // make dirty data globally visible
-    if (entry->type == LOCK_EX)
+    if (entry->type == LOCK_EX) {
+#if DEBUG_CS_PROFILING
+      uint64_t startt = get_sys_clock();
       entry->access->orig_row->copy(entry->access->data);
+      INC_STATS(entry->txn->get_thd_id(), time_copy, get_sys_clock() - startt);
+#else
+      entry->access->orig_row->copy(entry->access->data);
+#endif
+    }
   } else {
     // may be is aborted: assert(txn->status == ABORTED);
     assert(entry->status == LOCK_DROPPED);
@@ -429,7 +436,13 @@ void Row_bamboo_pt::update_entry(BBLockEntry * entry) {
     // R(W-committed)WWR -- no
     while (en && !(en->delta)) {
       en->is_cohead = true;
+#if DEBUG_CS_PROFILING
+      uint64_t starttime = get_sys_clock();
       en->txn->decrement_commit_barriers();
+      INC_STATS(en->txn->get_thd_id(), time_semaphore_cs, get_sys_clock() - starttime);
+#else
+      en->txn->decrement_commit_barriers();
+#endif
       en = en->next;
       if (!en && !checked_owners) {
         checked_owners = true;
@@ -442,7 +455,13 @@ void Row_bamboo_pt::update_entry(BBLockEntry * entry) {
     entry->delta = false;
     do { // RRRRW
       en->is_cohead = true;
+#if DEBUG_CS_PROFILING
+      uint64_t starttime = get_sys_clock();
       en->txn->decrement_commit_barriers();
+      INC_STATS(en->txn->get_thd_id(), time_semaphore_cs, get_sys_clock() - starttime);
+#else
+      en->txn->decrement_commit_barriers();
+#endif
       en = en->next;
       if (!en && !checked_owners) {
         checked_owners = true;
