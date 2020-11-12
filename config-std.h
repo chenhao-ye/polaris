@@ -144,6 +144,7 @@
 #define PERC_MULTI_PART				1
 #define REQ_PER_QUERY				16
 #define LONG_TXN_RATIO			        0
+#define LONG_TXN_READ_RATIO			0.5
 #define FIELD_PER_TUPLE				10
 // ==== [YCSB-synthetic] ====
 #define SYNTHETIC_YCSB              true

@@ -10,10 +10,13 @@ double ycsb_query::denom = 0;
 
 void ycsb_query::init(uint64_t thd_id, workload * h_wl, Query_thd * query_thd) {
 	_query_thd = query_thd;
+	local_read_perc = g_read_perc;
 	local_req_per_query = REQ_PER_QUERY;
 	double x = (double)(rand() % 100) / 100.0;
-	if (x < LONG_TXN_RATIO)
+	if (x < LONG_TXN_RATIO) {
 		local_req_per_query = MAX_ROW_PER_TXN;
+		local_read_perc = LONG_TXN_READ_RATIO;
+	}
 	requests = (ycsb_request *) 
 		mem_allocator.alloc(sizeof(ycsb_request) * local_req_per_query, thd_id);
 	part_to_access = (uint64_t *) 
@@ -219,9 +222,9 @@ uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 		double r;
 		// get a random number r to determine read/write ratio
 		drand48_r(&_query_thd->buffer, &r);
-		if (r < g_read_perc) {
+		if (r < local_read_perc) {
 			req->rtype = RD;
-		} else if (r >= g_read_perc && r <= g_write_perc + g_read_perc) {
+		} else if (r >= local_read_perc && r <= g_write_perc + local_read_perc) {
 			req->rtype = WR;
 		} else {
 			req->rtype = SCAN;

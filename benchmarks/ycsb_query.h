@@ -27,6 +27,7 @@ public:
 
 	uint64_t request_cnt;
 	uint64_t local_req_per_query;
+	double local_read_perc;
 	ycsb_request * requests;
 	uint64_t get_new_row();
 
