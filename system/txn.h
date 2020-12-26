@@ -207,6 +207,7 @@ inline bool txn_man::wound_txn(txn_man * txn)
         return true;
     }
     return status == ABORTED;
+#else
+  return false;
 #endif
-  return ABORTED;
 }
