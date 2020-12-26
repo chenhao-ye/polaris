@@ -82,7 +82,7 @@ class txn_man
 #endif
 
   // [WW, BAMBOO]
-  status_t          wound_txn(txn_man * txn);
+  bool              wound_txn(txn_man * txn);
   void              set_abort()
   {
 #if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT || CC_ALG == IC3
