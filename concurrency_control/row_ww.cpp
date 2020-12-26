@@ -107,9 +107,8 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int&txncnt,
     LockEntry * prev = NULL;
     while (en != NULL) {
       if (en->txn->get_ts() > txn->get_ts() && conflict_lock(lock_type, type)) {
-        if (txn->wound_txn(en->txn) == COMMITED){
-          // curr txn is wounded by other txns or txn to wound comitted
-          // already.. either way no entry is removed
+        if (!txn->wound_txn(en->txn)){
+          // txn to wound is already pre-committed or comitted
           if (owner_cnt == 0)
             bring_next();
           rc = Abort;

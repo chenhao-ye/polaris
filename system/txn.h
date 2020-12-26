@@ -83,17 +83,17 @@ class txn_man
 
   // [WW, BAMBOO]
   status_t          wound_txn(txn_man * txn);
-  status_t          set_abort()
+  void              set_abort()
   {
 #if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT || CC_ALG == IC3
     if (ATOM_CAS(status, RUNNING, ABORTED)) {
-      lock_abort = true;
-      return ABORTED;
+        lock_abort = true;
     } else {
-      return status;
+        if (ATOM_CAS(status, PRECOMMIT, ABORTED)) {
+            lock_abort = true;
+        }
     }
 #endif
-    return ABORTED;
   };
 
   void          increment_commit_barriers();
@@ -198,12 +198,15 @@ class txn_man
 
 #include "thread.h"
 
-inline status_t txn_man::wound_txn(txn_man * txn)
+inline bool txn_man::wound_txn(txn_man * txn)
 {
 #if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT
-  if (status != RUNNING)
-    return COMMITED; // wounder is wounded by others already.
-  return txn->set_abort(); // can be COMMITED (already commit) OR ABORTED
+    // CANNOT wound PRECOMMITTED txn
+    if (ATOM_CAS(status, RUNNING, ABORTED)) {
+        lock_abort = true;
+        return true;
+    }
+    return status == ABORTED;
 #endif
   return ABORTED;
 }

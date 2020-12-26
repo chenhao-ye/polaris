@@ -465,17 +465,19 @@ RC txn_man::finish(RC rc) {
 	}
 	cleanup(rc);
 #elif CC_ALG == BAMBOO
-  if (rc == RCOK) {
+  if (!ATOM_CAS(status, RUNNING, PRECOMMIT))
+      rc = Abort;
+  else {
 #if DEBUG_PROFILING
     uint64_t starttime = get_sys_clock();
 #endif
-    while(commit_barriers > 0 && status == RUNNING) {
+    while(commit_barriers > 0 && status == PRECOMMIT) {
       continue;
     }
 #if DEBUG_PROFILING
     INC_STATS(get_thd_id(), time_commit, get_sys_clock() - starttime);
 #endif
-    if (!ATOM_CAS(status, RUNNING, COMMITED))
+    if (!ATOM_CAS(status, PRECOMMIT, COMMITED))
       rc = Abort;
   }
   cleanup(rc);
