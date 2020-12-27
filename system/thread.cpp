@@ -190,7 +190,7 @@ RC thread_t::run() {
 		        INC_STATS(get_thd_id(), commit_latency, timespan);
 		        INC_STATS(get_thd_id(), latency, endtime - txn_starttime);
 			INC_STATS(get_thd_id(), txn_cnt, 1);
-#if WORKLOAD == YCSB
+#if LONG_TXN_RATIO > 0 && WORKLOAD == YCSB
 			if ( ((ycsb_query *) m_query)->request_cnt > REQ_PER_QUERY)
 				INC_STATS(get_thd_id(), txn_cnt_long, 1);
 #endif
@@ -199,7 +199,7 @@ RC thread_t::run() {
 		} else if (rc == Abort) {
 			INC_STATS(get_thd_id(), time_abort, timespan);
 			INC_STATS(get_thd_id(), abort_cnt, 1);
-#if WORKLOAD == YCSB
+#if LONG_TXN_RATIO > 0 && WORKLOAD == YCSB
 			if ( ((ycsb_query *) m_query)->request_cnt > REQ_PER_QUERY)
 				INC_STATS(get_thd_id(), abort_cnt_long, 1);
 #endif
@@ -210,7 +210,7 @@ RC thread_t::run() {
 		       INC_STATS(get_thd_id(), time_abort, timespan);
                        INC_STATS(get_thd_id(), user_abort_cnt, 1);
                        INC_STATS(get_thd_id(), abort_cnt, 1);
-#if WORKLOAD == YCSB
+#if LONG_TXN_RATIO > 0 && WORKLOAD == YCSB
 			if ( ((ycsb_query *) m_query)->request_cnt > REQ_PER_QUERY)
 				INC_STATS(get_thd_id(), abort_cnt_long, 1);
 #endif

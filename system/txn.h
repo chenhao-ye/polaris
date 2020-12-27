@@ -83,18 +83,23 @@ class txn_man
 
   // [WW, BAMBOO]
   bool              wound_txn(txn_man * txn);
-  void              set_abort()
+  status_t              set_abort()
   {
 #if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT || CC_ALG == IC3
     if (ATOM_CAS(status, RUNNING, ABORTED)) {
         lock_abort = true;
+	return ABORTED;
     } else {
 #if BB_PRECOMMIT
         if (ATOM_CAS(status, PRECOMMIT, ABORTED)) {
             lock_abort = true;
         }
+#else
+	return status;
 #endif
     }
+#else
+    return ABORTED;
 #endif
   };
 
@@ -203,12 +208,18 @@ class txn_man
 inline bool txn_man::wound_txn(txn_man * txn)
 {
 #if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT
+    if (status != RUNNING)
+	    return false;
+#if BB_PRECOMMIT
     // CANNOT wound PRECOMMITTED txn
     if (ATOM_CAS(txn->status, RUNNING, ABORTED)) {
         lock_abort = true;
         return true;
     }
     return txn->status == ABORTED;
+#else
+    return txn->set_abort() == ABORTED;
+#endif
 #else
   return false;
 #endif
