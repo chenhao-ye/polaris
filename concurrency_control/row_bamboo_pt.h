@@ -101,7 +101,7 @@
 
 // try_wound(to_wound, wounder), if commited, wound failed, return wounder
 #define TRY_WOUND_PT(to_wound, wounder) { \
-  if (!wounder->txn->wound_txn(to_wound->txn)) {\
+  if (wounder->txn->wound_txn(to_wound->txn) == COMMITED) {\
     return_entry(wounder); \
     rc = Abort; \
     goto final; \
