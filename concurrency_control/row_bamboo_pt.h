@@ -104,7 +104,8 @@
   if (!wounder->txn->wound_txn(to_wound->txn)) {\
     return_entry(wounder); \
     rc = Abort; \
-    goto final; } \
+    goto final; \
+  } else assert(to_wound->txn->status == ABORTED); \
 }
 
 struct BBLockEntry {
