@@ -163,6 +163,7 @@ class txn_man
   // For BAMBOO
 #if CC_ALG == BAMBOO
   RC                retire_row(int access_cnt);
+  ts_t              get_exec_time() {return get_sys_clock() - start_ts;};
 #endif
 
  protected:

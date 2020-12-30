@@ -83,7 +83,6 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
 #if DEBUG_ABORT_LENGTH
   txn->abort_chain = 0;
 #endif
-
 #if DEBUG_CS_PROFILING
   uint64_t starttime = get_sys_clock();
 #endif
