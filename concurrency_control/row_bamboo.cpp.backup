@@ -18,14 +18,14 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
   RC rc = RCOK;
   ts_t owner_ts = 0;
 
-#if DEBUG_ABORT_LENGTH
+#if PF_ABORT 
   txn->abort_chain = 0;
 #endif
-#if DEBUG_CS_PROFILING
+#if PF_CS
   uint64_t starttime = get_sys_clock();
 #endif
   lock(to_insert);
-#if DEBUG_CS_PROFILING
+#if PF_CS
   INC_STATS(txn->get_thd_id(), time_get_latch, get_sys_clock() - starttime);
   starttime = get_sys_clock();
 #endif
@@ -197,11 +197,11 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int
   txn->lock_ready = true;
 
   final:
-#if DEBUG_CS_PROFILING
+#if PF_CS
   INC_STATS(txn->get_thd_id(), time_get_cs, get_sys_clock() - starttime);
 #endif
   unlock(to_insert);
-#if DEBUG_ABORT_LENGTH
+#if PF_ABORT 
   if (txn->abort_chain > 0) {
     UPDATE_STATS(txn->get_thd_id(), max_abort_length, txn->abort_chain);
     INC_STATS(txn->get_thd_id(), cascading_abort_times, 1);

@@ -37,7 +37,7 @@ class Row_silo;
 class Row_vll;
 class Row_ww;
 class Row_bamboo;
-class Row_bamboo_pt;
+//class Row_bamboo_pt;
 class Row_ic3;
 
 class row_t
@@ -125,11 +125,7 @@ class row_t
   #elif CC_ALG == WOUND_WAIT
   	Row_ww * manager;
   #elif CC_ALG == BAMBOO
-  	#if DYNAMIC_TS
 	Row_bamboo * manager;
-  	#else
-	Row_bamboo_pt * manager;
-      #endif
   #elif CC_ALG == IC3
 	Row_ic3 * manager;
 #endif

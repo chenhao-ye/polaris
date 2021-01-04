@@ -13,9 +13,9 @@ void ycsb_query::init(uint64_t thd_id, workload * h_wl, Query_thd * query_thd) {
 	local_read_perc = g_read_perc;
 	local_req_per_query = REQ_PER_QUERY;
 	double x = (double)(rand() % 100) / 100.0;
-	if (x < LONG_TXN_RATIO) {
+	if (x < g_long_txn_ratio) {
 		local_req_per_query = MAX_ROW_PER_TXN;
-		local_read_perc = LONG_TXN_READ_RATIO;
+		local_read_perc = g_long_txn_read_ratio;
 	}
 	requests = (ycsb_request *) 
 		mem_allocator.alloc(sizeof(ycsb_request) * local_req_per_query, thd_id);
@@ -144,7 +144,7 @@ uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 			row_id = table_size - 1;
 		} else {
 #elif POS_HS == SPECIFIED
-		UInt32 hs_idx = (UInt32) min((int)g_req_per_query-1, max(1, (int) floor(g_req_per_query * SPECIFIED_RATIO)));
+		UInt32 hs_idx = (UInt32) min((int)g_req_per_query-1, max(1, (int) floor(g_req_per_query * g_specified_ratio)));
 		if (tmp == hs_idx) {
 			req->rtype = FIRST_HS;
                         row_id = table_size - 1;
@@ -181,10 +181,10 @@ uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 		} else { 
 #elif POS_HS == SPECIFIED
 		#if FIXED_HS == 0
-		UInt32 hs2_idx = (UInt32) min((int)g_req_per_query-1, max(1, (int) floor(g_req_per_query * SPECIFIED_RATIO)));
+		UInt32 hs2_idx = (UInt32) min((int)g_req_per_query-1, max(1, (int) floor(g_req_per_query * g_specified_ratio)));
 		UInt32 hs1_idx = 0;
 		#else
-		UInt32 hs2_idx = (UInt32) min((int)g_req_per_query-2, max(0, (int) floor(g_req_per_query * (1-SPECIFIED_RATIO))));
+		UInt32 hs2_idx = (UInt32) min((int)g_req_per_query-2, max(0, (int) floor(g_req_per_query * (1-g_specified_ratio))));
 		UInt32 hs1_idx = g_req_per_query - 1;
 		#endif
 		if (tmp == hs1_idx) {
@@ -203,7 +203,7 @@ uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 		uint64_t hs2_row_id = table_size - 2;
 		double flip;
 		drand48_r(&_query_thd->buffer, &flip);
-		if (flip < FLIP_RATIO) {
+		if (flip < g_flip_ratio) {
 			hs1_row_id = table_size - 2;
 			hs2_row_id = table_size - 1;
 		}

@@ -104,6 +104,11 @@ extern UInt64 g_synth_table_size;
 extern UInt32 g_req_per_query;
 extern UInt32 g_field_per_tuple;
 extern UInt32 g_init_parallelism;
+extern double g_last_retire;
+extern double g_specified_ratio;
+extern double g_flip_ratio;
+extern double g_long_txn_ratio;
+extern double g_long_txn_read_ratio;
 
 // TPCC
 extern UInt32 g_num_wh;

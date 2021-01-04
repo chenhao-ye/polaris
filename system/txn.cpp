@@ -19,7 +19,7 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
     lock_ready = false;
     lock_abort = false;
     timestamp = 0;
-#if DEBUG_ABORT_LENGTH
+#if PF_ABORT 
     abort_chain = 0;
 #endif
 #if CC_ALG == BAMBOO
@@ -474,7 +474,7 @@ RC txn_man::finish(RC rc) {
       rc = Abort;
 #endif
   else {
-#if DEBUG_PROFILING
+#if PF_BASIC 
     uint64_t starttime = get_sys_clock();
 #endif
 #if BB_PRECOMMIT
@@ -484,7 +484,7 @@ RC txn_man::finish(RC rc) {
 #endif
       continue;
     }
-#if DEBUG_PROFILING
+#if PF_BASIC 
     INC_STATS(get_thd_id(), time_commit, get_sys_clock() - starttime);
 #endif
 #if BB_PRECOMMIT

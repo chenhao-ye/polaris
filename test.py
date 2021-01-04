@@ -18,6 +18,7 @@ def replace(filename, pattern, replacement):
 
 
 def compile(job):
+        os.system("cp {} {}".format(dbms_cfg[0], dbms_cfg[1]))
 	# define workload
         for (param, value) in job.iteritems():
 		pattern = r"\#define\s*" + re.escape(param) + r'.*'

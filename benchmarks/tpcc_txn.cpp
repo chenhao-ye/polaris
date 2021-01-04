@@ -45,7 +45,7 @@ RC tpcc_txn_man::run_txn(base_query * query) {
 
 RC tpcc_txn_man::run_payment(tpcc_query * query) {
 
-#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT > 1)
+#if CC_ALG == BAMBOO && (THREAD_CNT > 1)
   int access_cnt;
 #endif
   // declare all variables
@@ -118,7 +118,7 @@ warehouse_piece:
   inc_value(W_YTD, query->h_amount); // will increment at commit time
 #endif
   // bamboo: retire lock for wh
-#if (CC_ALG == BAMBOO) && RETIRE_ON && (THREAD_CNT > 1) && !COMMUTATIVE_OPS
+#if (CC_ALG == BAMBOO) && (THREAD_CNT > 1) && !COMMUTATIVE_OPS
   RETIRE_ROW(row_cnt)
 #endif
   //get a copy of warehouse name
@@ -164,7 +164,7 @@ district_piece:
 #else
   inc_value(D_YTD, query->h_amount); // will increment at commit time
 #endif
-#if (CC_ALG == BAMBOO) && RETIRE_ON && (THREAD_CNT > 1) && !COMMUTATIVE_OPS
+#if (CC_ALG == BAMBOO) && (THREAD_CNT > 1) && !COMMUTATIVE_OPS
   RETIRE_ROW(row_cnt)
 #endif
   tmp_str = r_dist_local->get_value(D_NAME);
@@ -272,7 +272,7 @@ district_piece:
     //strncat(c_new_data, c_data, 500 - strlen(c_new_data));
     //c_new_data[500]='\0';
     r_cust->set_value("C_DATA", c_new_data);
-#if (CC_ALG == BAMBOO) && RETIRE_ON && (THREAD_CNT > 1)
+#if (CC_ALG == BAMBOO) && (THREAD_CNT > 1)
   RETIRE_ROW(row_cnt)
 #endif
   }
@@ -433,7 +433,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
   o_id ++;
   r_dist_local->set_value(D_NEXT_O_ID, o_id);
 
-#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
+#if CC_ALG == BAMBOO && (THREAD_CNT != 1)
   if (retire_row(row_cnt-1) == Abort)
       return finish(Abort);
 #endif
@@ -778,7 +778,7 @@ orderline_piece: // 7
         }
         r_stock_local->set_value(S_QUANTITY, &quantity);
 
-#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
+#if CC_ALG == BAMBOO && (THREAD_CNT != 1)
     if (retire_row(row_cnt-1) == Abort)
       return finish(Abort);
 #endif

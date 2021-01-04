@@ -14,7 +14,7 @@
 #include "row_vll.h"
 #include "row_ww.h"
 #include "row_bamboo.h"
-#include "row_bamboo_pt.h"
+//#include "row_bamboo_pt.h"
 #include "row_ic3.h"
 #include "mem_alloc.h"
 #include "manager.h"
@@ -75,13 +75,8 @@ void row_t::init_manager(row_t * row) {
 #elif CC_ALG == WOUND_WAIT
   manager = (Row_ww *) mem_allocator.alloc(sizeof(Row_ww), _part_id);
 #elif CC_ALG == BAMBOO
-#if DYNAMIC_TS
   manager = (Row_bamboo *) mem_allocator.alloc(sizeof(Row_bamboo), _part_id);
   new(manager) Row_bamboo();
-#else
-  manager = (Row_bamboo_pt *) mem_allocator.alloc(sizeof(Row_bamboo_pt), _part_id);
-  new(manager) Row_bamboo_pt();
-#endif
 #elif CC_ALG == IC3
   manager = (Row_ic3 *) _mm_malloc(sizeof(Row_ic3), 64);
 #endif

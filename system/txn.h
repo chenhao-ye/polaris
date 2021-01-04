@@ -65,7 +65,7 @@ class txn_man
   workload * h_wl;
   myrand * mrand;
   uint64_t abort_cnt;
-#if DEBUG_ABORT_LENGTH
+#if PF_ABORT 
   uint64_t      abort_chain;
 #endif
 
@@ -163,8 +163,8 @@ class txn_man
   // For BAMBOO
 #if CC_ALG == BAMBOO
   RC                retire_row(int access_cnt);
-  ts_t              get_exec_time() {return get_sys_clock() - start_ts;};
 #endif
+  ts_t              get_exec_time() {return get_sys_clock() - start_ts;};
 
  protected:
   void 			    insert_row(row_t * row, table_t * table);

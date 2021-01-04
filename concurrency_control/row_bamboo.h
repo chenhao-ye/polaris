@@ -121,7 +121,7 @@
 // dynamically assigned ts. e.g. [0,0,0] -> [12, 11, 5]
 #define WOUND_RETIRED(en, to_insert) { \
     en = retired_head; \
-    for (int i = 0; i < retired_cnt; i++) { \
+    for (UInt32 i = 0; i < retired_cnt; i++) { \
         if (en->type == LOCK_EX && (en->txn->get_ts() < ts)) { \
             TRY_WOUND(en, to_insert); \
             en = rm_from_retired(en, true, txn); \
@@ -139,7 +139,7 @@
 
 #define CHECK_AND_INSERT_RETIRED(en, to_insert) { \
     en = retired_head; \
-    for (int i = 0; i < retired_cnt; i++) { \
+    for (UInt32 i = 0; i < retired_cnt; i++) { \
         if (en->type == LOCK_EX && (en->txn->get_ts() > ts)) \
             break; \
         en = en->next; \
@@ -207,12 +207,15 @@ class Row_bamboo {
     UInt32 benefit_cnt2;
     UInt32 benefit1;
     UInt32 benefit2;
+    bool curr_benefit1;
 
     // helper functions
     bool              bring_next(txn_man * txn);
     void              update_entry(BBLockEntry * en);
     BBLockEntry *     rm_from_retired(BBLockEntry * en, bool is_abort, txn_man * txn);
     BBLockEntry *     remove_descendants(BBLockEntry * en, txn_man * txn);
+    void              lock(BBLockEntry * en);
+    void              unlock(BBLockEntry * en);
 
     // latches
 #if LATCH == LH_SPINLOCK
@@ -236,7 +239,7 @@ class Row_bamboo {
     }
 
     // init a lock entry (pre-allocated in each txn's access)
-    BBLockEntry * Row_bamboo_pt::get_entry(Access * access) {
+    BBLockEntry * get_entry(Access * access) {
         BBLockEntry * entry = (BBLockEntry *) access->lock_entry;
         entry->txn->lock_ready = false;
         entry->txn->lock_abort = false;
@@ -249,45 +252,11 @@ class Row_bamboo {
     };
 
     // clean the lock entry
-    void Row_bamboo_pt::return_entry(BBLockEntry * entry) {
+    void return_entry(BBLockEntry * entry) {
         entry->next = NULL;
         entry->prev = NULL;
         entry->status = LOCK_DROPPED;
     }
-
-    // taking the latch
-    void Row_bamboo_pt::lock(BBLockEntry * en) {
-        if (g_thread_cnt > 1) {
-            if (g_central_man)
-                glob_manager->lock_row(_row);
-            else {
-#if LATCH == LH_SPINLOCK
-                pthread_spin_lock( latch );
-#elif LATCH == LH_MUTEX
-                pthread_mutex_lock( latch );
-#else
-                latch->acquire(en->m_node);
-#endif
-            }
-        }
-    };
-
-    // release the latch
-    void Row_bamboo_pt::unlock(BBLockEntry * en) {
-        if (g_thread_cnt > 1) {
-            if (g_central_man)
-                glob_manager->release_row(_row);
-            else {
-#if LATCH == LH_SPINLOCK
-                pthread_spin_unlock( latch );
-#elif LATCH == LH_MUTEX
-                pthread_mutex_unlock( latch );
-#else
-                latch->release(en->m_node);
-#endif
-            }
-        }
-    };
 
     // record benefit
     inline void record_benefit(uint64_t time) {

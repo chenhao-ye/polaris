@@ -100,10 +100,9 @@
 // [VLL]
 #define TXN_QUEUE_SIZE_LIMIT		THREAD_CNT
 // [BAMBOO]
-#define DYNAMIC_TS					true
-#define RETIRE_ON 					true
+#define BB_DYNAMIC_TS					true
 #define BB_OPT_RAW                  true
-#define LAST_RETIRE                 0
+#define BB_LAST_RETIRE                 0
 #define BB_PRECOMMIT                false
 #define BB_AUTORETIRE               true
 // [WW]
@@ -219,19 +218,22 @@ extern TestCases					g_test_case;
 #define WL_VERB						true
 #define IDX_VERB					false
 #define VERB_ALLOC					true
-
 #define DEBUG_LOCK					false
-#define DEBUG_TIMESTAMP				false
+#define DEBUG_TIMESTAMP					false
 #define DEBUG_SYNTH					false
-#define DEBUG_ASSERT                false
+#define DEBUG_ASSERT                			false
 #define DEBUG_CC					false
-#define DEBUG_WW                    false
-#define DEBUG_BENCHMARK             false
-#define DEBUG_BAMBOO                false
+#define DEBUG_WW                    			false
+#define DEBUG_BENCHMARK             			false
+#define DEBUG_BAMBOO                			false
 #define DEBUG_TMP					false
-#define DEBUG_PROFILING				false
-#define DEBUG_CS_PROFILING          false // profiling inside critical path
-#define DEBUG_ABORT_LENGTH          false
+
+/***********************************************/
+// PROFILING 
+/***********************************************/
+#define PF_BASIC					false
+#define PF_CS          					false // profiling inside critical path
+#define PF_ABORT_LENGTH          			false
 
 /***********************************************/
 // Constant

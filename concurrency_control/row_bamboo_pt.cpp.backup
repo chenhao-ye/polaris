@@ -80,14 +80,14 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
   // helper
   RC rc = RCOK;
   BBLockEntry * en;
-#if DEBUG_ABORT_LENGTH
+#if PF_ABORT 
   txn->abort_chain = 0;
 #endif
-#if DEBUG_CS_PROFILING
+#if PF_CS
   uint64_t starttime = get_sys_clock();
 #endif
   lock(to_insert);
-#if DEBUG_CS_PROFILING
+#if PF_CS
   INC_STATS(txn->get_thd_id(), time_get_latch, get_sys_clock() - starttime);
   starttime = get_sys_clock();
 #endif
@@ -210,7 +210,7 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
   }
   txn->lock_ready = true;
   final:
-#if DEBUG_CS_PROFILING
+#if PF_CS
   INC_STATS(txn->get_thd_id(), time_get_cs, get_sys_clock() - starttime);
 #endif
   unlock(to_insert);
@@ -220,11 +220,11 @@ RC Row_bamboo_pt::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
 RC Row_bamboo_pt::lock_retire(void * addr) {
   BBLockEntry * entry = (BBLockEntry *) addr;
   ASSERT(entry->type == LOCK_EX);
-#if DEBUG_CS_PROFILING
+#if PF_CS
   uint64_t starttime = get_sys_clock();
 #endif
   lock(entry);
-#if DEBUG_CS_PROFILING
+#if PF_CS
   uint64_t endtime = get_sys_clock();
   INC_STATS(entry->txn->get_thd_id(), time_retire_latch, endtime - starttime);
   starttime = endtime;
@@ -236,7 +236,7 @@ RC Row_bamboo_pt::lock_retire(void * addr) {
     RETIRE_ENTRY(entry);
     // make dirty data globally visible
     if (entry->type == LOCK_EX) {
-#if DEBUG_CS_PROFILING
+#if PF_CS
       uint64_t startt = get_sys_clock();
       entry->access->orig_row->copy(entry->access->data);
       INC_STATS(entry->txn->get_thd_id(), time_copy, get_sys_clock() - startt);
@@ -251,7 +251,7 @@ RC Row_bamboo_pt::lock_retire(void * addr) {
   }
   bring_next(NULL);
 
-#if DEBUG_CS_PROFILING
+#if PF_CS
   INC_STATS(entry->txn->get_thd_id(), time_retire_cs, get_sys_clock() -
   starttime);
 #endif
@@ -261,14 +261,14 @@ RC Row_bamboo_pt::lock_retire(void * addr) {
 
 RC Row_bamboo_pt::lock_release(void * addr, RC rc) {
   BBLockEntry * entry = (BBLockEntry *) addr;
-#if DEBUG_ABORT_LENGTH
+#if PF_ABORT 
   entry->txn->abort_chain = 0;
 #endif
-#if DEBUG_CS_PROFILING
+#if PF_CS
   uint64_t starttime = get_sys_clock();
 #endif
   lock(entry);
-#if DEBUG_CS_PROFILING
+#if PF_CS
   uint64_t endtime = get_sys_clock();
   INC_STATS(entry->txn->get_thd_id(), time_release_latch, endtime- starttime);
   starttime = endtime;
@@ -291,12 +291,12 @@ RC Row_bamboo_pt::lock_release(void * addr, RC rc) {
   }
   // WAIT - done releasing with is_abort = true
   // FINISH - done releasing with is_abort = false
-#if DEBUG_CS_PROFILING
+#if PF_CS
   INC_STATS(entry->txn->get_thd_id(), time_release_cs, get_sys_clock() -
   starttime);
 #endif
   unlock(entry);
-#if DEBUG_ABORT_LENGTH
+#if PF_ABORT 
   if (entry->txn->abort_chain > 0) {
     UPDATE_STATS(entry->txn->get_thd_id(), max_abort_length, entry->txn->abort_chain);
     INC_STATS(entry->txn->get_thd_id(), cascading_abort_times, 1);
@@ -435,7 +435,7 @@ void Row_bamboo_pt::update_entry(BBLockEntry * entry) {
     // R(W-committed)WWR -- no
     while (en && !(en->delta)) {
       en->is_cohead = true;
-#if DEBUG_CS_PROFILING
+#if PF_CS
       uint64_t starttime = get_sys_clock();
       en->txn->decrement_commit_barriers();
       INC_STATS(en->txn->get_thd_id(), time_semaphore_cs, get_sys_clock() - starttime);
@@ -454,7 +454,7 @@ void Row_bamboo_pt::update_entry(BBLockEntry * entry) {
     entry->delta = false;
     do { // RRRRW
       en->is_cohead = true;
-#if DEBUG_CS_PROFILING
+#if PF_CS
       uint64_t starttime = get_sys_clock();
       en->txn->decrement_commit_barriers();
       INC_STATS(en->txn->get_thd_id(), time_semaphore_cs, get_sys_clock() - starttime);
@@ -484,7 +484,7 @@ txn) {
     en->txn->set_abort();
     to_return = en;
     retired_cnt--;
-#if DEBUG_ABORT_LENGTH
+#if PF_ABORT 
     txn->abort_chain++;
 #endif
     en = en->next;
@@ -492,7 +492,7 @@ txn) {
   }
   // empty owners
   if (owners) {
-#if DEBUG_ABORT_LENGTH
+#if PF_ABORT 
     txn->abort_chain++;
 #endif
     owners->txn->set_abort();

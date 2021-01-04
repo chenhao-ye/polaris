@@ -74,11 +74,11 @@ RC Row_lock::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
 
   LockEntry * entry = get_entry(access);
 
-#if DEBUG_CS_PROFILING
+#if PF_CS
   uint64_t starttime = get_sys_clock();
 #endif
   lock(entry);
-#if DEBUG_CS_PROFILING
+#if PF_CS
   uint64_t endtime = get_sys_clock();
   INC_STATS(txn->get_thd_id(), time_get_latch, endtime - starttime);
   starttime = endtime;
@@ -206,7 +206,7 @@ RC Row_lock::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
   }
 
   unlock(entry);
-#if DEBUG_CS_PROFILING
+#if PF_CS
   INC_STATS(txn->get_thd_id(), time_get_cs, get_sys_clock() - starttime);
 #endif
 
@@ -222,11 +222,11 @@ RC Row_lock::lock_release(void * addr) {
 
   auto entry = (LockEntry *) addr;
 
-#if DEBUG_CS_PROFILING
+#if PF_CS
   uint64_t starttime = get_sys_clock();
 #endif
   lock(entry);
-#if DEBUG_CS_PROFILING
+#if PF_CS
   uint64_t endtime = get_sys_clock();
   INC_STATS(entry->txn->get_thd_id(), time_release_latch, endtime - starttime);
   starttime = endtime;
@@ -283,7 +283,7 @@ RC Row_lock::lock_release(void * addr) {
   }
   ASSERT((owners == NULL) == (owner_cnt == 0));
   unlock(entry);
-#if DEBUG_CS_PROFILING
+#if PF_CS
   INC_STATS(entry->txn->get_thd_id(), time_release_cs, get_sys_clock() -
       starttime);
 #endif

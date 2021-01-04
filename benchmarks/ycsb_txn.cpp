@@ -25,9 +25,9 @@ RC ycsb_txn_man::run_txn(base_query * query) {
     ycsb_query * m_query = (ycsb_query *) query;
     ycsb_wl * wl = (ycsb_wl *) h_wl;
     itemid_t * m_item = NULL;
-#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
+#if CC_ALG == BAMBOO && (THREAD_CNT != 1)
     int access_id;
-    double retire_threshold = m_query->request_cnt * (1 - LAST_RETIRE);
+    double retire_threshold = m_query->request_cnt * (1 - g_last_retire);
 #else
     row_cnt = 0;
 #endif
@@ -57,7 +57,7 @@ RC ycsb_txn_man::run_txn(base_query * query) {
                 rc = Abort;
                 goto final;
             }
-#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
+#if CC_ALG == BAMBOO && (THREAD_CNT != 1)
             access_id = row_cnt - 1;
 #endif
 
@@ -88,7 +88,7 @@ RC ycsb_txn_man::run_txn(base_query * query) {
             iteration ++;
             if (req->rtype == RD || req->rtype == WR || iteration == req->scan_len)
                 finish_req = true;
-#if (CC_ALG == BAMBOO) && RETIRE_ON && (THREAD_CNT != 1)
+#if (CC_ALG == BAMBOO) && (THREAD_CNT != 1)
             // retire write txn
             if (finish_req && (req->rtype == WR) && (rid <= retire_threshold)) {
             	//printf("[txn-%lu] retire %d requests\n", get_txn_id(), rid);

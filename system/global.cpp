@@ -53,6 +53,11 @@ UInt64 g_synth_table_size = SYNTH_TABLE_SIZE;
 UInt32 g_req_per_query = REQ_PER_QUERY;
 UInt32 g_field_per_tuple = FIELD_PER_TUPLE;
 UInt32 g_init_parallelism = INIT_PARALLELISM;
+double g_last_retire = BB_LAST_RETIRE;
+double g_specified_ratio = SPECIFIED_RATIO;
+double g_flip_ratio = FLIP_RATIO;
+double g_long_txn_ratio = LONG_TXN_RATIO;
+double g_long_txn_read_ratio = LONG_TXN_READ_RATIO;
 
 UInt32 g_num_wh = NUM_WH;
 double g_perc_payment = PERC_PAYMENT;
