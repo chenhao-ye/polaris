@@ -224,6 +224,6 @@ inline status_t txn_man::wound_txn(txn_man * txn)
     return txn->set_abort();
 #endif
 #else
-  return false;
+  return ABORTED;
 #endif
 }
