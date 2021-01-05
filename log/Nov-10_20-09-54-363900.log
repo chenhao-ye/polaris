@@ -1,7 +1,0 @@
-{"WW_STARV_FREE": "false", "MAX_TXN_PER_PART": "1000000", "MAX_RUNTIME": "15", "DEBUG_CS_PROFILING": "false", "TERMINIATE_BY_COUNT": "false", "ZIPF_THETA": "0.9", "LATCH": "LH_MCSLOCK", "SYNTH_TABLE_SIZE": "100000000", "CC_ALG": "BAMBOO", "LONG_TXN_RATIO": "0", "READ_PERC": "0.5", "ABORT_PENALTY": "50000", "LAST_RETIRE": "0.15", "BB_OPT_MAX_WAITER": "0", "MAX_ROW_PER_TXN": "64", "UNSET_NUMA": "true", "NUM_HS": "0", "DEBUG_PROFILING": "true", "REQ_PER_QUERY": "16", "SPECIFIED_RATIO": "0", "THREAD_CNT": "1", "BB_OPT_RAW": "true", "FIXED_HS": "1", "KEY_ORDER": "false", "WORKLOAD": "YCSB", "SECOND_HS": "WR", "DEBUG_ABORT_LENGTH": "false", "FIRST_HS": "WR", "POS_HS": "TOP", "RETIRE_ON": "true", "DYNAMIC_TS": "true", "FLIP_RATIO": "0", "SYNTHETIC_YCSB": "false"}
-mem_allocator initialized!
-BAMBOO
-init table MAIN_TABLE at 0x7efefb434240
-workload initialized!
-Query Queue Init Time 6.052584
-query_queue initialized!
