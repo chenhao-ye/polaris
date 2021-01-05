@@ -278,7 +278,25 @@ RC Row_bamboo::lock_release(void * addr, RC rc) {
         if (rc == RCOK && (entry->type == LOCK_EX))
             entry->access->orig_row->copy(entry->access->data);
     } else if (entry->status == LOCK_WAITER) {
+#if DEBUG_BAMBOO 
+		UInt32 cnt = 0;
+		BBLockEntry * en = waiters_head;
+		bool found = false;
+		while(en) {
+			if (en == entry) {
+				found = true;
+			}
+			en = en->next;
+			cnt++;
+		}
+		assert(found);
+		assert(cnt == waiter_cnt);
+		assert(cnt != 0);
         LIST_RM(waiters_head, waiters_tail, entry, waiter_cnt);
+		assert(waiter_cnt == cnt-1);
+#else
+        LIST_RM(waiters_head, waiters_tail, entry, waiter_cnt);
+#endif
     } else {
 		// already removed
     }
@@ -397,12 +415,12 @@ BBLockEntry * Row_bamboo::rm_from_retired(BBLockEntry * en, bool is_abort, txn_m
 
 inline
 void Row_bamboo::update_entry(BBLockEntry * entry) {
+		//update to not use delta
     if (!entry->next && !owners) {
         return; // nothing to update
     }
     if (entry->type == LOCK_SH) {
         // cohead: no need to update
-        // delta: update next entry only
         if (entry->prev) {
             if (entry->next)
                 entry->next->delta = entry->prev->type == LOCK_EX;
@@ -536,5 +554,47 @@ RC Row_bamboo::insert_read_to_retired(BBLockEntry * to_insert, ts_t ts,
 		}
 	}
 	to_insert->txn->lock_ready = true;
+#if DEBUG_BAMBOO
+	// go through retired list and make sure
+	// 1) the retired cnt is correct
+	// 2) ordered by timestamp (allow disordered reads)
+	// 3) the delta and cohead is correct
+	en = retired_head;
+	UInt32 cnt = 0;
+	ts_t largest_ts = 0;
+	ts_t largest_wr_ts = 0;	
+	bool cohead = true;
+	bool has_write = false;
+	lock_t last = LOCK_NONE;
+	while(en) {
+		if (en == retired_head) {
+			assert(en->is_cohead);
+		} else {
+			// update expected cohead 
+			if (has_write)
+				cohead = false;
+			else
+				cohead = true;
+			// check cohead
+			assert(en->is_cohead == cohead);
+		}
+		// validate ts order
+		ts_t ts = en->txn->get_ts();
+		if (en->type == LOCK_EX) {
+			assert(ts >= largest_ts);
+			largest_wr_ts = ts;
+			largest_ts = ts;
+			last = LOCK_EX;
+			has_write = true;
+		} else {
+			assert(ts > largest_wr_ts || en->is_cohead);
+			largest_ts = max(ts, largest_ts);
+			last = LOCK_SH;
+		}
+		cnt++;
+		en = en->next;
+	}
+	assert(cnt == retired_cnt);
+#endif
 	return rc;
 }

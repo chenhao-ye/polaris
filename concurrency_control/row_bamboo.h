@@ -1,12 +1,10 @@
 #ifndef ROW_BAMBOO_H
 #define ROW_BAMBOO_H
 
-// note: RW (Write-After-Read does not form commit dependency)
-#define RECHECK_RETIRE_INFO(en, prev) { \
+#define RECHECK_COHEAD_INSERTEDE(en, prev) { \
   bool is_cohead = en->is_cohead; \
   if (prev) { \
     if (prev->type == LOCK_SH) { \
-      en->delta = false;  \
       en->is_cohead = prev->is_cohead; \
       if (!en->is_cohead && is_cohead) \
         en->txn->increment_commit_barriers(); \
@@ -14,22 +12,37 @@
         en->txn->decrement_commit_barriers(); \
         record_benefit(get_sys_clock() - en->txn->start_ts); } \
     } else { \
-      en->delta = true; \
       en->is_cohead = false; \
       if (is_cohead) \
         en->txn->increment_commit_barriers(); } \
   } else { \
     en->is_cohead = true; \
-    en->delta = false; \
     if (!is_cohead) \
       en->txn->decrement_commit_barriers(); \
       record_benefit(get_sys_clock() - en->txn->start_ts);} \
 }
 
+// update cohead info when a newly-init entry (en) is firstly 
+// added to owners (bring_next, WR)
+// or tail of retired (lock_get/bring_next, RD)
+// (not apply when moving from owners to retired
+// Algorithm:
+//     if previous entry is not null
+//         if previous entry is RD
+//             if prev is cohead, then self is cohead, 
+//                 time saved is 0.
+//             otherwise, self is not cohead, need to incr barrier,
+//                 record start_ts to calc time saved when becomes cohead
+//         else if prev is WR
+//             not cohead, need to incr barrier,
+//             record start_ts to calc time saved when becomes cohead
+//     else
+//         read no dirty data, becomes cohead
+//         record time saved from elr is 0.
+//     		
 #define UPDATE_RETIRE_INFO(en, prev) { \
   if (prev) { \
     if (prev->type == LOCK_SH) { \
-      en->delta = false;  \
       en->is_cohead = prev->is_cohead; \
       if (!en->is_cohead) { \
         en->start_ts = get_sys_clock(); \
@@ -37,27 +50,30 @@
       } else { \
         record_benefit(0);} \
     } else { \
-      en->delta = true; \
       en->is_cohead = false; \
       en->start_ts = get_sys_clock(); \
       en->txn->increment_commit_barriers(); } \
   } else { \
     record_benefit(0); \
     en->is_cohead = true; \
-    en->delta = false; } }
+   } }
 
 // used by lock_retire() (move from owners to retired)
-// or by lock_acquire(), used when has no owners but directly enters retired
+// or by lock_get(), used when has no owners but directly enters retired
 // for the latter need to call UPDATE_RETIRE_INFO(to_insert, retired_tail);
 #define ADD_TO_RETIRED_TAIL(to_retire) { \
   LIST_PUT_TAIL(retired_head, retired_tail, to_retire); \
   to_retire->status = LOCK_RETIRED; \
   retired_cnt++; }
 
-
+// Insert to_insert(RD) into the tail when owners is not empty
+// (1) update inserted entry's cohead information
+// (2) NO NEED to update owners cohead information 
+//     if owner is not cohead, it cannot become one with RD inserted
+//     if owner is cohead, RD still cannot change its status
+//     as WAR([RW]) does not form commit dependency
 #define INSERT_TO_RETIRED_TAIL(to_insert) { \
   UPDATE_RETIRE_INFO(to_insert, retired_tail); \
-  RECHECK_RETIRE_INFO(owners, to_insert); \
   LIST_PUT_TAIL(retired_head, retired_tail, to_insert); \
   to_insert->status = LOCK_RETIRED; \
   retired_cnt++; }
@@ -65,7 +81,6 @@
 
 #define INSERT_TO_RETIRED(to_insert, en) { \
   UPDATE_RETIRE_INFO(to_insert, en->prev); \
-  RECHECK_RETIRE_INFO(en, to_insert); \
   LIST_INSERT_BEFORE_CH(retired_head, en, to_insert); \
   to_insert->status = LOCK_RETIRED; \
   retired_cnt++; \
@@ -90,7 +105,7 @@
   waiter_cnt ++; \
 }
 
-#define ADD_TO_WAITERS_TAIL(to_insert) { \
+//#define ADD_TO_WAITERS_TAIL(to_insert) { \
   rc = WAIT; \
   LIST_PUT_TAIL(waiters_head, waiters_tail, to_insert); \
   to_insert->status = LOCK_WAITER; \
@@ -150,7 +165,6 @@ struct BBLockEntry {
     lock_t type;
     lock_status status;
     bool is_cohead;
-    bool delta; // if conflict with prev
     txn_man * txn;
     BBLockEntry * next;
     BBLockEntry * prev;
@@ -159,11 +173,11 @@ struct BBLockEntry {
 #if LATCH == LH_MCSLOCK
     mcslock::qnode_t * m_node;
     BBLockEntry(): type(LOCK_NONE), status(LOCK_DROPPED), is_cohead(false),
-                   delta(true), txn(NULL), next(NULL), prev(NULL), access(NULL),
+                   txn(NULL), next(NULL), prev(NULL), access(NULL),
                    start_ts(0), m_node(NULL){};
 #else
     BBLockEntry(): type(LOCK_NONE), status(LOCK_DROPPED), is_cohead(false),
-    delta(true), txn(NULL), next(NULL), prev(NULL), access(NULL) start_ts(0) {};
+    txn(NULL), next(NULL), prev(NULL), access(NULL) start_ts(0) {};
 #endif
 };
 
@@ -233,7 +247,6 @@ class Row_bamboo {
         entry->prev = NULL;
         entry->status = LOCK_DROPPED;
         entry->is_cohead = false;
-        entry->delta = true;
         return entry;
     };
 
