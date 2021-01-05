@@ -210,7 +210,7 @@ class Row_bamboo {
 	RC                insert_read_to_retired(BBLockEntry * to_insert, ts_t ts, Access * access);
 
     // check priorities
-    inline static bool a_higher_than_b(ts_t a, ts_t, b) {
+    inline static bool a_higher_than_b(ts_t a, ts_t b) {
         return a < b;
     };
 
