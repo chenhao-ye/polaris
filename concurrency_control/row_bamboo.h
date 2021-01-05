@@ -137,31 +137,12 @@
     owners = NULL; \
 }
 
-#define CHECK_AND_INSERT_RETIRED(en, to_insert) { \
-    en = retired_head; \
-    for (UInt32 i = 0; i < retired_cnt; i++) { \
-        if (en->type == LOCK_EX && (en->txn->get_ts() > ts)) \
-            break; \
-        en = en->next; \
-    } \
-    if (en) { \
-        access->data->copy(en->access->orig_data); \
-        INSERT_TO_RETIRED(to_insert, en); \
-        rc = FINISH; \
-    } else { \
-        if (owners) { \
-            access->data->copy(owners->access->orig_data); \
-            INSERT_TO_RETIRED_TAIL(to_insert); \
-            rc = FINISH; \
-        } else { \
-            UPDATE_RETIRE_INFO(to_insert, retired_tail); \
-            ADD_TO_RETIRED_TAIL(to_insert); \
-            rc = RCOK; \
-        } \
-    } \
-    txn->lock_ready = true; \
-    goto final; \
-}
+#define BRING_OUT_WAITER(entry) { \
+	LIST_RM(waiters_head, waiters_tail, entry, waiter_cnt); \
+	entry->txn->lock_ready = true; \
+	if (txn == entry->txn) \
+		has_txn = true; \
+} 
 
 struct BBLockEntry {
     // type of lock: EX or SH
@@ -216,6 +197,7 @@ class Row_bamboo {
     BBLockEntry *     remove_descendants(BBLockEntry * en, txn_man * txn);
     void              lock(BBLockEntry * en);
     void              unlock(BBLockEntry * en);
+	RC                insert_read_to_retired(BBLockEntry * to_insert, ts_t ts, Access * access);
 
     // latches
 #if LATCH == LH_SPINLOCK

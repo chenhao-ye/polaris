@@ -113,8 +113,9 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
                 goto final; // since owner is blocking others
             } else {
                 // if has any retired, retired must have ts since there's owner
-#if BB_RAW_OPT
-                CHECK_AND_INSERT_RETIRED(en, to_insert);
+#if BB_OPT_RAW
+				rc = insert_read_to_retired(to_insert, ts, access);
+				goto final;
 #else
                 // wound owners
                 WOUND_OWNER(to_insert);
@@ -124,7 +125,6 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
 #endif
             }
         } else { // no owners
-            assert(waiter_cnt == 0); // since owner is empty
 #if BB_DYNAMIC_TS
             // no owner, retired may not have ts.
             // if all read, then no need for ts. only case to have self=0
@@ -135,8 +135,9 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
                 assign_ts(ts, txn);
             }
 #endif
-#if BB_RAW_OPT
-            CHECK_AND_INSERT_RETIRED(en, to_insert);
+#if BB_OPT_RAW
+			rc = insert_read_to_retired(to_insert, ts, access);
+			goto final;
 #else
             // no owner, wound and add to retired (rc=RCOK)
             WOUND_RETIRED(en, to_insert);
@@ -254,6 +255,8 @@ RC Row_bamboo::lock_retire(void * addr) {
 
 RC Row_bamboo::lock_release(void * addr, RC rc) {
     BBLockEntry * entry = (BBLockEntry *) addr;
+	if (entry->status == LOCK_DROPPED)
+			return RCOK;
 #if PF_ABORT 
     entry->txn->abort_chain = 0;
 #endif
@@ -277,11 +280,13 @@ RC Row_bamboo::lock_release(void * addr, RC rc) {
     } else if (entry->status == LOCK_WAITER) {
         LIST_RM(waiters_head, waiters_tail, entry, waiter_cnt);
     } else {
+		// already removed
     }
     return_entry(entry);
     if (!owners) {
         bring_next(NULL);
     }
+    assert(owners || retired_head || (waiter_cnt == 0));
     // WAIT - done releasing with is_abort = true
     // FINISH - done releasing with is_abort = false
 #if PF_CS
@@ -303,17 +308,17 @@ RC Row_bamboo::lock_release(void * addr, RC rc) {
 inline
 bool Row_bamboo::bring_next(txn_man * txn) {
     bool has_txn = false;
-    BBLockEntry * entry;
-    bool retired_has_write = (retired_tail && (retired_tail->type == LOCK_EX ||
-        !retired_tail->is_cohead));
-    // If any waiter can join the owners, just do it!
-    while (waiters_head) {
-        if (!owners || (waiters_head->type == LOCK_SH)) {
-            LIST_GET_HEAD(waiters_head, waiters_tail, entry);
-            waiter_cnt --;
-            if (entry->type == LOCK_EX) {
+    BBLockEntry * entry = waiters_head;
+    BBLockEntry * next = NULL;
+    bool retired_has_write = (retired_tail && (retired_tail->type == LOCK_EX || !retired_tail->is_cohead));
+    // If any waiter can join the owners, just do it
+    while (entry) {
+		// XXX(zhihan): entry may not be waiters_head 
+		next = entry->next;
+        if (!owners || entry->type == LOCK_SH) {
+            if (entry->type == LOCK_EX) { // !owners
                 if (retired_has_write) {
-                    // TODO: decide if should read the dirty data
+                    // XXX(zhihan): decide if should read the dirty data
                     // it does not only benefit itself but also others.
                     // now everybody is waiting. should benefit times waiter cnt
 #if BB_AUTORETIRE
@@ -329,19 +334,20 @@ bool Row_bamboo::bring_next(txn_man * txn) {
                         owners = entry;
                         entry->status = LOCK_OWNER;
                         UPDATE_RETIRE_INFO(owners, retired_tail);
+		    			BRING_OUT_WAITER(entry);
                     }
                 } else {
                     // add to owners
                     owners = entry;
                     entry->status = LOCK_OWNER;
                     UPDATE_RETIRE_INFO(owners, retired_tail);
+		    		BRING_OUT_WAITER(entry);
                 }
                 break; // owner is taken ~
             } else {
                 // decide if should read dirty data
                 if (retired_has_write) {
 #if BB_AUTORETIRE
-                    // TODO: decide if should read the dirty data
                     int benefit = (benefit1 + benefit2) / (benefit_cnt1 +
                         benefit_cnt2);
                     int cost = entry->txn->get_exec_time();
@@ -353,19 +359,18 @@ bool Row_bamboo::bring_next(txn_man * txn) {
                         // add to retired
                         UPDATE_RETIRE_INFO(entry, retired_tail);
                         ADD_TO_RETIRED_TAIL(entry);
+		    			BRING_OUT_WAITER(entry);
                     }
                 } else {
                     // add to retired
                     UPDATE_RETIRE_INFO(entry, retired_tail);
                     ADD_TO_RETIRED_TAIL(entry);
+		    		BRING_OUT_WAITER(entry);
                 }
             }
-            entry->txn->lock_ready = true;
-            if (txn == entry->txn) {
-                has_txn = true;
-            }
+			entry = next;
         } else
-            break;
+            break; // no promotable waiters
     }
     assert(owners || retired_head || (waiter_cnt == 0));
     return has_txn;
@@ -504,4 +509,32 @@ txn) {
         return retired_head;
 }
 
-
+inline
+RC Row_bamboo::insert_read_to_retired(BBLockEntry * to_insert, ts_t ts, 
+				Access * access) {
+	RC rc = RCOK;
+	BBLockEntry * en = retired_head;
+	for (UInt32 i = 0; i < retired_cnt; i++) {
+		if ((en->type == LOCK_EX) && (en->txn->get_ts() > ts)) {
+			break;
+		}
+		en = en->next;
+	}
+	if (en) {
+		access->data->copy(en->access->orig_data);
+		INSERT_TO_RETIRED(to_insert, en);
+		rc = FINISH;
+	} else {
+		if (owners) {
+			access->data->copy(owners->access->orig_data);
+			INSERT_TO_RETIRED_TAIL(to_insert);
+			rc = FINISH;
+		} else {
+			UPDATE_RETIRE_INFO(to_insert, retired_tail);
+			ADD_TO_RETIRED_TAIL(to_insert);
+			rc = RCOK;
+		}
+	}
+	to_insert->txn->lock_ready = true;
+	return rc;
+}
