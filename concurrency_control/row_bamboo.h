@@ -123,7 +123,7 @@
 #define WOUND_RETIRED(en, to_insert) { \
     en = retired_head; \
     for (UInt32 i = 0; i < retired_cnt; i++) { \
-        if (en->type == LOCK_EX && (en->txn->get_ts() > ts)) { \
+        if (en->type == LOCK_EX && a_higher_than_b(ts, en->txn->get_ts())) { \
             TRY_WOUND(en, to_insert); \
             en = rm_from_retired(en, true, txn); \
         } else \
@@ -190,16 +190,6 @@ class Row_bamboo {
     UInt32 benefit1;
     UInt32 benefit2;
     bool curr_benefit1;
-
-    // helper functions
-    bool              bring_next(txn_man * txn);
-    void              update_entry(BBLockEntry * en);
-    BBLockEntry *     rm_from_retired(BBLockEntry * en, bool is_abort, txn_man * txn);
-    BBLockEntry *     remove_descendants(BBLockEntry * en, txn_man * txn);
-    void              lock(BBLockEntry * en);
-    void              unlock(BBLockEntry * en);
-	RC                insert_read_to_retired(BBLockEntry * to_insert, ts_t ts, Access * access);
-
     // latches
 #if LATCH == LH_SPINLOCK
     pthread_spinlock_t * latch;
@@ -211,6 +201,19 @@ class Row_bamboo {
     bool blatch;
 
     // helper functions
+    bool              bring_next(txn_man * txn);
+    void              update_entry(BBLockEntry * en);
+    BBLockEntry *     rm_from_retired(BBLockEntry * en, bool is_abort, txn_man * txn);
+    BBLockEntry *     remove_descendants(BBLockEntry * en, txn_man * txn);
+    void              lock(BBLockEntry * en);
+    void              unlock(BBLockEntry * en);
+	RC                insert_read_to_retired(BBLockEntry * to_insert, ts_t ts, Access * access);
+
+    // check priorities
+    inline static a_higher_than_b(ts_t a, ts_t, b) {
+        return a < b;
+    };
+
     inline static int assign_ts(ts_t ts, txn_man * txn) {
         if (ts == 0) {
             ts = txn->set_next_ts(1);
