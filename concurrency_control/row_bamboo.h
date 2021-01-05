@@ -119,10 +119,11 @@
 
 // NOTE: it is unrealistic to have completely ordered read with
 // dynamically assigned ts. e.g. [0,0,0] -> [12, 11, 5]
+// used when to_insert->type = LOCK_SH
 #define WOUND_RETIRED(en, to_insert) { \
     en = retired_head; \
     for (UInt32 i = 0; i < retired_cnt; i++) { \
-        if (en->type == LOCK_EX && (en->txn->get_ts() < ts)) { \
+        if (en->type == LOCK_EX && (en->txn->get_ts() > ts)) { \
             TRY_WOUND(en, to_insert); \
             en = rm_from_retired(en, true, txn); \
         } else \

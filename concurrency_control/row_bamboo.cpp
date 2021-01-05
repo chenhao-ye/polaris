@@ -107,7 +107,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
             // self may be unassigned
             ts = assign_ts(ts, txn);
 #endif
-            if (owner_ts < ts) {
+            if (owner_ts > ts) {
                 // add to waiters
                 ADD_TO_WAITERS(en, to_insert);
                 goto final; // since owner is blocking others
@@ -185,14 +185,14 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
         // wound retired
         en = retired_head;
         for (UInt32 i = 0; i < retired_cnt; i++) {
-            if (en->txn->get_ts() < ts) {
+            if (en->txn->get_ts() > ts) {
                 TRY_WOUND(en, to_insert);
                 en = rm_from_retired(en, true, txn);
             } else
                 en = en->next;
         }
         // wound owners
-        if (owners && (owner_ts < ts))
+        if (owners && (owner_ts > ts))
             WOUND_OWNER(to_insert);
         // add self to waiters
         ADD_TO_WAITERS(en, to_insert);
