@@ -14,17 +14,33 @@ def replace(filename, pattern, replacement):
 	f.write(s)
 	f.close()
 
-def compile(job, ndebug=False):
+def set_ndebug(ndebug):
+    f = open("system/global.h", "a+")
+    found = None
+    set_ndebug = False
+    for line in f:
+        if "#define NDEBUG" in line:
+            found = line
+            if line[0] != '#':
+                set_ndebug = True
+        if "<cassert" in line:
+            break
+    if found is None:
+        if ndebug:
+            replace("system/global.h", r"#include <cassert>", "#define NDEBUG\n#include <cassert>")
+    else:
+        if ndebug:
+            replace("system/global.h", found, "#define NDEBUG\n")
+        else:
+            replace("system/global.h", found, "")
+
+def compile(job):
         os.system("cp {} {}".format(dbms_cfg[0], dbms_cfg[1]))
 	# define workload
         for (param, value) in job.iteritems():
 		pattern = r"\#define\s*" + re.escape(param) + r'.*'
 		replacement = "#define " + param + ' ' + str(value)
 		replace(dbms_cfg[1], pattern, replacement)
-        if ndebug:
-            f = open(dbms_cfg[1], "a+")
-            f.write("\n#define NDEBUG\n")
-            f.close()
 	os.system("make clean > temp.out 2>&1")
 	ret = os.system("make -j8 > temp.out 2>&1")
 	if ret != 0:
@@ -62,11 +78,14 @@ if __name__ == "__main__":
             key = item.split("=")[0]
             value = item.split("=")[1]
             job[key] = value
-    ndebug = eval_arg(job, "NDEBUG"):
+    ndebug = eval_arg(job, "NDEBUG")
+    set_ndebug(ndebug)
+    if ndebug:
+        print("- disable assert()")
     unset_numa = eval_arg(job, "UNSET_NUMA")
     if unset_numa:
         print("- disable numa-aware")
-    compile(job, ndebug=ndebug)
+    compile(job)
     if not eval_arg(job, "COMPILE_ONLY"):
         run("", job, unset_numa=unset_numa)
         if eval_arg(job, "OUTPUT_TO_FILE"):

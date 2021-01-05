@@ -335,7 +335,8 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
   char * c_credit;
   row_t * r_dist;
   row_t * r_dist_local;
-  double d_tax;
+  // d_tax: used only when implementing full tpcc 
+  //double d_tax;
   int64_t o_id;
   //int64_t o_d_id;
   uint64_t row_id;
@@ -427,7 +428,8 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
     return finish(Abort);
   }
 
-  d_tax = *(double *) r_dist_local->get_value(D_TAX);
+  //d_tax = *(double *) r_dist_local->get_value(D_TAX);
+  r_dist_local->get_value(D_TAX);
   o_id = *(int64_t *) r_dist_local->get_value(D_NEXT_O_ID);
 
   o_id ++;

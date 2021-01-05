@@ -86,7 +86,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
     lock(to_insert);
     // timestamp
     ts_t ts = txn->get_ts();
-    ts_t owner_ts;
+    ts_t owner_ts = 0;
     ts_t en_ts;
 #if !BB_DYNAMIC_TS
     // [pre-assigned ts] assign ts if does not have one
@@ -367,6 +367,7 @@ bool Row_bamboo::bring_next(txn_man * txn) {
         } else
             break;
     }
+    assert(owners || retired_head || (waiter_cnt == 0));
     return has_txn;
 }
 

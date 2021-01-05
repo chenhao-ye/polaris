@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <cstddef>
 #include <cstdlib>
+#define NDEBUG
 #include <cassert>
 #include <stdio.h>
 #include <iostream>

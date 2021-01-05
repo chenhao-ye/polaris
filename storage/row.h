@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cassert>
 #include "global.h"
 
 #define DECL_SET_VALUE(type) \
