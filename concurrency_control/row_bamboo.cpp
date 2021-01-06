@@ -86,7 +86,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
     lock(to_insert);
     // timestamp
     ts_t ts = txn->get_ts();
-    ts_t owner_ts = 0;
+    ts_t owner_ts = owners->txn->get_ts();
     ts_t en_ts;
 #if !BB_DYNAMIC_TS
     // [pre-assigned ts] assign ts if does not have one
@@ -99,8 +99,6 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
         // if read, decide if need to wait
         // need_to_wait(): ts > owner & owner is write.
         if (owners) {
-            // get owner's timestamp
-            owner_ts = owners->txn->get_ts();
 #if BB_DYNAMIC_TS
             // the only writer in owner may be unassigned
             owner_ts = assign_ts(owner_ts, owners->txn);
@@ -205,6 +203,55 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
 final:
 #if DEBUG_BAMBOO
 	printf("[txn-%lu] lock_get(%p, %d) status=%d ts=%lu\n", txn->get_txn_id(), this, type, rc, ts);
+    // go through retired list and make sure
+	// 1) the retired cnt is correct
+	// 2) ordered by timestamp (allow disordered reads)
+	// 3) the cohead is correct
+	UInt32 cnt = 0;
+	ts_t largest_ts = 0;
+	ts_t largest_wr_ts = 0;
+	bool cohead = true;
+	bool has_write = false;
+	en = retired_head;
+	while(en) {
+		if (en == retired_head) {
+			assert(en->is_cohead);
+		} else {
+			// update expected cohead
+			if (has_write)
+				cohead = false;
+			else
+				cohead = true;
+			// check cohead
+			assert(en->is_cohead == cohead);
+		}
+		// validate ts order
+		ts_t ts = en->txn->get_ts();
+		if (en->type == LOCK_EX) {
+			assert(ts >= largest_ts);
+			largest_wr_ts = ts;
+			largest_ts = ts;
+			has_write = true;
+		} else {
+			assert(ts > largest_wr_ts || en->is_cohead);
+			largest_ts = max(ts, largest_ts);
+		}
+		cnt++;
+		en = en->next;
+	}
+	// check owner
+	if (owners) {
+	    assert(owners->is_cohead == (!has_write));
+	    assert(owners >= largest_ts);
+	}
+	// check waiter
+	en = waiters_head;
+	while (en) {
+	    assert(!en->is_cohead);
+	    assert(en->txn->get_ts() >= largest_ts);
+	    en = en->next;
+	}
+	assert(cnt == retired_cnt);
 #endif
     // release the latch
     unlock(to_insert);
@@ -544,44 +591,5 @@ RC Row_bamboo::insert_read_to_retired(BBLockEntry * to_insert, ts_t ts,
 		}
 	}
 	to_insert->txn->lock_ready = true;
-#if DEBUG_BAMBOO
-	// go through retired list and make sure
-	// 1) the retired cnt is correct
-	// 2) ordered by timestamp (allow disordered reads)
-	// 3) the delta and cohead is correct
-	en = retired_head;
-	UInt32 cnt = 0;
-	ts_t largest_ts = 0;
-	ts_t largest_wr_ts = 0;	
-	bool cohead = true;
-	bool has_write = false;
-	while(en) {
-		if (en == retired_head) {
-			assert(en->is_cohead);
-		} else {
-			// update expected cohead 
-			if (has_write)
-				cohead = false;
-			else
-				cohead = true;
-			// check cohead
-			assert(en->is_cohead == cohead);
-		}
-		// validate ts order
-		ts_t ts = en->txn->get_ts();
-		if (en->type == LOCK_EX) {
-			assert(ts >= largest_ts);
-			largest_wr_ts = ts;
-			largest_ts = ts;
-			has_write = true;
-		} else {
-			assert(ts > largest_wr_ts || en->is_cohead);
-			largest_ts = max(ts, largest_ts);
-		}
-		cnt++;
-		en = en->next;
-	}
-	assert(cnt == retired_cnt);
-#endif
 	return rc;
 }
