@@ -405,7 +405,6 @@ BBLockEntry * Row_bamboo::rm_from_retired(BBLockEntry * en, bool is_abort, txn_m
         return en;
     } else {
         BBLockEntry * next = en->next;
-        // TODO: also needs to update entry info in owners if the last
         update_entry(en);
         LIST_RM(retired_head, retired_tail, en, retired_cnt);
         return_entry(en);
@@ -413,80 +412,63 @@ BBLockEntry * Row_bamboo::rm_from_retired(BBLockEntry * en, bool is_abort, txn_m
     }
 }
 
+// used when entry is removed from retired, need to update other's co-head info
+// case 1: no following nodes (!next && !owners)
+//         return
+// case 2.1: entry is RD
+// case 2.1.1: [entry] is co-head
+// - [R](R)W       W is also co-head, no changes needed
+// case 2.1.2: [entry] is not co-head -> there is a W as co-head
+// - W(R)[R](R)R  R will not become co-head
+// - W(R)[R](R)W  W will not become co-head
+// case 2.2: entry is WR
+// [entry] must be co-head, otherwise rm_descendants & no need to call this
+// rule: update util first write (include owners)
+// - [W]RRWR      all RDs till first WR (included), e.g. RRW, new co-head
+// - [W]WR        first WR becomes new co-head
 inline
 void Row_bamboo::update_entry(BBLockEntry * entry) {
-		//update to not use delta
     if (!entry->next && !owners) {
         return; // nothing to update
     }
     if (entry->type == LOCK_SH) {
-        // cohead: no need to update
-        if (entry->prev) {
-            if (entry->next)
-                entry->next->delta = entry->prev->type == LOCK_EX;
-            else
-                owners->delta = entry->prev->type == LOCK_EX;
-        }
         return;
-    }
-    // if entry->type == LOCK_EX, has to be co-head and txn commits, otherwise
-    // abort will not call this
-    // TODO: update owners' commit barrier if needed (just bring in owners in
-    //  the loop)
-    ASSERT(entry->is_cohead);
-    BBLockEntry * en = entry->next;
-    bool checked_owners = false;
-    if (!en) {
-        en = owners;
-        checked_owners = true;
-    }
-    if (entry->prev) {
-        // prev can only be reads
-        // cohead: whatever it is, it becomes NEW cohead and decrement barrier
-        // delta: set only the immediate next
-        en->delta = false;
-        // R(W-committed)RRR -- yes for entry->next->next, i.e. en->next
-        // R(W-committed)RWR -- yes
-        // R(W-committed)WRR -- no
-        // R(W-committed)WWR -- no
-        while (en && !(en->delta)) {
-            en->is_cohead = true;
-#if PF_CS
-            uint64_t starttime = get_sys_clock();
-            en->txn->decrement_commit_barriers();
-            record_benefit(get_sys_clock() - en->txn->start_ts);
-            INC_STATS(en->txn->get_thd_id(), time_semaphore_cs, get_sys_clock() - starttime);
-#else
-            en->txn->decrement_commit_barriers();
-            record_benefit(get_sys_clock() - en->txn->start_ts);
-#endif
-            en = en->next;
-            if (!en && !checked_owners) {
-                checked_owners = true;
-                en = owners;
-            }
-        }
     } else {
-        // cohead: whatever it is becomes cohead
-        // delta: whatever it is delta is false
-        entry->delta = false;
-        do { // RRRRW
-            en->is_cohead = true;
+        assert(entry->is_cohead);
+        entry = entry->next;
+        bool first_write = false;
+        while(entry && !first_write) {
+            if (entry->type == LOCK_EX) {
+                first_write = true;
+            }
+            assert(!entry->is_cohead);
+            entry->is_cohead = true;
 #if PF_CS
             uint64_t starttime = get_sys_clock();
-            en->txn->decrement_commit_barriers();
-            record_benefit(get_sys_clock() - en->txn->start_ts);
-            INC_STATS(en->txn->get_thd_id(), time_semaphore_cs, get_sys_clock() - starttime);
+            entry->txn->decrement_commit_barriers();
+            INC_STATS(entry->txn->get_thd_id(), time_semaphore_cs,
+                get_sys_clock() - starttime);
 #else
-            en->txn->decrement_commit_barriers();
-            record_benefit(get_sys_clock() - en->txn->start_ts);
+            entry->txn->decrement_commit_barriers();
 #endif
-            en = en->next;
-            if (!en && !checked_owners) {
-                checked_owners = true;
-                en = owners;
-            }
-        } while(en && !(en->delta));
+            if (entry->start_ts != 0)
+                record_benefit(get_sys_clock() - entry->start_ts);
+            entry = entry->next;
+        }
+        if (!first_write && owners) {
+            entry = owners;
+            entry->is_cohead = true;
+#if PF_CS
+            uint64_t starttime = get_sys_clock();
+            entry->txn->decrement_commit_barriers();
+            INC_STATS(entry->txn->get_thd_id(), time_semaphore_cs,
+                get_sys_clock() - starttime);
+#else
+            entry->txn->decrement_commit_barriers();
+#endif
+            if (entry->start_ts != 0)
+                record_benefit(get_sys_clock() - entry->start_ts);
+        }
     }
 }
 

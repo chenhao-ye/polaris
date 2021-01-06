@@ -1,27 +1,6 @@
 #ifndef ROW_BAMBOO_H
 #define ROW_BAMBOO_H
 
-#define RECHECK_COHEAD_INSERTEDE(en, prev) { \
-  bool is_cohead = en->is_cohead; \
-  if (prev) { \
-    if (prev->type == LOCK_SH) { \
-      en->is_cohead = prev->is_cohead; \
-      if (!en->is_cohead && is_cohead) \
-        en->txn->increment_commit_barriers(); \
-      if (en->is_cohead && !is_cohead) {\
-        en->txn->decrement_commit_barriers(); \
-        record_benefit(get_sys_clock() - en->txn->start_ts); } \
-    } else { \
-      en->is_cohead = false; \
-      if (is_cohead) \
-        en->txn->increment_commit_barriers(); } \
-  } else { \
-    en->is_cohead = true; \
-    if (!is_cohead) \
-      en->txn->decrement_commit_barriers(); \
-      record_benefit(get_sys_clock() - en->txn->start_ts);} \
-}
-
 // update cohead info when a newly-init entry (en) is firstly 
 // added to owners (bring_next, WR)
 // or tail of retired (lock_get/bring_next, RD)
@@ -101,13 +80,6 @@
   } else { \
     LIST_PUT_TAIL(waiters_head, waiters_tail, to_insert); \
   } \
-  to_insert->status = LOCK_WAITER; \
-  waiter_cnt ++; \
-}
-
-//#define ADD_TO_WAITERS_TAIL(to_insert) { \
-  rc = WAIT; \
-  LIST_PUT_TAIL(waiters_head, waiters_tail, to_insert); \
   to_insert->status = LOCK_WAITER; \
   waiter_cnt ++; \
 }
@@ -247,6 +219,7 @@ class Row_bamboo {
         entry->prev = NULL;
         entry->status = LOCK_DROPPED;
         entry->is_cohead = false;
+        entry->start_ts = 0;
         return entry;
     };
 
@@ -255,6 +228,7 @@ class Row_bamboo {
         entry->next = NULL;
         entry->prev = NULL;
         entry->status = LOCK_DROPPED;
+        entry->start_ts = 0;
     }
 
     // record benefit
