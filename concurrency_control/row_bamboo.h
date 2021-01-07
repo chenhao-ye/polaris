@@ -74,17 +74,6 @@
 
 #define CHECK_ROLL_BACK(en) { \
     en->access->orig_row->copy(en->access->orig_data); \
-  }
-
-// try_wound(to_wound, wounder), if commited, wound failed, return wounder
-#define TRY_WOUND(to_wound, wounder) { \
-  if (wounder->txn->wound_txn(to_wound->txn) == COMMITED) {\
-    return_entry(wounder); \
-    rc = Abort; \
-    goto final; \
-  } \
-  printf("[txn-%lu](%lu) wound %lu(%lu) on %p\n", wounder->txn->get_txn_id(), \
-				  wounder->txn->get_ts(), to_wound->txn->get_txn_id(), to_wound->txn->get_ts(), this); \
 }
 
 struct BBLockEntry {

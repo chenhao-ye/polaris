@@ -104,7 +104,8 @@
 #define BB_OPT_RAW                  true
 #define BB_LAST_RETIRE                 0
 #define BB_PRECOMMIT                false
-#define BB_AUTORETIRE               true
+#define BB_AUTORETIRE               false
+#define BB_ALWAYS_RETIRE_READ       true
 // [WW]
 #define WW_STARV_FREE               false // set false if compared w/ bamboo
 // [IC3]
