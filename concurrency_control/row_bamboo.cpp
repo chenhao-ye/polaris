@@ -161,10 +161,10 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
             UPDATE_RETIRE_INFO(to_insert, retired_tail);
             goto final;
         }
-#if BB_DYNAMIC_TS
         // assign ts
         if (owners)
             owner_ts = owners->txn->get_ts();
+#if BB_DYNAMIC_TS
         if (ts == 0) {
             if (owners) {
                 if (!retired_head) {
@@ -219,63 +219,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
     }
 final:
 #if DEBUG_BAMBOO
-	printf("[txn-%lu] lock_get(%p, %d) status=%d ts=%lu\n", txn->get_txn_id(), this, type, rc, ts);
-    // go through retired list and make sure
-	// 1) the retired cnt is correct
-	// 2) ordered by timestamp (allow disordered reads)
-	// 3) the cohead is correct
-	UInt32 cnt = 0;
-	ts_t largest_ts = 0;
-	ts_t largest_wr_ts = 0;
-	bool cohead = true;
-	bool has_write = false;
-	en = retired_head;
-	while(en) {
-		assert(en->status == LOCK_RETIRED);
-		if (en == retired_head) {
-			assert(en->is_cohead);
-		} else {
-			// update expected cohead
-			if (has_write)
-				cohead = false;
-			else
-				cohead = true;
-			// check cohead
-			assert(en->is_cohead == cohead);
-		}
-		// validate ts order
-		ts_t ts = en->txn->get_ts();
-		if (en->type == LOCK_EX) {
-			assert(ts >= largest_ts);
-			largest_wr_ts = ts;
-			largest_ts = ts;
-			has_write = true;
-		} else {
-			assert(ts > largest_wr_ts || en->is_cohead);
-			largest_ts = max(ts, largest_ts);
-		}
-		cnt++;
-		en = en->next;
-	}
-	// check owner
-	if (owners) {
-		assert(owners->status == LOCK_OWNER);
-	    assert(owners->is_cohead == (!has_write));
-	    assert(owners->txn->get_ts() >= largest_ts);
-		largest_ts = owners->txn->get_ts();
-	}
-	// check waiter
-	cnt = 0;
-	en = waiters_head;
-	while (en) {
-		assert(en->status == LOCK_WAITER);
-	    assert(!en->is_cohead);
-	    assert(en->txn->get_ts() >= largest_ts);
-		largest_ts = en->txn->get_ts();
-	    en = en->next;
-		cnt++;
-	}
-	assert(cnt == waiter_cnt);
+    printf("[txn-%lu] lock_get(%p, %d) status=%d ts=%lu\n", txn->get_txn_id(), this, type, rc, ts);
 #endif
     // release the latch
     unlock(to_insert);
@@ -404,6 +348,9 @@ RC Row_bamboo::lock_release(void * addr, RC rc) {
 
 inline
 bool Row_bamboo::bring_next(txn_man * txn) {
+#if DEBUG_BAMBOO
+    check_correctness();
+#endif
     bool has_txn = false;
     BBLockEntry * entry = waiters_head;
     BBLockEntry * next = NULL;
@@ -470,6 +417,9 @@ bool Row_bamboo::bring_next(txn_man * txn) {
             break; // no promotable waiters
     }
     assert(owners || retired_head || (waiter_cnt == 0));
+#if DEBUG_BAMBOO
+    check_correctness();
+#endif
     return has_txn;
 }
 
@@ -624,3 +574,64 @@ RC Row_bamboo::insert_read_to_retired(BBLockEntry * to_insert, ts_t ts,
 	to_insert->txn->lock_ready = true;
 	return rc;
 }
+
+#if DEBUG_BAMBOO
+void Row_bamboo::check_correctness() {
+    // go through retired list and make sure
+	// 1) the retired cnt is correct
+	// 2) ordered by timestamp (allow disordered reads)
+	// 3) the cohead is correct
+	UInt32 cnt = 0;
+	ts_t largest_ts = 0;
+	ts_t largest_wr_ts = 0;
+	bool cohead = true;
+	bool has_write = false;
+	en = retired_head;
+	while(en) {
+		assert(en->status == LOCK_RETIRED);
+		if (en == retired_head) {
+			assert(en->is_cohead);
+		} else {
+			// update expected cohead
+			if (has_write)
+				cohead = false;
+			else
+				cohead = true;
+			// check cohead
+			assert(en->is_cohead == cohead);
+		}
+		// validate ts order
+		ts_t ts = en->txn->get_ts();
+		if (en->type == LOCK_EX) {
+			assert(ts >= largest_ts);
+			largest_wr_ts = ts;
+			largest_ts = ts;
+			has_write = true;
+		} else {
+			assert(ts > largest_wr_ts || en->is_cohead);
+			largest_ts = max(ts, largest_ts);
+		}
+		cnt++;
+		en = en->next;
+	}
+	// check owner
+	if (owners) {
+		assert(owners->status == LOCK_OWNER);
+	    assert(owners->is_cohead == (!has_write));
+	    assert(owners->txn->get_ts() >= largest_ts);
+		largest_ts = owners->txn->get_ts();
+	}
+	// check waiter
+	cnt = 0;
+	en = waiters_head;
+	while (en) {
+		assert(en->status == LOCK_WAITER);
+	    assert(!en->is_cohead);
+	    assert(en->txn->get_ts() >= largest_ts);
+		largest_ts = en->txn->get_ts();
+	    en = en->next;
+		cnt++;
+	}
+	assert(cnt == waiter_cnt);
+}
+#endif
