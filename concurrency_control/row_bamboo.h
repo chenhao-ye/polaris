@@ -38,7 +38,7 @@
    } }
 
 // used by lock_retire() (move from owners to retired)
-// or by lock_get(), used when has no owners but directly enters retired
+// or by lock_get()/bring_next(), used when has no owners but directly enters retired
 // for the latter need to call UPDATE_RETIRE_INFO(to_insert, retired_tail);
 #define ADD_TO_RETIRED_TAIL(to_retire) { \
   LIST_PUT_TAIL(retired_head, retired_tail, to_retire); \
@@ -100,8 +100,12 @@
   if (wounder->txn->wound_txn(to_wound->txn) == COMMITED) {\
     return_entry(wounder); \
     rc = Abort; \
+    printf("[txn-%lu](%lu) fail to wound %lu(%lu) on %p\n", wounder->txn->get_txn_id(), \
+				  wounder->txn->get_ts(), to_wound->txn->get_txn_id(), to_wound->txn->get_ts(), this); \
     goto final; \
   } \
+  printf("[txn-%lu](%lu) wound %lu(%lu) on %p\n", wounder->txn->get_txn_id(), \
+				  wounder->txn->get_ts(), to_wound->txn->get_txn_id(), to_wound->txn->get_ts(), this); \
 }
 
 // NOTE: it is unrealistic to have completely ordered read with

@@ -86,7 +86,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
     lock(to_insert);
     // timestamp
     ts_t ts = txn->get_ts();
-    ts_t owner_ts = owners->txn->get_ts();
+    ts_t owner_ts = 0;
     ts_t en_ts;
 #if !BB_DYNAMIC_TS
     // [pre-assigned ts] assign ts if does not have one
@@ -99,6 +99,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
         // if read, decide if need to wait
         // need_to_wait(): ts > owner & owner is write.
         if (owners) {
+			owner_ts = owners->txn->get_ts();
 #if BB_DYNAMIC_TS
             // the only writer in owner may be unassigned
             owner_ts = assign_ts(owner_ts, owners->txn);
@@ -109,9 +110,9 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
                 // add to waiters
                 ADD_TO_WAITERS(en, to_insert);
                 goto final; // since owner is blocking others
-            } else {
-                // if has any retired, retired must have ts since there's owner
+            } else { // ts has higher priority than owner
 #if BB_OPT_RAW
+                // if has any retired, retired must have ts since there's owner
 				rc = insert_read_to_retired(to_insert, ts, access);
 				goto final;
 #else
@@ -126,15 +127,23 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
 #if BB_DYNAMIC_TS
             // no owner, retired may not have ts.
             // if all read, then no need for ts. only case to have self=0
-            // if any writes, then it has to be just one write in the retired
-            // list, with no other reads; then may need to assign ts
+            // if any writes, 
+			//   case 1: [W][][] then it has to be just one write in the retired
+            //           list, with no other reads; then may need to assign ts
+			//   case 2: [W][][W] then retired list must be assigned
             if (retired_tail && (retired_tail->type == LOCK_EX)) {
                 assign_ts(0, retired_tail->txn);
                 ts = assign_ts(ts, txn);
             }
 #endif
 #if BB_OPT_RAW
-			rc = insert_read_to_retired(to_insert, ts, access);
+			// if waiters_head has higher priority, then wait. 
+			if (waiters_head && a_higher_than_b(waiters_head->txn->get_ts(), ts)) {
+				ADD_TO_WAITERS(en, to_insert);
+			} else {
+				// else, insert to retired list
+				rc = insert_read_to_retired(to_insert, ts, access);
+			}
 			goto final;
 #else
             // no owner, wound and add to retired (rc=RCOK)
@@ -177,19 +186,27 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
                     ts = assign_ts(ts, txn);
                 } // else [][][] -> no need to assign self
             }
-        }
+        } else {
+			// self is assigned but txns in the list may not be assigned
+			// three cases of where things are not assigned: 
+			// case 1: [R][][], reads must be killed. 
+			// case 2: [W][][], write must be killed
+			// case 3: [][W][], write must be killed
+			// must be handled by the follow that if unassigned must be killed
+		}
 #endif
         // wound retired
         en = retired_head;
         for (UInt32 i = 0; i < retired_cnt; i++) {
-            if (a_higher_than_b(ts, en->txn->get_ts())) {
+			// order enforced for condition checking: 
+            if (en->txn->get_ts() == 0 || a_higher_than_b(ts, en->txn->get_ts())) {
                 TRY_WOUND(en, to_insert);
                 en = rm_from_retired(en, true, txn);
             } else
                 en = en->next;
         }
         // wound owners
-        if (owners && a_higher_than_b(ts, owner_ts))
+        if (owners && (owner_ts == 0 || a_higher_than_b(ts, owner_ts)))
             WOUND_OWNER(to_insert);
         // add self to waiters
         ADD_TO_WAITERS(en, to_insert);
@@ -214,6 +231,7 @@ final:
 	bool has_write = false;
 	en = retired_head;
 	while(en) {
+		assert(en->status == LOCK_RETIRED);
 		if (en == retired_head) {
 			assert(en->is_cohead);
 		} else {
@@ -241,17 +259,23 @@ final:
 	}
 	// check owner
 	if (owners) {
+		assert(owners->status == LOCK_OWNER);
 	    assert(owners->is_cohead == (!has_write));
-	    assert(owners >= largest_ts);
+	    assert(owners->txn->get_ts() >= largest_ts);
+		largest_ts = owners->txn->get_ts();
 	}
 	// check waiter
+	cnt = 0;
 	en = waiters_head;
 	while (en) {
+		assert(en->status == LOCK_WAITER);
 	    assert(!en->is_cohead);
 	    assert(en->txn->get_ts() >= largest_ts);
+		largest_ts = en->txn->get_ts();
 	    en = en->next;
+		cnt++;
 	}
-	assert(cnt == retired_cnt);
+	assert(cnt == waiter_cnt);
 #endif
     // release the latch
     unlock(to_insert);
@@ -299,7 +323,7 @@ RC Row_bamboo::lock_retire(void * addr) {
     starttime);
 #endif
 #if DEBUG_BAMBOO
-	printf("[txn-%lu] lock_retire(%p, %d) ts=%lu\n", entry->txn->get_txn_id(), this, entry->type, entry->txn->get_ts());
+	// printf("[txn-%lu] lock_retire(%p, %d) ts=%lu\n", entry->txn->get_txn_id(), this, entry->type, entry->txn->get_ts());
 #endif
     unlock(entry);
     return rc;
@@ -364,7 +388,7 @@ RC Row_bamboo::lock_release(void * addr, RC rc) {
   starttime);
 #endif
 #if DEBUG_BAMBOO
-	printf("[txn-%lu] lock_release(%p, %d) status=%d ts=%lu\n", entry->txn->get_txn_id(), this, entry->type, rc, entry->txn->get_ts());
+	// printf("[txn-%lu] lock_release(%p, %d) status=%d ts=%lu\n", entry->txn->get_txn_id(), this, entry->type, rc, entry->txn->get_ts());
 #endif
     unlock(entry);
 #if PF_ABORT 
@@ -388,7 +412,7 @@ bool Row_bamboo::bring_next(txn_man * txn) {
     while (entry) {
 		// XXX(zhihan): entry may not be waiters_head 
 		next = entry->next;
-        if (!owners || entry->type == LOCK_SH) {
+        if (!owners) {
             if (entry->type == LOCK_EX) { // !owners
                 if (retired_has_write) {
                     // XXX(zhihan): decide if should read the dirty data
@@ -585,9 +609,16 @@ RC Row_bamboo::insert_read_to_retired(BBLockEntry * to_insert, ts_t ts,
 			INSERT_TO_RETIRED_TAIL(to_insert);
 			rc = FINISH;
 		} else {
-			UPDATE_RETIRE_INFO(to_insert, retired_tail);
-			ADD_TO_RETIRED_TAIL(to_insert);
-			rc = RCOK;
+			// add to waiters
+			bool retired_has_write = (retired_tail && (retired_tail->type == LOCK_EX || !retired_tail->is_cohead));
+			if (retired_has_write) {
+            	ADD_TO_WAITERS(en, to_insert);
+				rc = WAIT;
+			} else {
+				UPDATE_RETIRE_INFO(to_insert, retired_tail);
+				ADD_TO_RETIRED_TAIL(to_insert);
+				rc = RCOK;
+			}
 		}
 	}
 	to_insert->txn->lock_ready = true;
