@@ -1,6 +1,6 @@
 {
 	"THREAD_CNT": 16,
-	"MAX_TXN_PER_PART": 100000,
+	"MAX_TXN_PER_PART": 1000000,
 	"ABORT_PENALTY": 50000,
 	"LATCH": "LH_MCSLOCK",
 	"TERMINATE_BY_COUNT": "true",
@@ -16,7 +16,8 @@
 	"BB_OPT_RAW": "true",
 	"BB_LAST_RETIRE": 0,
 	"BB_PRECOMMIT": "false",
-	"BB_AUTORETIRE": "true",
+	"BB_AUTORETIRE": "false",
+	"BB_ALWAYS_RETIRE_READ": "true",
 
 	"WORKLOAD": "YCSB",
 	"SYNTHETIC_YCSB": "false",

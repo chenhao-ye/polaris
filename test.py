@@ -78,17 +78,19 @@ if __name__ == "__main__":
             key = item.split("=")[0]
             value = item.split("=")[1]
             job[key] = value
-    ndebug = eval_arg(job, "NDEBUG")
-    set_ndebug(ndebug)
-    if ndebug:
-        print("- disable assert()")
+    if not eval_arg(job, "EXEC_ONLY"):
+        ndebug = eval_arg(job, "NDEBUG")
+        set_ndebug(ndebug)
+        if ndebug:
+            print("- disable assert()")
+        compile(job)
     unset_numa = eval_arg(job, "UNSET_NUMA")
     if unset_numa:
         print("- disable numa-aware")
-    compile(job)
     if not eval_arg(job, "COMPILE_ONLY"):
         run("", job, unset_numa=unset_numa)
         if eval_arg(job, "OUTPUT_TO_FILE"):
             stats = open("outputs/stats.json", "a+")
             stats.write(json.dumps(job)+"\n")
             stats.close()
+
