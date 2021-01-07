@@ -79,6 +79,7 @@ if __name__ == "__main__":
             value = item.split("=")[1]
             job[key] = value
     if not eval_arg(job, "EXEC_ONLY"):
+        print("- compiling...")
         ndebug = eval_arg(job, "NDEBUG")
         set_ndebug(ndebug)
         if ndebug:
@@ -88,6 +89,7 @@ if __name__ == "__main__":
     if unset_numa:
         print("- disable numa-aware")
     if not eval_arg(job, "COMPILE_ONLY"):
+        print("- executing...")
         run("", job, unset_numa=unset_numa)
         if eval_arg(job, "OUTPUT_TO_FILE"):
             stats = open("outputs/stats.json", "a+")
