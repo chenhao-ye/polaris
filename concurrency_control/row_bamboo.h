@@ -129,13 +129,6 @@
     owners = NULL; \
 }
 
-#define BRING_OUT_WAITER(entry) { \
-	LIST_RM(waiters_head, waiters_tail, entry, waiter_cnt); \
-	entry->txn->lock_ready = true; \
-	if (txn == entry->txn) \
-		has_txn = true; \
-} 
-
 struct BBLockEntry {
     // type of lock: EX or SH
     lock_t type;
@@ -272,6 +265,15 @@ class Row_bamboo {
             }
         };
     };
+
+	inline bool bring_out_waiter(BBLockEntry * entry, txn_man * txn) {
+		LIST_RM(waiters_head, waiters_tail, entry, waiter_cnt);
+		entry->txn->lock_ready = true;
+		if (txn == entry->txn) {
+			return true;
+		}
+		return false;
+	};
 };
 
 #endif

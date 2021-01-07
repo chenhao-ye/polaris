@@ -208,6 +208,9 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
         // wound owners
         if (owners && (owner_ts == 0 || a_higher_than_b(ts, owner_ts)))
             WOUND_OWNER(to_insert);
+#if DEBUG_BAMBOO
+		check_correctness();
+#endif
         // add self to waiters
         ADD_TO_WAITERS(en, to_insert);
     }
@@ -378,14 +381,14 @@ bool Row_bamboo::bring_next(txn_man * txn) {
                         owners = entry;
                         entry->status = LOCK_OWNER;
                         UPDATE_RETIRE_INFO(owners, retired_tail);
-		    			BRING_OUT_WAITER(entry);
+						has_txn = bring_out_waiter(entry, txn);
                     }
                 } else {
                     // add to owners
                     owners = entry;
                     entry->status = LOCK_OWNER;
                     UPDATE_RETIRE_INFO(owners, retired_tail);
-		    		BRING_OUT_WAITER(entry);
+					has_txn = bring_out_waiter(entry, txn);
                 }
                 break; // owner is taken ~
             } else {
@@ -402,14 +405,14 @@ bool Row_bamboo::bring_next(txn_man * txn) {
                     if (read_dirty_data) {
                         // add to retired
                         UPDATE_RETIRE_INFO(entry, retired_tail);
+						has_txn = bring_out_waiter(entry, txn);
                         ADD_TO_RETIRED_TAIL(entry);
-		    			BRING_OUT_WAITER(entry);
                     }
                 } else {
                     // add to retired
                     UPDATE_RETIRE_INFO(entry, retired_tail);
+					has_txn = bring_out_waiter(entry, txn);
                     ADD_TO_RETIRED_TAIL(entry);
-		    		BRING_OUT_WAITER(entry);
                 }
             }
 			entry = next;
@@ -586,7 +589,7 @@ void Row_bamboo::check_correctness() {
 	ts_t largest_wr_ts = 0;
 	bool cohead = true;
 	bool has_write = false;
-	en = retired_head;
+	BBLockEntry * en = retired_head;
 	while(en) {
 		assert(en->status == LOCK_RETIRED);
 		if (en == retired_head) {
