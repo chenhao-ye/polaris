@@ -585,7 +585,18 @@ RC Row_bamboo::insert_read_to_retired(BBLockEntry * to_insert, ts_t ts,
 			to_insert->txn->lock_ready = true;
 			rc = FINISH;
 		} else {
-#if !BB_ALWAYS_RETIRE_READ && BB_AUTO_RETIRE
+#if BB_AUTO_RETIRE
+#if BB_ALWAYS_RETIRE_READ
+		    if (waiters_head && a_high_than_b(waiters_head->txn->ts, ts)) {
+		        add_to_waiters(ts, to_insert);
+				rc = WAIT;
+		    } else {
+		        UPDATE_RETIRE_INFO(to_insert, retired_tail);
+				ADD_TO_RETIRED_TAIL(to_insert);
+				to_insert->txn->lock_ready = true;
+				rc = RCOK;
+		    }
+#else
 			// add to waiters
 			bool retired_has_write = (retired_tail && (retired_tail->type == LOCK_EX || !retired_tail->is_cohead));
 			if (retired_has_write) {
@@ -597,6 +608,7 @@ RC Row_bamboo::insert_read_to_retired(BBLockEntry * to_insert, ts_t ts,
 				to_insert->txn->lock_ready = true;
 				rc = RCOK;
 			}
+#endif
 #else
             UPDATE_RETIRE_INFO(to_insert, retired_tail);
             ADD_TO_RETIRED_TAIL(to_insert);
