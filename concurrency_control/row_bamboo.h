@@ -65,25 +65,6 @@
   retired_cnt++; \
 }
 
-#define ADD_TO_WAITERS(en, to_insert) { \
-  rc = WAIT; \
-  en = waiters_head; \
-  while (en != NULL) { \
-    if (ts < en->txn->get_ts()) \
-      break; \
-    en = en->next; \
-  } \
-  if (en) { \
-    LIST_INSERT_BEFORE(en, to_insert); \
-    if (en == waiters_head) \
-      waiters_head = to_insert; \
-  } else { \
-    LIST_PUT_TAIL(waiters_head, waiters_tail, to_insert); \
-  } \
-  to_insert->status = LOCK_WAITER; \
-  waiter_cnt ++; \
-}
-
 #define RETIRE_ENTRY(to_retire) { \
   to_retire = owners; \
   owners = NULL; \
@@ -100,33 +81,10 @@
   if (wounder->txn->wound_txn(to_wound->txn) == COMMITED) {\
     return_entry(wounder); \
     rc = Abort; \
-    printf("[txn-%lu](%lu) fail to wound %lu(%lu) on %p\n", wounder->txn->get_txn_id(), \
-				  wounder->txn->get_ts(), to_wound->txn->get_txn_id(), to_wound->txn->get_ts(), this); \
     goto final; \
   } \
   printf("[txn-%lu](%lu) wound %lu(%lu) on %p\n", wounder->txn->get_txn_id(), \
 				  wounder->txn->get_ts(), to_wound->txn->get_txn_id(), to_wound->txn->get_ts(), this); \
-}
-
-// NOTE: it is unrealistic to have completely ordered read with
-// dynamically assigned ts. e.g. [0,0,0] -> [12, 11, 5]
-// used when to_insert->type = LOCK_SH
-#define WOUND_RETIRED(en, to_insert) { \
-    en = retired_head; \
-    for (UInt32 i = 0; i < retired_cnt; i++) { \
-        if (en->type == LOCK_EX && a_higher_than_b(ts, en->txn->get_ts())) { \
-            TRY_WOUND(en, to_insert); \
-            en = rm_from_retired(en, true, txn); \
-        } else \
-            en = en->next; \
-    } \
-}
-
-// owner's type is always LOCK_EX
-#define WOUND_OWNER(to_insert) { \
-    TRY_WOUND(owners, to_insert); \
-    return_entry(owners); \
-    owners = NULL; \
 }
 
 struct BBLockEntry {
@@ -274,6 +232,81 @@ class Row_bamboo {
 		}
 		return false;
 	};
+
+	inline void add_to_waiters(ts_t ts, BBLockEntry * to_insert) {
+		BBLockEntry * en = waiters_head;
+		while (en != NULL) {
+			if (ts < en->txn->get_ts())
+					break;
+			en = en->next;
+		}
+		if (en) {
+			LIST_INSERT_BEFORE(en, to_insert);
+			if (en == waiters_head) 
+				waiters_head = to_insert;
+		} else {
+			LIST_PUT_TAIL(waiters_head, waiters_tail, to_insert);
+		}
+		to_insert->status = LOCK_WAITER;
+		to_insert->txn->lock_ready = false;
+		waiter_cnt++;
+	};	
+
+	// NOTE: it is unrealistic to have completely ordered read with
+	// dynamically assigned ts. e.g. [0,0,0] -> [12, 11, 5]
+	// used when to_insert->type = LOCK_SH
+	inline RC wound_retired_rd(ts_t ts, BBLockEntry * to_insert) {
+		BBLockEntry * en = retired_head;
+		while(en) {
+			if (en->type == LOCK_EX && a_higher_than_b(ts, en->txn->get_ts())) {
+				if (to_insert->txn->wound_txn(en->txn) == COMMITED) {
+					return_entry(to_insert);
+					return Abort;
+				}
+    			printf("[txn-%lu](%lu) wounded %lu(%lu) on %p\n", to_insert->txn->get_txn_id(), 
+				  		to_insert->txn->get_ts(), en->txn->get_txn_id(), en->txn->get_ts(), this);
+				en = rm_from_retired(en, true, to_insert->txn);
+			} else 
+				en = en->next;
+		}
+	};
+
+	// try_wound(to_wound, wounder), if commited, wound failed, return wounder
+	inline RC wound_retired_wr(ts_t ts, BBLockEntry * to_insert) {
+		BBLockEntry * en = retired_head;
+		while(en) {
+			if (en->txn->get_ts() == 0 || a_higher_than_b(ts, en->txn->get_ts())) {
+				if (to_insert->txn->wound_txn(en->txn) == COMMITED) {
+					return_entry(to_insert);
+					return Abort;
+				}
+    			printf("[txn-%lu](%lu) wounded %lu(%lu) on %p\n", to_insert->txn->get_txn_id(), 
+				  		to_insert->txn->get_ts(), en->txn->get_txn_id(), en->txn->get_ts(), this);
+				en = rm_from_retired(en, true, to_insert->txn);
+			} else 
+				en = en->next;
+		}
+		return RCOK;
+	};
+
+	inline RC wound_owner(BBLockEntry * to_insert) {
+		if (to_insert->txn->wound_txn(owners->txn) == COMMITED) {
+			return_entry(to_insert);
+			return Abort;
+		}
+		return_entry(owners);
+		owners = NULL;
+		return RCOK;
+	};
+
+// owner's type is always LOCK_EX
+#define WOUND_OWNER(to_insert) { \
+    TRY_WOUND(owners, to_insert); \
+    return_entry(owners); \
+    owners = NULL; \
+}
+
+
 };
 
 #endif
