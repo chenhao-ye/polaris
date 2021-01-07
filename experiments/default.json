@@ -28,6 +28,6 @@
 	"SYNTH_TABLE_SIZE": 10000000,
 
 	"UNSET_NUMA": "false",
-	"COMPILE_ONLY": "true",
+	"COMPILE_ONLY": "false",
 	"NDEBUG": "true"
 }

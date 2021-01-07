@@ -15,7 +15,7 @@
 #define CPU_FREQ 					2.6 // in GHz/s
 
 // # of transactions to run for warmup
-#define WARMUP						0
+#define WARMUP						1000
 // YCSB or TPCC
 #define WORKLOAD                    YCSB
 // print the transaction latency distribution
