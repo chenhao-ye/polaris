@@ -181,10 +181,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int&txncnt,
 }
 
 
-RC Row_ww::lock_release(void * addr) {
-
-  auto entry = (LockEntry * ) addr;
-
+RC Row_ww::lock_release(LockEntry * entry) {
 #if PF_CS
   uint64_t starttime = get_sys_clock();
 #endif

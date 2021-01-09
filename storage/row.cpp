@@ -379,15 +379,17 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row, Access * access) {
 #endif
 }
 
-void row_t::return_row(void * lock_entry, RC rc) {
 #if CC_ALG == BAMBOO
-  this->manager->lock_release(lock_entry, rc);
-#elif CC_ALG == WOUND_WAIT
-  this->manager->lock_release(lock_entry);
-#endif
+void row_t::return_row(BBLockEntry * lock_entry, RC rc) {
+    this->manager->lock_release(lock_entry, rc);
 }
+#elif CC_ALG == WOUND_WAIT
+void row_t::return_row(LockEntry * lock_entry, RC rc) {
+    this->manager->lock_release(lock_entry);
+}
+#endif
 
-void row_t::return_row(access_t type, row_t * row, void * lock_entry) {
+void row_t::return_row(access_t type, row_t * row, LockEntry * lock_entry) {
 #if CC_ALG == WOUND_WAIT
   // make committed writes globally visible
   if (type == WR) // must be commited, aborted write will be XP
@@ -398,7 +400,6 @@ void row_t::return_row(access_t type, row_t * row, void * lock_entry) {
   if (type == XP) {// recover from previous writes.
     this->copy(row);
   }
-//printf("[%p]txn-%lu return row %lu\n", lock_entry, ((LockEntry *)lock_entry)->txn->get_txn_id(), get_row_id());
   this->manager->lock_release(lock_entry);
 #else
   assert(false);

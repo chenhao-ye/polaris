@@ -101,8 +101,8 @@ class Row_bamboo {
   public:
     void init(row_t * row);
     RC lock_get(lock_t type, txn_man * txn, Access * access);
-    RC lock_release(void * en, RC rc);
-    RC lock_retire(void * en);
+    RC lock_release(BBLockEntry * entry, RC rc);
+    RC lock_retire(BBLockEntry * entry);
 
   private:
 
