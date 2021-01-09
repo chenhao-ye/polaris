@@ -155,11 +155,13 @@ class Row_bamboo {
                 ts = txn->get_ts();
         }
         return ts;
-    }
+    };
+
 
     // init a lock entry (pre-allocated in each txn's access)
-    BBLockEntry * get_entry(Access * access) {
-        BBLockEntry * entry = (BBLockEntry *) access->lock_entry;
+    static BBLockEntry * get_entry(Access * access) {
+    #if CC_ALG == BAMBOO
+        BBLockEntry * entry = access->lock_entry;
         entry->txn->lock_ready = false;
         entry->txn->lock_abort = false;
         entry->next = NULL;
@@ -168,7 +170,11 @@ class Row_bamboo {
         entry->is_cohead = false;
         entry->start_ts = 0;
         return entry;
+    #else
+        return NULL;
+    #endif
     };
+
 
     // clean the lock entry
     void return_entry(BBLockEntry * entry) {
@@ -176,7 +182,7 @@ class Row_bamboo {
         entry->prev = NULL;
         entry->status = LOCK_DROPPED;
         entry->start_ts = 0;
-    }
+    };
 
     // record benefit
     inline void record_benefit(uint64_t time) {
@@ -299,5 +305,4 @@ class Row_bamboo {
 
 
 };
-
 #endif

@@ -299,11 +299,15 @@ inline
 LockEntry * Row_lock::get_entry(Access * access) {
   //LockEntry * entry = (LockEntry *) mem_allocator.alloc(sizeof(LockEntry),
   // _row->get_part_id());
+  #if CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE || CC_ALG == DL_DETECT
   LockEntry * entry = (LockEntry *) access->lock_entry;
   entry->next = NULL;
   entry->prev = NULL;
   entry->status = LOCK_DROPPED;
   return entry;
+  #else 
+  return NULL;
+  #endif
 }
 
 inline 

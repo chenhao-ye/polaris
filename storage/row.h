@@ -98,7 +98,7 @@ class row_t
 
     // for concurrency control. can be lock, timestamp etc.
 #if CC_ALG == BAMBOO
-    RC retire_row(void * lock_entry);
+    RC retire_row(BBLockEntry * lock_entry);
 #elif CC_ALG == IC3
     row_t * orig;
     void init_accesses(Access * access);

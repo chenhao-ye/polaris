@@ -228,7 +228,7 @@ void row_t::free_row() {
 }
 
 #if CC_ALG == BAMBOO
-RC row_t::retire_row(void * lock_entry) {
+RC row_t::retire_row(BBLockEntry * lock_entry) {
   return this->manager->lock_retire(lock_entry);
 }
 #endif
@@ -389,6 +389,7 @@ void row_t::return_row(LockEntry * lock_entry, RC rc) {
 }
 #endif
 
+#if CC_ALG == WOUND_WAIT || CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT
 void row_t::return_row(access_t type, row_t * row, LockEntry * lock_entry) {
 #if CC_ALG == WOUND_WAIT
   // make committed writes globally visible
@@ -405,6 +406,7 @@ void row_t::return_row(access_t type, row_t * row, LockEntry * lock_entry) {
   assert(false);
 #endif
 }
+#endif
 
 // the "row" is the row read out in get_row(). 
 // For locking based CC_ALG, the "row" is the same as "this". 
