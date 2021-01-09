@@ -24,6 +24,7 @@ IndexHash::init(int part_cnt, table_t * table, uint64_t bucket_cnt) {
 
 bool IndexHash::index_exist(idx_key_t key) {
   assert(false);
+  return false;
 }
 
 void

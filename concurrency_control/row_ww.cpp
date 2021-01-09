@@ -181,10 +181,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int&txncnt,
 }
 
 
-RC Row_ww::lock_release(void * addr) {
-
-  auto entry = (LockEntry * ) addr;
-
+RC Row_ww::lock_release(LockEntry * entry) {
 #if PF_CS
   uint64_t starttime = get_sys_clock();
 #endif
@@ -247,11 +244,15 @@ inline
 LockEntry * Row_ww::get_entry(Access * access) {
   //LockEntry * entry = (LockEntry *) mem_allocator.alloc(sizeof(LockEntry),
   // _row->get_part_id());
-  LockEntry * entry = (LockEntry *) access->lock_entry;
+  #if CC_ALG == WOUND_WAIT
+  LockEntry * entry = access->lock_entry;
   entry->next = NULL;
   entry->prev = NULL;
   entry->status = LOCK_DROPPED;
   return entry;
+  #else
+  return NULL;
+  #endif
 }
 
 inline 

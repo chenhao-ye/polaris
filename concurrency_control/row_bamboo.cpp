@@ -243,8 +243,7 @@ final:
     return rc;
 }
 
-RC Row_bamboo::lock_retire(void * addr) {
-    BBLockEntry * entry = (BBLockEntry *) addr;
+RC Row_bamboo::lock_retire(BBLockEntry * entry) {
     ASSERT(entry->type == LOCK_EX);
 #if PF_CS
     uint64_t starttime = get_sys_clock();
@@ -288,10 +287,9 @@ RC Row_bamboo::lock_retire(void * addr) {
     return rc;
 }
 
-RC Row_bamboo::lock_release(void * addr, RC rc) {
-    BBLockEntry * entry = (BBLockEntry *) addr;
+RC Row_bamboo::lock_release(BBLockEntry * entry, RC rc) {
 	if (entry->status == LOCK_DROPPED)
-			return RCOK;
+	    return RCOK;
 #if PF_ABORT 
     entry->txn->abort_chain = 0;
 #endif

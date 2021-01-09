@@ -218,10 +218,7 @@ RC Row_lock::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
 }
 
 
-RC Row_lock::lock_release(void * addr) {
-
-  auto entry = (LockEntry *) addr;
-
+RC Row_lock::lock_release(LockEntry * entry) {
 #if PF_CS
   uint64_t starttime = get_sys_clock();
 #endif
@@ -231,7 +228,6 @@ RC Row_lock::lock_release(void * addr) {
   INC_STATS(entry->txn->get_thd_id(), time_release_latch, endtime - starttime);
   starttime = endtime;
 #endif
-
   LockEntry * en;
   // Try to find the entry in the owners
   if (entry->status == LOCK_OWNER) { // find the entry in the owner list
@@ -303,11 +299,15 @@ inline
 LockEntry * Row_lock::get_entry(Access * access) {
   //LockEntry * entry = (LockEntry *) mem_allocator.alloc(sizeof(LockEntry),
   // _row->get_part_id());
+  #if CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE || CC_ALG == DL_DETECT
   LockEntry * entry = (LockEntry *) access->lock_entry;
   entry->next = NULL;
   entry->prev = NULL;
   entry->status = LOCK_DROPPED;
   return entry;
+  #else 
+  return NULL;
+  #endif
 }
 
 inline 
