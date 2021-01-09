@@ -122,6 +122,7 @@ mem_alloc::get_size_id(UInt32 size) {
 	}
     printf("size = %d\n", size);
 	assert( false );
+    return 0;
 }
 
 
