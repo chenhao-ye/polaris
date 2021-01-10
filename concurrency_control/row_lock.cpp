@@ -37,7 +37,7 @@ void Row_lock::lock(txn_man * txn) {
 #elif LATCH == LH_MUTEX
                 pthread_mutex_lock( latch );
 #else
-                latch->acquire(txn->get_mcs_node());
+                latch->acquire(txn->mcs_node);
 #endif
             }
     }
@@ -54,7 +54,7 @@ void Row_lock::unlock(txn_man * txn) {
 #elif LATCH == LH_MUTEX
                 pthread_mutex_unlock( latch );
 #else
-                latch->release(txn->get_mcs_node());
+                latch->release(txn->mcs_node);
 #endif
             }
         }

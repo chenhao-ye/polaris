@@ -74,13 +74,10 @@ void txn_man::set_txn_id(txnid_t txn_id) {
     depqueue_sz = 0;
 #endif
     this->txn_id = txn_id;
-}
-
 #if LATCH == LH_MCSLOCK
-mcslock::mcs_node * txn_man::get_mcs_node() { 
-    return h_thd->mcs_node;
-}
+    mcs_node = new mcslock::mcs_node();
 #endif
+}
 
 txnid_t txn_man::get_txn_id() {
     return this->txn_id;

@@ -15,22 +15,21 @@ class mcslock {
     mcslock(): tail(nullptr) {};
 
     struct mcs_node {
-        bool locked;
+        volatile bool locked;
         uint8_t pad0[64 - sizeof(bool)];
         // padding to separate next and locked into two cache lines
-        mcs_node* next;
+        volatile mcs_node* volatile next;
         uint8_t pad1[64 - sizeof(mcs_node *)];
         mcs_node(): locked(true), next(nullptr) {}
     };
 
     void acquire(mcs_node * me) {
-        me->next = nullptr;
         auto prior_node = tail.exchange(me, std::memory_order_acquire);
-        // No one there?
+        // Any one there?
         if (prior_node != nullptr) {
             // memory_barrier();
-            me->locked = true;
             // Someone there, need to link in
+            me->locked = true;
             prior_node->next = me;
             // Make sure we do the above setting of next.
             // memory_barrier();
@@ -43,18 +42,17 @@ class mcslock {
     };
 
     void release(mcs_node * me) {
-        // No successor yet?
         if (me->next == nullptr) {
-            if (tail.compare_exchange_strong(me, nullptr,
+            mcs_node * expected = me;
+            // No successor yet
+            if (tail.compare_exchange_strong(expected, nullptr,
                                          std::memory_order_release,
                                          std::memory_order_relaxed)) {
                 return;
             }
             // otherwise, another thread is in the process of trying to
             // acquire the lock, so spins waiting for it to finish
-            while (me->next == nullptr) {
-                nop_pause();
-            };
+            while (me->next == nullptr) {};
         }
         // memory_barrier();
         // Unlock next one
@@ -63,7 +61,7 @@ class mcslock {
     };
 
   private:
-    std::atomic<mcs_node*> tail{nullptr};
+    std::atomic<mcs_node*> tail;
 };
 
 #endif

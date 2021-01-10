@@ -9,9 +9,6 @@ class thread_t {
   public:
     uint64_t _thd_id;
     workload * _wl;
-#if LATCH == LH_MCSLOCK
-    mcslock::mcs_node * mcs_node;
-#endif
 
     uint64_t 	get_thd_id();
 

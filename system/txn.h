@@ -70,6 +70,9 @@ class txn_man
   void release();
   thread_t * h_thd;
   workload * h_wl;
+#if LATCH == LH_MCSLOCK
+  mcslock::mcs_node * mcs_node;
+#endif
   myrand * mrand;
   uint64_t abort_cnt;
 #if PF_ABORT 
@@ -81,9 +84,6 @@ class txn_man
   workload * 		get_wl();
   void 			    set_txn_id(txnid_t txn_id);
   txnid_t 		    get_txn_id();
-#if LATCH == LH_MCSLOCK
-  mcslock::mcs_node * get_mcs_node(); 
-#endif
 
   // [COMMUTATIVE OPERATIONS]
 #if COMMUTATIVE_OPS
