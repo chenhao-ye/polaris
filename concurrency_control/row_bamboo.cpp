@@ -95,7 +95,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
     // take the latch
     lock(txn);
     // timestamp
-    ts_t ts = txn->get_ts();
+    ts_t ts = 0;
     ts_t owner_ts = 0;
     ts_t en_ts;
 #if !BB_DYNAMIC_TS
@@ -174,7 +174,9 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
 			}
             UPDATE_RETIRE_INFO(to_insert, retired_tail);
             ADD_TO_RETIRED_TAIL(to_insert);
-            goto final; // no owner -> no waiter, no need to promote
+            unlock(txn);
+            return rc;
+            //goto final; // no owner -> no waiter, no need to promote
 #endif
         }
     } else { // LOCK_EX
@@ -184,12 +186,15 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
             owners->status = LOCK_OWNER;
 			owners->txn->lock_ready = true;
             UPDATE_RETIRE_INFO(to_insert, retired_tail);
-            goto final;
+            unlock(txn);
+            return rc;
+            // goto final;
         }
         // assign ts
         if (owners)
             owner_ts = owners->txn->get_ts();
 #if BB_DYNAMIC_TS
+        ts = txn->get_ts();
         if (ts == 0) {
             if (owners) {
                 if (!retired_head) {
