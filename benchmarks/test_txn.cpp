@@ -14,6 +14,7 @@ RC TestTxnMan::run_txn(int type, int access_num) {
 		return testConflict(access_num);
 	default:
 		assert(false);
+        return Abort;
 	}
 }
 
@@ -34,13 +35,16 @@ RC TestTxnMan::testReadwrite(int access_num) {
 		int v1;
     	double v2;
     	uint64_t v3;
-	    char * v4;
     	
 		row_local->get_value(0, v1);
 	    row_local->get_value(1, v2);
     	row_local->get_value(2, v3);
+#ifdef NDEBUG
+        row_local->get_value(3);
+#else
+	    char * v4;
 	    v4 = row_local->get_value(3);
-
+#endif
     	assert(v1 == 1234);
 	    assert(v2 == 1234.5);
     	assert(v3 == 8589934592UL);

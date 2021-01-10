@@ -32,13 +32,15 @@ void Row_bamboo::init(row_t * row) {
     benefit2 = 0;
     benefit_cnt2 = 0;
     curr_benefit1 = true;
-
+    #if DEBUG_BAMBOO
+    thd_cnt = 0;
+    #endif
 }
 
 // taking the latch
-void Row_bamboo::lock(BBLockEntry * en) {
-    if (g_thread_cnt > 1) {
-            if (g_central_man)
+void Row_bamboo::lock(txn_man * txn) {
+    if (likely(g_thread_cnt > 1)) {
+            if (unlikely(g_central_man))
                 glob_manager->lock_row(_row);
             else {
 #if LATCH == LH_SPINLOCK
@@ -46,16 +48,24 @@ void Row_bamboo::lock(BBLockEntry * en) {
 #elif LATCH == LH_MUTEX
                 pthread_mutex_lock( latch );
 #else
-                latch->acquire(en->m_node);
+                latch->acquire(txn->mcs_node);
 #endif
             }
+#if DEBUG_BAMBOO
+        ATOM_ADD(thd_cnt, 1);
+        assert(thd_cnt == 1);
+#endif
     }
 };
 
 // release the latch
-void Row_bamboo::unlock(BBLockEntry * en) {
-        if (g_thread_cnt > 1) {
-            if (g_central_man)
+void Row_bamboo::unlock(txn_man * txn) {
+#if DEBUG_BAMBOO
+    ATOM_SUB(thd_cnt, 1);
+    assert(thd_cnt == 0);
+#endif
+        if (likely(g_thread_cnt > 1)) {
+            if (unlikely(g_central_man))
                 glob_manager->release_row(_row);
             else {
 #if LATCH == LH_SPINLOCK
@@ -63,7 +73,7 @@ void Row_bamboo::unlock(BBLockEntry * en) {
 #elif LATCH == LH_MUTEX
                 pthread_mutex_unlock( latch );
 #else
-                latch->release(en->m_node);
+                latch->release(txn->mcs_node);
 #endif
             }
         }
@@ -83,7 +93,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
     BBLockEntry * to_insert = get_entry(access);
     to_insert->type = type;
     // take the latch
-    lock(to_insert);
+    lock(txn);
     // timestamp
     ts_t ts = txn->get_ts();
     ts_t owner_ts = 0;
@@ -137,9 +147,11 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
             // if all read, then no need for ts. only case to have self=0
             // if any writes, 
 			//   case 1: [W][][] then it has to be just one write in the retired
-            //           list, with no other reads; then may need to assign ts
-			//   case 2: [W][][W] then retired list must be assigned
-            if (retired_tail && (retired_tail->type == LOCK_EX)) {
+            //           list, with no other reads; then may need to assign ts, self may
+            //           be assigned
+			//   case 2: [W][][W] then retired list must be assigned, self may be assigned
+            //   case 3: [RWR][][.] then retired list all assigned, but must assign self
+            if (retired_tail && (retired_tail->type == LOCK_EX || !retired_tail->is_cohead)) {
                 assign_ts(0, retired_tail->txn);
                 ts = assign_ts(ts, txn);
             }
@@ -237,19 +249,18 @@ final:
 	check_correctness();
 #endif
     // release the latch
-    unlock(to_insert);
+    unlock(txn);
     if (rc == RCOK || rc == FINISH)
         txn->lock_ready = true;
     return rc;
 }
 
-RC Row_bamboo::lock_retire(void * addr) {
-    BBLockEntry * entry = (BBLockEntry *) addr;
+RC Row_bamboo::lock_retire(BBLockEntry * entry) {
     ASSERT(entry->type == LOCK_EX);
 #if PF_CS
     uint64_t starttime = get_sys_clock();
 #endif
-    lock(entry);
+    lock(entry->txn);
 #if PF_CS
     uint64_t endtime = get_sys_clock();
     INC_STATS(entry->txn->get_thd_id(), time_retire_latch, endtime - starttime);
@@ -284,21 +295,20 @@ RC Row_bamboo::lock_retire(void * addr) {
 #if DEBUG_BAMBOO
 	// printf("[txn-%lu] lock_retire(%p, %d) ts=%lu\n", entry->txn->get_txn_id(), this, entry->type, entry->txn->get_ts());
 #endif
-    unlock(entry);
+    unlock(entry->txn);
     return rc;
 }
 
-RC Row_bamboo::lock_release(void * addr, RC rc) {
-    BBLockEntry * entry = (BBLockEntry *) addr;
+RC Row_bamboo::lock_release(BBLockEntry * entry, RC rc) {
 	if (entry->status == LOCK_DROPPED)
-			return RCOK;
+	    return RCOK;
 #if PF_ABORT 
     entry->txn->abort_chain = 0;
 #endif
 #if PF_CS
     uint64_t starttime = get_sys_clock();
 #endif
-    lock(entry);
+    lock(entry->txn);
 #if PF_CS
     uint64_t endtime = get_sys_clock();
   INC_STATS(entry->txn->get_thd_id(), time_release_latch, endtime- starttime);
@@ -349,7 +359,7 @@ RC Row_bamboo::lock_release(void * addr, RC rc) {
 #if DEBUG_BAMBOO
 	// printf("[txn-%lu] lock_release(%p, %d) status=%d ts=%lu\n", entry->txn->get_txn_id(), this, entry->type, rc, entry->txn->get_ts());
 #endif
-    unlock(entry);
+    unlock(entry->txn);
 #if PF_ABORT 
     if (entry->txn->abort_chain > 0) {
     UPDATE_STATS(entry->txn->get_thd_id(), max_abort_length, entry->txn->abort_chain);
@@ -408,6 +418,7 @@ bool Row_bamboo::bring_next(txn_man * txn) {
                 UPDATE_RETIRE_INFO(owners, retired_tail);
                 has_txn = bring_out_waiter(entry, txn);
 #endif
+                break;
             } else {
 #if BB_AUTORETIRE && !BB_ALWAYS_RETIRE_READ
                 // decide if should read dirty data
@@ -574,12 +585,14 @@ RC Row_bamboo::insert_read_to_retired(BBLockEntry * to_insert, ts_t ts,
 		en = en->next;
 	}
 	if (en) {
+        assert(ts != 0);
 		access->data->copy(en->access->orig_data);
 		INSERT_TO_RETIRED(to_insert, en);
 		to_insert->txn->lock_ready = true;
 		rc = FINISH;
 	} else {
 		if (owners) {
+            assert(ts != 0);
 			access->data->copy(owners->access->orig_data);
 			INSERT_TO_RETIRED_TAIL(to_insert);
 			to_insert->txn->lock_ready = true;

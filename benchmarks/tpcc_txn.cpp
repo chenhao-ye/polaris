@@ -39,7 +39,7 @@ RC tpcc_txn_man::run_txn(base_query * query) {
     case TPCC_STOCK_LEVEL :
       return run_stock_level(m_query); break;
     default:
-      assert(false);
+      assert(false); return Abort;
   }
 }
 
@@ -331,8 +331,6 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
   double w_tax;
   row_t * r_cust;
   row_t * r_cust_local;
-  char * c_last;
-  char * c_credit;
   row_t * r_dist;
   row_t * r_dist_local;
   // d_tax: used only when implementing full tpcc 
@@ -353,8 +351,6 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
   row_t * r_stock;
   row_t * r_stock_local;
   int64_t i_price;
-  char * i_name;
-  char * i_data;
   uint64_t stock_key;
   INDEX * stock_index;
   itemid_t * stock_item;
@@ -460,11 +456,8 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
   //retrieve data
   uint64_t c_discount;
   if(!TPCC_SMALL) {
-    c_last = r_cust_local->get_value(C_LAST);
-    c_credit = r_cust_local->get_value(C_CREDIT);
-    //bypass warning checks
-    assert(c_last!=NULL);
-    assert(c_credit!=NULL);
+    r_cust_local->get_value(C_LAST);
+    r_cust_local->get_value(C_CREDIT);
   }
   r_cust_local->get_value(C_DISCOUNT, c_discount);
 
@@ -546,13 +539,9 @@ item_piece: // 5
       return finish(Abort);
     }
     r_item_local->get_value(I_PRICE, i_price);
-    /*
-    //i_name = r_item_local->get_value(I_NAME);
-    //i_data = r_item_local->get_value(I_DATA);
-    //assert(i_name!=NULL);
-    //assert(i_data!=NULL);
+    r_item_local->get_value(I_NAME);
+    r_item_local->get_value(I_DATA);
     assert(r_item_local->data);
-    */
   }
   
   if (end_piece(5) != RCOK)
@@ -716,10 +705,8 @@ orderline_piece: // 7
         }
 
         r_item_local->get_value(I_PRICE, i_price);
-        i_name = r_item_local->get_value(I_NAME);
-        i_data = r_item_local->get_value(I_DATA);
-        assert(i_name!=NULL);
-        assert(i_data!=NULL);
+        r_item_local->get_value(I_NAME);
+        r_item_local->get_value(I_DATA);
         /*===================================================================+
         EXEC SQL SELECT s_quantity, s_data,
                 s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05,

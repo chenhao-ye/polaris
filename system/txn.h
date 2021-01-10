@@ -1,7 +1,6 @@
 #pragma once
 
 #include "global.h"
-#include "helper.h"
 
 class workload;
 class thread_t;
@@ -10,6 +9,11 @@ class table_t;
 class base_query;
 class INDEX;
 class txn_man;
+#if CC_ALG == WOUND_WAIT || CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT
+struct LockEntry;
+#elif CC_ALG == BAMBOO
+struct BBLockEntry;
+#endif
 
 // each thread has a txn_man. 
 // a txn_man corresponds to a single transaction.
@@ -45,8 +49,11 @@ class Access {
   uint64_t  rd_accesses;
   uint64_t  wr_accesses;
   uint64_t  lk_accesses;
+#elif CC_ALG == BAMBOO
+  BBLockEntry * lock_entry;
+#elif CC_ALG == WOUND_WAIT || CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT
+  LockEntry * lock_entry;
 #endif
-  void * lock_entry;
 };
 
 #if CC_ALG == IC3
@@ -63,6 +70,9 @@ class txn_man
   void release();
   thread_t * h_thd;
   workload * h_wl;
+#if LATCH == LH_MCSLOCK
+  mcslock::mcs_node * mcs_node;
+#endif
   myrand * mrand;
   uint64_t abort_cnt;
 #if PF_ABORT 

@@ -78,34 +78,27 @@
 
 struct BBLockEntry {
     // type of lock: EX or SH
+    txn_man * txn;
+    Access * access;
+    char padding[64 - sizeof(txn_man *) - sizeof(Access *)];
     lock_t type;
     lock_status status;
     bool is_cohead;
-    txn_man * txn;
     BBLockEntry * next;
     BBLockEntry * prev;
-    Access * access;
     ts_t start_ts;
-#if LATCH == LH_MCSLOCK
-    mcslock::qnode_t * m_node;
-    BBLockEntry(): type(LOCK_NONE), status(LOCK_DROPPED), is_cohead(false),
-                   txn(NULL), next(NULL), prev(NULL), access(NULL),
-                   start_ts(0), m_node(NULL){};
-#else
-    BBLockEntry(): type(LOCK_NONE), status(LOCK_DROPPED), is_cohead(false),
-    txn(NULL), next(NULL), prev(NULL), access(NULL) start_ts(0) {};
-#endif
+    BBLockEntry(txn_man * t, Access * a): txn(t), access(a), type(LOCK_NONE), 
+    status(LOCK_DROPPED), is_cohead(false), next(NULL), prev(NULL), start_ts(0) {};
 };
 
 class Row_bamboo {
   public:
     void init(row_t * row);
     RC lock_get(lock_t type, txn_man * txn, Access * access);
-    RC lock_release(void * en, RC rc);
-    RC lock_retire(void * en);
+    RC lock_release(BBLockEntry * entry, RC rc);
+    RC lock_retire(BBLockEntry * entry);
 
   private:
-
     // data structure
     BBLockEntry * owners;
     BBLockEntry * retired_head;
@@ -129,14 +122,17 @@ class Row_bamboo {
     mcslock * latch;
 #endif
     bool blatch;
+    #if DEBUG_BAMBOO
+    UInt32 thd_cnt;
+    #endif
 
     // helper functions
     bool              bring_next(txn_man * txn);
     void              update_entry(BBLockEntry * en);
     BBLockEntry *     rm_from_retired(BBLockEntry * en, bool is_abort, txn_man * txn);
     BBLockEntry *     remove_descendants(BBLockEntry * en, txn_man * txn);
-    void              lock(BBLockEntry * en);
-    void              unlock(BBLockEntry * en);
+    void              lock(txn_man * txn);
+    void              unlock(txn_man * txn);
 	RC                insert_read_to_retired(BBLockEntry * to_insert, ts_t ts, Access * access);
 #if DEBUG_BAMBOO
 	void              check_correctness();
@@ -155,11 +151,13 @@ class Row_bamboo {
                 ts = txn->get_ts();
         }
         return ts;
-    }
+    };
+
 
     // init a lock entry (pre-allocated in each txn's access)
-    BBLockEntry * get_entry(Access * access) {
-        BBLockEntry * entry = (BBLockEntry *) access->lock_entry;
+    static BBLockEntry * get_entry(Access * access) {
+    #if CC_ALG == BAMBOO
+        BBLockEntry * entry = access->lock_entry;
         entry->txn->lock_ready = false;
         entry->txn->lock_abort = false;
         entry->next = NULL;
@@ -168,7 +166,11 @@ class Row_bamboo {
         entry->is_cohead = false;
         entry->start_ts = 0;
         return entry;
+    #else
+        return NULL;
+    #endif
     };
+
 
     // clean the lock entry
     void return_entry(BBLockEntry * entry) {
@@ -176,7 +178,7 @@ class Row_bamboo {
         entry->prev = NULL;
         entry->status = LOCK_DROPPED;
         entry->start_ts = 0;
-    }
+    };
 
     // record benefit
     inline void record_benefit(uint64_t time) {
@@ -239,6 +241,7 @@ class Row_bamboo {
 		to_insert->status = LOCK_WAITER;
 		to_insert->txn->lock_ready = false;
 		waiter_cnt++;
+        assert(ts != 0);
 	};	
 
 	// NOTE: it is unrealistic to have completely ordered read with
@@ -299,5 +302,4 @@ class Row_bamboo {
 
 
 };
-
 #endif
