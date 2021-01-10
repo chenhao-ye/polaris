@@ -10,8 +10,7 @@
 #define ALWAYS_INLINE __attribute__((always_inline))
 
 inline ALWAYS_INLINE void
-nop_pause()
-{
+nop_pause() {
   __asm volatile("pause" : :);
 }
 
@@ -21,8 +20,7 @@ memory_barrier() {
 }
 
 inline ALWAYS_INLINE uint64_t
-rdtsc(void)
-{
+rdtsc(void) {
   uint32_t hi, lo;
   __asm volatile("rdtsc" : "=a"(lo), "=d"(hi));
   return ((uint64_t)lo)|(((uint64_t)hi)<<32);
