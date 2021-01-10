@@ -80,15 +80,16 @@ struct BBLockEntry {
     // type of lock: EX or SH
     txn_man * txn;
     Access * access;
-    char padding[64 - sizeof(txn_man *) - sizeof(Access *)];
     lock_t type;
-    lock_status status;
-    bool is_cohead;
     BBLockEntry * next;
+    bool is_cohead;
+    lock_status status;
     BBLockEntry * prev;
     ts_t start_ts;
-    BBLockEntry(txn_man * t, Access * a): txn(t), access(a), type(LOCK_NONE), 
-    status(LOCK_DROPPED), is_cohead(false), next(NULL), prev(NULL), start_ts(0) {};
+    BBLockEntry(txn_man * t, Access * a): txn(t), access(a), type(LOCK_NONE),
+                                          next(NULL), is_cohead(false),
+                                          status(LOCK_DROPPED),
+                                          prev(NULL), start_ts(0) {};
 };
 
 class Row_bamboo {

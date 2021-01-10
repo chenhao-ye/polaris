@@ -124,6 +124,7 @@
 /***********************************************/
 // Benchmark
 /***********************************************/
+#define INSERT_ENABLED              false
 #define THINKTIME				    0
 #define MAX_RUNTIME                 30 // in s, used only if !TERMINATE_BY_TIME
 // max number of rows touched per transaction
