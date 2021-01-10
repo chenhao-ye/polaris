@@ -1,7 +1,6 @@
 #pragma once 
 
 #include "global.h"
-#include "helper.h"
 
 class workload;
 class ycsb_query;

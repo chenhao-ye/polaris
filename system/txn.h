@@ -1,7 +1,6 @@
 #pragma once
 
 #include "global.h"
-#include "helper.h"
 
 class workload;
 class thread_t;
@@ -71,6 +70,9 @@ class txn_man
   void release();
   thread_t * h_thd;
   workload * h_wl;
+#if LATCH == LH_MCSLOCK
+  mcslock::mcs_node * mcs_node;
+#endif
   myrand * mrand;
   uint64_t abort_cnt;
 #if PF_ABORT 

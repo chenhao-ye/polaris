@@ -1,6 +1,5 @@
 #pragma once 
 
-#include "helper.h"
 #include "global.h"
 
 class row_t;

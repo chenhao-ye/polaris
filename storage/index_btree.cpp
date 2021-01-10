@@ -15,7 +15,7 @@ RC index_btree::init(uint64_t part_cnt) {
 #ifdef NDEBUG
         make_lf(part_id, roots[part_id]);
 #else
-		rc = make_lf(part_id, roots[part_id]);
+		RC rc = make_lf(part_id, roots[part_id]);
 		assert (rc == RCOK);
 #endif
 	}

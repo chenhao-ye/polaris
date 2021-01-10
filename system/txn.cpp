@@ -74,6 +74,9 @@ void txn_man::set_txn_id(txnid_t txn_id) {
     depqueue_sz = 0;
 #endif
     this->txn_id = txn_id;
+#if LATCH == LH_MCSLOCK
+    mcs_node = new mcslock::mcs_node();
+#endif
 }
 
 txnid_t txn_man::get_txn_id() {
@@ -206,18 +209,14 @@ inline
 void txn_man::assign_lock_entry(Access * access) {
 #if CC_ALG == BAMBOO
     auto lock_entry = (BBLockEntry *) _mm_malloc(sizeof(BBLockEntry), 64);
-    new (lock_entry) BBLockEntry;
+    new (lock_entry) BBLockEntry(this, access);
 #else
     auto lock_entry = (LockEntry *) _mm_malloc(sizeof(LockEntry), 64);
-    new (lock_entry) LockEntry;
-#endif
-#if LATCH == LH_MCSLOCK
-    lock_entry->m_node = (mcslock::qnode_t *) _mm_malloc(sizeof(mcslock::qnode_t), 64);
-    new (lock_entry->m_node) mcslock::qnode_t();
+    new (lock_entry) LockEntry(this, access);
 #endif
     access->lock_entry = lock_entry;
-    lock_entry->txn = this;
-    lock_entry->access = access;
+    //lock_entry->txn = this;
+    //lock_entry->access = access;
 }
 #endif
 
@@ -510,9 +509,14 @@ RC txn_man::finish(RC rc) {
 
 void
 txn_man::release() {
-    for (int i = 0; i < num_accesses_alloc; i++)
+    for (int i = 0; i < num_accesses_alloc; i++) {
+    #if CC_ALG == BAMOO || CC_ALG == NO_WAIT || CC_ALG == WOUND_WAIT || CC_ALG == WAIT_DIE || CC_ALG == DL_DETEC
+        delete accesses[i]->lock_entry;
+    #endif
         mem_allocator.free(accesses[i], 0);
+    }
     mem_allocator.free(accesses, 0);
+    delete mcs_node;
 }
 
 #if COMMUTATIVE_OPS
