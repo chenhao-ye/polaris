@@ -49,14 +49,14 @@ def compile(job):
 	else:
 		os.system("rm -f temp.out")
 
-def run(test = '', job=None, unset_numa=False):
+def run(test = '', job=None, numa=True):
 	app_flags = ""
 	if test == 'read_write':
 		app_flags = "-Ar -t1"
 	if test == 'conflict':
 		app_flags = "-Ac -t4"
-        if unset_numa:
-	    os.system("numactl --all ./rundb %s | tee temp.out" % app_flags)
+        if numa:
+	    os.system("numactl --interleave all ./rundb %s | tee temp.out" % app_flags)
         else:
             os.system("./rundb %s | tee temp.out" % app_flags)
 	
@@ -110,12 +110,12 @@ if __name__ == "__main__":
         if ndebug:
             print("- disable assert()")
         compile(job)
-    unset_numa = eval_arg(job, "UNSET_NUMA")
-    if unset_numa:
-        print("- disable numa-aware")
+    numa = eval_arg(job, "UNSET_NUMA") == False
+    if not numa:
+        print("- disable interleaving allocation across numa nodes")
     if not eval_arg(job, "COMPILE_ONLY"):
         print("- executing...")
-        run("", job, unset_numa=unset_numa)
+        run("", job, numa=numa)
         if eval_arg(job, "OUTPUT_TO_FILE"):
             job = parse_output(job)
             stats = open("outputs/stats.json", "a+")
