@@ -80,8 +80,11 @@ struct BBLockEntry {
     // type of lock: EX or SH
     txn_man * txn;
     Access * access;
+    //uint8_t padding[64 - sizeof(void *)*2];
     lock_t type;
+    uint8_t padding[64 - sizeof(void *)*2 - sizeof(lock_t)];
     BBLockEntry * next;
+    //uint8_t padding[64 - sizeof(void *)*3 - sizeof(lock_t)];
     bool is_cohead;
     lock_status status;
     BBLockEntry * prev;

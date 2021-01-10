@@ -31,7 +31,7 @@ class Access {
     BBLockEntry * lock_entry;
 #elif CC_ALG == WOUND_WAIT || CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT
     LockEntry * lock_entry;
-#if CC_ALG == TICTOC
+#elif CC_ALG == TICTOC
     ts_t 		wts;
     ts_t 		rts;
 #elif CC_ALG == SILO
@@ -99,10 +99,10 @@ class txn_man
     status_t            status; // RUNNING, COMMITED, ABORTED
 #if PF_ABORT
     uint64_t            abort_chain;
-    uint_8              padding0[64 - sizeof(bool)*2 - sizeof(status_t)-
+    uint8_t             padding0[64 - sizeof(bool)*2 - sizeof(status_t)-
     sizeof(uint64_t)];
 #else
-    uint_8              padding0[64 - sizeof(bool)*2 - sizeof(status_t)];
+    uint8_t             padding0[64 - sizeof(bool)*2 - sizeof(status_t)];
 #endif
     // ideal second cache line
 
@@ -187,8 +187,23 @@ class txn_man
 #endif
     // [WW, BAMBOO]
     // wound txn
+    status_t            set_abort() {
+#if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT || CC_ALG == IC3
+    if (ATOM_CAS(status, RUNNING, ABORTED)) {
+        lock_abort = true;
+        return ABORTED;
+    } 
+#if BB_PRECOMMIT
+    else {
+        if (ATOM_CAS(status, PRECOMMIT, ABORTED)) {
+            lock_abort = true;
+        }
+    }
+#endif
+    return status;
+#endif
+    };
     status_t            wound_txn(txn_man * txn);
-    status_t            set_abort();
     void                increment_commit_barriers();
     void                decrement_commit_barriers();
     // dynamically set timestamp
@@ -235,3 +250,25 @@ class txn_man
 
 };
 
+
+inline status_t txn_man::wound_txn(txn_man * txn)
+{
+#if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT
+    if (status != RUNNING)
+        return COMMITED;
+#if BB_PRECOMMIT
+    // CANNOT wound PRECOMMITTED txn
+    if (ATOM_CAS(txn->status, RUNNING, ABORTED)) {
+        lock_abort = true;
+        return ABORTED;
+    }
+    if (txn->status != ABORTED)
+	    return COMMITED;
+    return ABORTED;
+#else
+    return txn->set_abort();
+#endif
+#else
+    return ABORTED;
+#endif
+}

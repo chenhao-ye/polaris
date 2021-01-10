@@ -519,49 +519,6 @@ txn_man::release() {
     delete mcs_node;
 }
 
-inline
-status_t txn_man::set_abort() {
-#if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT || CC_ALG == IC3
-    if (ATOM_CAS(status, RUNNING, ABORTED)) {
-        lock_abort = true;
-        return ABORTED;
-    } else {
-#if BB_PRECOMMIT
-        if (ATOM_CAS(status, PRECOMMIT, ABORTED)) {
-                    lock_abort = true;
-                }
-#else
-        return status;
-#endif
-    }
-#else
-    return ABORTED;
-#endif
-}
-
-inline
-status_t txn_man::wound_txn(txn_man * txn)
-{
-#if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT
-    if (status != RUNNING)
-        return COMMITED;
-#if BB_PRECOMMIT
-    // CANNOT wound PRECOMMITTED txn
-    if (ATOM_CAS(txn->status, RUNNING, ABORTED)) {
-        lock_abort = true;
-        return ABORTED;
-    }
-    if (txn->status != ABORTED)
-	    return COMMITED;
-    return ABORTED;
-#else
-    return txn->set_abort();
-#endif
-#else
-    return ABORTED;
-#endif
-}
-
 #if COMMUTATIVE_OPS
 void txn_man::inc_value(int col, uint64_t val) {
   // store operation and execute at commit time
