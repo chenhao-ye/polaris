@@ -76,6 +76,12 @@ void txn_man::set_txn_id(txnid_t txn_id) {
     this->txn_id = txn_id;
 }
 
+#if LATCH == LH_MCSLOCK
+mcslock::mcs_node * txn_man::get_mcs_node() { 
+    return h_thd->mcs_node;
+}
+#endif
+
 txnid_t txn_man::get_txn_id() {
     return this->txn_id;
 }
@@ -206,14 +212,14 @@ inline
 void txn_man::assign_lock_entry(Access * access) {
 #if CC_ALG == BAMBOO
     auto lock_entry = (BBLockEntry *) _mm_malloc(sizeof(BBLockEntry), 64);
-    new (lock_entry) BBLockEntry;
+    new (lock_entry) BBLockEntry(this, access);
 #else
     auto lock_entry = (LockEntry *) _mm_malloc(sizeof(LockEntry), 64);
-    new (lock_entry) LockEntry;
+    new (lock_entry) LockEntry(this, access);
 #endif
     access->lock_entry = lock_entry;
-    lock_entry->txn = this;
-    lock_entry->access = access;
+    //lock_entry->txn = this;
+    //lock_entry->access = access;
 }
 #endif
 

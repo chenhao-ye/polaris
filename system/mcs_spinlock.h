@@ -6,8 +6,8 @@
 #ifndef _MCS_SPINLOCK
 #define _MCS_SPINLOCK
 
+#include <atomic>
 #include "amd64.h"
-#include <pthread.h>
 
 class mcslock {
 
@@ -16,14 +16,15 @@ class mcslock {
 
     struct mcs_node {
         bool locked;
-        uint8_t pad1[64 - sizeof(bool)];
+        uint8_t pad0[64 - sizeof(bool)];
         // padding to separate next and locked into two cache lines
         mcs_node* next;
         uint8_t pad1[64 - sizeof(mcs_node *)];
-        qnode_t(): next(nullptr), locked(true) {}
+        mcs_node(): locked(true), next(nullptr) {}
     };
 
     void acquire(mcs_node * me) {
+        me->next = nullptr;
         auto prior_node = tail.exchange(me, std::memory_order_acquire);
         // No one there?
         if (prior_node != nullptr) {

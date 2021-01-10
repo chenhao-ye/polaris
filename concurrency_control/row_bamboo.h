@@ -78,16 +78,17 @@
 
 struct BBLockEntry {
     // type of lock: EX or SH
+    txn_man * txn;
+    Access * access;
+    char padding[64 - sizeof(txn_man *) - sizeof(Access *)];
     lock_t type;
     lock_status status;
     bool is_cohead;
-    txn_man * txn;
     BBLockEntry * next;
     BBLockEntry * prev;
-    Access * access;
     ts_t start_ts;
-    BBLockEntry(): type(LOCK_NONE), status(LOCK_DROPPED), is_cohead(false),
-    txn(NULL), next(NULL), prev(NULL), access(NULL) start_ts(0) {};
+    BBLockEntry(txn_man * t, Access * a): txn(t), access(a), type(LOCK_NONE), 
+    status(LOCK_DROPPED), is_cohead(false), next(NULL), prev(NULL), start_ts(0) {};
 };
 
 class Row_bamboo {
@@ -127,8 +128,8 @@ class Row_bamboo {
     void              update_entry(BBLockEntry * en);
     BBLockEntry *     rm_from_retired(BBLockEntry * en, bool is_abort, txn_man * txn);
     BBLockEntry *     remove_descendants(BBLockEntry * en, txn_man * txn);
-    void              lock(BBLockEntry * en);
-    void              unlock(BBLockEntry * en);
+    void              lock(txn_man * txn);
+    void              unlock(txn_man * txn);
 	RC                insert_read_to_retired(BBLockEntry * to_insert, ts_t ts, Access * access);
 #if DEBUG_BAMBOO
 	void              check_correctness();

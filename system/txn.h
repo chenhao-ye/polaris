@@ -82,7 +82,7 @@ class txn_man
   void 			    set_txn_id(txnid_t txn_id);
   txnid_t 		    get_txn_id();
 #if LATCH == LH_MCSLOCK
-  mcslock::mcs_node * get_mcs_node() {return h_thd->mcs_node;};
+  mcslock::mcs_node * get_mcs_node(); 
 #endif
 
   // [COMMUTATIVE OPERATIONS]

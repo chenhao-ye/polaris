@@ -10,3 +10,4 @@ rundb
 cmake-build-debug
 .DS_STORE
 .idea/*
+perf*

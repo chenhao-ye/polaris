@@ -2,20 +2,15 @@
 #define ROW_LOCK_H
 
 struct LockEntry {
+  txn_man * txn;
+  Access * access;
+  char padding[64 - sizeof(txn_man *) - sizeof(Access *)];
   lock_t type;
   lock_status status;
-  txn_man * txn;
   LockEntry * next;
   LockEntry * prev;
-  Access * access;
-#if LATCH == LH_MCSLOCK
-  mcslock::qnode_t * m_node;
-  LockEntry(): type(LOCK_NONE), status(LOCK_DROPPED), txn(NULL), next(NULL),
-  prev(NULL), access(NULL), m_node(NULL) {};
-#else
-  LockEntry(): type(LOCK_NONE), status(LOCK_DROPPED), txn(NULL), next(NULL),
-  prev(NULL), access(NULL) {};
-#endif
+  LockEntry(txn_man * t, Access * a): txn(t), access(a), type(LOCK_NONE), 
+  status(LOCK_DROPPED), next(NULL), prev(NULL) {};
 };
 
 class Row_lock {
@@ -25,8 +20,8 @@ class Row_lock {
   RC lock_get(lock_t type, txn_man * txn, Access * access);
   RC lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt, Access * access);
   RC lock_release(LockEntry * entry);
-  void lock(LockEntry * en = NULL);
-  void unlock(LockEntry * en = NULL);
+  void lock(txn_man * txn);
+  void unlock(txn_man * txn);
 
  private:
 #if LATCH == LH_SPINLOCK

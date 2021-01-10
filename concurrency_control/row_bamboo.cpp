@@ -83,7 +83,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
     BBLockEntry * to_insert = get_entry(access);
     to_insert->type = type;
     // take the latch
-    lock(to_insert);
+    lock(txn);
     // timestamp
     ts_t ts = txn->get_ts();
     ts_t owner_ts = 0;
@@ -237,7 +237,7 @@ final:
 	check_correctness();
 #endif
     // release the latch
-    unlock(to_insert);
+    unlock(txn);
     if (rc == RCOK || rc == FINISH)
         txn->lock_ready = true;
     return rc;
@@ -248,7 +248,7 @@ RC Row_bamboo::lock_retire(BBLockEntry * entry) {
 #if PF_CS
     uint64_t starttime = get_sys_clock();
 #endif
-    lock(entry);
+    lock(entry->txn);
 #if PF_CS
     uint64_t endtime = get_sys_clock();
     INC_STATS(entry->txn->get_thd_id(), time_retire_latch, endtime - starttime);
@@ -283,7 +283,7 @@ RC Row_bamboo::lock_retire(BBLockEntry * entry) {
 #if DEBUG_BAMBOO
 	// printf("[txn-%lu] lock_retire(%p, %d) ts=%lu\n", entry->txn->get_txn_id(), this, entry->type, entry->txn->get_ts());
 #endif
-    unlock(entry);
+    unlock(entry->txn);
     return rc;
 }
 
@@ -296,7 +296,7 @@ RC Row_bamboo::lock_release(BBLockEntry * entry, RC rc) {
 #if PF_CS
     uint64_t starttime = get_sys_clock();
 #endif
-    lock(entry);
+    lock(entry->txn);
 #if PF_CS
     uint64_t endtime = get_sys_clock();
   INC_STATS(entry->txn->get_thd_id(), time_release_latch, endtime- starttime);
@@ -347,7 +347,7 @@ RC Row_bamboo::lock_release(BBLockEntry * entry, RC rc) {
 #if DEBUG_BAMBOO
 	// printf("[txn-%lu] lock_release(%p, %d) status=%d ts=%lu\n", entry->txn->get_txn_id(), this, entry->type, rc, entry->txn->get_ts());
 #endif
-    unlock(entry);
+    unlock(entry->txn);
 #if PF_ABORT 
     if (entry->txn->abort_chain > 0) {
     UPDATE_STATS(entry->txn->get_thd_id(), max_abort_length, entry->txn->abort_chain);
