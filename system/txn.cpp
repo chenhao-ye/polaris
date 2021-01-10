@@ -509,9 +509,14 @@ RC txn_man::finish(RC rc) {
 
 void
 txn_man::release() {
-    for (int i = 0; i < num_accesses_alloc; i++)
+    for (int i = 0; i < num_accesses_alloc; i++) {
+    #if CC_ALG == BAMOO || CC_ALG == NO_WAIT || CC_ALG == WOUND_WAIT || CC_ALG == WAIT_DIE || CC_ALG == DL_DETEC
+        delete accesses[i]->lock_entry;
+    #endif
         mem_allocator.free(accesses[i], 0);
+    }
     mem_allocator.free(accesses, 0);
+    delete mcs_node;
 }
 
 #if COMMUTATIVE_OPS

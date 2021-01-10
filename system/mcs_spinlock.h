@@ -38,6 +38,7 @@ class mcslock {
                 // memory_barrier();
                 nop_pause();
             }
+            assert(!me->locked);
         }
     };
 

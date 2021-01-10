@@ -32,7 +32,9 @@ void Row_bamboo::init(row_t * row) {
     benefit2 = 0;
     benefit_cnt2 = 0;
     curr_benefit1 = true;
-
+    #if DEBUG_BAMBOO
+    thd_cnt = 0;
+    #endif
 }
 
 // taking the latch
@@ -49,11 +51,19 @@ void Row_bamboo::lock(txn_man * txn) {
                 latch->acquire(txn->mcs_node);
 #endif
             }
+#if DEBUG_BAMBOO
+        ATOM_ADD(thd_cnt, 1);
+        assert(thd_cnt == 1);
+#endif
     }
 };
 
 // release the latch
 void Row_bamboo::unlock(txn_man * txn) {
+#if DEBUG_BAMBOO
+    ATOM_SUB(thd_cnt, 1);
+    assert(thd_cnt == 0);
+#endif
         if (likely(g_thread_cnt > 1)) {
             if (unlikely(g_central_man))
                 glob_manager->release_row(_row);
@@ -137,9 +147,11 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
             // if all read, then no need for ts. only case to have self=0
             // if any writes, 
 			//   case 1: [W][][] then it has to be just one write in the retired
-            //           list, with no other reads; then may need to assign ts
-			//   case 2: [W][][W] then retired list must be assigned
-            if (retired_tail && (retired_tail->type == LOCK_EX)) {
+            //           list, with no other reads; then may need to assign ts, self may
+            //           be assigned
+			//   case 2: [W][][W] then retired list must be assigned, self may be assigned
+            //   case 3: [RWR][][.] then retired list all assigned, but must assign self
+            if (retired_tail && (retired_tail->type == LOCK_EX || !retired_tail->is_cohead)) {
                 assign_ts(0, retired_tail->txn);
                 ts = assign_ts(ts, txn);
             }
@@ -406,6 +418,7 @@ bool Row_bamboo::bring_next(txn_man * txn) {
                 UPDATE_RETIRE_INFO(owners, retired_tail);
                 has_txn = bring_out_waiter(entry, txn);
 #endif
+                break;
             } else {
 #if BB_AUTORETIRE && !BB_ALWAYS_RETIRE_READ
                 // decide if should read dirty data
@@ -572,12 +585,14 @@ RC Row_bamboo::insert_read_to_retired(BBLockEntry * to_insert, ts_t ts,
 		en = en->next;
 	}
 	if (en) {
+        assert(ts != 0);
 		access->data->copy(en->access->orig_data);
 		INSERT_TO_RETIRED(to_insert, en);
 		to_insert->txn->lock_ready = true;
 		rc = FINISH;
 	} else {
 		if (owners) {
+            assert(ts != 0);
 			access->data->copy(owners->access->orig_data);
 			INSERT_TO_RETIRED_TAIL(to_insert);
 			to_insert->txn->lock_ready = true;

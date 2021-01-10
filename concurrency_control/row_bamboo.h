@@ -122,6 +122,9 @@ class Row_bamboo {
     mcslock * latch;
 #endif
     bool blatch;
+    #if DEBUG_BAMBOO
+    UInt32 thd_cnt;
+    #endif
 
     // helper functions
     bool              bring_next(txn_man * txn);
@@ -238,6 +241,7 @@ class Row_bamboo {
 		to_insert->status = LOCK_WAITER;
 		to_insert->txn->lock_ready = false;
 		waiter_cnt++;
+        assert(ts != 0);
 	};	
 
 	// NOTE: it is unrealistic to have completely ordered read with
