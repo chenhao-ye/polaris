@@ -86,15 +86,8 @@ struct BBLockEntry {
     BBLockEntry * prev;
     Access * access;
     ts_t start_ts;
-#if LATCH == LH_MCSLOCK
-    mcslock::qnode_t * m_node;
-    BBLockEntry(): type(LOCK_NONE), status(LOCK_DROPPED), is_cohead(false),
-                   txn(NULL), next(NULL), prev(NULL), access(NULL),
-                   start_ts(0), m_node(NULL){};
-#else
     BBLockEntry(): type(LOCK_NONE), status(LOCK_DROPPED), is_cohead(false),
     txn(NULL), next(NULL), prev(NULL), access(NULL) start_ts(0) {};
-#endif
 };
 
 class Row_bamboo {
@@ -105,7 +98,6 @@ class Row_bamboo {
     RC lock_retire(BBLockEntry * entry);
 
   private:
-
     // data structure
     BBLockEntry * owners;
     BBLockEntry * retired_head;

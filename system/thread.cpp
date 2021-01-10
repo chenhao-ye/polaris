@@ -23,6 +23,9 @@ void thread_t::init(uint64_t thd_id, workload * workload) {
 		_abort_buffer[i].query = NULL;
 	_abort_buffer_empty_slots = _abort_buffer_size;
 	_abort_buffer_enable = (g_params["abort_buffer_enable"] == "true");
+#if LATCH == LH_MCSLOCK
+	mcs_node = new mcslock::mcs_node();
+#endif
 }
 
 uint64_t thread_t::get_thd_id() { return _thd_id; }

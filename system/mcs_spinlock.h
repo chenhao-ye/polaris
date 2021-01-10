@@ -1,5 +1,6 @@
 //
-// Implemented by authors of IC3
+// Implemented based on MCS_lock in IC3
+// Modified based on http://libfbp.blogspot.com/2018/01/c-mellor-crummey-scott-mcs-lock.html
 //
 
 #ifndef _MCS_SPINLOCK
@@ -11,32 +12,25 @@
 class mcslock {
 
   public:
-    struct qnode_t {
-        volatile qnode_t * volatile next;
-        volatile bool locked;
-        constexpr qnode_t(): next(NULL), locked(true){}
+    mcslock(): tail(nullptr) {};
+
+    struct mcs_node {
+        bool locked;
+        uint8_t pad1[64 - sizeof(bool)];
+        // padding to separate next and locked into two cache lines
+        mcs_node* next;
+        uint8_t pad1[64 - sizeof(mcs_node *)];
+        qnode_t(): next(nullptr), locked(true) {}
     };
 
-  private:
-    struct lock_t {
-        qnode_t* tail;
-        lock_t(): tail(NULL){}
-    };
-
-    volatile lock_t lock_;
-  public:
-
-    static void acquire(qnode_t * me) {
-        qnode_t * tail = NULL;
-        me->next = NULL;
-        tail = __sync_lock_test_and_set(&lock_.tail, me);
-        // memory_barrier();
+    void acquire(mcs_node * me) {
+        auto prior_node = tail.exchange(me, std::memory_order_acquire);
         // No one there?
-        if (tail) {
+        if (prior_node != nullptr) {
             // memory_barrier();
             me->locked = true;
             // Someone there, need to link in
-            tail->next = me;
+            prior_node->next = me;
             // Make sure we do the above setting of next.
             // memory_barrier();
             // Spin on my spin variable
@@ -45,45 +39,30 @@ class mcslock {
                 nop_pause();
             }
         }
-    }
+    };
 
-    void release(qnode_t* me) {
+    void release(mcs_node * me) {
         // No successor yet?
-        if (!me->next) {
-            // Try to atomically unlock
-            if (__sync_bool_compare_and_swap(&lock_.tail, me, NULL))
+        if (me->next == nullptr) {
+            if (tail.compare_exchange_strong(me, nullptr,
+                                         std::memory_order_release,
+                                         std::memory_order_relaxed)) {
                 return;
+            }
+            // otherwise, another thread is in the process of trying to
+            // acquire the lock, so spins waiting for it to finish
+            while (me->next == nullptr) {
+                nop_pause();
+            };
         }
-        // Wait for successor to appear
-        while (!me->next){
-            nop_pause();
-        }
-        memory_barrier();
+        // memory_barrier();
         // Unlock next one
         me->next->locked = false;
-    }
-
-};
-
-template <typename MCSLockable>
-class mcs_lock_guard {
-
-  public:
-    mcs_lock_guard(MCSLockable *l, mcslock::qnode_t* args)
-        : l(l), node(args) {
-        if (likely(l)) {
-            l->mcs_lock(node);
-        }
-    }
-
-    ~mcs_lock_guard() {
-        if (likely(l))
-            l->mcs_unlock(node);
-    }
+        me->next = nullptr;
+    };
 
   private:
-    MCSLockable* l;
-    mcslock::qnode_t *node;
+    std::atomic<mcs_node*> tail{nullptr};
 };
 
 #endif

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "global.h"
-#include "helper.h"
 
 class workload;
 class thread_t;
@@ -82,6 +81,9 @@ class txn_man
   workload * 		get_wl();
   void 			    set_txn_id(txnid_t txn_id);
   txnid_t 		    get_txn_id();
+#if LATCH == LH_MCSLOCK
+  mcslock::mcs_node * get_mcs_node() {return h_thd->mcs_node;};
+#endif
 
   // [COMMUTATIVE OPERATIONS]
 #if COMMUTATIVE_OPS

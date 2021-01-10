@@ -36,9 +36,9 @@ void Row_bamboo::init(row_t * row) {
 }
 
 // taking the latch
-void Row_bamboo::lock(BBLockEntry * en) {
-    if (g_thread_cnt > 1) {
-            if (g_central_man)
+void Row_bamboo::lock(txn_man * txn) {
+    if (likely(g_thread_cnt > 1)) {
+            if (unlikely(g_central_man))
                 glob_manager->lock_row(_row);
             else {
 #if LATCH == LH_SPINLOCK
@@ -46,16 +46,16 @@ void Row_bamboo::lock(BBLockEntry * en) {
 #elif LATCH == LH_MUTEX
                 pthread_mutex_lock( latch );
 #else
-                latch->acquire(en->m_node);
+                latch->acquire(txn->get_mcs_node());
 #endif
             }
     }
 };
 
 // release the latch
-void Row_bamboo::unlock(BBLockEntry * en) {
-        if (g_thread_cnt > 1) {
-            if (g_central_man)
+void Row_bamboo::unlock(txn_man * txn) {
+        if (likely(g_thread_cnt > 1)) {
+            if (unlikely(g_central_man))
                 glob_manager->release_row(_row);
             else {
 #if LATCH == LH_SPINLOCK
@@ -63,7 +63,7 @@ void Row_bamboo::unlock(BBLockEntry * en) {
 #elif LATCH == LH_MUTEX
                 pthread_mutex_unlock( latch );
 #else
-                latch->release(en->m_node);
+                latch->release(txn->get_mcs_node());
 #endif
             }
         }

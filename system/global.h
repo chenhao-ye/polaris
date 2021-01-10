@@ -22,16 +22,17 @@
 #include <sys/time.h>
 #include <math.h>
 
+#if LATCH == LH_MCSLOCK
+#include "mcs_spinlock.h"
+#endif
 #include "pthread.h"
 #include "config.h"
 #include "stats.h"
 #include "dl_detect.h"
-#if LATCH == LH_MCSLOCK
-#include "mcs_spinlock.h"
-#endif
 #ifndef NOGRAPHITE
 #include "carbon_user.h"
 #endif
+#include "helper.h"
 
 using namespace std;
 

@@ -211,10 +211,6 @@ void txn_man::assign_lock_entry(Access * access) {
     auto lock_entry = (LockEntry *) _mm_malloc(sizeof(LockEntry), 64);
     new (lock_entry) LockEntry;
 #endif
-#if LATCH == LH_MCSLOCK
-    lock_entry->m_node = (mcslock::qnode_t *) _mm_malloc(sizeof(mcslock::qnode_t), 64);
-    new (lock_entry->m_node) mcslock::qnode_t();
-#endif
     access->lock_entry = lock_entry;
     lock_entry->txn = this;
     lock_entry->access = access;
