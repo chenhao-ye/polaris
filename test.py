@@ -63,6 +63,31 @@ def run(test = '', job=None, unset_numa=False):
 def eval_arg(job, arg):
     return ((arg in job) and (job[arg] == "true"))
 
+def parse_output(job):
+    output = open("temp.out")
+    success = False
+    for line in output:
+            line = line.strip()
+            if "[summary]" in line:
+                    success = True
+                    for token in line.strip().split('[summary]')[-1].split(','):
+                            key, val = token.strip().split('=')
+                            job[key] = val
+                    break
+    if success:
+        output.close()
+        os.system("rm -f temp.out")
+        return job
+    errlog = open("log/{}.log".format(datetime.datetime.now().strftime("%b-%d_%H-%M-%S-%f")), 'a+')
+    errlog.write("{}\n".format(json.dumps(job)))
+    output = open("temp.out")
+    for line in output:
+        errlog.write(line)
+    errlog.close()
+    output.close()
+    os.system("rm -f temp.out")
+    return job
+
 if __name__ == "__main__":
     print("usage: path/to/json [more args]")
     fname = sys.argv[1]
@@ -92,6 +117,7 @@ if __name__ == "__main__":
         print("- executing...")
         run("", job, unset_numa=unset_numa)
         if eval_arg(job, "OUTPUT_TO_FILE"):
+            job = parse_output(job)
             stats = open("outputs/stats.json", "a+")
             stats.write(json.dumps(job)+"\n")
             stats.close()
