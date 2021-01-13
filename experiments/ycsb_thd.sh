@@ -1,6 +1,6 @@
 cd ..
 
-for zipf in 0 0.6 0.99
+for zipf in 0.9 #0 0.6 0.99
 do
 for thd in 1 2 4 8 16 32
 do
@@ -15,7 +15,7 @@ done
 done
 done
 
-fname="ycsb_thd"
+fname="ycsb_thd_9"
 cd outputs/
 python3 collect_stats.py
 mv stats.csv ${fname}.csv
