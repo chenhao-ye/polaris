@@ -14,7 +14,7 @@
 #include "row_vll.h"
 #include "row_ww.h"
 #include "row_bamboo.h"
-#include "row_bamboo_pt.h"
+//#include "row_bamboo_pt.h"
 #include "row_ic3.h"
 #include "mem_alloc.h"
 #include "manager.h"
@@ -75,13 +75,8 @@ void row_t::init_manager(row_t * row) {
 #elif CC_ALG == WOUND_WAIT
   manager = (Row_ww *) mem_allocator.alloc(sizeof(Row_ww), _part_id);
 #elif CC_ALG == BAMBOO
-#if DYNAMIC_TS
   manager = (Row_bamboo *) mem_allocator.alloc(sizeof(Row_bamboo), _part_id);
   new(manager) Row_bamboo();
-#else
-  manager = (Row_bamboo_pt *) mem_allocator.alloc(sizeof(Row_bamboo_pt), _part_id);
-  new(manager) Row_bamboo_pt();
-#endif
 #elif CC_ALG == IC3
   manager = (Row_ic3 *) _mm_malloc(sizeof(Row_ic3), 64);
 #endif
@@ -233,7 +228,7 @@ void row_t::free_row() {
 }
 
 #if CC_ALG == BAMBOO
-RC row_t::retire_row(void * lock_entry) {
+RC row_t::retire_row(BBLockEntry * lock_entry) {
   return this->manager->lock_retire(lock_entry);
 }
 #endif
@@ -384,15 +379,18 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row, Access * access) {
 #endif
 }
 
-void row_t::return_row(void * lock_entry, RC rc) {
 #if CC_ALG == BAMBOO
-  this->manager->lock_release(lock_entry, rc);
-#elif CC_ALG == WOUND_WAIT
-  this->manager->lock_release(lock_entry);
-#endif
+void row_t::return_row(BBLockEntry * lock_entry, RC rc) {
+    this->manager->lock_release(lock_entry, rc);
 }
+#elif CC_ALG == WOUND_WAIT
+void row_t::return_row(LockEntry * lock_entry, RC rc) {
+    this->manager->lock_release(lock_entry);
+}
+#endif
 
-void row_t::return_row(access_t type, row_t * row, void * lock_entry) {
+#if CC_ALG == WOUND_WAIT || CC_ALG == WAIT_DIE || CC_ALG == NO_WAIT || CC_ALG == DL_DETECT
+void row_t::return_row(access_t type, row_t * row, LockEntry * lock_entry) {
 #if CC_ALG == WOUND_WAIT
   // make committed writes globally visible
   if (type == WR) // must be commited, aborted write will be XP
@@ -403,12 +401,12 @@ void row_t::return_row(access_t type, row_t * row, void * lock_entry) {
   if (type == XP) {// recover from previous writes.
     this->copy(row);
   }
-//printf("[%p]txn-%lu return row %lu\n", lock_entry, ((LockEntry *)lock_entry)->txn->get_txn_id(), get_row_id());
   this->manager->lock_release(lock_entry);
 #else
   assert(false);
 #endif
 }
+#endif
 
 // the "row" is the row read out in get_row(). 
 // For locking based CC_ALG, the "row" is the same as "this". 

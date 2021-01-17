@@ -26,39 +26,39 @@ void Row_lock::init(row_t * row) {
 
 }
 
-inline 
-void Row_lock::lock(LockEntry * en) {
-  // take latch
-  if (g_central_man)
-    glob_manager->lock_row(_row);
-  else
-  {
+// taking the latch
+void Row_lock::lock(txn_man * txn) {
+    if (likely(g_thread_cnt > 1)) {
+            if (unlikely(g_central_man))
+                glob_manager->lock_row(_row);
+            else {
 #if LATCH == LH_SPINLOCK
-    pthread_spin_lock( latch );
+                pthread_spin_lock( latch );
 #elif LATCH == LH_MUTEX
-    pthread_mutex_lock( latch );
+                pthread_mutex_lock( latch );
 #else
-    latch->acquire(en->m_node);
+                latch->acquire(txn->mcs_node);
 #endif
-  }
-}
+            }
+    }
+};
 
-inline 
-void Row_lock::unlock(LockEntry * en) {
-  // release latch
-  if (g_central_man)
-    glob_manager->release_row(_row);
-  else
-  {
+// release the latch
+void Row_lock::unlock(txn_man * txn) {
+        if (likely(g_thread_cnt > 1)) {
+            if (unlikely(g_central_man))
+                glob_manager->release_row(_row);
+            else {
 #if LATCH == LH_SPINLOCK
-    pthread_spin_unlock( latch );
+                pthread_spin_unlock( latch );
 #elif LATCH == LH_MUTEX
-    pthread_mutex_unlock( latch );
+                pthread_mutex_unlock( latch );
 #else
-    latch->release(en->m_node);
+                latch->release(txn->mcs_node);
 #endif
-  }
-}
+            }
+        }
+};
 
 RC Row_lock::lock_get(lock_t type, txn_man * txn, Access * access) {
   uint64_t *txnids = NULL;
@@ -74,11 +74,11 @@ RC Row_lock::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
 
   LockEntry * entry = get_entry(access);
 
-#if DEBUG_CS_PROFILING
+#if PF_CS
   uint64_t starttime = get_sys_clock();
 #endif
-  lock(entry);
-#if DEBUG_CS_PROFILING
+  lock(entry->txn);
+#if PF_CS
   uint64_t endtime = get_sys_clock();
   INC_STATS(txn->get_thd_id(), time_get_latch, endtime - starttime);
   starttime = endtime;
@@ -205,8 +205,8 @@ RC Row_lock::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
     ASSERT(txncnt > 0);
   }
 
-  unlock(entry);
-#if DEBUG_CS_PROFILING
+  unlock(entry->txn);
+#if PF_CS
   INC_STATS(txn->get_thd_id(), time_get_cs, get_sys_clock() - starttime);
 #endif
 
@@ -218,20 +218,16 @@ RC Row_lock::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
 }
 
 
-RC Row_lock::lock_release(void * addr) {
-
-  auto entry = (LockEntry *) addr;
-
-#if DEBUG_CS_PROFILING
+RC Row_lock::lock_release(LockEntry * entry) {
+#if PF_CS
   uint64_t starttime = get_sys_clock();
 #endif
-  lock(entry);
-#if DEBUG_CS_PROFILING
+  lock(entry->txn);
+#if PF_CS
   uint64_t endtime = get_sys_clock();
   INC_STATS(entry->txn->get_thd_id(), time_release_latch, endtime - starttime);
   starttime = endtime;
 #endif
-
   LockEntry * en;
   // Try to find the entry in the owners
   if (entry->status == LOCK_OWNER) { // find the entry in the owner list
@@ -282,8 +278,8 @@ RC Row_lock::lock_release(void * addr) {
     //printf("[%p]txn-%lu got %lu\n", en, en->txn->get_txn_id(), _row->get_row_id());
   }
   ASSERT((owners == NULL) == (owner_cnt == 0));
-  unlock(entry);
-#if DEBUG_CS_PROFILING
+  unlock(entry->txn);
+#if PF_CS
   INC_STATS(entry->txn->get_thd_id(), time_release_cs, get_sys_clock() -
       starttime);
 #endif
@@ -303,11 +299,15 @@ inline
 LockEntry * Row_lock::get_entry(Access * access) {
   //LockEntry * entry = (LockEntry *) mem_allocator.alloc(sizeof(LockEntry),
   // _row->get_part_id());
+  #if CC_ALG == NO_WAIT || CC_ALG == WAIT_DIE || CC_ALG == DL_DETECT
   LockEntry * entry = (LockEntry *) access->lock_entry;
   entry->next = NULL;
   entry->prev = NULL;
   entry->status = LOCK_DROPPED;
   return entry;
+  #else 
+  return NULL;
+  #endif
 }
 
 inline 

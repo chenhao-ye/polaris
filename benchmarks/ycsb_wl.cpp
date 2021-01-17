@@ -43,14 +43,14 @@ ycsb_wl::key_to_part(uint64_t key) {
 }
 
 RC ycsb_wl::init_table() {
-	RC rc;
+	RC rc = RCOK;
     uint64_t total_row = 0;
     while (true) {
     	for (UInt32 part_id = 0; part_id < g_part_cnt; part_id ++) {
             if (total_row > g_synth_table_size)
                 goto ins_done;
             row_t * new_row = NULL;
-	    //zhihan
+	        //zhihan
 			uint64_t row_id = get_sys_clock();
             rc = the_table->get_new_row(new_row, part_id, row_id); 
             // TODO insertion of last row may fail after the table_size
@@ -81,7 +81,7 @@ RC ycsb_wl::init_table() {
     }
 ins_done:
     printf("[YCSB] Table \"MAIN_TABLE\" initialized.\n");
-    return RCOK;
+    return rc;
 
 }
 
@@ -110,7 +110,6 @@ void * ycsb_wl::init_table_slice() {
 	set_affinity(tid);
 
 	mem_allocator.register_thread(tid);
-	RC rc;
 	assert(g_synth_table_size % g_init_parallelism == 0);
 	assert(tid < g_init_parallelism);
 	while ((UInt32)ATOM_FETCH_ADD(next_tid, 0) < g_init_parallelism) {}
@@ -124,7 +123,11 @@ void * ycsb_wl::init_table_slice() {
 		//zhihan uint64_t row_id;
 		uint64_t row_id = get_sys_clock();
 		int part_id = key_to_part(key);
-		rc = the_table->get_new_row(new_row, part_id, row_id); 
+        #ifdef NDEBUG
+        the_table->get_new_row(new_row, part_id, row_id);
+        #else
+		RC rc = the_table->get_new_row(new_row, part_id, row_id); 
+        #endif
 		assert(rc == RCOK);
 		uint64_t primary_key = key;
 		new_row->set_primary_key(primary_key);
@@ -143,8 +146,11 @@ void * ycsb_wl::init_table_slice() {
 		m_item->location = new_row;
 		m_item->valid = true;
 		uint64_t idx_key = primary_key;
-		
+		#ifdef NDEBUG
+		the_index->index_insert(idx_key, m_item, part_id);
+        #else
 		rc = the_index->index_insert(idx_key, m_item, part_id);
+        #endif
 		assert(rc == RCOK);
 	}
 	return NULL;

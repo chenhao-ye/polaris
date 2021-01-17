@@ -47,6 +47,7 @@ Manager::get_ts(uint64_t thread_id) {
 #ifndef NOGRAPHITE
 		time = CarbonGetTimestamp();
 #else
+        time = 0;
 		assert(false);
 #endif
 		break;
@@ -54,7 +55,7 @@ Manager::get_ts(uint64_t thread_id) {
 		time = get_sys_clock() * g_thread_cnt + thread_id;
 		break;
 	default :
-		assert(false);
+		time = 0; assert(false);
 	}
 	INC_STATS(thread_id, time_ts_alloc, get_sys_clock() - starttime);
 	return time;

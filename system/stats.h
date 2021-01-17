@@ -6,11 +6,12 @@
   y(uint64_t, txn_cnt) y(uint64_t, abort_cnt) y(uint64_t, user_abort_cnt) \
   x(double, run_time) x(double, time_abort) x(double, time_cleanup) \
   x(double, time_query) x(double, time_get_latch) x(double, time_get_cs) \
-  x(double, time_retire_latch) x(double, time_retire_cs) \
-  x(double, time_release_latch) x(double, time_release_cs) \
+  x(double, time_copy) x(double, time_retire_latch) x(double, time_retire_cs) \
+  x(double, time_release_latch) x(double, time_release_cs) x(double, time_semaphore_cs) \
   x(double, time_commit) y(uint64_t, time_ts_alloc) y(uint64_t, wait_cnt) \
   y(uint64_t, latency) y(uint64_t, commit_latency) y(uint64_t, abort_length) \
-  y(uint64_t, cascading_abort_times) z(uint64_t, max_abort_length) TMP_METRICS(x, y)
+  y(uint64_t, cascading_abort_times) z(uint64_t, max_abort_length) \
+  y(uint64_t, txn_cnt_long) y(uint64_t, abort_cnt_long) TMP_METRICS(x, y) 
 #define DECLARE_VAR(tpe, name) tpe name;
 #define INIT_VAR(tpe, name) name = 0;
 #define INIT_TOTAL_VAR(tpe, name) tpe total_##name = 0;

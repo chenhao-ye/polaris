@@ -4,7 +4,7 @@
 #include "txn.h"
 #include "row.h"
 #include "row_bamboo.h"
-#include "row_bamboo_pt.h"
+//#include "row_bamboo_pt.h"
 
 #if CC_ALG == BAMBOO
 RC

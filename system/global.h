@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <cstddef>
 #include <cstdlib>
+#define NDEBUG
 #include <cassert>
 #include <stdio.h>
 #include <iostream>
@@ -21,16 +22,17 @@
 #include <sys/time.h>
 #include <math.h>
 
+#if LATCH == LH_MCSLOCK
+#include "mcs_spinlock.h"
+#endif
 #include "pthread.h"
 #include "config.h"
 #include "stats.h"
 #include "dl_detect.h"
-#if LATCH == LH_MCSLOCK
-#include "mcs_spinlock.h"
-#endif
 #ifndef NOGRAPHITE
 #include "carbon_user.h"
 #endif
+#include "helper.h"
 
 using namespace std;
 
@@ -104,6 +106,11 @@ extern UInt64 g_synth_table_size;
 extern UInt32 g_req_per_query;
 extern UInt32 g_field_per_tuple;
 extern UInt32 g_init_parallelism;
+extern double g_last_retire;
+extern double g_specified_ratio;
+extern double g_flip_ratio;
+extern double g_long_txn_ratio;
+extern double g_long_txn_read_ratio;
 
 // TPCC
 extern UInt32 g_num_wh;
@@ -147,7 +154,7 @@ enum lock_status {LOCK_DROPPED, LOCK_WAITER, LOCK_OWNER, LOCK_RETIRED};
 /* TIMESTAMP */
 enum TsType {R_REQ, W_REQ, P_REQ, XP_REQ};
 /* TXN STATUS */
-enum status_t {RUNNING, COMMITED, ABORTED};
+enum status_t {RUNNING, PRECOMMIT, COMMITED, ABORTED};
 
 /* COMMUTATIVE OPERATIONS */
 enum com_t {COM_INC, COM_DEC, COM_NONE};

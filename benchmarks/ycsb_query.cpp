@@ -10,8 +10,15 @@ double ycsb_query::denom = 0;
 
 void ycsb_query::init(uint64_t thd_id, workload * h_wl, Query_thd * query_thd) {
 	_query_thd = query_thd;
+	local_read_perc = g_read_perc;
+	local_req_per_query = REQ_PER_QUERY;
+	double x = (double)(rand() % 100) / 100.0;
+	if (x < g_long_txn_ratio) {
+		local_req_per_query = MAX_ROW_PER_TXN;
+		local_read_perc = g_long_txn_read_ratio;
+	}
 	requests = (ycsb_request *) 
-		mem_allocator.alloc(sizeof(ycsb_request) * g_req_per_query, thd_id);
+		mem_allocator.alloc(sizeof(ycsb_request) * local_req_per_query, thd_id);
 	part_to_access = (uint64_t *) 
 		mem_allocator.alloc(sizeof(uint64_t) * g_part_per_txn, thd_id);
 	zeta_2_theta = zeta(2, g_zipf_theta);
@@ -105,13 +112,15 @@ void ycsb_query::gen_requests(uint64_t thd_id, workload * h_wl) {
 #if SYNTHETIC_YCSB
 uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 #endif
-	int rid = 0;
-	for (UInt32 tmp = 0; tmp < g_req_per_query; tmp ++) {		
+	uint64_t rid = 0;
+	uint64_t tmp;
+	for (tmp = 0; tmp < local_req_per_query; tmp ++) {		
+	assert(tmp == rid);
 		ycsb_request * req = &requests[rid];
 		// the request will access part_id.
-		uint64_t ith = tmp * part_num / g_req_per_query;
-		uint64_t part_id = 
-			part_to_access[ ith ];
+		//uint64_t ith = tmp * part_num / g_req_per_query;
+		uint64_t ith = tmp * part_num / local_req_per_query;
+		uint64_t part_id = part_to_access[ ith ];
 		uint64_t row_id; 
 #if SYNTHETIC_YCSB
 		assert(part_id == 0);
@@ -135,7 +144,7 @@ uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 			row_id = table_size - 1;
 		} else {
 #elif POS_HS == SPECIFIED
-		UInt32 hs_idx = (UInt32) min((int)g_req_per_query-1, max(1, (int) floor(g_req_per_query * SPECIFIED_RATIO)));
+		UInt32 hs_idx = (UInt32) min((int)g_req_per_query-1, max(1, (int) floor(g_req_per_query * g_specified_ratio)));
 		if (tmp == hs_idx) {
 			req->rtype = FIRST_HS;
                         row_id = table_size - 1;
@@ -172,10 +181,10 @@ uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 		} else { 
 #elif POS_HS == SPECIFIED
 		#if FIXED_HS == 0
-		UInt32 hs2_idx = (UInt32) min((int)g_req_per_query-1, max(1, (int) floor(g_req_per_query * SPECIFIED_RATIO)));
+		UInt32 hs2_idx = (UInt32) min((int)g_req_per_query-1, max(1, (int) floor(g_req_per_query * g_specified_ratio)));
 		UInt32 hs1_idx = 0;
 		#else
-		UInt32 hs2_idx = (UInt32) min((int)g_req_per_query-2, max(0, (int) floor(g_req_per_query * (1-SPECIFIED_RATIO))));
+		UInt32 hs2_idx = (UInt32) min((int)g_req_per_query-2, max(0, (int) floor(g_req_per_query * (1-g_specified_ratio))));
 		UInt32 hs1_idx = g_req_per_query - 1;
 		#endif
 		if (tmp == hs1_idx) {
@@ -194,7 +203,7 @@ uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 		uint64_t hs2_row_id = table_size - 2;
 		double flip;
 		drand48_r(&_query_thd->buffer, &flip);
-		if (flip < FLIP_RATIO) {
+		if (flip < g_flip_ratio) {
 			hs1_row_id = table_size - 2;
 			hs2_row_id = table_size - 1;
 		}
@@ -213,9 +222,9 @@ uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 		double r;
 		// get a random number r to determine read/write ratio
 		drand48_r(&_query_thd->buffer, &r);
-		if (r < g_read_perc) {
+		if (r < local_read_perc) {
 			req->rtype = RD;
-		} else if (r >= g_read_perc && r <= g_write_perc + g_read_perc) {
+		} else if (r >= local_read_perc && r <= g_write_perc + local_read_perc) {
 			req->rtype = WR;
 		} else {
 			req->rtype = SCAN;
@@ -230,6 +239,14 @@ uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 #endif
 		uint64_t primary_key = row_id * g_virtual_part_cnt + part_id;
 		req->key = primary_key;
+		assert(req->key < (g_synth_table_size / g_virtual_part_cnt));
+		/*
+		if (req->key >= (g_synth_table_size / g_virtual_part_cnt)) {
+			printf("table size: %lu\n", g_synth_table_size / g_virtual_part_cnt);
+			printf("WRONG KEY: %lu, req->key: %lu, rowid=%lu\n", primary_key, req->key, row_id);
+			assert(false);
+		}
+		*/
 		int64_t rint64;
 		lrand48_r(&_query_thd->buffer, &rint64);
 		req->value = rint64 % (1<<8);
@@ -263,7 +280,7 @@ uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 		rid ++;
 	}
 	request_cnt = rid;
-	assert(request_cnt == g_req_per_query);
+	assert(request_cnt == local_req_per_query);
 
 	if (g_key_order) {
 	  // Sort the requests in key order.
@@ -292,9 +309,9 @@ uint64_t table_size = g_synth_table_size / g_virtual_part_cnt;
 				}
 #endif
 				if (requests[a].key > requests[b].key) {
-					ycsb_request tmp = requests[a];
+					ycsb_request tmp_req = requests[a];
 					requests[a] = requests[b];
-					requests[b] = tmp;
+					requests[b] = tmp_req;
 				}
 			}
 		}

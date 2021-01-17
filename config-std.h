@@ -4,6 +4,7 @@
 /***********************************************/
 // Simulation + Hardware
 /***********************************************/
+#define TERMINIATE_BY_COUNT         true
 #define THREAD_CNT					20
 #define PART_CNT					1
 // each transaction only accesses 1 virtual partition. But the lock/ts manager and index are not aware of such partitioning. VIRTUAL_PART_CNT describes the request distribution and is only used to generate queries. For HSTORE, VIRTUAL_PART_CNT should be the same as PART_CNT.
@@ -14,7 +15,7 @@
 #define CPU_FREQ 					2.6 // in GHz/s
 
 // # of transactions to run for warmup
-#define WARMUP						0
+#define WARMUP						1000
 // YCSB or TPCC
 #define WORKLOAD                    YCSB
 // print the transaction latency distribution
@@ -99,11 +100,12 @@
 // [VLL]
 #define TXN_QUEUE_SIZE_LIMIT		THREAD_CNT
 // [BAMBOO]
-#define DYNAMIC_TS					true
-#define RETIRE_ON 					true
+#define BB_DYNAMIC_TS					true
 #define BB_OPT_RAW                  true
-#define BB_OPT_MAX_WAITER           0
-#define LAST_RETIRE                 0.15
+#define BB_LAST_RETIRE                 0
+#define BB_PRECOMMIT                false
+#define BB_AUTORETIRE               false
+#define BB_ALWAYS_RETIRE_READ       true
 // [WW]
 #define WW_STARV_FREE               false // set false if compared w/ bamboo
 // [IC3]
@@ -122,7 +124,9 @@
 /***********************************************/
 // Benchmark
 /***********************************************/
+#define INSERT_ENABLED              false
 #define THINKTIME				    0
+#define MAX_RUNTIME                 30 // in s, used only if !TERMINATE_BY_TIME
 // max number of rows touched per transaction
 #define MAX_ROW_PER_TXN				64
 #define QUERY_INTVL 				1UL
@@ -141,6 +145,8 @@
 #define PART_PER_TXN 				1
 #define PERC_MULTI_PART				1
 #define REQ_PER_QUERY				16
+#define LONG_TXN_RATIO			        0
+#define LONG_TXN_READ_RATIO			0.5
 #define FIELD_PER_TUPLE				10
 // ==== [YCSB-synthetic] ====
 #define SYNTHETIC_YCSB              true
@@ -214,19 +220,22 @@ extern TestCases					g_test_case;
 #define WL_VERB						true
 #define IDX_VERB					false
 #define VERB_ALLOC					true
-
 #define DEBUG_LOCK					false
-#define DEBUG_TIMESTAMP				false
+#define DEBUG_TIMESTAMP					false
 #define DEBUG_SYNTH					false
-#define DEBUG_ASSERT                false
+#define DEBUG_ASSERT                			false
 #define DEBUG_CC					false
-#define DEBUG_WW                    false
-#define DEBUG_BENCHMARK             false
-#define DEBUG_BAMBOO                false
+#define DEBUG_WW                    			false
+#define DEBUG_BENCHMARK             			false
+#define DEBUG_BAMBOO                			false
 #define DEBUG_TMP					false
-#define DEBUG_PROFILING				false
-#define DEBUG_CS_PROFILING          false // profiling inside critical path
-#define DEBUG_ABORT_LENGTH          false
+
+/***********************************************/
+// PROFILING 
+/***********************************************/
+#define PF_BASIC					false
+#define PF_CS          					false // profiling inside critical path
+#define PF_ABORT_LENGTH          			false
 
 /***********************************************/
 // Constant

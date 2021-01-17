@@ -308,7 +308,7 @@ RC txn_man::end_piece(int piece_id) {
 RC
 txn_man::validate_ic3() {
   // for T' in depqueue, wait till T' commit
-#if DEBUG_PROFILING
+#if PF_BASIC 
   uint64_t starttime = get_sys_clock();
 #endif
   for (int i = 0; i < depqueue_sz; i++) {
@@ -321,7 +321,7 @@ txn_man::validate_ic3() {
       return Abort;
     }
   }
-#if DEBUG_PROFILING
+#if PF_BASIC 
   INC_STATS(get_thd_id(), time_commit, get_sys_clock() - starttime);
 #endif
   Access * access;

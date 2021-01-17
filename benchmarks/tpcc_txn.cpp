@@ -39,13 +39,13 @@ RC tpcc_txn_man::run_txn(base_query * query) {
     case TPCC_STOCK_LEVEL :
       return run_stock_level(m_query); break;
     default:
-      assert(false);
+      assert(false); return Abort;
   }
 }
 
 RC tpcc_txn_man::run_payment(tpcc_query * query) {
 
-#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT > 1)
+#if CC_ALG == BAMBOO && (THREAD_CNT > 1)
   int access_cnt;
 #endif
   // declare all variables
@@ -118,7 +118,7 @@ warehouse_piece:
   inc_value(W_YTD, query->h_amount); // will increment at commit time
 #endif
   // bamboo: retire lock for wh
-#if (CC_ALG == BAMBOO) && RETIRE_ON && (THREAD_CNT > 1) && !COMMUTATIVE_OPS
+#if (CC_ALG == BAMBOO) && (THREAD_CNT > 1) && !COMMUTATIVE_OPS
   RETIRE_ROW(row_cnt)
 #endif
   //get a copy of warehouse name
@@ -164,7 +164,7 @@ district_piece:
 #else
   inc_value(D_YTD, query->h_amount); // will increment at commit time
 #endif
-#if (CC_ALG == BAMBOO) && RETIRE_ON && (THREAD_CNT > 1) && !COMMUTATIVE_OPS
+#if (CC_ALG == BAMBOO) && (THREAD_CNT > 1) && !COMMUTATIVE_OPS
   RETIRE_ROW(row_cnt)
 #endif
   tmp_str = r_dist_local->get_value(D_NAME);
@@ -272,7 +272,7 @@ district_piece:
     //strncat(c_new_data, c_data, 500 - strlen(c_new_data));
     //c_new_data[500]='\0';
     r_cust->set_value("C_DATA", c_new_data);
-#if (CC_ALG == BAMBOO) && RETIRE_ON && (THREAD_CNT > 1)
+#if (CC_ALG == BAMBOO) && (THREAD_CNT > 1)
   RETIRE_ROW(row_cnt)
 #endif
   }
@@ -331,11 +331,10 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
   double w_tax;
   row_t * r_cust;
   row_t * r_cust_local;
-  char * c_last;
-  char * c_credit;
   row_t * r_dist;
   row_t * r_dist_local;
-  double d_tax;
+  // d_tax: used only when implementing full tpcc 
+  //double d_tax;
   int64_t o_id;
   //int64_t o_d_id;
   uint64_t row_id;
@@ -352,8 +351,6 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
   row_t * r_stock;
   row_t * r_stock_local;
   int64_t i_price;
-  char * i_name;
-  char * i_data;
   uint64_t stock_key;
   INDEX * stock_index;
   itemid_t * stock_item;
@@ -427,13 +424,14 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
     return finish(Abort);
   }
 
-  d_tax = *(double *) r_dist_local->get_value(D_TAX);
+  //d_tax = *(double *) r_dist_local->get_value(D_TAX);
+  r_dist_local->get_value(D_TAX);
   o_id = *(int64_t *) r_dist_local->get_value(D_NEXT_O_ID);
 
   o_id ++;
   r_dist_local->set_value(D_NEXT_O_ID, o_id);
 
-#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
+#if CC_ALG == BAMBOO && (THREAD_CNT != 1)
   if (retire_row(row_cnt-1) == Abort)
       return finish(Abort);
 #endif
@@ -458,11 +456,8 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
   //retrieve data
   uint64_t c_discount;
   if(!TPCC_SMALL) {
-    c_last = r_cust_local->get_value(C_LAST);
-    c_credit = r_cust_local->get_value(C_CREDIT);
-    //bypass warning checks
-    assert(c_last!=NULL);
-    assert(c_credit!=NULL);
+    r_cust_local->get_value(C_LAST);
+    r_cust_local->get_value(C_CREDIT);
   }
   r_cust_local->get_value(C_DISCOUNT, c_discount);
 
@@ -544,13 +539,9 @@ item_piece: // 5
       return finish(Abort);
     }
     r_item_local->get_value(I_PRICE, i_price);
-    /*
-    //i_name = r_item_local->get_value(I_NAME);
-    //i_data = r_item_local->get_value(I_DATA);
-    //assert(i_name!=NULL);
-    //assert(i_data!=NULL);
+    r_item_local->get_value(I_NAME);
+    r_item_local->get_value(I_DATA);
     assert(r_item_local->data);
-    */
   }
   
   if (end_piece(5) != RCOK)
@@ -714,10 +705,8 @@ orderline_piece: // 7
         }
 
         r_item_local->get_value(I_PRICE, i_price);
-        i_name = r_item_local->get_value(I_NAME);
-        i_data = r_item_local->get_value(I_DATA);
-        assert(i_name!=NULL);
-        assert(i_data!=NULL);
+        r_item_local->get_value(I_NAME);
+        r_item_local->get_value(I_DATA);
         /*===================================================================+
         EXEC SQL SELECT s_quantity, s_data,
                 s_dist_01, s_dist_02, s_dist_03, s_dist_04, s_dist_05,
@@ -778,7 +767,7 @@ orderline_piece: // 7
         }
         r_stock_local->set_value(S_QUANTITY, &quantity);
 
-#if CC_ALG == BAMBOO && RETIRE_ON && (THREAD_CNT != 1)
+#if CC_ALG == BAMBOO && (THREAD_CNT != 1)
     if (retire_row(row_cnt-1) == Abort)
       return finish(Abort);
 #endif

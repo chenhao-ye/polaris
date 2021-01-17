@@ -190,11 +190,19 @@ RC thread_t::run() {
 		        INC_STATS(get_thd_id(), commit_latency, timespan);
 		        INC_STATS(get_thd_id(), latency, endtime - txn_starttime);
 			INC_STATS(get_thd_id(), txn_cnt, 1);
+#if LONG_TXN_RATIO > 0 && WORKLOAD == YCSB
+			if ( ((ycsb_query *) m_query)->request_cnt > REQ_PER_QUERY)
+				INC_STATS(get_thd_id(), txn_cnt_long, 1);
+#endif
 			stats.commit(get_thd_id());
 			txn_cnt ++;
 		} else if (rc == Abort) {
 			INC_STATS(get_thd_id(), time_abort, timespan);
 			INC_STATS(get_thd_id(), abort_cnt, 1);
+#if LONG_TXN_RATIO > 0 && WORKLOAD == YCSB
+			if ( ((ycsb_query *) m_query)->request_cnt > REQ_PER_QUERY)
+				INC_STATS(get_thd_id(), abort_cnt_long, 1);
+#endif
 			stats.abort(get_thd_id());
 			m_txn->abort_cnt ++;
 		} else if (rc == ERROR) {
@@ -202,6 +210,10 @@ RC thread_t::run() {
 		       INC_STATS(get_thd_id(), time_abort, timespan);
                        INC_STATS(get_thd_id(), user_abort_cnt, 1);
                        INC_STATS(get_thd_id(), abort_cnt, 1);
+#if LONG_TXN_RATIO > 0 && WORKLOAD == YCSB
+			if ( ((ycsb_query *) m_query)->request_cnt > REQ_PER_QUERY)
+				INC_STATS(get_thd_id(), abort_cnt_long, 1);
+#endif
                        stats.abort(get_thd_id());
                        m_txn->abort_cnt ++;
 		}
@@ -218,11 +230,19 @@ RC thread_t::run() {
 			return FINISH;
 		}
 
+#if TERMINIATE_BY_COUNT
 		if (warmup_finish && txn_cnt >= MAX_TXN_PER_PART) {
 			assert(txn_cnt == MAX_TXN_PER_PART);
 			if( !ATOM_CAS(_wl->sim_done, false, true) )
 				assert( _wl->sim_done);
 		}
+#else
+		if (warmup_finish && (stats._stats[get_thd_id()]->run_time / 1000000000 >=
+		MAX_RUNTIME)) {
+            if( !ATOM_CAS(_wl->sim_done, false, true) )
+                assert( _wl->sim_done);
+		}
+#endif
 
 		if (_wl->sim_done) {
 #if CC_ALG == IC3

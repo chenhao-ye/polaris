@@ -8,9 +8,9 @@ class Row_ww {
   void init(row_t * row);
   RC lock_get(lock_t type, txn_man * txn, Access * access);
   RC lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int &txncnt, Access * access);
-  RC lock_release(void * en);
-  void lock(LockEntry * en = NULL);
-  void unlock(LockEntry * en = NULL);
+  RC lock_release(LockEntry * entry);
+  void lock(txn_man * txn);
+  void unlock(txn_man * txn);
 
  private:
 #if LATCH == LH_SPINLOCK
