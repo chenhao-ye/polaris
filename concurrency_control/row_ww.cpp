@@ -81,6 +81,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int&txncnt,
   uint64_t starttime = get_sys_clock();
 #endif
   lock(entry->txn);
+  COMPILER_BARRIER
 #if PF_CS
   uint64_t endtime = get_sys_clock();
   INC_STATS(txn->get_thd_id(), time_get_latch, endtime - starttime);
@@ -169,6 +170,7 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int&txncnt,
 #if PF_CS
   INC_STATS(txn->get_thd_id(), time_get_cs, get_sys_clock() - starttime);
 #endif
+  COMPILER_BARRIER
   unlock(entry->txn);
 #if PF_ABORT 
   if (txn->abort_chain > 0) {
@@ -186,6 +188,7 @@ RC Row_ww::lock_release(LockEntry * entry) {
   uint64_t starttime = get_sys_clock();
 #endif
   lock(entry->txn);
+  COMPILER_BARRIER
 #if PF_CS
   uint64_t endtime = get_sys_clock();
   INC_STATS(entry->txn->get_thd_id(), time_release_latch, endtime - starttime);
@@ -224,6 +227,7 @@ RC Row_ww::lock_release(LockEntry * entry) {
   starttime);
 #endif
   unlock(entry->txn);
+  COMPILER_BARRIER
 #if PF_ABORT 
   if (entry->txn->abort_chain > 0)
     UPDATE_STATS(entry->txn->get_thd_id(), abort_length, entry->txn->abort_chain);

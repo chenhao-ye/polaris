@@ -32,9 +32,6 @@ void Row_bamboo::init(row_t * row) {
     benefit2 = 0;
     benefit_cnt2 = 0;
     curr_benefit1 = true;
-    #if DEBUG_BAMBOO
-    thd_cnt = 0;
-    #endif
 }
 
 // taking the latch
@@ -51,19 +48,11 @@ void Row_bamboo::lock(txn_man * txn) {
                 latch->acquire(txn->mcs_node);
 #endif
             }
-#if DEBUG_BAMBOO
-        ATOM_ADD(thd_cnt, 1);
-        assert(thd_cnt == 1);
-#endif
     }
 };
 
 // release the latch
 void Row_bamboo::unlock(txn_man * txn) {
-#if DEBUG_BAMBOO
-    ATOM_SUB(thd_cnt, 1);
-    assert(thd_cnt == 0);
-#endif
         if (likely(g_thread_cnt > 1)) {
             if (unlikely(g_central_man))
                 glob_manager->release_row(_row);
@@ -94,6 +83,9 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
     to_insert->type = type;
     // take the latch
     lock(txn);
+#if !DEBUG_BAMBOO
+    COMPILER_BARRIER
+#endif
     // timestamp
     ts_t ts = 0;
     ts_t owner_ts = 0;
@@ -138,7 +130,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
 					goto final;
 				}
 				add_to_waiters(ts, to_insert);
-				rc = WAIT;
+		TMy		rc = WAIT;
 #endif
             }
         } else { // no owners
@@ -174,6 +166,9 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
 			}
             UPDATE_RETIRE_INFO(to_insert, retired_tail);
             ADD_TO_RETIRED_TAIL(to_insert);
+#if !DEBUG_BAMBOO
+            COMPILER_BARRIER
+#endif
             unlock(txn);
             return rc;
             //goto final; // no owner -> no waiter, no need to promote
@@ -181,11 +176,14 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
         }
     } else { // LOCK_EX
         // grab directly, no ts needed
-        if (retired_cnt == 0 && !owners) {
+        if (!retired_head && !owners) {
             owners = to_insert;
             owners->status = LOCK_OWNER;
 			owners->txn->lock_ready = true;
             UPDATE_RETIRE_INFO(to_insert, retired_tail);
+#if !DEBUG_BAMBOO
+            COMPILER_BARRIER
+#endif
             unlock(txn);
             return rc;
             // goto final;
@@ -254,6 +252,9 @@ final:
 	check_correctness();
 #endif
     // release the latch
+#if !DEBUG_BAMBOO
+    COMPILER_BARRIER
+#endif
     unlock(txn);
     if (rc == RCOK || rc == FINISH)
         txn->lock_ready = true;
@@ -266,6 +267,9 @@ RC Row_bamboo::lock_retire(BBLockEntry * entry) {
     uint64_t starttime = get_sys_clock();
 #endif
     lock(entry->txn);
+#if !DEBUG_BAMBOO
+    COMPILER_BARRIER
+#endif
 #if PF_CS
     uint64_t endtime = get_sys_clock();
     INC_STATS(entry->txn->get_thd_id(), time_retire_latch, endtime - starttime);
@@ -300,6 +304,9 @@ RC Row_bamboo::lock_retire(BBLockEntry * entry) {
 #if DEBUG_BAMBOO
 	// printf("[txn-%lu] lock_retire(%p, %d) ts=%lu\n", entry->txn->get_txn_id(), this, entry->type, entry->txn->get_ts());
 #endif
+#if !DEBUG_BAMBOO
+    COMPILER_BARRIER
+#endif
     unlock(entry->txn);
     return rc;
 }
@@ -314,6 +321,9 @@ RC Row_bamboo::lock_release(BBLockEntry * entry, RC rc) {
     uint64_t starttime = get_sys_clock();
 #endif
     lock(entry->txn);
+#if !DEBUG_BAMBOO
+    COMPILER_BARRIER
+#endif
 #if PF_CS
     uint64_t endtime = get_sys_clock();
   INC_STATS(entry->txn->get_thd_id(), time_release_latch, endtime- starttime);
@@ -363,6 +373,9 @@ RC Row_bamboo::lock_release(BBLockEntry * entry, RC rc) {
 #endif
 #if DEBUG_BAMBOO
 	// printf("[txn-%lu] lock_release(%p, %d) status=%d ts=%lu\n", entry->txn->get_txn_id(), this, entry->type, rc, entry->txn->get_ts());
+#endif
+#if !DEBUG_BAMBOO
+    COMPILER_BARRIER
 #endif
     unlock(entry->txn);
 #if PF_ABORT 
@@ -475,6 +488,8 @@ BBLockEntry * Row_bamboo::rm_from_retired(BBLockEntry * en, bool is_abort, txn_m
     } else {
         BBLockEntry * next = en->next;
         update_entry(en);
+        if (retired_cnt == 0)
+          printf("error!\n");
         LIST_RM(retired_head, retired_tail, en, retired_cnt);
         return_entry(en);
         return next;
@@ -554,6 +569,8 @@ txn) {
     while(en) {
         en->txn->set_abort();
         to_return = en;
+        if (retired_cnt == 0)
+          printf("error!\n");
         retired_cnt--;
 #if PF_ABORT 
         txn->abort_chain++;

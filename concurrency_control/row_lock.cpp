@@ -78,6 +78,7 @@ RC Row_lock::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
   uint64_t starttime = get_sys_clock();
 #endif
   lock(entry->txn);
+  COMPILER_BARRIER
 #if PF_CS
   uint64_t endtime = get_sys_clock();
   INC_STATS(txn->get_thd_id(), time_get_latch, endtime - starttime);
@@ -205,6 +206,7 @@ RC Row_lock::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
     ASSERT(txncnt > 0);
   }
 
+  COMPILER_BARRIER
   unlock(entry->txn);
 #if PF_CS
   INC_STATS(txn->get_thd_id(), time_get_cs, get_sys_clock() - starttime);
@@ -223,6 +225,7 @@ RC Row_lock::lock_release(LockEntry * entry) {
   uint64_t starttime = get_sys_clock();
 #endif
   lock(entry->txn);
+  COMPILER_BARRIER
 #if PF_CS
   uint64_t endtime = get_sys_clock();
   INC_STATS(entry->txn->get_thd_id(), time_release_latch, endtime - starttime);
@@ -278,6 +281,7 @@ RC Row_lock::lock_release(LockEntry * entry) {
     //printf("[%p]txn-%lu got %lu\n", en, en->txn->get_txn_id(), _row->get_row_id());
   }
   ASSERT((owners == NULL) == (owner_cnt == 0));
+  COMPILER_BARRIER
   unlock(entry->txn);
 #if PF_CS
   INC_STATS(entry->txn->get_thd_id(), time_release_cs, get_sys_clock() -
