@@ -478,7 +478,8 @@ RC txn_man::finish(RC rc) {
 #else
     while(commit_barriers > 0 && status == RUNNING) {
 #endif
-      continue;
+        //PAUSE
+        continue;
     }
 #if PF_BASIC 
     INC_STATS(get_thd_id(), time_commit, get_sys_clock() - starttime);
