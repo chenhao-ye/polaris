@@ -1,9 +1,14 @@
 import json
 import pandas as pd
 import numpy as np
+import sys
 
 data = []
-f = open("stats.json")
+if len(sys.argv) > 2:
+    fname = sys.argv[1]
+else:
+    fname = "stats.json"
+f = open(fname)
 for line in f:
     data.append(json.loads(line.strip()))
 df = pd.DataFrame(data=data)
