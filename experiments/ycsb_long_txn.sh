@@ -5,11 +5,11 @@ for i in 0 1 2 3 4
 do
 for zipf in 0.9
 do
-for thd in 1 2 4 8 16 32 64 
+for thd in 1 2 4 8 16 32 64
 do
 for alg in BAMBOO SILO WOUND_WAIT WAIT_DIE NO_WAIT
 do
-		python test.py experiments/large_dataset.json THREAD_CNT=${thd} ZIPF_THETA=${zipf} CC_ALG=${alg} OUTPUT_TO_FILE=true CPU_FREQ=2.8 LONG_TXN_RATIO=0.01 LONG_TXN_READ_RATIO=1 MAX_ROW_PER_TXN=1000 WARMUP=100 
+		python test.py experiments/long_txn.json THREAD_CNT=${thd} ZIPF_THETA=${zipf} CC_ALG=${alg} OUTPUT_TO_FILE=true CPU_FREQ=2.8 
 done
 done
 done
