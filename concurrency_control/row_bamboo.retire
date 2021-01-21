@@ -27,6 +27,11 @@ void Row_bamboo::init(row_t * row) {
     latch = new mcslock();
 #endif
     blatch = false;
+    benefit1 = 0;
+    benefit_cnt1 = 1;
+    benefit2 = 0;
+    benefit_cnt2 = 0;
+    curr_benefit1 = true;
 }
 
 // taking the latch
@@ -402,7 +407,28 @@ bool Row_bamboo::bring_next(txn_man * txn) {
         if (!owners) {
             if (entry->type == LOCK_EX) { // !owners
 #if BB_AUTORETIRE
-                printf("ERROR: not support AUTORETIRE yet\n");
+                if (retired_has_write) {
+                    // XXX(zhihan): decide if should read the dirty data
+                    // it does not only benefit itself but also others.
+                    // now everybody is waiting. should benefit times waiter cnt
+                    int benefit = (benefit1 + benefit2) / (benefit_cnt1 +
+                        benefit_cnt2);
+                    int cost = entry->txn->get_exec_time();
+                    bool read_dirty_data = ((benefit - cost) > 0);
+                    if (read_dirty_data) {
+                        // add to owners
+                        owners = entry;
+                        entry->status = LOCK_OWNER;
+                        UPDATE_RETIRE_INFO(owners, retired_tail);
+						has_txn = bring_out_waiter(entry, txn);
+                    }
+                } else {
+                    // add to owners
+                    owners = entry;
+                    entry->status = LOCK_OWNER;
+                    UPDATE_RETIRE_INFO(owners, retired_tail);
+					has_txn = bring_out_waiter(entry, txn);
+                }
 #else
                 // add to owners
                 owners = entry;
@@ -412,8 +438,26 @@ bool Row_bamboo::bring_next(txn_man * txn) {
 #endif
                 break;
             } else {
-#if BB_AUTORETIRE && !BB_ALWAYS_RETIRED
-                printf("ERROR: not support AUTORETIRE yet\n");
+#if BB_AUTORETIRE && !BB_ALWAYS_RETIRE_READ
+                // decide if should read dirty data
+                if (retired_has_write) {
+
+                    int benefit = (benefit1 + benefit2) / (benefit_cnt1 +
+                        benefit_cnt2);
+                    int cost = entry->txn->get_exec_time();
+                    bool read_dirty_data = ((benefit - cost) > 0);
+                    if (read_dirty_data) {
+                        // add to retired
+                        UPDATE_RETIRE_INFO(entry, retired_tail);
+						has_txn = bring_out_waiter(entry, txn);
+                        ADD_TO_RETIRED_TAIL(entry);
+                    }
+                } else {
+                    // add to retired
+                    UPDATE_RETIRE_INFO(entry, retired_tail);
+					has_txn = bring_out_waiter(entry, txn);
+                    ADD_TO_RETIRED_TAIL(entry);
+                }
 #else
                 // add to retired
                 UPDATE_RETIRE_INFO(entry, retired_tail);
@@ -491,6 +535,8 @@ void Row_bamboo::update_entry(BBLockEntry * entry) {
 #else
             entry->txn->decrement_commit_barriers();
 #endif
+            if (entry->start_ts != 0)
+                record_benefit(get_sys_clock() - entry->start_ts);
             entry = entry->next;
         }
         if (!first_write && owners) {
@@ -504,6 +550,8 @@ void Row_bamboo::update_entry(BBLockEntry * entry) {
 #else
             entry->txn->decrement_commit_barriers();
 #endif
+            if (entry->start_ts != 0)
+                record_benefit(get_sys_clock() - entry->start_ts);
         }
     }
 }

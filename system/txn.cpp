@@ -65,8 +65,10 @@ void txn_man::set_txn_id(txnid_t txn_id) {
     status = RUNNING;
 #if CC_ALG == BAMBOO
     commit_barriers = 0;
+    #if BB_AUTORETIRE
     // USED FOR AUTO RETIRE
     start_ts = get_sys_clock();
+    #endif
 #endif
 #endif
 #if CC_ALG == IC3

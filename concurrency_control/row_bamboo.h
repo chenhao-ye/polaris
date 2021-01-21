@@ -24,16 +24,12 @@
     if (prev->type == LOCK_SH) { \
       en->is_cohead = prev->is_cohead; \
       if (!en->is_cohead) { \
-        en->start_ts = get_sys_clock(); \
         en->txn->increment_commit_barriers(); \
-      } else { \
-        record_benefit(0);} \
+      } \
     } else { \
       en->is_cohead = false; \
-      en->start_ts = get_sys_clock(); \
       en->txn->increment_commit_barriers(); } \
   } else { \
-    record_benefit(0); \
     en->is_cohead = true; \
    } }
 
@@ -88,11 +84,10 @@ struct BBLockEntry {
     bool is_cohead;
     lock_status status;
     BBLockEntry * prev;
-    ts_t start_ts;
     BBLockEntry(txn_man * t, Access * a): txn(t), access(a), type(LOCK_NONE),
                                           next(NULL), is_cohead(false),
                                           status(LOCK_DROPPED),
-                                          prev(NULL), start_ts(0) {};
+                                          prev(NULL) {};
 };
 
 class Row_bamboo {
@@ -112,11 +107,6 @@ class Row_bamboo {
     row_t * _row;
     UInt32 waiter_cnt;
     UInt32 retired_cnt;
-    UInt32 benefit_cnt1;
-    UInt32 benefit_cnt2;
-    UInt32 benefit1;
-    UInt32 benefit2;
-    bool curr_benefit1;
     // latches
 #if LATCH == LH_SPINLOCK
     pthread_spinlock_t * latch;
@@ -165,7 +155,6 @@ class Row_bamboo {
         entry->prev = NULL;
         entry->status = LOCK_DROPPED;
         entry->is_cohead = false;
-        entry->start_ts = 0;
         return entry;
     #else
         return NULL;
@@ -178,42 +167,6 @@ class Row_bamboo {
         entry->next = NULL;
         entry->prev = NULL;
         entry->status = LOCK_DROPPED;
-        entry->start_ts = 0;
-    };
-
-    // record benefit
-    inline void record_benefit(uint64_t time) {
-        if (curr_benefit1) {
-            if (benefit_cnt1 == 10) {
-                curr_benefit1 = false;
-                if (benefit_cnt2 == 10) {
-                    // clear benefit2
-                    benefit2 = time;
-                    benefit_cnt2 = 1;
-                } else {
-                    benefit2 += time;
-                    benefit_cnt2 += 1;
-                }
-            } else {
-                benefit1 += time;
-                benefit_cnt1 += 1;
-            }
-        } else {
-            if (benefit_cnt2 == 10) {
-                curr_benefit1 = true;
-                if (benefit_cnt1 == 10) {
-                    // clear benefit1
-                    benefit1 = time;
-                    benefit_cnt1 = 1;
-                } else {
-                    benefit1 += time;
-                    benefit_cnt1 += 1;
-                }
-            } else {
-                benefit2 += time;
-                benefit_cnt2 += 1;
-            }
-        };
     };
 
 	inline bool bring_out_waiter(BBLockEntry * entry, txn_man * txn) {

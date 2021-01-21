@@ -11,3 +11,4 @@ cmake-build-debug
 .DS_STORE
 .idea/*
 perf*
+row_stats.csv
