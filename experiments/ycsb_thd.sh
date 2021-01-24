@@ -15,7 +15,7 @@ done
 done
 done
 
-fname="ycsb_thd_large"
+fname="ycsb_thd_100g"
 cd outputs/
 python3 collect_stats.py
 mv stats.csv ${fname}.csv
