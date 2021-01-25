@@ -1,11 +1,11 @@
 cd ..
-rm outputs/stats.json
+cp outputs/ycsb_thd_100g.json stats.json
 
 for i in 0 1 2 3 4
 do
 for zipf in 0.9
 do
-for thd in 1 2 4 8 16 32 64 96 
+for thd in 120 #1 2 4 8 16 32 64 96 
 do
 for alg in BAMBOO SILO WOUND_WAIT WAIT_DIE NO_WAIT
 do
@@ -15,7 +15,7 @@ done
 done
 done
 
-fname="ycsb_thd_100g"
+fname="ycsb_thd_100g_high"
 cd outputs/
 python3 collect_stats.py
 mv stats.csv ${fname}.csv
