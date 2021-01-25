@@ -1,5 +1,5 @@
 cd ..
-cp outputs/ycsb_thd_100g.json stats.json
+cp outputs/ycsb_thd_100g.json outputs/stats.json
 
 for i in 0 1 2 3 4
 do
