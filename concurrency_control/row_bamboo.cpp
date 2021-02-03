@@ -78,9 +78,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
     to_insert->type = type;
     // take the latch
     lock(txn);
-#if !DEBUG_BAMBOO
     COMPILER_BARRIER
-#endif
     // timestamp
     ts_t ts = 0;
     ts_t owner_ts = 0;
@@ -131,20 +129,27 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
         } else { // no owners
 #if BB_DYNAMIC_TS
             // no owner, retired may not have ts.
-            // if all read, then no need for ts. only case to have self=0
-            // if any writes, 
-			//   case 1: [W][][] then it has to be just one write in the retired
-            //           list, with no other reads; then may need to assign ts, self may
-            //           be assigned
-			//   case 2: [W][][W] then retired list must be assigned, self may be assigned
-            //   case 3: [RWR][][.] then retired list all assigned, but must assign self
-            if (retired_tail && (retired_tail->type == LOCK_EX || !retired_tail->is_cohead)) {
-                assign_ts(0, retired_tail->txn);
-                ts = assign_ts(ts, txn);
+            if (retired_tail) {
+                if (retired_tail->is_cohead) {
+                    // case 1: [W][][] / [W][][W]
+                    if (retired_tail->type == LOCK_EX && !waiters_head) {
+                        // assign retired head and assign self
+                        assign_ts(0, retired_tail->txn);
+                        ts = assign_ts(ts, txn);
+                    } 
+                    // else, case 2: [RRR][][] / [RRR][][W]
+                    // all reads, then no need for ts. only case to have self=0
+                } else {
+                    // case 1: [RW] 
+                    // case 3: [WR] 
+                    // case 2: [WW] 
+                    // retire list all assigned, need to assign self
+                    ts = assign_ts(ts, txn);
+                }
             }
 #endif
 #if BB_OPT_RAW
-			// if waiters_head has higher priority, then wait. 
+			// no owners, if waiters_head has higher priority, then wait. 
 			if (waiters_head && a_higher_than_b(waiters_head->txn->get_ts(), ts)) {
 				add_to_waiters(ts, to_insert);
 				rc = WAIT;
@@ -161,9 +166,7 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
 			}
             UPDATE_RETIRE_INFO(to_insert, retired_tail);
             ADD_TO_RETIRED_TAIL(to_insert);
-#if !DEBUG_BAMBOO
             COMPILER_BARRIER
-#endif
             unlock(txn);
             return rc;
             //goto final; // no owner -> no waiter, no need to promote
@@ -174,11 +177,9 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
         if (!retired_head && !owners) {
             owners = to_insert;
             owners->status = LOCK_OWNER;
-			owners->txn->lock_ready = true;
+            owners->txn->lock_ready = true;
             UPDATE_RETIRE_INFO(to_insert, retired_tail);
-#if !DEBUG_BAMBOO
             COMPILER_BARRIER
-#endif
             unlock(txn);
             return rc;
             // goto final;
@@ -247,9 +248,7 @@ final:
 	check_correctness();
 #endif
     // release the latch
-#if !DEBUG_BAMBOO
     COMPILER_BARRIER
-#endif
     unlock(txn);
     if (rc == RCOK || rc == FINISH)
         txn->lock_ready = true;
@@ -262,9 +261,7 @@ RC Row_bamboo::lock_retire(BBLockEntry * entry) {
     uint64_t starttime = get_sys_clock();
 #endif
     lock(entry->txn);
-#if !DEBUG_BAMBOO
     COMPILER_BARRIER
-#endif
 #if PF_CS
     uint64_t endtime = get_sys_clock();
     INC_STATS(entry->txn->get_thd_id(), time_retire_latch, endtime - starttime);
@@ -299,9 +296,7 @@ RC Row_bamboo::lock_retire(BBLockEntry * entry) {
 #if DEBUG_BAMBOO
 	// printf("[txn-%lu] lock_retire(%p, %d) ts=%lu\n", entry->txn->get_txn_id(), this, entry->type, entry->txn->get_ts());
 #endif
-#if !DEBUG_BAMBOO
     COMPILER_BARRIER
-#endif
     unlock(entry->txn);
     return rc;
 }
@@ -316,9 +311,7 @@ RC Row_bamboo::lock_release(BBLockEntry * entry, RC rc) {
     uint64_t starttime = get_sys_clock();
 #endif
     lock(entry->txn);
-#if !DEBUG_BAMBOO
     COMPILER_BARRIER
-#endif
 #if PF_CS
     uint64_t endtime = get_sys_clock();
   INC_STATS(entry->txn->get_thd_id(), time_release_latch, endtime- starttime);
@@ -369,9 +362,7 @@ RC Row_bamboo::lock_release(BBLockEntry * entry, RC rc) {
 #if DEBUG_BAMBOO
 	// printf("[txn-%lu] lock_release(%p, %d) status=%d ts=%lu\n", entry->txn->get_txn_id(), this, entry->type, rc, entry->txn->get_ts());
 #endif
-#if !DEBUG_BAMBOO
     COMPILER_BARRIER
-#endif
     unlock(entry->txn);
 #if PF_ABORT 
     if (entry->txn->abort_chain > 0) {
@@ -457,14 +448,19 @@ BBLockEntry * Row_bamboo::rm_from_retired(BBLockEntry * en, bool is_abort, txn_m
 //         return
 // case 2.1: entry is RD
 // case 2.1.1: [entry] is co-head
-// - [R](R)W       W is also co-head, no changes needed
+// case 2.1.1.1: has other co-head
+// - [R](R)W       W will not become co-head 
+// case 2.1.1.2: no other co-head
+// - [R]W          [acction point] W becomes cohead, decrement barrier
 // case 2.1.2: [entry] is not co-head -> there is a W as co-head
 // - W(R)[R](R)R  R will not become co-head
+// - W(W)[R](R)R  R will not become co-head
 // - W(R)[R](R)W  W will not become co-head
+// - W(W)[R](R)W  W will not become co-head
 // case 2.2: entry is WR
 // [entry] must be co-head, otherwise rm_descendants & no need to call this
 // rule: update util first write (include owners)
-// - [W]RRWR      all RDs till first WR (included), e.g. RRW, new co-head
+// - [W]RRWR      all RDs till first W (exclusive), e.g. RR, new co-head
 // - [W]WR        first WR becomes new co-head
 inline
 void Row_bamboo::update_entry(BBLockEntry * entry) {
@@ -472,37 +468,60 @@ void Row_bamboo::update_entry(BBLockEntry * entry) {
         return; // nothing to update
     }
     if (entry->type == LOCK_SH) {
+        // entry is the only RD cohead, update the write following it to be cohead
+        if (entry->is_cohead && (!entry->prev)) {
+            entry = entry->next;
+            if (entry) {
+                    if (entry->type == LOCK_SH)
+                        return; // has other RD cohead
+                    else {
+#if PF_CS
+                        DEC_BARRIER_PF(entry);
+#else
+                        DEC_BARRIER(entry);
+#endif
+                    }
+            } else if (owners) {
+#if PF_CS
+                DEC_BARRIER_PF(owners);
+#else
+                DEC_BARRIER(owners);
+#endif
+            }
+        }
         return;
-    } else {
+    } else { // entry->type == LOCK_EX
         assert(entry->is_cohead);
         entry = entry->next;
-        bool first_write = false;
-        while(entry && !first_write) {
+        bool updated = false;
+        while(entry) {
             if (entry->type == LOCK_EX) {
-                first_write = true;
-            }
-            assert(!entry->is_cohead);
-            entry->is_cohead = true;
+                if (!updated) {
+                    updated = true;
 #if PF_CS
-            uint64_t starttime = get_sys_clock();
-            entry->txn->decrement_commit_barriers();
-            INC_STATS(entry->txn->get_thd_id(), time_semaphore_cs,
-                get_sys_clock() - starttime);
+                    DEC_BARRIER_PF(entry);
 #else
-            entry->txn->decrement_commit_barriers();
+                    DEC_BARRIER(entry);
 #endif
+                }
+                break;
+            } else {
+                // update all RDs before 1st write
+                updated = true;
+#if PF_CS
+                DEC_BARRIER_PF(entry);
+#else
+                DEC_BARRIER(entry);
+#endif
+
+            }
             entry = entry->next;
         }
-        if (!first_write && owners) {
-            entry = owners;
-            entry->is_cohead = true;
+        if (!updated && owners) {
 #if PF_CS
-            uint64_t starttime = get_sys_clock();
-            entry->txn->decrement_commit_barriers();
-            INC_STATS(entry->txn->get_thd_id(), time_semaphore_cs,
-                get_sys_clock() - starttime);
+                DEC_BARRIER_PF(owners);
 #else
-            entry->txn->decrement_commit_barriers();
+                DEC_BARRIER(owners);
 #endif
         }
     }
@@ -552,25 +571,60 @@ RC Row_bamboo::insert_read_to_retired(BBLockEntry * to_insert, ts_t ts,
 				Access * access) {
 	RC rc = RCOK;
 	BBLockEntry * en = retired_head;
+    // TODO: handle case if en is committed. 
 	for (UInt32 i = 0; i < retired_cnt; i++) {
 		if ((en->type == LOCK_EX) && (en->txn->get_ts() > ts)) {
-			break;
+            // increment barrier anyway. if is not cohead, decrement the barrier
+            en->txn->increment_commit_barriers();
+            // compiler barrier
+            COMPILER_BARRIER
+            // check if status == committed, if still runnig, break. else continue
+            if (en->txn->status == RUNNING) {
+                if (!en->is_cohead)
+                    en->txn->decrement_commit_barriers();
+                else
+                    en->is_cohead = false;
+			    break;
+            }
 		}
 		en = en->next;
 	}
 	if (en) {
         assert(ts != 0);
-		access->data->copy(en->access->orig_data);
-		INSERT_TO_RETIRED(to_insert, en);
+        //INSERT_TO_RETIRED(to_insert, en);
+        UPDATE_RETIRE_INFO(to_insert, en->prev); 
+        LIST_INSERT_BEFORE_CH(retired_head, en, to_insert); 
+        to_insert->status = LOCK_RETIRED; 
+        retired_cnt++;
 		to_insert->txn->lock_ready = true;
+		access->data->copy(en->access->orig_data);
 		rc = FINISH;
+#if DBEUG_BAMBOO
+        check_correctness();
+#endif
 	} else {
 		if (owners) {
+            // insert before owners. 
             assert(ts != 0);
-			access->data->copy(owners->access->orig_data);
-			INSERT_TO_RETIRED_TAIL(to_insert);
-			to_insert->txn->lock_ready = true;
-			rc = FINISH;
+            owners->txn->increment_commit_barriers();
+            COMPILER_BARRIER
+            if (owners->txn->status == RUNNING) {
+                if (!owners->is_cohead)
+                    owners->txn->decrement_commit_barriers();
+                else
+                    owners->is_cohead = false;
+                UPDATE_RETIRE_INFO(to_insert, retired_tail); 
+                LIST_PUT_TAIL(retired_head, retired_tail, to_insert); 
+                to_insert->status = LOCK_RETIRED; 
+                retired_cnt++; 
+                access->data->copy(owners->access->orig_data);
+                to_insert->txn->lock_ready = true;
+                rc = FINISH;
+            } else {
+                // COMMITED. add RD to waiters
+		        add_to_waiters(ts, to_insert);
+				rc = WAIT;
+            }
 		} else {
 #if BB_AUTO_RETIRE
 #if BB_ALWAYS_RETIRE_READ
@@ -603,6 +657,9 @@ RC Row_bamboo::insert_read_to_retired(BBLockEntry * to_insert, ts_t ts,
             rc = RCOK;
 #endif
 		}
+#if DBEUG_BAMBOO
+        check_correctness();
+#endif
 	}
 	return rc;
 }
@@ -617,31 +674,32 @@ void Row_bamboo::check_correctness() {
 	ts_t largest_ts = 0;
 	ts_t largest_wr_ts = 0;
 	bool cohead = true;
-	bool has_write = false;
+	bool has_conflict = false;
 	BBLockEntry * en = retired_head;
 	while(en) {
 		assert(en->status == LOCK_RETIRED);
-		if (en == retired_head) {
-			assert(en->is_cohead);
-		} else {
-			// update expected cohead
-			if (has_write)
-				cohead = false;
-			else
-				cohead = true;
-			// check cohead
-			assert(en->is_cohead == cohead);
-		}
 		// validate ts order
 		ts_t ts = en->txn->get_ts();
 		if (en->type == LOCK_EX) {
 			assert(ts >= largest_ts);
 			largest_wr_ts = ts;
 			largest_ts = ts;
-			has_write = true;
+			has_conflict = true;
 		} else {
-			assert(ts > largest_wr_ts || en->is_cohead);
+			//assert(ts > largest_wr_ts || en->is_cohead);
 			largest_ts = max(ts, largest_ts);
+		}
+        // validate cohead
+		if (en == retired_head) {
+			assert(en->is_cohead);
+		} else {
+			// update expected cohead
+			if (has_conflict)
+				cohead = false;
+			else
+				cohead = true;
+			// check cohead
+			assert(en->is_cohead == cohead);
 		}
 		cnt++;
 		en = en->next;
@@ -649,7 +707,7 @@ void Row_bamboo::check_correctness() {
 	// check owner
 	if (owners) {
 		assert(owners->status == LOCK_OWNER);
-	    assert(owners->is_cohead == (!has_write));
+	    assert(owners->is_cohead == (retired_head == NULL));
 	    assert(owners->txn->get_ts() >= largest_ts);
 		largest_ts = owners->txn->get_ts();
 	}
@@ -659,7 +717,8 @@ void Row_bamboo::check_correctness() {
 	while (en) {
 		assert(en->status == LOCK_WAITER);
 	    assert(!en->is_cohead);
-	    assert(en->txn->get_ts() >= largest_ts);
+        if (en->type == LOCK_EX)
+	        assert(en->txn->get_ts() >= largest_ts);
 		largest_ts = en->txn->get_ts();
 	    en = en->next;
 		cnt++;

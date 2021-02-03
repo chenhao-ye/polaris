@@ -96,7 +96,7 @@ class txn_man
     // [DL_DETECT, NO_WAIT, WAIT_DIE, WOUND_WAIT, BAMBOO]
     bool volatile       lock_ready;
     bool volatile       lock_abort; // forces another waiting txn to abort.
-    status_t            status; // RUNNING, COMMITED, ABORTED
+    status_t volatile   status; // RUNNING, COMMITED, ABORTED
 #if PF_ABORT
     uint64_t            abort_chain;
     uint8_t             padding0[64 - sizeof(bool)*2 - sizeof(status_t)-

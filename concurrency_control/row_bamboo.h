@@ -7,28 +7,34 @@
 // (not apply when moving from owners to retired
 // Algorithm:
 //     if previous entry is not null
-//         if previous entry is RD
-//             if prev is cohead, then self is cohead, 
-//                 time saved is 0.
-//             otherwise, self is not cohead, need to incr barrier,
-//                 record start_ts to calc time saved when becomes cohead
-//         else if prev is WR
-//             not cohead, need to incr barrier,
-//             record start_ts to calc time saved when becomes cohead
+//         if self is WR,
+//             not cohead, need to incr barrier
+//         else 
+//             if previous entry is RD
+//               if prev is cohead, 
+//                   //time saved is 0.
+//               otherwise, self is not cohead, need to incr barrier,
+//                   //record start_ts to calc time saved when becomes cohead
+//             else if prev is WR
+//               not cohead, need to incr barrier,
+//               //record start_ts to calc time saved when becomes cohead
 //     else
 //         read no dirty data, becomes cohead
-//         record time saved from elr is 0.
+//         //record time saved from elr is 0.
 //     		
 #define UPDATE_RETIRE_INFO(en, prev) { \
   if (prev) { \
-    if (prev->type == LOCK_SH) { \
-      en->is_cohead = prev->is_cohead; \
-      if (!en->is_cohead) { \
-        en->txn->increment_commit_barriers(); \
-      } \
-    } else { \
-      en->is_cohead = false; \
-      en->txn->increment_commit_barriers(); } \
+    if (en->type == LOCK_EX) \
+      en->txn->increment_commit_barriers(); \
+    else { \
+            if (prev->type == LOCK_SH) { \
+              en->is_cohead = prev->is_cohead; \
+              if (!en->is_cohead) { \
+                en->txn->increment_commit_barriers(); \
+              } \
+            } else { \
+              en->txn->increment_commit_barriers(); } \
+    } \
   } else { \
     en->is_cohead = true; \
    } }
@@ -43,23 +49,18 @@
 
 // Insert to_insert(RD) into the tail when owners is not empty
 // (1) update inserted entry's cohead information
-// (2) NO NEED to update owners cohead information 
+// (2) NEED to update owners cohead information 
 //     if owner is not cohead, it cannot become one with RD inserted
-//     if owner is cohead, RD still cannot change its status
-//     as WAR([RW]) does not form commit dependency
+//     if owner is cohead, RD becomes cohead and owner is no longer a cohead 
 #define INSERT_TO_RETIRED_TAIL(to_insert) { \
   UPDATE_RETIRE_INFO(to_insert, retired_tail); \
+  if (owners && owners->is_cohead) { \
+    owners->is_cohead = false; \
+    owners->txn->increment_commit_barriers(); \
+  } \
   LIST_PUT_TAIL(retired_head, retired_tail, to_insert); \
   to_insert->status = LOCK_RETIRED; \
   retired_cnt++; }
-
-
-#define INSERT_TO_RETIRED(to_insert, en) { \
-  UPDATE_RETIRE_INFO(to_insert, en->prev); \
-  LIST_INSERT_BEFORE_CH(retired_head, en, to_insert); \
-  to_insert->status = LOCK_RETIRED; \
-  retired_cnt++; \
-}
 
 #define RETIRE_ENTRY(to_retire) { \
   to_retire = owners; \
@@ -70,6 +71,21 @@
 
 #define CHECK_ROLL_BACK(en) { \
     en->access->orig_row->copy(en->access->orig_data); \
+}
+
+#define DEC_BARRIER_PF(entry) { \
+    assert(!entry->is_cohead); \
+    entry->is_cohead = true; \
+    uint64_t starttime = get_sys_clock(); \
+    entry->txn->decrement_commit_barriers(); \
+    INC_STATS(entry->txn->get_thd_id(), time_semaphore_cs, \
+        get_sys_clock() - starttime); \
+}
+
+#define DEC_BARRIER(entry) { \
+    assert(!entry->is_cohead); \
+    entry->is_cohead = true; \
+    entry->txn->decrement_commit_barriers(); \
 }
 
 struct BBLockEntry {
@@ -210,8 +226,8 @@ class Row_bamboo {
 					return Abort;
 				}
 #if DEBUG_BAMBOO
-    			printf("[txn-%lu](%lu) wounded %lu(%lu) on %p\n", to_insert->txn->get_txn_id(), 
-				  		to_insert->txn->get_ts(), en->txn->get_txn_id(), en->txn->get_ts(), this);
+    			//printf("[txn-%lu](%lu) wounded %lu(%lu) on %p\n", to_insert->txn->get_txn_id(), 
+				//  		to_insert->txn->get_ts(), en->txn->get_txn_id(), en->txn->get_ts(), this);
 #endif
 				en = rm_from_retired(en, true, to_insert->txn);
 			} else 
@@ -229,8 +245,8 @@ class Row_bamboo {
 					return Abort;
 				}
 #if DEBUG_BAMBOO
-    			printf("[txn-%lu](%lu) wounded %lu(%lu) on %p\n", to_insert->txn->get_txn_id(), 
-				  		to_insert->txn->get_ts(), en->txn->get_txn_id(), en->txn->get_ts(), this);
+    			//printf("[txn-%lu](%lu) wounded %lu(%lu) on %p\n", to_insert->txn->get_txn_id(), 
+				//  		to_insert->txn->get_ts(), en->txn->get_txn_id(), en->txn->get_ts(), this);
 #endif
 				en = rm_from_retired(en, true, to_insert->txn);
 			} else 
