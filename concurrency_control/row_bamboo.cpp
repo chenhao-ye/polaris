@@ -36,7 +36,7 @@ void Row_bamboo::lock(txn_man * txn) {
                 glob_manager->lock_row(_row);
             else {
 #if LATCH == LH_SPINLOCK
-                pthread_spin_lock( latch );
+               pthread_spin_lock( latch );
 #elif LATCH == LH_MUTEX
                 pthread_mutex_lock( latch );
 #else
@@ -221,19 +221,22 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
 #endif
         // wound retired
         if (wound_retired_wr(ts, to_insert) == Abort) {
-			rc = Abort;
-			goto final;
-		}
+              rc = Abort;
+              goto final;
+        }
         // wound owners
         if (owners && (owner_ts == 0 || a_higher_than_b(ts, owner_ts))) {
             if (wound_owner(to_insert) == Abort) {
-				rc = Abort;
-				goto final;
-			}
-		}
+                rc = Abort;
+                goto final;
+            }
+        }
         // add self to waiters
-		add_to_waiters(ts, to_insert);
-		rc = WAIT;
+        add_to_waiters(ts, to_insert);
+        rc = WAIT;
+#if DEBUG_TMP
+        printf("[txn-%lu] lock_get(%p, %d) status=%d ts=%lu\n", txn->get_txn_id(), this, type, rc, ts);
+#endif
     }
     // promote waiters, need to decide whether to read dirty data
     if (bring_next(txn)) {
@@ -243,7 +246,6 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
     }
 final:
 #if DEBUG_BAMBOO
-    //printf("[txn-%lu] lock_get(%p, %d) status=%d ts=%lu\n", txn->get_txn_id(), this, type, rc, ts);
 	assert(((rc == WAIT) == (!txn->lock_ready)) || rc == Abort);
 	check_correctness();
 #endif
@@ -584,6 +586,7 @@ RC Row_bamboo::insert_read_to_retired(BBLockEntry * to_insert, ts_t ts,
                     en->txn->decrement_commit_barriers();
                 else
                     en->is_cohead = false;
+                assert(en->txn->status == RUNNING);
 			    break;
             }
 		}
@@ -620,6 +623,7 @@ RC Row_bamboo::insert_read_to_retired(BBLockEntry * to_insert, ts_t ts,
                 access->data->copy(owners->access->orig_data);
                 to_insert->txn->lock_ready = true;
                 rc = FINISH;
+                assert(owners->txn->status == RUNNING);
             } else {
                 // COMMITED. add RD to waiters
 		        add_to_waiters(ts, to_insert);
@@ -657,10 +661,13 @@ RC Row_bamboo::insert_read_to_retired(BBLockEntry * to_insert, ts_t ts,
             rc = RCOK;
 #endif
 		}
-#if DBEUG_BAMBOO
-        check_correctness();
-#endif
 	}
+#if DEBUG_TMP
+    printf("[txn-%lu] lock_get(%p, RD) status=%d ts=%lu\n", to_insert->txn->get_txn_id(), this, rc, ts);
+#endif
+#if DBEUG_BAMBOO
+    check_correctness();
+#endif
 	return rc;
 }
 
@@ -694,10 +701,12 @@ void Row_bamboo::check_correctness() {
 			assert(en->is_cohead);
 		} else {
 			// update expected cohead
-			if (has_conflict)
+			if (has_conflict) {
 				cohead = false;
-			else
+                assert(en->txn->commit_barriers != 0);
+			} else {
 				cohead = true;
+            }
 			// check cohead
 			assert(en->is_cohead == cohead);
 		}

@@ -467,31 +467,19 @@ RC txn_man::finish(RC rc) {
 #elif CC_ALG == BAMBOO
   if (rc == Abort)
       status = ABORTED;
-#if BB_PRECOMMIT
-  else if (!ATOM_CAS(status, RUNNING, PRECOMMIT))
-      rc = Abort;
-#endif
   else {
 #if PF_BASIC 
     uint64_t starttime = get_sys_clock();
 #endif
-#if BB_PRECOMMIT
-    while(commit_barriers > 0 && status == PRECOMMIT) {
-#else
-    while(commit_barriers > 0 && status == RUNNING) {
-#endif
+    while(commit_barriers != 0 && status == RUNNING) {
         //PAUSE
         continue;
     }
+    if (!ATOM_CAS(status, RUNNING, COMMITED))
+        rc = Abort;
 #if PF_BASIC 
     INC_STATS(get_thd_id(), time_commit, get_sys_clock() - starttime);
 #endif
-#if BB_PRECOMMIT
-    if (!ATOM_CAS(status, PRECOMMIT, COMMITED))
-#else
-    if (!ATOM_CAS(status, RUNNING, COMMITED))
-#endif
-      rc = Abort;
   }
   cleanup(rc);
 #else
