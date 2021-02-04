@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <cstddef>
 #include <cstdlib>
+#define NDEBUG
 #include <cassert>
 #include <stdio.h>
 #include <iostream>
@@ -153,7 +154,7 @@ enum lock_status {LOCK_DROPPED, LOCK_WAITER, LOCK_OWNER, LOCK_RETIRED};
 /* TIMESTAMP */
 enum TsType {R_REQ, W_REQ, P_REQ, XP_REQ};
 /* TXN STATUS */
-enum status_t {RUNNING, PRECOMMIT, COMMITED, ABORTED};
+enum status_t {RUNNING, PRECOMMIT, COMMITED, ABORTED, HOLDING};
 
 /* COMMUTATIVE OPERATIONS */
 enum com_t {COM_INC, COM_DEC, COM_NONE};

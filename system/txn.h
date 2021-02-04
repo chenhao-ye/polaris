@@ -96,7 +96,7 @@ class txn_man
     // [DL_DETECT, NO_WAIT, WAIT_DIE, WOUND_WAIT, BAMBOO]
     bool volatile       lock_ready;
     bool volatile       lock_abort; // forces another waiting txn to abort.
-    status_t volatile   status; // RUNNING, COMMITED, ABORTED
+    status_t volatile   status; // RUNNING, COMMITED, ABORTED, HOLDING
 #if PF_ABORT
     uint64_t            abort_chain;
     uint8_t             padding0[64 - sizeof(bool)*2 - sizeof(status_t)-
@@ -249,8 +249,9 @@ class txn_man
 inline status_t txn_man::wound_txn(txn_man * txn)
 {
 #if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT
+    // TODO: change the line to == commited since != Running may also be aborted. 
     if (status != RUNNING)
-        return COMMITED;
+        return status;
     return txn->set_abort();
 #else
     return ABORTED;
