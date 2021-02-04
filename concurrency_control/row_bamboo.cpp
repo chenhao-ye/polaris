@@ -122,8 +122,8 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
 					rc = Abort;
 					goto final;
 				}
-				add_to_waiters(ts, to_insert);
-		TMy		rc = WAIT;
+				add_to_waiters(ts, to_insert);		
+                rc = WAIT;
 #endif
             }
         } else { // no owners
