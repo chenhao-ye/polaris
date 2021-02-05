@@ -2,7 +2,7 @@ cd ..
 rm outputs/stats.json
 
 zipf=0.9
-for thd in 1 2 4 8 16 32 64 96 120
+for thd in 1 2 4 8 16 32 64 96 #120
 do
 for i in 0 1 2 3 4
 do
@@ -13,7 +13,7 @@ done
 done
 done
 
-fname="ycsb_thd_100g_bamboo"
+fname="ycsb_thd_100g_bamboo_multitenant"
 cd outputs/
 python3 collect_stats.py
 mv stats.csv ${fname}.csv
