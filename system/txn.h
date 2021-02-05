@@ -195,19 +195,30 @@ class txn_man
 #if CC_ALG == BAMBOO 
         uint64_t local = commit_barriers;
         uint64_t barriers = local >> 2;
+        uint64_t s = local & 3UL;
         // cannot use atom_add:
         // (1) what if two txns both atomic add? may change from abort to commit
         // (2) moreover, may exceed two bits
-        while (((local & 3UL) == RUNNING) && 
-                ATOM_CAS(commit_barriers, local, (barriers << 2) + ABORTED)) {
+        while (s == RUNNING) {
+            ATOM_CAS(commit_barriers, local, (barriers << 2) + ABORTED);
             local = commit_barriers;
             barriers = local >> 2;
+            s = local & 3UL;
         } 
-        if ((local & 3UL) == RUNNING) {
+        if (s == RUNNING) {
             lock_abort = true;
+            if(s != ABORTED) {
+                printf("aborted local is %lu\n", local);
+                printf("should set to %lu\n", (barriers << 2) + ABORTED);
+                assert(false);
+            }
+            return ABORTED;
+        } else if (s == COMMITED) {
+            return COMMITED;
+        } else if (s == ABORTED) {
             return ABORTED;
         } else {
-            assert((local & 3UL) == COMMITED);
+            assert(false);
             return COMMITED;
         }
 #elif CC_ALG == WOUND_WAIT || CC_ALG == IC3
