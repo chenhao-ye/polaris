@@ -205,18 +205,12 @@ class txn_man
             barriers = local >> 2;
             s = local & 3UL;
         } 
-        if (s == RUNNING) {
-            lock_abort = true;
-            if(s != ABORTED) {
-                printf("aborted local is %lu\n", local);
-                printf("should set to %lu\n", (barriers << 2) + ABORTED);
-                assert(false);
-            }
+        if (s == ABORTED) {
+            if (!lock_abort)
+                lock_abort = true;
             return ABORTED;
         } else if (s == COMMITED) {
             return COMMITED;
-        } else if (s == ABORTED) {
-            return ABORTED;
         } else {
             assert(false);
             return COMMITED;
