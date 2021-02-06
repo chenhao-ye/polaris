@@ -5,7 +5,7 @@ cp outputs/ycsb_long_txn_ww.json outputs/stats.json
 zipf=0.9
 for i in 0 1 2 3 4
 do
-for thd in 96 120 #1 2 4 8 16 32 64
+for thd in 120 96 64 32 16 8 4 2 1 
 do
 for alg in BAMBOO SILO WOUND_WAIT WAIT_DIE NO_WAIT
 do
@@ -14,7 +14,7 @@ done
 done
 done
 
-fname="ycsb_long_txn_large_core"
+fname="ycsb_long_txn_large"
 cd outputs/
 python3 collect_stats.py
 mv stats.csv ${fname}.csv

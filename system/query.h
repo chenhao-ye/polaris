@@ -5,6 +5,7 @@
 class workload;
 class ycsb_query;
 class tpcc_query;
+class ycsb_request;
 
 class base_query {
 public:
