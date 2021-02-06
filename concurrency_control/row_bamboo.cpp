@@ -581,12 +581,12 @@ RC Row_bamboo::insert_read_to_retired(BBLockEntry * to_insert, ts_t ts,
             // compiler barrier
             COMPILER_BARRIER
             // check if status == committed, if still runnig, break. else continue
-            if (en->txn->status == RUNNING) {
+            if ((en->txn->commit_barriers & 3UL) ==  RUNNING) {
                 if (!en->is_cohead)
                     en->txn->decrement_commit_barriers();
                 else
                     en->is_cohead = false;
-                assert(en->txn->status == RUNNING);
+                assert((en->txn->commit_barriers & 3UL) != COMMITED);
 			    break;
             }
 		}
@@ -611,7 +611,7 @@ RC Row_bamboo::insert_read_to_retired(BBLockEntry * to_insert, ts_t ts,
             assert(ts != 0);
             owners->txn->increment_commit_barriers();
             COMPILER_BARRIER
-            if (owners->txn->status == RUNNING) {
+            if ((owners->txn->commit_barriers & 3UL) == RUNNING) {
                 if (!owners->is_cohead)
                     owners->txn->decrement_commit_barriers();
                 else
@@ -623,7 +623,7 @@ RC Row_bamboo::insert_read_to_retired(BBLockEntry * to_insert, ts_t ts,
                 access->data->copy(owners->access->orig_data);
                 to_insert->txn->lock_ready = true;
                 rc = FINISH;
-                assert(owners->txn->status == RUNNING);
+                assert((owners->txn->commit_barriers & 3UL) != COMMITED);
             } else {
                 // COMMITED. add RD to waiters
 		        add_to_waiters(ts, to_insert);

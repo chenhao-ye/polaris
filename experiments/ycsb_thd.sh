@@ -2,9 +2,9 @@ cd ..
 rm outputs/stats.json
 
 zipf=0.9
-for thd in 1 2 4 8 16 32 64 96 120
-do
 for i in 0 1 2 3 4
+do
+for thd in 120 96 64 32 16 8 4 2 1 #1 2 4 8 16 32 64 96 #120
 do
 for alg in BAMBOO #SILO WOUND_WAIT WAIT_DIE NO_WAIT
 do

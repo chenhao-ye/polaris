@@ -110,8 +110,10 @@ class txn_man
     ts_t volatile       timestamp;
     uint8_t             padding1[64 - sizeof(ts_t)];
     // share its own cache line since it happens tooooo frequent.
-    int volatile        commit_barriers;
-    uint8_t             padding2[64 - sizeof(int)];
+    // bamboo -- combine both status and barrier into one int. 
+    // low 2 bits representing status 
+    uint64_t volatile   commit_barriers;
+    uint8_t             padding2[64 - sizeof(uint64_t)];
 
     // [BAMBOO-AUTORETIRE, OCC]
     uint64_t 		    start_ts; // bamboo: update once per txn
@@ -186,14 +188,39 @@ class txn_man
     void                dec_value(int col, uint64_t val);
 #endif
     // [WW, BAMBOO]
-    // wound txn
+    // if already abort, no change, return aborted
+    // if already commit, no change, return committed
+    // if running, set abort, return aborted.  
     status_t            set_abort() {
-#if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT || CC_ALG == IC3
-    if (ATOM_CAS(status, RUNNING, ABORTED)) {
-        lock_abort = true;
-        return ABORTED;
-    } 
-    return status;
+#if CC_ALG == BAMBOO 
+        uint64_t local = commit_barriers;
+        uint64_t barriers = local >> 2;
+        uint64_t s = local & 3UL;
+        // cannot use atom_add:
+        // (1) what if two txns both atomic add? may change from abort to commit
+        // (2) moreover, may exceed two bits
+        while (s == RUNNING) {
+            ATOM_CAS(commit_barriers, local, (barriers << 2) + ABORTED);
+            local = commit_barriers;
+            barriers = local >> 2;
+            s = local & 3UL;
+        } 
+        if (s == ABORTED) {
+            if (!lock_abort)
+                lock_abort = true;
+            return ABORTED;
+        } else if (s == COMMITED) {
+            return COMMITED;
+        } else {
+            assert(false);
+            return COMMITED;
+        }
+#elif CC_ALG == WOUND_WAIT || CC_ALG == IC3
+       if (ATOM_CAS(status, RUNNING, ABORTED)) {
+            lock_abort = true;
+            return ABORTED;
+       }
+       return status; // COMMITED or ABORTED
 #else
     return ABORTED;
 #endif
@@ -249,9 +276,6 @@ class txn_man
 inline status_t txn_man::wound_txn(txn_man * txn)
 {
 #if CC_ALG == BAMBOO || CC_ALG == WOUND_WAIT
-    // TODO: change the line to == commited since != Running may also be aborted. 
-    if (status != RUNNING)
-        return status;
     return txn->set_abort();
 #else
     return ABORTED;

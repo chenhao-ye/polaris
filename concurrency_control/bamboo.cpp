@@ -15,11 +15,14 @@ txn_man::retire_row(int access_cnt){
 
 void
 txn_man::decrement_commit_barriers() {
-  ATOM_SUB(this->commit_barriers, 1);
+    assert((commit_barriers >> 2) != 0);
+    ATOM_SUB(this->commit_barriers, 1UL << 2);
+    assert((commit_barriers >> 2) <= 16);
+    //printf("[txn-%lu] dec barrier to %lu\n", txn_id, commit_barriers >> 2);
 }
 
 void
 txn_man::increment_commit_barriers() {
-  // not necessarily atomic, called in critical section only
-  ATOM_ADD(this->commit_barriers, 1);
+    ATOM_ADD(this->commit_barriers, 1UL << 2);
+    //printf("[txn-%lu] add barrier to %lu\n", txn_id, commit_barriers >> 2);
 }

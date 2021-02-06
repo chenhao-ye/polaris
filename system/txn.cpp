@@ -471,12 +471,12 @@ RC txn_man::finish(RC rc) {
 #if PF_BASIC 
     uint64_t starttime = get_sys_clock();
 #endif
-    while(commit_barriers != 0 && status == RUNNING) {
-        //PAUSE
-        continue;
+    while (!ATOM_CAS(commit_barriers, 0, COMMITED)) {
+        if (commit_barriers & ABORTED) {
+            rc = Abort;
+            break;
+        }
     }
-    if (!ATOM_CAS(status, RUNNING, COMMITED))
-        rc = Abort;
 #if PF_BASIC 
     INC_STATS(get_thd_id(), time_commit, get_sys_clock() - starttime);
 #endif

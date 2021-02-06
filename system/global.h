@@ -154,7 +154,8 @@ enum lock_status {LOCK_DROPPED, LOCK_WAITER, LOCK_OWNER, LOCK_RETIRED};
 /* TIMESTAMP */
 enum TsType {R_REQ, W_REQ, P_REQ, XP_REQ};
 /* TXN STATUS */
-enum status_t {RUNNING, PRECOMMIT, COMMITED, ABORTED, HOLDING};
+// XXX(zhihan): bamboo requires the enumeration order to be unchanged
+enum status_t: unsigned int {RUNNING, ABORTED, COMMITED, HOLDING}; 
 
 /* COMMUTATIVE OPERATIONS */
 enum com_t {COM_INC, COM_DEC, COM_NONE};
