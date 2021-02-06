@@ -1,11 +1,10 @@
 cd ..
-#rm outputs/stats.json
-cp outputs/ycsb_long_txn_ww.json outputs/stats.json
+rm outputs/stats.json
 
 zipf=0.9
 for i in 0 1 2 3 4
 do
-for thd in 120 96 64 32 16 8 4 2 1 
+for thd in 120 96 64 32 16 8 4 2 1 # 1 2 4 8 16 32 64 96 120 
 do
 for alg in BAMBOO SILO WOUND_WAIT WAIT_DIE NO_WAIT
 do
@@ -14,11 +13,11 @@ done
 done
 done
 
-fname="ycsb_long_txn_large"
+fname="ycsb-long-txn-dynamic-query"
 cd outputs/
 python3 collect_stats.py
-mv stats.csv ${fname}.csv
-mv stats.json ${fname}.json
+mv stats.csv ycsb_long_txn/${fname}.csv
+mv stats.json ycsb_long_txn/${fname}.json
 cd ..
 
 cd experiments
