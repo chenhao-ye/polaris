@@ -22,6 +22,8 @@ public:
 	uint64_t q_idx;
 #if WORKLOAD == YCSB
 	ycsb_query * queries;
+    ycsb_request * long_txn;
+    uint64_t * long_txn_part;
 #else 
 	tpcc_query * queries;
 #endif
