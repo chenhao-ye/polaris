@@ -32,8 +32,8 @@ RC ycsb_txn_man::run_txn(base_query * query) {
     row_cnt = 0;
 #endif
 
-    // if long txn, generate queries
-    if (unlikely(m_query->is_long && (this->abort_cnt == 0))) {
+    // if long txn and not rerun aborted txn, generate queries
+    if (unlikely(m_query->is_long && !(m_query->rerun))) {
         uint64_t starttime = get_sys_clock();
         m_query->gen_requests(h_thd->get_thd_id(), h_wl);
         DEC_STATS(h_thd->get_thd_id(), run_time, get_sys_clock() - starttime);

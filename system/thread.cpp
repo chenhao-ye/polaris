@@ -70,6 +70,7 @@ RC thread_t::run() {
 						for (int i = 0; i < _abort_buffer_size; i++) {
 							if (_abort_buffer[i].query != NULL && curr_time > _abort_buffer[i].ready_time) {
 								m_query = _abort_buffer[i].query;
+                                m_query->rerun = true;
 								txn_starttime = _abort_buffer[i].starttime;
 								_abort_buffer[i].query = NULL;
 								_abort_buffer_empty_slots ++;
@@ -84,6 +85,7 @@ RC thread_t::run() {
 						usleep((min_ready_time - curr_time)/1000); 
 					} else if (m_query == NULL) {
 						m_query = query_queue->get_next_query( _thd_id );
+                        m_query->rerun = false;
                         m_txn->abort_cnt = 0;
 						assert(m_query);
                         txn_starttime = starttime;
@@ -97,6 +99,7 @@ RC thread_t::run() {
 			} else {
 				if (rc == RCOK) {
 					m_query = query_queue->get_next_query( _thd_id );
+                    m_query->rerun = false;
 		            m_txn->abort_cnt = 0;
 					assert(m_query);
                     txn_starttime = starttime;

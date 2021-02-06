@@ -17,7 +17,7 @@ void ycsb_query::init(uint64_t thd_id, workload * h_wl, Query_thd * query_thd) {
 		local_req_per_query = MAX_ROW_PER_TXN;
 		local_read_perc = g_long_txn_read_ratio;
 		// XXX(zhihan): point requests and part to access to a pre-allocate
-		// spot; so that dynamic
+		// spot in the thd's query queue; so that dynamically generate queries.
         requests = query_thd->long_txn;
         part_to_access = query_thd->long_txn_part;
         is_long = true; // used to identify long txn
