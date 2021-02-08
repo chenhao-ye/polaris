@@ -106,8 +106,12 @@ Query_thd::init(workload * h_wl, int thread_id) {
 
 base_query * 
 Query_thd::get_next_query() {
-	if (q_idx >= request_cnt-1)
+	if (q_idx >= request_cnt-1) {
+        q_idx = 0;
+        assert(q_idx < request_cnt);
+        printf("WARNING: run out of queries, increase txn cnt per part!\n");
 		return NULL;
+    }
 	base_query * query = &queries[q_idx++];
 	return query;
 }

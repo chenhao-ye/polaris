@@ -169,12 +169,16 @@ RC Row_lock::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
         txn->lock_ready = false;
         rc = WAIT;
       }
-      else
+      else {
+        // lock abort is not used for wait_die. since abort itself only
         rc = Abort;
+        return_entry(entry);
+      }
     }
   } else {
     entry->type = type;
     entry->txn = txn;
+    txn->lock_ready = true;
     STACK_PUSH(owners, entry);
     entry->status = LOCK_OWNER;
     owner_cnt ++;
@@ -211,10 +215,6 @@ RC Row_lock::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
 #if PF_CS
   INC_STATS(txn->get_thd_id(), time_get_cs, get_sys_clock() - starttime);
 #endif
-
-  if (rc == Abort && (CC_ALG != NO_WAIT)) {
-    return_entry(entry);
-  }
 
   return rc;
 }
