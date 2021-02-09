@@ -120,8 +120,11 @@ void workload::index_insert(INDEX * index, uint64_t key, row_t * row, int64_t pa
 	m_item->type = DT_row;
 	m_item->location = row;
 	m_item->valid = true;
-
+#ifdef NDEBUG
+    index->index_insert(key, m_item, pid);
+#else
     assert( index->index_insert(key, m_item, pid) == RCOK );
+#endif
 }
 
 SC_PIECE * workload::get_cedges(TPCCTxnType type, int idx) {

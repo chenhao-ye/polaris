@@ -392,7 +392,11 @@ void txn_man::index_insert(row_t * row, INDEX * index, idx_key_t key) {
     m_item->type = DT_row;
     m_item->location = row;
     m_item->valid = true;
+#ifdef NDEBUG
+    index->index_insert(key, m_item, part_id);
+#else
     assert(index->index_insert(key, m_item, part_id) == RCOK);
+#endif
 }
 
 itemid_t *
