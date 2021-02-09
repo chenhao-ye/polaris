@@ -18,8 +18,10 @@ void ycsb_query::init(uint64_t thd_id, workload * h_wl, Query_thd * query_thd) {
 		local_read_perc = g_long_txn_read_ratio;
 		// XXX(zhihan): point requests and part to access to a pre-allocate
 		// spot in the thd's query queue; so that dynamically generate queries.
+#if WORKLOAD == YCSB
         requests = query_thd->long_txn;
         part_to_access = query_thd->long_txn_part;
+#endif
         is_long = true; // used to identify long txn
         zeta_2_theta = zeta(2, g_zipf_theta);
         return;
