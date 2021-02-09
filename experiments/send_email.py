@@ -4,9 +4,6 @@ import smtplib
 zhihan_send = "experiments.guo@gmail.com"
 zhihan_recv = "zhihan@cs.wisc.edu"
 zhihan_pass = 'expnotification@'
-xinyu_send  = "exp.zeng@gmail.com"
-xinyu_recv  = "xzeng56@wisc.edu"
-xinyu_pass  = 'experiment'
 
 sender = zhihan_send
 recver = zhihan_recv
