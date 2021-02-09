@@ -81,13 +81,21 @@ Query_thd::init(workload * h_wl, int thread_id) {
 	queries = (ycsb_query *) 
 		mem_allocator.alloc(sizeof(ycsb_query) * request_cnt, thread_id);
 	srand48_r(thread_id + 1, &buffer);
+    // XXX(zhihan): create a pre-allocated space for long txn
+	if (g_long_txn_ratio > 0) {
+        long_txn = (ycsb_request *)
+            mem_allocator.alloc(sizeof(ycsb_request) * MAX_ROW_PER_TXN,
+                thread_id);
+        long_txn_part = (uint64_t *)
+            mem_allocator.alloc(sizeof(uint64_t) * g_part_per_txn, thread_id);
+	}
 #elif WORKLOAD == TPCC
 	queries = (tpcc_query *) _mm_malloc(sizeof(tpcc_query) * request_cnt, 64);
 #endif
 	for (UInt32 qid = 0; qid < request_cnt; qid ++) {
 #if WORKLOAD == YCSB
 		new(&queries[qid]) ycsb_query();
-		queries[qid].init(thread_id, h_wl, this);
+        queries[qid].init(thread_id, h_wl, this);
 #elif WORKLOAD == TPCC
 		new(&queries[qid]) tpcc_query();
 		queries[qid].init(thread_id, h_wl);
@@ -98,8 +106,12 @@ Query_thd::init(workload * h_wl, int thread_id) {
 
 base_query * 
 Query_thd::get_next_query() {
-	if (q_idx >= request_cnt-1)
+	if (q_idx >= request_cnt-1) {
+        q_idx = 0;
+        assert(q_idx < request_cnt);
+        printf("WARNING: run out of queries, increase txn cnt per part!\n");
 		return NULL;
+    }
 	base_query * query = &queries[q_idx++];
 	return query;
 }

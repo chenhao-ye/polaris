@@ -5,6 +5,7 @@
 class workload;
 class ycsb_query;
 class tpcc_query;
+class ycsb_request;
 
 class base_query {
 public:
@@ -12,6 +13,7 @@ public:
 	uint64_t waiting_time;
 	uint64_t part_num;
 	uint64_t * part_to_access;
+    bool rerun;
 };
 
 // All the querise for a particular thread.
@@ -22,6 +24,8 @@ public:
 	uint64_t q_idx;
 #if WORKLOAD == YCSB
 	ycsb_query * queries;
+    ycsb_request * long_txn;
+    uint64_t * long_txn_part;
 #else 
 	tpcc_query * queries;
 #endif

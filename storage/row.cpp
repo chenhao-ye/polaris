@@ -252,6 +252,7 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row, Access * access) {
   }
   rc = this->manager->lock_get(lt, txn, access);
   #else
+  assert(txn->get_ts() != 0);
   rc = this->manager->lock_get(lt, txn, access);
   #endif
   if (rc == RCOK) {

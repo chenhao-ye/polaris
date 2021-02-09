@@ -62,7 +62,7 @@ RC thread_t::run() {
 		ts_t starttime = get_sys_clock();
 		if (WORKLOAD != TEST) {
 			if (_abort_buffer_enable) {
-                                while(true) {
+                while(true) {
 					m_query = NULL;
 					ts_t curr_time = get_sys_clock();
 					ts_t min_ready_time = UINT64_MAX;
@@ -70,6 +70,7 @@ RC thread_t::run() {
 						for (int i = 0; i < _abort_buffer_size; i++) {
 							if (_abort_buffer[i].query != NULL && curr_time > _abort_buffer[i].ready_time) {
 								m_query = _abort_buffer[i].query;
+                                m_query->rerun = true;
 								txn_starttime = _abort_buffer[i].starttime;
 								_abort_buffer[i].query = NULL;
 								_abort_buffer_empty_slots ++;
@@ -78,14 +79,16 @@ RC thread_t::run() {
 					          		&& _abort_buffer[i].ready_time < min_ready_time)
 								min_ready_time = _abort_buffer[i].ready_time;
 							}
-						}
+				    }
 					if (m_query == NULL && _abort_buffer_empty_slots == 0) {
 						M_ASSERT(min_ready_time >= curr_time, "min_ready_time=%ld, curr_time=%ld\n", min_ready_time, curr_time);
 						usleep((min_ready_time - curr_time)/1000); 
 					} else if (m_query == NULL) {
 						m_query = query_queue->get_next_query( _thd_id );
+                        m_query->rerun = false;
+                        m_txn->abort_cnt = 0;
 						assert(m_query);
-                                        	txn_starttime = starttime;
+                        txn_starttime = starttime;
 #if CC_ALG == WAIT_DIE || (CC_ALG == WOUND_WAIT && WW_STARV_FREE)
 						m_txn->set_ts(get_next_ts());
 #endif
@@ -96,13 +99,17 @@ RC thread_t::run() {
 			} else {
 				if (rc == RCOK) {
 					m_query = query_queue->get_next_query( _thd_id );
+                    m_query->rerun = false;
+		            m_txn->abort_cnt = 0;
 					assert(m_query);
-                                        txn_starttime = starttime;
-                                }
+                    txn_starttime = starttime;
+#if CC_ALG == WAIT_DIE || (CC_ALG == WOUND_WAIT && WW_STARV_FREE)
+					m_txn->set_ts(get_next_ts());
+#endif
+                }
 			}
 		}
 		INC_STATS(_thd_id, time_query, get_sys_clock() - starttime);
-		m_txn->abort_cnt = 0;
 //#if CC_ALG == VLL
 //		_wl->get_txn_man(m_txn, this);
 //#endif
@@ -111,8 +118,10 @@ RC thread_t::run() {
 		m_txn->set_ts(get_next_ts());
 #elif (CC_ALG == BAMBOO)
 		m_txn->set_ts(0);
-#elif (CC_ALG == WOUND_WAIT) && !WW_STARV_FREE
-		m_txn->set_ts(get_next_ts());
+#elif CC_ALG == WAIT_DIE || (CC_ALG == WOUND_WAIT && WW_STARV_FREE)
+        // used for after warmup, since aborted txn keeps original ts
+        if (unlikely(m_txn->get_ts() == 0))
+            m_txn->set_ts(get_next_ts());
 #endif
 		m_txn->set_txn_id(get_thd_id() + thd_txn_id * g_thread_cnt);
 		thd_txn_id ++;
@@ -175,7 +184,7 @@ RC thread_t::run() {
 					if (_abort_buffer[i].query == NULL) {
 						_abort_buffer[i].query = m_query;
 						_abort_buffer[i].ready_time = get_sys_clock() + penalty;
-                                                _abort_buffer[i].starttime = txn_starttime;
+                        _abort_buffer[i].starttime = txn_starttime;
 						_abort_buffer_empty_slots --;
 						break;
 					}
@@ -187,14 +196,14 @@ RC thread_t::run() {
 		INC_STATS(get_thd_id(), run_time, timespan);
 		//stats.add_lat(get_thd_id(), timespan);
 		if (rc == RCOK) {
-		        INC_STATS(get_thd_id(), commit_latency, timespan);
-		        INC_STATS(get_thd_id(), latency, endtime - txn_starttime);
-			INC_STATS(get_thd_id(), txn_cnt, 1);
+            INC_STATS(get_thd_id(), commit_latency, timespan);
+            INC_STATS(get_thd_id(), latency, endtime - txn_starttime);
+            INC_STATS(get_thd_id(), txn_cnt, 1);
 #if WORKLOAD == YCSB
-      if (unlikely(g_long_txn_ratio > 0)) {
-          if ( ((ycsb_query *) m_query)->request_cnt > REQ_PER_QUERY)
-              INC_STATS(get_thd_id(), txn_cnt_long, 1);
-      }
+            if (unlikely(g_long_txn_ratio > 0)) {
+                if ( ((ycsb_query *) m_query)->request_cnt > REQ_PER_QUERY)
+                    INC_STATS(get_thd_id(), txn_cnt_long, 1);
+            }
 #endif
 			stats.commit(get_thd_id());
 			txn_cnt ++;
@@ -202,31 +211,31 @@ RC thread_t::run() {
 			INC_STATS(get_thd_id(), time_abort, timespan);
 			INC_STATS(get_thd_id(), abort_cnt, 1);
 #if WORKLOAD == YCSB
-      if (unlikely(g_long_txn_ratio > 0)) {
-          if ( ((ycsb_query *) m_query)->request_cnt > REQ_PER_QUERY)
-              INC_STATS(get_thd_id(), abort_cnt_long, 1);
-      }
+            if (unlikely(g_long_txn_ratio > 0)) {
+                if ( ((ycsb_query *) m_query)->request_cnt > REQ_PER_QUERY)
+                    INC_STATS(get_thd_id(), abort_cnt_long, 1);
+            }
 #endif
 			stats.abort(get_thd_id());
-			m_txn->abort_cnt ++;
+			m_txn->abort_cnt++;
 		} else if (rc == ERROR) {
-		       // user initiated aborts
-		       INC_STATS(get_thd_id(), time_abort, timespan);
-                       INC_STATS(get_thd_id(), user_abort_cnt, 1);
-                       INC_STATS(get_thd_id(), abort_cnt, 1);
+		    // user initiated aborts
+		    INC_STATS(get_thd_id(), time_abort, timespan);
+            INC_STATS(get_thd_id(), user_abort_cnt, 1);
+            INC_STATS(get_thd_id(), abort_cnt, 1);
 #if WORKLOAD == YCSB
-      if (unlikely(g_long_txn_ratio > 0)) {
-          if ( ((ycsb_query *) m_query)->request_cnt > REQ_PER_QUERY)
-              INC_STATS(get_thd_id(), abort_cnt_long, 1);
-      }
+            if (unlikely(g_long_txn_ratio > 0)) {
+                if ( ((ycsb_query *) m_query)->request_cnt > REQ_PER_QUERY)
+                    INC_STATS(get_thd_id(), abort_cnt_long, 1);
+            }
 #endif
-                       stats.abort(get_thd_id());
-                       m_txn->abort_cnt ++;
+            stats.abort(get_thd_id());
+            m_txn->abort_cnt ++;
 		}
 
-		if (rc == FINISH){
+		if (rc == FINISH) {
 #if CC_ALG == IC3
-		m_txn->set_txn_id(get_thd_id() + thd_txn_id * g_thread_cnt);
+		    m_txn->set_txn_id(get_thd_id() + thd_txn_id * g_thread_cnt);
 #endif
 			return rc;
 		}
@@ -236,7 +245,7 @@ RC thread_t::run() {
 			return FINISH;
 		}
 
-#if TERMINIATE_BY_COUNT
+#if TERMINATE_BY_COUNT
 		if (warmup_finish && txn_cnt >= MAX_TXN_PER_PART) {
 			assert(txn_cnt == MAX_TXN_PER_PART);
 			if( !ATOM_CAS(_wl->sim_done, false, true) )
@@ -252,7 +261,7 @@ RC thread_t::run() {
 
 		if (_wl->sim_done) {
 #if CC_ALG == IC3
-		m_txn->set_txn_id(get_thd_id() + thd_txn_id * g_thread_cnt);
+		    m_txn->set_txn_id(get_thd_id() + thd_txn_id * g_thread_cnt);
 #endif
 			return FINISH;
 		}

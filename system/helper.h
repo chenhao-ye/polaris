@@ -130,6 +130,10 @@
 	if (STATS_ENABLE) \
 		stats._stats[tid]->name += value;
 
+#define DEC_STATS(tid, name, value) \
+	if (STATS_ENABLE) \
+		stats._stats[tid]->name -= value;
+
 #define INC_TMP_STATS(tid, name, value) \
 	if (STATS_ENABLE) \
 		stats.tmp_stats[tid]->name += value;
