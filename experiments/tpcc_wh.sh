@@ -1,8 +1,8 @@
 cd ..
-rm outputs/stats.json
+#rm outputs/stats.json
 
 thd=32
-for i in 0 1 2 3 4
+for i in 0 1 2 #3 4
 do
 for wh in 1 2 4 8 16 32 64 128
 do
