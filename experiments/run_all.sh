@@ -4,6 +4,6 @@
 #./ycsb_read_ratio.sh
 #./tpcc_thd.sh
 #./tpcc_wh.sh
-./ic3.sh
+#./ic3.sh
 ./hs1_pos.sh
 ./hs1_req.sh
