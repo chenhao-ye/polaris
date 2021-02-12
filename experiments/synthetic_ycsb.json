@@ -29,6 +29,7 @@
   "NUM_HS": 1,
   "FIRST_HS": "WR",
   "SECOND_HS": "WR",
+  "FIXED_HS": 0,
 
 	"LONG_TXN_RATIO": 0,
 	"REQ_PER_QUERY": 16,

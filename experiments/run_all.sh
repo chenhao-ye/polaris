@@ -5,5 +5,7 @@
 #./tpcc_thd.sh
 #./tpcc_wh.sh
 #./ic3.sh
-./hs1_pos.sh
-./hs1_req.sh
+#./hs1_pos.sh
+#./hs1_req.sh
+./hs2_fix.sh
+./hs2_flip.sh
