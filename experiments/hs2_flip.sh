@@ -18,7 +18,7 @@ done
 done
 done
 
-fname="hs1_flip"
+fname="hs2_flip"
 cd outputs/
 python3 collect_stats.py
 mv stats.csv synthetic/${fname}.csv

@@ -18,7 +18,7 @@ done
 done
 done
 
-fname="hs1_fix"
+fname="hs2_fix"
 cd outputs/
 python3 collect_stats.py
 mv stats.csv synthetic/${fname}.csv
