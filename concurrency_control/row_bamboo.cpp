@@ -76,6 +76,9 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
     // initialize a lock entry
     BBLockEntry * to_insert = get_entry(access);
     to_insert->type = type;
+#if PF_MODEL
+    INC_STATS(txn->get_thd_id(), lock_acquire_cnt, 1);
+#endif
     // take the latch
     lock(txn);
     COMPILER_BARRIER
@@ -127,6 +130,10 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
 #endif
             }
         } else { // no owners
+#if PF_MODEL
+            if (waiter_cnt == 0 && (!retired_tail || (retired_tail->is_cohead && retired_tail->type == LOCK_SH)))
+                INC_STATS(txn->get_thd_id(), lock_directly_cnt, 1);
+#endif
 #if BB_DYNAMIC_TS
             // no owner, retired may not have ts.
             if (retired_tail) {
@@ -181,6 +188,9 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
             UPDATE_RETIRE_INFO(to_insert, retired_tail);
             COMPILER_BARRIER
             unlock(txn);
+#if PF_MODEL
+            INC_STATS(txn->get_thd_id(), lock_directly_cnt, 1);
+#endif
             return rc;
             // goto final;
         }
@@ -540,7 +550,7 @@ txn) {
     // abort till end, no need to update barrier as set abort anyway
     LIST_RM_SINCE(retired_head, retired_tail, en);
     while(en) {
-        en->txn->set_abort();
+        en->txn->set_abort(true);
         to_return = en;
         if (retired_cnt == 0)
           printf("error!\n");

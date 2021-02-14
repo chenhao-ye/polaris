@@ -191,7 +191,7 @@ class txn_man
     // if already abort, no change, return aborted
     // if already commit, no change, return committed
     // if running, set abort, return aborted.  
-    status_t            set_abort() {
+    status_t            set_abort(bool cascading=false) {
 #if CC_ALG == BAMBOO 
         uint64_t local = commit_barriers;
         uint64_t barriers = local >> 2;
@@ -208,6 +208,10 @@ class txn_man
         if (s == ABORTED) {
             if (!lock_abort)
                 lock_abort = true;
+#if PF_MODEL
+            if (cascading)
+                INC_STATS(get_thd_id(), cascading_abort_cnt, 1);
+#endif
             return ABORTED;
         } else if (s == COMMITED) {
             return COMMITED;

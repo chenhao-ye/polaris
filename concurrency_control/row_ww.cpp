@@ -80,6 +80,9 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int&txncnt,
 #if PF_CS
   uint64_t starttime = get_sys_clock();
 #endif
+#if PF_MODEL
+  INC_STATS(txn->get_thd_id(), lock_acquire_cnt, 1);
+#endif
   lock(entry->txn);
   COMPILER_BARRIER
 #if PF_CS
@@ -116,9 +119,6 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int&txncnt,
           entry->status = LOCK_DROPPED;
           goto final;
         }
-#if PF_ABORT 
-        txn->abort_chain ++;
-#endif
         // remove from owner
         if (prev)
           prev->next = en->next;
@@ -172,6 +172,10 @@ RC Row_ww::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids, int&txncnt,
 #endif
   COMPILER_BARRIER
   unlock(entry->txn);
+#if PF_MODEL
+  if (rc == RCOK)
+      INC_STATS(txn->get_thd_id(), lock_directly_cnt, 1);
+#endif
 #if PF_ABORT 
   if (txn->abort_chain > 0) {
     UPDATE_STATS(txn->get_thd_id(), max_abort_length, txn->abort_chain);

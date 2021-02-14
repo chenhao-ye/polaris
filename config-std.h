@@ -236,6 +236,7 @@ extern TestCases					g_test_case;
 #define PF_BASIC					false
 #define PF_CS          					false // profiling inside critical path
 #define PF_ABORT_LENGTH          			false
+#define PF_MODEL          false
 
 /***********************************************/
 // Constant
