@@ -15,10 +15,12 @@ txn_man::retire_row(int access_cnt){
 
 void
 txn_man::decrement_commit_barriers() {
-    ATOM_SUB(*addr_barriers, 1UL << 2);
+    //ATOM_SUB(*addr_barriers, 1UL << 2);
+    ATOM_SUB(commit_barriers, 1UL << 2);
 }
 
 void
 txn_man::increment_commit_barriers() {
-    ATOM_ADD(*addr_barriers, 1UL << 2);
+    //ATOM_ADD(*addr_barriers, 1UL << 2);
+    ATOM_ADD(commit_barriers, 1UL << 2);
 }

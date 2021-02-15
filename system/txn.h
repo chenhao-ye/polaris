@@ -114,8 +114,8 @@ class txn_man
     // low 2 bits representing status 
     uint64_t volatile   commit_barriers;
     uint8_t             padding2[64 - sizeof(uint64_t)];
-    uint64_t            tmp_barriers;
-    volatile uint64_t * volatile addr_barriers;
+    //uint64_t volatile   tmp_barriers;
+    //volatile uint64_t * volatile addr_barriers;
 
     // [BAMBOO-AUTORETIRE, OCC]
     uint64_t 		    start_ts; // bamboo: update once per txn

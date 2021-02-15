@@ -24,8 +24,9 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 #endif
 #if CC_ALG == BAMBOO
     commit_barriers = 0;
-    tmp_barriers = 0;
-    addr_barriers = &(tmp_barriers);
+    //commit_barriers = g_thread_cnt << 2;
+    //tmp_barriers = 0;
+    //addr_barriers = &(tmp_barriers);
 #endif
     ready_part = 0;
     row_cnt = 0;
@@ -67,6 +68,8 @@ void txn_man::set_txn_id(txnid_t txn_id) {
     status = RUNNING;
 #if CC_ALG == BAMBOO
     commit_barriers = 0;
+    //commit_barriers = g_thread_cnt << 2;
+    //addr_barriers = &(tmp_barriers);
     #if BB_AUTORETIRE
     // USED FOR AUTO RETIRE
     start_ts = get_sys_clock();
@@ -478,9 +481,10 @@ RC txn_man::finish(RC rc) {
     uint64_t starttime = get_sys_clock();
 #endif
     // aggregate barrier
-    addr_barriers = &(commit_barriers);
-    COMPILER_BARRIER
-    ATOM_ADD(commit_barriers, tmp_barriers);
+    // addr_barriers = &(commit_barriers);
+    // COMPILER_BARRIER
+    // ATOM_ADD(commit_barriers, tmp_barriers);
+    // ATOM_SUB(commit_barriers, g_thread_cnt << 2);
     while (!ATOM_CAS(commit_barriers, 0, COMMITED)) {
         if (commit_barriers & ABORTED) {
             rc = Abort;

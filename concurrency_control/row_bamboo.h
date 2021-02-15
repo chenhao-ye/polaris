@@ -222,8 +222,10 @@ class Row_bamboo {
 		while(en) {
 			if (en->type == LOCK_EX && a_higher_than_b(ts, en->txn->get_ts())) {
 				if (to_insert->txn->wound_txn(en->txn) == COMMITED) {
-					return_entry(to_insert);
-					return Abort;
+					//return_entry(to_insert);
+					//return Abort;
+                    en = en->next;
+                    continue;
 				}
 				en = rm_from_retired(en, true, to_insert->txn);
 			} else 
@@ -238,13 +240,11 @@ class Row_bamboo {
 		while(en) {
 			if (en->txn->get_ts() == 0 || a_higher_than_b(ts, en->txn->get_ts())) {
 				if (to_insert->txn->wound_txn(en->txn) == COMMITED) {
-					return_entry(to_insert);
-					return Abort;
+					//return_entry(to_insert);
+					//return Abort;
+                    en = en->next;
+                    continue;
 				}
-#if DEBUG_BAMBOO
-    			//printf("[txn-%lu](%lu) wounded %lu(%lu) on %p\n", to_insert->txn->get_txn_id(), 
-				//  		to_insert->txn->get_ts(), en->txn->get_txn_id(), en->txn->get_ts(), this);
-#endif
 				en = rm_from_retired(en, true, to_insert->txn);
 			} else 
 				en = en->next;
@@ -254,8 +254,9 @@ class Row_bamboo {
 
 	inline RC wound_owner(BBLockEntry * to_insert) {
 		if (to_insert->txn->wound_txn(owners->txn) == COMMITED) {
-			return_entry(to_insert);
-			return Abort;
+			//return_entry(to_insert);
+			//return Abort;
+            return WAIT;
 		}
 		return_entry(owners);
 		owners = NULL;
