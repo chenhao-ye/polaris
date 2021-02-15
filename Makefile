@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-Wall -g -ggdb -std=c++0x -fno-omit-frame-pointer
+CFLAGS=-Wall -g -std=c++0x -fno-omit-frame-pointer
 
 .SUFFIXES: .o .cpp .h
 

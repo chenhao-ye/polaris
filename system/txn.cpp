@@ -24,6 +24,8 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 #endif
 #if CC_ALG == BAMBOO
     commit_barriers = 0;
+    tmp_barriers = 0;
+    addr_barriers = &(tmp_barriers);
 #endif
     ready_part = 0;
     row_cnt = 0;
@@ -475,6 +477,10 @@ RC txn_man::finish(RC rc) {
 #if PF_BASIC 
     uint64_t starttime = get_sys_clock();
 #endif
+    // aggregate barrier
+    addr_barriers = &(commit_barriers);
+    COMPILER_BARRIER
+    ATOM_ADD(commit_barriers, tmp_barriers);
     while (!ATOM_CAS(commit_barriers, 0, COMMITED)) {
         if (commit_barriers & ABORTED) {
             rc = Abort;
