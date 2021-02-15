@@ -225,14 +225,11 @@ class Row_bamboo {
 					return_entry(to_insert);
 					return Abort;
 				}
-#if DEBUG_BAMBOO
-    			//printf("[txn-%lu](%lu) wounded %lu(%lu) on %p\n", to_insert->txn->get_txn_id(), 
-				//  		to_insert->txn->get_ts(), en->txn->get_txn_id(), en->txn->get_ts(), this);
-#endif
 				en = rm_from_retired(en, true, to_insert->txn);
 			} else 
 				en = en->next;
 		}
+		return RCOK;
 	};
 
 	// try_wound(to_wound, wounder), if commited, wound failed, return wounder

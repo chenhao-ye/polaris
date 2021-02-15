@@ -14,7 +14,7 @@
 	"WW_STARV_FREE": "false",
 	"BB_DYNAMIC_TS": "true",
 	"BB_OPT_RAW": "true",
-	"BB_LAST_RETIRE": 0.15,
+	"BB_LAST_RETIRE": 0,
 	"BB_PRECOMMIT": "false",
 	"BB_AUTORETIRE": "false",
 	"BB_ALWAYS_RETIRE_READ": "true",
@@ -25,7 +25,7 @@
 	"READ_PERC": 1,
   "POS_HS": "SPECIFIED",
   "SPECIFIED_RATIO": 1.0,
-  "FLIP_RATIO": 0.5,
+  "FLIP_RATIO": 0,
   "NUM_HS": 2,
   "FIRST_HS": "WR",
   "SECOND_HS": "WR",
@@ -33,7 +33,7 @@
 
 	"LONG_TXN_RATIO": 0,
 	"REQ_PER_QUERY": 16,
-	"SYNTH_TABLE_SIZE": 100000000,
+	"SYNTH_TABLE_SIZE": 100000,
 
 	"UNSET_NUMA": "false",
 	"COMPILE_ONLY": "false",
