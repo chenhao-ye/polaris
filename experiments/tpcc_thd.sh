@@ -2,20 +2,19 @@ cd ..
 rm outputs/stats.json
 
 wh=1
-#for i in 0 1 2 3 4
-#do
+for i in 0 1 2 3 4
+do
 for thd in 120 96 64 32 16 8 4 2 1 #1 2 4 8 16 32 64 96 #120
 do
-for alg in BAMBOO WOUND_WAIT #WAIT_DIE SILO WOUND_WAIT BAMBOO NO_WAIT
+for alg in BAMBOO #WAIT_DIE SILO WOUND_WAIT BAMBOO NO_WAIT
 do
-		#python test.py experiments/tpcc.json THREAD_CNT=${thd} NUM_WH=${wh} CC_ALG=${alg} OUTPUT_TO_FILE=true CPU_FREQ=2.8
-		python test.py experiments/tpcc.json PF_MODEL=true THREAD_CNT=${thd} NUM_WH=${wh} CC_ALG=${alg} OUTPUT_TO_FILE=true CPU_FREQ=2.8
+		python test.py experiments/tpcc.json THREAD_CNT=${thd} NUM_WH=${wh} CC_ALG=${alg} OUTPUT_TO_FILE=true CPU_FREQ=2.8
 done
 done
-#done
+done
 
 #fname="tpcc-thd-wh1"
-fname="tpcc-thd-wh1-pf"
+fname="tpcc-thd-wh1_bb"
 cd outputs/
 python3 collect_stats.py
 mv stats.csv tpcc/${fname}.csv
