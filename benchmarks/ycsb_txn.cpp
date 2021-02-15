@@ -27,7 +27,7 @@ RC ycsb_txn_man::run_txn(base_query * query) {
     itemid_t * m_item = NULL;
 #if CC_ALG == BAMBOO && (THREAD_CNT != 1)
     int access_id;
-    double retire_threshold = m_query->request_cnt * (1 - g_last_retire);
+    retire_threshold = (uint32_t) floor(m_query->request_cnt * (1 - g_last_retire));
 #else
     row_cnt = 0;
 #endif

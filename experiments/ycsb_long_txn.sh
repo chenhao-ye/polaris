@@ -1,8 +1,8 @@
 cd ..
-rm outputs/stats.json
+#rm outputs/stats.json
 
 zipf=0.9
-for l in 0 0.15
+for l in 0.15 #0
 do
 for thd in 120 96 64 32 16 8 4 2 1 # 1 2 4 8 16 32 64 96 120 
 do

@@ -70,10 +70,8 @@ void txn_man::set_txn_id(txnid_t txn_id) {
     commit_barriers = 0;
     //commit_barriers = g_thread_cnt << 2;
     //addr_barriers = &(tmp_barriers);
-    #if BB_AUTORETIRE
-    // USED FOR AUTO RETIRE
-    start_ts = get_sys_clock();
-    #endif
+    if (g_last_retire > 0)
+        start_ts = get_sys_clock();
 #endif
 #endif
 #if CC_ALG == IC3
@@ -477,9 +475,8 @@ RC txn_man::finish(RC rc) {
   if (rc == Abort)
       status = ABORTED;
   else {
-#if PF_BASIC 
     uint64_t starttime = get_sys_clock();
-#endif
+    //int times = 0;
     // aggregate barrier
     // addr_barriers = &(commit_barriers);
     // COMPILER_BARRIER
@@ -489,6 +486,22 @@ RC txn_man::finish(RC rc) {
         if (commit_barriers & ABORTED) {
             rc = Abort;
             break;
+        }
+        if (g_last_retire > 0 && (retire_threshold < row_cnt - 1)) {
+            //times++;
+            //if (times >= 10) {
+                uint64_t lapse = get_sys_clock();
+                if ((lapse - starttime) >= (lapse - start_ts) * g_last_retire) {
+            //printf("late retire\n");
+                    for (int rid = row_cnt - 1; rid > retire_threshold; rid--) {
+                        accesses[rid]->orig_row->retire_row(accesses[rid]->lock_entry);
+                    }
+                    retire_threshold = row_cnt - 1;
+                }
+            //if ( (double)(lapse-starttime)/(lapse - start_ts) > 0)
+            //    printf("%.6f\n", (lapse - starttime) / (lapse - start_ts));
+           //     times = 0;
+           // }
         }
     }
 #if PF_BASIC 

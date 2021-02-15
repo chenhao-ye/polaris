@@ -116,6 +116,7 @@ class txn_man
     uint8_t             padding2[64 - sizeof(uint64_t)];
     //uint64_t volatile   tmp_barriers;
     //volatile uint64_t * volatile addr_barriers;
+    int                 retire_threshold;
 
     // [BAMBOO-AUTORETIRE, OCC]
     uint64_t 		    start_ts; // bamboo: update once per txn

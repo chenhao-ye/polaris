@@ -166,7 +166,7 @@ class Row_bamboo {
     #if CC_ALG == BAMBOO
         BBLockEntry * entry = access->lock_entry;
         entry->txn->lock_ready = false;
-        entry->txn->lock_abort = false;
+        // dont init lock_abort, can only be set true but not false. 
         entry->next = NULL;
         entry->prev = NULL;
         entry->status = LOCK_DROPPED;
