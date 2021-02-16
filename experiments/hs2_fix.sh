@@ -5,7 +5,7 @@ for i in 0 1 2 3 4
 do
 for l in 0 0.15
 do
-for fix in 0 1
+for fix in 1 #0 1
 do
 for pos in 0 0.25 0.5 0.75 1
 do

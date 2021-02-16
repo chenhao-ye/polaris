@@ -4,7 +4,6 @@
 ./ycsb_read_ratio.sh
 ./ic3.sh
 ./hs1_pos.sh
-./hs1_req.sh
 ./hs2_fix.sh
 ./hs2_flip.sh
 ./tpcc_thd.sh

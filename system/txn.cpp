@@ -494,6 +494,8 @@ RC txn_man::finish(RC rc) {
                 if ((lapse - starttime) >= (lapse - start_ts) * g_last_retire) {
             //printf("late retire\n");
                     for (int rid = row_cnt - 1; rid > retire_threshold; rid--) {
+                        if (accesses[rid]->lock_entry->type == LOCK_SH)
+                            continue;
                         accesses[rid]->orig_row->retire_row(accesses[rid]->lock_entry);
                     }
                     retire_threshold = row_cnt - 1;
