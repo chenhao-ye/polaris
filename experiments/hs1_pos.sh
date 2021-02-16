@@ -1,9 +1,9 @@
 cd ..
 rm outputs/stats.json
 
-for i in 0 1 2 3 4
+for i in 0 1 2 #3 4
 do
-for l in 0 0.15 
+for l in 0.15 #0 0.15 
 do
 for pos in 0 0.25 0.5 0.75 1
 do
@@ -18,7 +18,7 @@ done
 done
 done
 
-fname="hs1_pos_bb"
+fname="hs1_pos_bb_retire"
 cd outputs/
 python3 collect_stats.py
 mv stats.csv synthetic/${fname}.csv

@@ -2,7 +2,7 @@ cd ..
 rm outputs/stats.json
 
 wh=1
-for i in 0 1 2 3 4
+for i in 0 1 2 #3 4
 do
 for thd in 120 96 64 32 16 8 4 2 1 #1 2 4 8 16 32 64 96 #120
 do
@@ -14,7 +14,7 @@ done
 done
 
 #fname="tpcc-thd-wh1"
-fname="tpcc-thd-wh1_bb"
+fname="tpcc-thd-wh1_bb_retire"
 cd outputs/
 python3 collect_stats.py
 mv stats.csv tpcc/${fname}.csv

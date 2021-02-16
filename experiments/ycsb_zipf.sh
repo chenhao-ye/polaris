@@ -2,9 +2,9 @@ cd ..
 rm outputs/stats.json
 
 thd=32
-for l in 0 0.15
+for l in 0.15
 do
-for i in 0 1 2 3 4
+for i in 0 1 2 #3 4
 do
 for zipf in 0.5 0.7 0.8 0.9 0.99 
 do
@@ -16,7 +16,7 @@ done
 done
 done
 
-fname="ycsb-zipf-100g_bb"
+fname="ycsb-zipf-100g_bb_retire"
 cd outputs/
 python3 collect_stats.py
 mv stats.csv ycsb_other/${fname}.csv

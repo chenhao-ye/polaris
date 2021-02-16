@@ -2,9 +2,9 @@ cd ..
 rm outputs/stats.json
 
 mode=true
-for i in 0 1 2 3 4
+for i in 0 1 2 #3 4
 do
-for l in 0 0.15
+for l in 0.15
 do
 for thd in 1 2 4 8 16 32 64 96 120
 do
@@ -28,7 +28,7 @@ mode=false
 #done
 #done
 
-fname="ic3_bb"
+fname="ic3_bb_retire"
 cd outputs/
 python3 collect_stats.py
 mv stats.csv tpcc/${fname}.csv
