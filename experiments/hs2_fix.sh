@@ -3,7 +3,7 @@ rm outputs/stats.json
 
 for i in 0 1 2 #3 4
 do
-for l in 0.15 #0
+for l in 0 #0.15 0
 do
 for fix in 0 1
 do
@@ -21,7 +21,7 @@ done
 done
 done
 
-fname="hs2_fix_bb_retire"
+fname="hs2_fix_bb_no_retire"
 cd outputs/
 python3 collect_stats.py
 mv stats.csv synthetic/${fname}.csv

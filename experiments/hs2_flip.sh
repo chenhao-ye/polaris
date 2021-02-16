@@ -1,7 +1,7 @@
 cd ..
 rm outputs/stats.json
 
-for l in 0.15
+for l in 0.15 #0
 do
 for i in 0 1 2 #3 4
 do
