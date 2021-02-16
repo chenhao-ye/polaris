@@ -11,7 +11,7 @@ for pos in 0 0.25 0.5 0.75 1
 do
 for alg in BAMBOO #WOUND_WAIT BAMBOO 
 do
-for thd in 16 32
+for thd in 32
 do
 		python test.py experiments/synthetic_ycsb.json BB_LAST_RETIRE=$l FIXED_HS=${fix} NUM_HS=2 THREAD_CNT=${thd} SPECIFIED_RATIO=${pos} CC_ALG=${alg} OUTPUT_TO_FILE=true CPU_FREQ=2.8
 done
