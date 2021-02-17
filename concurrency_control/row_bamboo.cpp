@@ -631,7 +631,7 @@ RC Row_bamboo::insert_read_to_retired(BBLockEntry * to_insert, ts_t ts,
 #if PF_CS
         uint64_t startt = get_sys_clock();
         access->data->copy(en->access->orig_data);
-        INC_STATS(entry->txn->get_thd_id(), time_copy, get_sys_clock() - startt);
+        INC_STATS(to_insert->txn->get_thd_id(), time_copy, get_sys_clock() - startt);
 #else
         access->data->copy(en->access->orig_data);
 #endif
@@ -655,9 +655,9 @@ RC Row_bamboo::insert_read_to_retired(BBLockEntry * to_insert, ts_t ts,
                 to_insert->status = LOCK_RETIRED; 
                 retired_cnt++; 
 #if PF_CS
-                startt = get_sys_clock();
+                uint64_t startt = get_sys_clock();
                 access->data->copy(owners->access->orig_data);
-                INC_STATS(entry->txn->get_thd_id(), time_copy, get_sys_clock() - startt);
+                INC_STATS(to_insert->txn->get_thd_id(), time_copy, get_sys_clock() - startt);
 #else
                 access->data->copy(owners->access->orig_data);
 #endif
