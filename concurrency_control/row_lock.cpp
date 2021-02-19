@@ -114,7 +114,8 @@ RC Row_lock::lock_get(lock_t type, txn_man * txn, uint64_t* &txnids,
       conflict = true;
   }
   // Some txns coming earlier is waiting. Should also wait.
-  if (CC_ALG == DL_DETECT && waiters_head != NULL)
+  //if (CC_ALG == DL_DETECT && waiters_head != NULL)
+  if (waiters_head != NULL)
     conflict = true;
 
   if (conflict) {

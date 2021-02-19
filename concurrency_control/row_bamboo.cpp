@@ -76,9 +76,20 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
     // initialize a lock entry
     BBLockEntry * to_insert = get_entry(access);
     to_insert->type = type;
+#if PF_MODEL
+    INC_STATS(txn->get_thd_id(), lock_acquire_cnt, 1);
+#endif
+#if PF_CS
+    uint64_t starttime = get_sys_clock();
+#endif
     // take the latch
     lock(txn);
     COMPILER_BARRIER
+#if PF_CS
+    uint64_t endtime = get_sys_clock();
+    INC_STATS(txn->get_thd_id(), time_get_latch, endtime - starttime);
+    starttime = endtime;
+#endif
     // timestamp
     ts_t ts = 0;
     ts_t owner_ts = 0;
@@ -127,6 +138,10 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
 #endif
             }
         } else { // no owners
+#if PF_MODEL
+            if (waiter_cnt == 0 && (!retired_tail || (retired_tail->is_cohead && retired_tail->type == LOCK_SH)))
+                INC_STATS(txn->get_thd_id(), lock_directly_cnt, 1);
+#endif
 #if BB_DYNAMIC_TS
             // no owner, retired may not have ts.
             if (retired_tail) {
@@ -166,6 +181,9 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
 			}
             UPDATE_RETIRE_INFO(to_insert, retired_tail);
             ADD_TO_RETIRED_TAIL(to_insert);
+#if PF_CS
+            INC_STATS(txn->get_thd_id(), time_get_cs, get_sys_clock() - starttime);
+#endif
             COMPILER_BARRIER
             unlock(txn);
             return rc;
@@ -179,8 +197,14 @@ RC Row_bamboo::lock_get(lock_t type, txn_man * txn, Access * access) {
             owners->status = LOCK_OWNER;
             owners->txn->lock_ready = true;
             UPDATE_RETIRE_INFO(to_insert, retired_tail);
+#if PF_CS
+            INC_STATS(txn->get_thd_id(), time_get_cs, get_sys_clock() - starttime);
+#endif
             COMPILER_BARRIER
             unlock(txn);
+#if PF_MODEL
+            INC_STATS(txn->get_thd_id(), lock_directly_cnt, 1);
+#endif
             return rc;
             // goto final;
         }
@@ -249,6 +273,9 @@ final:
 	assert(((rc == WAIT) == (!txn->lock_ready)) || rc == Abort);
 	check_correctness();
 #endif
+#if PF_CS
+    INC_STATS(txn->get_thd_id(), time_get_cs, get_sys_clock() - starttime);
+#endif
     // release the latch
     COMPILER_BARRIER
     unlock(txn);
@@ -295,9 +322,6 @@ RC Row_bamboo::lock_retire(BBLockEntry * entry) {
     INC_STATS(entry->txn->get_thd_id(), time_retire_cs, get_sys_clock() -
     starttime);
 #endif
-#if DEBUG_BAMBOO
-	// printf("[txn-%lu] lock_retire(%p, %d) ts=%lu\n", entry->txn->get_txn_id(), this, entry->type, entry->txn->get_ts());
-#endif
     COMPILER_BARRIER
     unlock(entry->txn);
     return rc;
@@ -316,8 +340,8 @@ RC Row_bamboo::lock_release(BBLockEntry * entry, RC rc) {
     COMPILER_BARRIER
 #if PF_CS
     uint64_t endtime = get_sys_clock();
-  INC_STATS(entry->txn->get_thd_id(), time_release_latch, endtime- starttime);
-  starttime = endtime;
+    INC_STATS(entry->txn->get_thd_id(), time_release_latch, endtime- starttime);
+    starttime = endtime;
 #endif
     // if in retired
     if (entry->status == LOCK_RETIRED) {
@@ -325,8 +349,15 @@ RC Row_bamboo::lock_release(BBLockEntry * entry, RC rc) {
     } else if (entry->status == LOCK_OWNER) {
         owners = NULL;
         // not found in retired, need to make globally visible if rc = commit
-        if (rc == RCOK && (entry->type == LOCK_EX))
-            entry->access->orig_row->copy(entry->access->data);
+        if (rc == RCOK && (entry->type == LOCK_EX)) {
+#if PF_CS
+                uint64_t startt = get_sys_clock();
+                entry->access->orig_row->copy(entry->access->data);
+                INC_STATS(entry->txn->get_thd_id(), time_copy, get_sys_clock() - startt);
+#else
+                entry->access->orig_row->copy(entry->access->data);
+#endif
+        }
     } else if (entry->status == LOCK_WAITER) {
 #if DEBUG_BAMBOO 
 		UInt32 cnt = 0;
@@ -360,9 +391,6 @@ RC Row_bamboo::lock_release(BBLockEntry * entry, RC rc) {
 #if PF_CS
     INC_STATS(entry->txn->get_thd_id(), time_release_cs, get_sys_clock() -
   starttime);
-#endif
-#if DEBUG_BAMBOO
-	// printf("[txn-%lu] lock_release(%p, %d) status=%d ts=%lu\n", entry->txn->get_txn_id(), this, entry->type, rc, entry->txn->get_ts());
 #endif
     COMPILER_BARRIER
     unlock(entry->txn);
@@ -540,7 +568,7 @@ txn) {
     // abort till end, no need to update barrier as set abort anyway
     LIST_RM_SINCE(retired_head, retired_tail, en);
     while(en) {
-        en->txn->set_abort();
+        en->txn->set_abort(true);
         to_return = en;
         if (retired_cnt == 0)
           printf("error!\n");
@@ -600,7 +628,13 @@ RC Row_bamboo::insert_read_to_retired(BBLockEntry * to_insert, ts_t ts,
         to_insert->status = LOCK_RETIRED; 
         retired_cnt++;
 		to_insert->txn->lock_ready = true;
-		access->data->copy(en->access->orig_data);
+#if PF_CS
+        uint64_t startt = get_sys_clock();
+        access->data->copy(en->access->orig_data);
+        INC_STATS(to_insert->txn->get_thd_id(), time_copy, get_sys_clock() - startt);
+#else
+        access->data->copy(en->access->orig_data);
+#endif
 		rc = FINISH;
 #if DBEUG_BAMBOO
         check_correctness();
@@ -620,7 +654,13 @@ RC Row_bamboo::insert_read_to_retired(BBLockEntry * to_insert, ts_t ts,
                 LIST_PUT_TAIL(retired_head, retired_tail, to_insert); 
                 to_insert->status = LOCK_RETIRED; 
                 retired_cnt++; 
+#if PF_CS
+                uint64_t startt = get_sys_clock();
                 access->data->copy(owners->access->orig_data);
+                INC_STATS(to_insert->txn->get_thd_id(), time_copy, get_sys_clock() - startt);
+#else
+                access->data->copy(owners->access->orig_data);
+#endif
                 to_insert->txn->lock_ready = true;
                 rc = FINISH;
                 assert((owners->txn->commit_barriers & 3UL) != COMMITED);

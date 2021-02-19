@@ -109,9 +109,9 @@
 // [WW]
 #define WW_STARV_FREE               false // set false if compared w/ bamboo
 // [IC3]
-#define IC3_EAGER_EXEC              false
-#define IC3_RENDEZVOUS              false
-#define IC3_FIELD_LOCKING           false
+#define IC3_EAGER_EXEC              true 
+#define IC3_RENDEZVOUS              true
+#define IC3_FIELD_LOCKING           false // should not be true
 #define IC3_MODIFIED_TPCC           false
 
 /***********************************************/
@@ -236,6 +236,7 @@ extern TestCases					g_test_case;
 #define PF_BASIC					false
 #define PF_CS          					false // profiling inside critical path
 #define PF_ABORT_LENGTH          			false
+#define PF_MODEL          false
 
 /***********************************************/
 // Constant

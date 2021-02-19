@@ -1,0 +1,41 @@
+{
+	"THREAD_CNT": 32,
+	"MAX_TXN_PER_PART": 1000000,
+	"ABORT_PENALTY": 50000,
+	"LATCH": "LH_MCSLOCK",
+	"TERMINATE_BY_COUNT": "false",
+	"MAX_RUNTIME": 10,
+
+	"PF_BASIC": "true",
+	"PF_CS": "false",
+	"PF_ABORT": "false",
+
+	"CC_ALG": "BAMBOO",
+	"WW_STARV_FREE": "false",
+	"BB_DYNAMIC_TS": "true",
+	"BB_OPT_RAW": "true",
+	"BB_LAST_RETIRE": 0,
+	"BB_PRECOMMIT": "false",
+	"BB_AUTORETIRE": "false",
+	"BB_ALWAYS_RETIRE_READ": "true",
+
+	"WORKLOAD": "YCSB",
+	"SYNTHETIC_YCSB": "true",
+	"ZIPF_THETA": 0,
+	"READ_PERC": 1,
+  "POS_HS": "SPECIFIED",
+  "SPECIFIED_RATIO": 0,
+  "FLIP_RATIO": 0,
+  "NUM_HS": 1,
+  "FIRST_HS": "WR",
+  "SECOND_HS": "WR",
+  "FIXED_HS": 0,
+
+	"LONG_TXN_RATIO": 0,
+	"REQ_PER_QUERY": 16,
+	"SYNTH_TABLE_SIZE": 100000000,
+
+	"UNSET_NUMA": "false",
+	"COMPILE_ONLY": "false",
+	"NDEBUG": "true"
+}

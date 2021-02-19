@@ -24,6 +24,9 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
 #endif
 #if CC_ALG == BAMBOO
     commit_barriers = 0;
+    //commit_barriers = g_thread_cnt << 2;
+    //tmp_barriers = 0;
+    //addr_barriers = &(tmp_barriers);
 #endif
     ready_part = 0;
     row_cnt = 0;
@@ -65,10 +68,10 @@ void txn_man::set_txn_id(txnid_t txn_id) {
     status = RUNNING;
 #if CC_ALG == BAMBOO
     commit_barriers = 0;
-    #if BB_AUTORETIRE
-    // USED FOR AUTO RETIRE
-    start_ts = get_sys_clock();
-    #endif
+    //commit_barriers = g_thread_cnt << 2;
+    //addr_barriers = &(tmp_barriers);
+    if (g_last_retire > 0)
+        start_ts = get_sys_clock();
 #endif
 #endif
 #if CC_ALG == IC3
@@ -392,7 +395,11 @@ void txn_man::index_insert(row_t * row, INDEX * index, idx_key_t key) {
     m_item->type = DT_row;
     m_item->location = row;
     m_item->valid = true;
+#ifdef NDEBUG
+    index->index_insert(key, m_item, part_id);
+#else
     assert(index->index_insert(key, m_item, part_id) == RCOK);
+#endif
 }
 
 itemid_t *
@@ -468,13 +475,35 @@ RC txn_man::finish(RC rc) {
   if (rc == Abort)
       status = ABORTED;
   else {
-#if PF_BASIC 
     uint64_t starttime = get_sys_clock();
-#endif
+    //int times = 0;
+    // aggregate barrier
+    // addr_barriers = &(commit_barriers);
+    // COMPILER_BARRIER
+    // ATOM_ADD(commit_barriers, tmp_barriers);
+    // ATOM_SUB(commit_barriers, g_thread_cnt << 2);
     while (!ATOM_CAS(commit_barriers, 0, COMMITED)) {
         if (commit_barriers & ABORTED) {
             rc = Abort;
             break;
+        }
+        if (g_last_retire > 0 && (retire_threshold < row_cnt - 1)) {
+            //times++;
+            //if (times >= 10) {
+                uint64_t lapse = get_sys_clock();
+                if ((lapse - starttime) >= (lapse - start_ts) * g_last_retire) {
+            //printf("late retire\n");
+                    for (int rid = row_cnt - 1; rid > retire_threshold; rid--) {
+                        if (accesses[rid]->lock_entry->type == LOCK_SH)
+                            continue;
+                        accesses[rid]->orig_row->retire_row(accesses[rid]->lock_entry);
+                    }
+                    retire_threshold = row_cnt - 1;
+                }
+            //if ( (double)(lapse-starttime)/(lapse - start_ts) > 0)
+            //    printf("%.6f\n", (lapse - starttime) / (lapse - start_ts));
+           //     times = 0;
+           // }
         }
     }
 #if PF_BASIC 

@@ -1,0 +1,31 @@
+{
+	"THREAD_CNT": 16,
+	"MAX_TXN_PER_PART": 100000,
+	"ABORT_PENALTY": 50000,
+	"LATCH": "LH_MCSLOCK",
+	"TERMINATE_BY_COUNT": "false",
+	"MAX_RUNTIME": 10,
+
+	"PF_BASIC": "true",
+	"PF_CS": "false",
+	"PF_ABORT": "false",
+
+	"CC_ALG": "BAMBOO",
+	"WW_STARV_FREE": "false",
+	"BB_DYNAMIC_TS": "true",
+	"BB_OPT_RAW": "true",
+	"BB_LAST_RETIRE": 0,
+	"BB_PRECOMMIT": "false",
+	"BB_AUTORETIRE": "false",
+	"BB_ALWAYS_RETIRE_READ": "true",
+
+	"WORKLOAD": "TPCC",
+  "NUM_WH": 1,
+  "TPCC_USER_ABORT": "true",
+  "IC3_EAGER_EXEC": "true",
+  "IC3_RENDEZVOUS": "true",
+
+	"UNSET_NUMA": "false",
+	"COMPILE_ONLY": "false",
+	"NDEBUG": "true"
+}
