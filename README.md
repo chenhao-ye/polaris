@@ -1,4 +1,4 @@
-DBx1000-BAMBOO
+DBx1000-Bamboo
 ==============
 The repository is built on DBx1000: https://github.com/yxymit/DBx1000 
 
