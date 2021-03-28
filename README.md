@@ -8,9 +8,11 @@ The repository is built on DBx1000: https://github.com/yxymit/DBx1000
     
 The major changes made in this repository:
 - added support for Bamboo and its optimizations. Bamboo is a concurrency control protocol proposed in:
+```
     Releasing Locks As Early As You Can: Reducing Contention of Hotspots by Violating Two-Phase Locking
     Zhihan Guo, Kan Wu, Cong Yan, Xiangyao Yu
     link (TBA)
+```
 - focused on support for: NO_WAIT, WOUND_WAIT, WAIT_DIE, SILO, IC3
 - changed the memory allocation for lock entry to be static
 - added support for MCS Lock in addition to mutex and spinlock
