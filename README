@@ -7,7 +7,7 @@ DBMS BENCHMARK
   dbms is a OLTP database benchmark with the following features.
   
   1. Seven different concurrency control algorithms are supported.
-    DL_DETECT[1]	: deadlock detection 
+  DL_DETECT[1]	: deadlock detection 
 	NO_WAIT[1]		: no wait two phase locking
 	WAIT_DIE[1]		: wait and die two phase locking
 	TIMESTAMP[1]	: basic T/O
