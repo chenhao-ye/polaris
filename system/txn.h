@@ -37,6 +37,11 @@ class Access {
 #elif CC_ALG == SILO
     ts_t 		tid;
     ts_t 		epoch;
+#elif CC_ALG == SILO_PRIO
+    ts_t 		data_ver; // tid in Silo
+    uint32_t	prio_ver;
+    ts_t 		epoch;
+	bool		is_owner;
 #elif CC_ALG == HEKATON
     void * 	history_entry;
 #elif CC_ALG == IC3
@@ -143,6 +148,19 @@ class txn_man
 #elif CC_ALG == SILO
     ts_t 			    last_tid;
     ts_t 			    _cur_tid;
+    bool 			    _pre_abort;
+    bool 			    _validation_no_wait;
+    // [SILO_PRIO]
+#elif CC_ALG == SILO_PRIO
+	// the priority of the current transaction
+	// it could be just the number of time this transaction has aborted
+	uint32_t			prio;
+    ts_t 			    _cur_data_ver;
+	// these two fields are temporarily set in `Row_silo_prio.access`
+	// and txn_mng then set it to access
+	uint32_t			last_prio_ver;
+    ts_t 			    last_data_ver;
+	bool				last_is_owner;
     bool 			    _pre_abort;
     bool 			    _validation_no_wait;
     // [IC3]
@@ -266,6 +284,8 @@ class txn_man
     // [SILO]
 #elif CC_ALG == SILO
     RC				    validate_silo();
+#elif CC_ALG == SILO_PRIO
+    RC				    validate_silo_prio();
 #endif
 
   protected:

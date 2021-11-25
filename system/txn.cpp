@@ -12,6 +12,7 @@
 // for info of lock entry
 #include "row_lock.h"
 #include "row_bamboo.h"
+#include "row_silo_prio.h"
 
 void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
     this->h_thd = h_thd;
@@ -37,7 +38,7 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
     for (int i = 0; i < MAX_ROW_PER_TXN; i++)
         accesses[i] = NULL;
     num_accesses_alloc = 0;
-#if CC_ALG == TICTOC || CC_ALG == SILO
+#if CC_ALG == TICTOC || CC_ALG == SILO || CC_ALG == SILO_PRIO
     _pre_abort = (g_params["pre_abort"] == "true");
     if (g_params["validation_lock"] == "no-wait")
         _validation_no_wait = true;
@@ -52,6 +53,9 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
     _atomic_timestamp = (g_params["atomic_timestamp"] == "true");
 #elif CC_ALG == SILO
     _cur_tid = 0;
+#elif CC_ALG == SILO_PRIO
+    _cur_data_ver = 0;
+	prio = 0;
 #elif CC_ALG == IC3
   depqueue = (TxnEntry **) _mm_malloc(sizeof(void *)*THREAD_CNT, 64);
   for (int i = 0; i < THREAD_CNT; i++)
@@ -142,6 +146,12 @@ void txn_man::cleanup(RC rc) {
 #endif
         row_t * orig_r = accesses[rid]->orig_row;
         access_t type = accesses[rid]->type;
+
+#if CC_ALG == SILO_PRIO
+		// actually, if a writer hasn't acquired the latch yet, we also release it here
+		if (accesses[rid]->is_owner) orig_r->manager->reader_release(prio, accesses[rid]->prio_ver);
+#endif
+
 #if COMMUTATIVE_OPS
         if (accesses[rid]->com_op != COM_NONE && (rc != Abort)) {
       if (accesses[rid]->com_op == COM_INC)
@@ -238,7 +248,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
     access->com_op = COM_NONE;
 #endif
         accesses[row_cnt] = access;
-#if (CC_ALG == SILO || CC_ALG == TICTOC)
+#if (CC_ALG == SILO || CC_ALG == TICTOC || CC_ALG == SILO_PRIO)
         access->data = (row_t *) _mm_malloc(sizeof(row_t), 64);
         access->data->init(MAX_TUPLE_SIZE);
         access->orig_data = (row_t *) _mm_malloc(sizeof(row_t), 64);
@@ -323,6 +333,10 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
     accesses[row_cnt]->rts = last_rts;
 #elif CC_ALG == SILO
     accesses[row_cnt]->tid = last_tid;
+#elif CC_ALG == SILO_PRIO
+	accesses[row_cnt]->is_owner = last_is_owner;
+    accesses[row_cnt]->data_ver = last_data_ver;
+	if (last_is_owner) accesses[row_cnt]->prio_ver = last_prio_ver;
 #elif CC_ALG == HEKATON
   accesses[row_cnt]->history_entry = history_entry;
 #endif
@@ -444,6 +458,11 @@ RC txn_man::finish(RC rc) {
 #elif CC_ALG == SILO
   if (rc == RCOK)
 		rc = validate_silo();
+	else 
+		cleanup(rc);
+#elif CC_ALG == SILO_PRIO
+  if (rc == RCOK)
+		rc = validate_silo_prio();
 	else 
 		cleanup(rc);
 #elif CC_ALG == IC3

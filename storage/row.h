@@ -33,6 +33,7 @@ class Row_ts;
 class Row_occ;
 class Row_tictoc;
 class Row_silo;
+class Row_silo_prio;
 class Row_vll;
 class Row_ww;
 class Row_bamboo;
@@ -129,6 +130,8 @@ class row_t
   	Row_tictoc * manager;
   #elif CC_ALG == SILO
   	Row_silo * manager;
+  #elif CC_ALG == SILO_PRIO
+  	Row_silo_prio * manager;
   #elif CC_ALG == VLL
   	Row_vll * manager;
   #elif CC_ALG == WOUND_WAIT
