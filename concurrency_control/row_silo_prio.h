@@ -161,27 +161,27 @@ public:
 
 	// the reader only need to release its priority
 	void		reader_release(uint32_t prio, uint32_t prio_ver) {
-		TID_prio_t v;
+		TID_prio_t v, v2;
 	retry:
 		v = _tid_word_prio;
 		if (v.is_locked()) return;
-		v.release_prio(prio, prio_ver);
-		if (!__sync_bool_compare_and_swap(&_tid_word_prio.raw_bits, v.raw_bits,
-			v.get_locked_copy().raw_bits))
+		v2 = v;
+		v2.release_prio(prio, prio_ver);
+		if (!__sync_bool_compare_and_swap(&_tid_word_prio.raw_bits, v.raw_bits, v2.raw_bits))
 			goto retry;
 	}
 
 	// in the case of abort, the writer just do the same things as reader plus
 	// releasing latch
 	void		writer_release_abort(uint32_t prio, uint32_t prio_ver) {
-		TID_prio_t v;
+		TID_prio_t v, v2;
 	retry:
 		v = _tid_word_prio;
 		assert (v.is_locked());
-		v.unlock();
-		v.release_prio(prio, prio_ver);
-		if (!__sync_bool_compare_and_swap(&_tid_word_prio.raw_bits, v.raw_bits,
-			v.get_locked_copy().raw_bits))
+		v2 = v;
+		v2.unlock();
+		v2.release_prio(prio, prio_ver);
+		if (!__sync_bool_compare_and_swap(&_tid_word_prio.raw_bits, v.raw_bits, v2.raw_bits))
 			goto retry;
 	}
 
