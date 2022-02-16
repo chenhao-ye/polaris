@@ -13,7 +13,10 @@ public:
 	uint64_t waiting_time;
 	uint64_t part_num;
 	uint64_t * part_to_access;
-    bool rerun;
+	bool rerun;
+#if CC_ALG == SILO_PRIO
+	uint32_t prio = 0;
+#endif
 };
 
 // All the querise for a particular thread.
