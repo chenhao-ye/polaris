@@ -113,6 +113,25 @@
 #define IC3_RENDEZVOUS              true
 #define IC3_FIELD_LOCKING           false // should not be true
 #define IC3_MODIFIED_TPCC           false
+// [SILO_PRIO]
+//   whether use fixed priority; if true, a query's priority won't be
+//   incremented no matter how many times it has aborted
+#define SILO_PRIO_FIXED_PRIO        true
+//   increment the priority of a query after how many aborts
+//   only effective if SILO_PRIO_FIXED_PRIO is false
+#define SILO_PRIO_INC_PRIO_AFTER_NUM_ABORT 2
+//   optimization: if true, the lowest-priority transaction does not place any
+//   reserveration; this avoid a shared-memory write to TID
+#define SILO_PRIO_NO_RESERVE_LOWEST_PRIO true
+//   how to distribute the number of bits in TID (change is not recommended...)
+#define SILO_PRIO_NUM_BITS_PRIO_VER 4
+#define SILO_PRIO_NUM_BITS_PRIO     4
+#define SILO_PRIO_NUM_BITS_REF_CNT  12
+#define SILO_PRIO_NUM_BITS_DATA_VER 43
+
+static_assert(SILO_PRIO_NUM_BITS_PRIO_VER + SILO_PRIO_NUM_BITS_PRIO \
+	+ SILO_PRIO_NUM_BITS_REF_CNT + SILO_PRIO_NUM_BITS_DATA_VER + 1 == 64,
+	"TID must be exactly 64 bits");
 
 /***********************************************/
 // Logging

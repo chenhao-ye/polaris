@@ -68,6 +68,11 @@ public:
 	// acquire/release_prio will maintain ref_cnt based on priority
 	bool acquire_prio(uint32_t prio) {
 		if (tid_prio.prio == prio) {
+#if SILO_PRIO_NO_RESERVE_LOWEST_PRIO
+			// optimization: if the current txn is the lowest-priority txn,
+			// there is no need to reserve this transaction
+			if (prio == 0) return false;
+#endif
 			inc_ref_cnt();
 			return true;
 		}
@@ -97,7 +102,8 @@ public:
 };
 
 static_assert(sizeof(TID_prio_t) == 8, "TID_prio_t must be of size 64 bits");
-static_assert(std::atomic<TID_prio_t>::is_always_lock_free, "TID_prio_t must be lock-free atomic");
+static_assert(std::atomic<TID_prio_t>::is_always_lock_free,
+	"TID_prio_t must be lock-free atomic");
 
 
 class Row_silo_prio {
