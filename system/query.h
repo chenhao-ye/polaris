@@ -16,7 +16,9 @@ public:
 	bool rerun;
 #if CC_ALG == SILO_PRIO
 	uint32_t num_abort = 0;
-	uint32_t prio = 0;
+	uint32_t prio = drand48() < HIGH_PRIO_RATIO ? 1 : 0;
+	// note prio may be overwritten by subclass to support more complicated
+	// priority distribution, e.g. long-running txn
 #endif
 };
 
