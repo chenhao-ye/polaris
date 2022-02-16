@@ -41,7 +41,7 @@ class Access {
     ts_t 		data_ver; // tid in Silo
     uint32_t	prio_ver;
     ts_t 		epoch;
-	bool		is_owner;
+	bool		is_reserved;
 #elif CC_ALG == HEKATON
     void * 	history_entry;
 #elif CC_ALG == IC3

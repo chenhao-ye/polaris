@@ -149,7 +149,7 @@ void txn_man::cleanup(RC rc) {
 
 #if CC_ALG == SILO_PRIO
 		// actually, if a writer hasn't acquired the latch yet, we also release it here
-		if (accesses[rid]->is_owner) orig_r->manager->reader_release(prio, accesses[rid]->prio_ver);
+		if (accesses[rid]->is_reserved) orig_r->manager->reader_release(prio, accesses[rid]->prio_ver);
 #endif
 
 #if COMMUTATIVE_OPS
@@ -334,7 +334,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
 #elif CC_ALG == SILO
     accesses[row_cnt]->tid = last_tid;
 #elif CC_ALG == SILO_PRIO
-	accesses[row_cnt]->is_owner = last_is_owner;
+	accesses[row_cnt]->is_reserved = last_is_owner;
     accesses[row_cnt]->data_ver = last_data_ver;
 	if (last_is_owner) accesses[row_cnt]->prio_ver = last_prio_ver;
 #elif CC_ALG == HEKATON

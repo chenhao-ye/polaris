@@ -18,7 +18,7 @@ RC
 Row_silo_prio::access(txn_man * txn, TsType type, row_t * local_row) {
 	TID_prio_t v, v2;
 	const uint32_t prio = txn->prio;
-	bool is_owner;
+	bool is_reserved;
 	v = _tid_word.load(std::memory_order_relaxed);
 retry:
 	if (v.is_locked()) {
@@ -34,14 +34,14 @@ retry:
 		if (v != _tid_word.load(std::memory_order_relaxed)) goto retry;
 	}
 	v2 = v;
-	is_owner = v2.acquire_prio(prio);
+	is_reserved = v2.acquire_prio(prio);
 	local_row->copy(_row);
 	if (_tid_word.compare_exchange_strong(v, v2, std::memory_order_relaxed,
 			std::memory_order_relaxed))
 		goto retry;
-	txn->last_is_owner = is_owner;
+	txn->last_is_owner = is_reserved;
 	txn->last_data_ver = v2.get_data_ver();
-	if (is_owner) txn->last_prio_ver = v2.get_prio_ver();
+	if (is_reserved) txn->last_prio_ver = v2.get_prio_ver();
 	return RCOK;
 }
 

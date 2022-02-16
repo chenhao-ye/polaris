@@ -145,8 +145,8 @@ final:
 		for (int i = 0; i < num_locks; i++) {
 			Access * access = accesses[ write_set[i] ];
 			access->orig_row->manager->writer_release_abort(prio, access->prio_ver);
-			assert(access->is_owner);
-			access->is_owner = false;
+			assert(access->is_reserved);
+			access->is_reserved = false;
 		}
 		cleanup(rc);
 	} else {
@@ -154,8 +154,8 @@ final:
 			Access * access = accesses[ write_set[i] ];
 			access->orig_row->manager->write(access->data);
 			access->orig_row->manager->writer_release_commit(_cur_data_ver);
-			assert(access->is_owner);
-			access->is_owner = false;
+			assert(access->is_reserved);
+			access->is_reserved = false;
 		}
 		cleanup(rc);
 	}
