@@ -10,7 +10,7 @@ void
 Row_silo_prio::init(row_t * row) 
 {
 	_row = row;
-	_tid_word_prio.raw_bits = 0;
+	_tid_word.raw_bits = 0;
 }
 
 RC
@@ -19,7 +19,7 @@ Row_silo_prio::access(txn_man * txn, TsType type, row_t * local_row) {
 	const uint32_t prio = txn->prio;
 	bool is_owner;
 retry:
-	v = _tid_word_prio;
+	v = _tid_word;
 	if (v.is_locked()) {
 		PAUSE
 		goto retry;
@@ -29,12 +29,12 @@ retry:
 		if (type != R_REQ) return Abort;
 		COMPILER_BARRIER
 		// reread to ensure we read a consistent copy
-		if (v != _tid_word_prio) goto retry;
+		if (v != _tid_word) goto retry;
 	}
 	v2 = v;
 	is_owner = v2.acquire_prio(prio);
 	local_row->copy(_row);
-	if (!__sync_bool_compare_and_swap(&_tid_word_prio.raw_bits, v.raw_bits,
+	if (!__sync_bool_compare_and_swap(&_tid_word.raw_bits, v.raw_bits,
 		v2.raw_bits))
 		goto retry;
 	txn->last_is_owner = is_owner;

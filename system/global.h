@@ -180,3 +180,20 @@ enum com_t {COM_INC, COM_DEC, COM_NONE};
 #define UINT64_MAX 		18446744073709551615UL
 #endif // UINT64_MAX
 
+#if CC_ALG == SILO_PRIO
+
+#define SILO_PRIO_NUM_BITS_PRIO_VER 3
+#define SILO_PRIO_NUM_BITS_PRIO     4
+#define SILO_PRIO_NUM_BITS_REF_CNT  12
+#define SILO_PRIO_NUM_BITS_DATA_VER 44
+
+static_assert(SILO_PRIO_NUM_BITS_PRIO_VER + SILO_PRIO_NUM_BITS_PRIO \
+	+ SILO_PRIO_NUM_BITS_REF_CNT + SILO_PRIO_NUM_BITS_DATA_VER + 1 == 64,
+	"TID must be exactly 64 bits");
+
+// there is no SILO_PRIO_MAX_PRIO_VER, since we expect it to overflow
+#define SILO_PRIO_MAX_PRIO     ((1 << (SILO_PRIO_NUM_BITS_PRIO)) - 1)
+#define SILO_PRIO_MAX_REF_CNT  ((1 << (SILO_PRIO_NUM_BITS_REF_CNT)) - 1)
+#define SILO_PRIO_MAX_DATA_VER ((1 << (SILO_PRIO_NUM_BITS_DATA_VER)) - 1)
+
+#endif

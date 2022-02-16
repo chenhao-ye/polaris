@@ -12,20 +12,18 @@ struct TsReqEntry;
 
 #if CC_ALG == SILO_PRIO
 
-#define SILO_PRIO_MAX_REF_CNT 4096
-
 union TID_prio_t {
 	uint64_t raw_bits;
 	struct {
 		uint32_t latch : 1;
-		uint32_t prio_ver: 3;
+		uint32_t prio_ver: SILO_PRIO_NUM_BITS_PRIO_VER;
 		// currently support 16 levels of priority
 		// but we could just use more bits to support more
-		uint32_t prio : 4;
+		uint32_t prio : SILO_PRIO_NUM_BITS_PRIO;
 		// it's possible to have reference count as a separated value
 		// but for now, let's just embed it for simplicity
-		uint32_t ref_cnt : 12;
-		uint64_t data_ver : 44;
+		uint32_t ref_cnt : SILO_PRIO_NUM_BITS_REF_CNT;
+		uint64_t data_ver : SILO_PRIO_NUM_BITS_DATA_VER;
 	} tid_prio;
 
 	TID_prio_t() {}
@@ -100,7 +98,7 @@ public:
 static_assert(sizeof(TID_prio_t) == 8, "TID_prio_t must be of size 64 bits");
 
 class Row_silo_prio {
-	TID_prio_t _tid_word_prio;
+	TID_prio_t _tid_word;
 	row_t * 			_row;
 
 public:
@@ -110,17 +108,17 @@ public:
 		LOCK_ERR_PRIO,		// fail due to priority issue
 	};
 
-	uint32_t			get_data_ver() { return _tid_word_prio.get_data_ver(); }
+	uint32_t			get_data_ver() { return _tid_word.get_data_ver(); }
 
 	void 				init(row_t * row);
 	RC 					access(txn_man * txn, TsType type, row_t * local_row);
 	// this write only do copy, but not TID operation
 	// TID operation is done in writer_release
 	void				write(row_t * data);
-	void 				assert_lock() { assert(_tid_word_prio.is_locked()); }
+	void 				assert_lock() { assert(_tid_word.is_locked()); }
 
 	bool				validate(ts_t old_data_ver, bool in_write_set) {
-		TID_prio_t v = _tid_word_prio;
+		TID_prio_t v = _tid_word;
 		if (!in_write_set && v.is_locked()) return false;
 		return v.get_data_ver() == old_data_ver;
 	}
@@ -129,13 +127,13 @@ public:
 	LOCK_STATUS 		lock(uint32_t prio) {
 		TID_prio_t v;
 	retry:
-		v = _tid_word_prio;
+		v = _tid_word;
 		if (v.is_locked()) {
 			PAUSE
 			goto retry;
 		}
 		if (v.get_prio() > prio) return LOCK_STATUS::LOCK_ERR_PRIO;
-		if (!__sync_bool_compare_and_swap(&_tid_word_prio.raw_bits, v.raw_bits,
+		if (!__sync_bool_compare_and_swap(&_tid_word.raw_bits, v.raw_bits,
 			v.get_locked_copy().raw_bits))
 			goto retry;
 		return LOCK_STATUS::LOCK_DONE;
@@ -144,10 +142,10 @@ public:
 	LOCK_STATUS			try_lock(uint32_t prio) {
 		TID_prio_t v;
 	retry:
-		v = _tid_word_prio;
+		v = _tid_word;
 		if (v.is_locked()) return LOCK_STATUS::LOCK_ERR_TAKEN;
 		if (v.get_prio() > prio) return LOCK_STATUS::LOCK_ERR_PRIO;
-		if (!__sync_bool_compare_and_swap(&_tid_word_prio.raw_bits, v.raw_bits,
+		if (!__sync_bool_compare_and_swap(&_tid_word.raw_bits, v.raw_bits,
 			v.get_locked_copy().raw_bits))
 			goto retry;
 		return LOCK_STATUS::LOCK_DONE;
@@ -156,18 +154,18 @@ public:
 	// temporarily release the lock
 	// only happen as a backoff in validation
 	void				unlock() {
-		_tid_word_prio.unlock();
+		_tid_word.unlock();
 	}
 
 	// the reader only need to release its priority
 	void		reader_release(uint32_t prio, uint32_t prio_ver) {
 		TID_prio_t v, v2;
 	retry:
-		v = _tid_word_prio;
+		v = _tid_word;
 		if (v.is_locked()) return;
 		v2 = v;
 		v2.release_prio(prio, prio_ver);
-		if (!__sync_bool_compare_and_swap(&_tid_word_prio.raw_bits, v.raw_bits, v2.raw_bits))
+		if (!__sync_bool_compare_and_swap(&_tid_word.raw_bits, v.raw_bits, v2.raw_bits))
 			goto retry;
 	}
 
@@ -176,20 +174,20 @@ public:
 	void		writer_release_abort(uint32_t prio, uint32_t prio_ver) {
 		TID_prio_t v, v2;
 	retry:
-		v = _tid_word_prio;
+		v = _tid_word;
 		assert (v.is_locked());
 		v2 = v;
 		v2.unlock();
 		v2.release_prio(prio, prio_ver);
-		if (!__sync_bool_compare_and_swap(&_tid_word_prio.raw_bits, v.raw_bits, v2.raw_bits))
+		if (!__sync_bool_compare_and_swap(&_tid_word.raw_bits, v.raw_bits, v2.raw_bits))
 			goto retry;
 	}
 
 	// in the case of abort, the writer update the data version and reset
 	// prioirty and ref_cnt
 	void		writer_release_commit(uint64_t data_ver) {
-		TID_prio_t v(data_ver, _tid_word_prio.get_prio_ver() + 1);
-		_tid_word_prio = v;
+		TID_prio_t v(data_ver, _tid_word.get_prio_ver() + 1);
+		_tid_word = v;
 	}
 };
 
