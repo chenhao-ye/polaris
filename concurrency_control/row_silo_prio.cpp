@@ -3,6 +3,7 @@
 #include "row.h"
 #include "row_silo_prio.h"
 #include "mem_alloc.h"
+#include <atomic>
 
 #if CC_ALG == SILO_PRIO
 
@@ -10,7 +11,7 @@ void
 Row_silo_prio::init(row_t * row) 
 {
 	_row = row;
-	_tid_word.raw_bits = 0;
+	_tid_word.store({0, 0}, std::memory_order_relaxed);
 }
 
 RC
@@ -18,10 +19,11 @@ Row_silo_prio::access(txn_man * txn, TsType type, row_t * local_row) {
 	TID_prio_t v, v2;
 	const uint32_t prio = txn->prio;
 	bool is_owner;
+	v = _tid_word.load(std::memory_order_relaxed);
 retry:
-	v = _tid_word;
 	if (v.is_locked()) {
 		PAUSE
+		v = _tid_word.load(std::memory_order_relaxed);
 		goto retry;
 	}
 	// for a write, abort if the current priority is higher
@@ -29,13 +31,13 @@ retry:
 		if (type != R_REQ) return Abort;
 		COMPILER_BARRIER
 		// reread to ensure we read a consistent copy
-		if (v != _tid_word) goto retry;
+		if (v != _tid_word.load(std::memory_order_relaxed)) goto retry;
 	}
 	v2 = v;
 	is_owner = v2.acquire_prio(prio);
 	local_row->copy(_row);
-	if (!__sync_bool_compare_and_swap(&_tid_word.raw_bits, v.raw_bits,
-		v2.raw_bits))
+	if (_tid_word.compare_exchange_strong(v, v2, std::memory_order_relaxed,
+			std::memory_order_relaxed))
 		goto retry;
 	txn->last_is_owner = is_owner;
 	txn->last_data_ver = v2.get_data_ver();

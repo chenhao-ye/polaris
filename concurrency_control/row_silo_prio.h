@@ -3,6 +3,7 @@
 #include "global.h"
 #include <cstdint>
 #include <cassert>
+#include <atomic>
 
 class row_t;
 class table_t;
@@ -96,10 +97,12 @@ public:
 };
 
 static_assert(sizeof(TID_prio_t) == 8, "TID_prio_t must be of size 64 bits");
+static_assert(std::atomic<TID_prio_t>::is_always_lock_free, "TID_prio_t must be lock-free atomic");
+
 
 class Row_silo_prio {
-	TID_prio_t _tid_word;
-	row_t * 			_row;
+	std::atomic<TID_prio_t>	_tid_word;
+	row_t * 				_row;
 
 public:
 	enum class LOCK_STATUS: uint8_t {
@@ -108,45 +111,45 @@ public:
 		LOCK_ERR_PRIO,		// fail due to priority issue
 	};
 
-	uint32_t			get_data_ver() { return _tid_word.get_data_ver(); }
+	uint32_t			get_data_ver() { return _tid_word.load(std::memory_order_relaxed).get_data_ver(); }
 
 	void 				init(row_t * row);
 	RC 					access(txn_man * txn, TsType type, row_t * local_row);
 	// this write only do copy, but not TID operation
 	// TID operation is done in writer_release
 	void				write(row_t * data);
-	void 				assert_lock() { assert(_tid_word.is_locked()); }
+	void 				assert_lock() { assert(_tid_word.load(std::memory_order_relaxed).is_locked()); }
 
 	bool				validate(ts_t old_data_ver, bool in_write_set) {
-		TID_prio_t v = _tid_word;
+		TID_prio_t v = _tid_word.load(std::memory_order_relaxed);
 		if (!in_write_set && v.is_locked()) return false;
 		return v.get_data_ver() == old_data_ver;
 	}
 
 	// if the transaction has lower priority, lock acquisition would fail
 	LOCK_STATUS 		lock(uint32_t prio) {
-		TID_prio_t v;
+		TID_prio_t v = _tid_word.load(std::memory_order_relaxed);
 	retry:
-		v = _tid_word;
 		if (v.is_locked()) {
 			PAUSE
+			v = _tid_word.load(std::memory_order_relaxed);
 			goto retry;
 		}
 		if (v.get_prio() > prio) return LOCK_STATUS::LOCK_ERR_PRIO;
-		if (!__sync_bool_compare_and_swap(&_tid_word.raw_bits, v.raw_bits,
-			v.get_locked_copy().raw_bits))
+		// if fail, compare_exchange_strong will save the new value into v
+		if (!_tid_word.compare_exchange_strong(v, v.get_locked_copy(),
+			std::memory_order_relaxed, std::memory_order_relaxed))
 			goto retry;
 		return LOCK_STATUS::LOCK_DONE;
 	}
 
 	LOCK_STATUS			try_lock(uint32_t prio) {
-		TID_prio_t v;
+		TID_prio_t v = _tid_word.load(std::memory_order_relaxed);
 	retry:
-		v = _tid_word;
 		if (v.is_locked()) return LOCK_STATUS::LOCK_ERR_TAKEN;
 		if (v.get_prio() > prio) return LOCK_STATUS::LOCK_ERR_PRIO;
-		if (!__sync_bool_compare_and_swap(&_tid_word.raw_bits, v.raw_bits,
-			v.get_locked_copy().raw_bits))
+		if (!_tid_word.compare_exchange_strong(v, v.get_locked_copy(),
+			std::memory_order_relaxed, std::memory_order_relaxed))
 			goto retry;
 		return LOCK_STATUS::LOCK_DONE;
 	}
@@ -154,18 +157,21 @@ public:
 	// temporarily release the lock
 	// only happen as a backoff in validation
 	void				unlock() {
-		_tid_word.unlock();
+		TID_prio_t v = _tid_word.load(std::memory_order_relaxed);
+		v.unlock();
+		_tid_word.store(v, std::memory_order_relaxed);
 	}
 
 	// the reader only need to release its priority
 	void		reader_release(uint32_t prio, uint32_t prio_ver) {
 		TID_prio_t v, v2;
+		v = _tid_word.load(std::memory_order_relaxed);
 	retry:
-		v = _tid_word;
 		if (v.is_locked()) return;
 		v2 = v;
 		v2.release_prio(prio, prio_ver);
-		if (!__sync_bool_compare_and_swap(&_tid_word.raw_bits, v.raw_bits, v2.raw_bits))
+		if (!_tid_word.compare_exchange_strong(v, v2, std::memory_order_relaxed,
+			std::memory_order_relaxed))
 			goto retry;
 	}
 
@@ -173,21 +179,22 @@ public:
 	// releasing latch
 	void		writer_release_abort(uint32_t prio, uint32_t prio_ver) {
 		TID_prio_t v, v2;
+		v = _tid_word.load(std::memory_order_relaxed);
 	retry:
-		v = _tid_word;
 		assert (v.is_locked());
 		v2 = v;
 		v2.unlock();
 		v2.release_prio(prio, prio_ver);
-		if (!__sync_bool_compare_and_swap(&_tid_word.raw_bits, v.raw_bits, v2.raw_bits))
+		if (!_tid_word.compare_exchange_strong(v, v2, std::memory_order_relaxed,
+			std::memory_order_relaxed))
 			goto retry;
 	}
 
 	// in the case of abort, the writer update the data version and reset
 	// prioirty and ref_cnt
 	void		writer_release_commit(uint64_t data_ver) {
-		TID_prio_t v(data_ver, _tid_word.get_prio_ver() + 1);
-		_tid_word = v;
+		TID_prio_t v(data_ver, _tid_word.load(std::memory_order_relaxed).get_prio_ver() + 1);
+		_tid_word.store(v, std::memory_order_relaxed);
 	}
 };
 

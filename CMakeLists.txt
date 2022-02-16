@@ -3,7 +3,7 @@ project(Dbx1000)
 
 SET (CMAKE_C_COMPILER "gcc")
 SET (CMAKE_CXX_COMPILER "g++")
-SET (CMAKE_CXX_FLAGS "-std=c++11 -Wno-deprecated-declarations" CACHE INTERNAL "compiler options" FORCE)
+SET (CMAKE_CXX_FLAGS "-std=c++17 -Wno-deprecated-declarations" CACHE INTERNAL "compiler options" FORCE)
 SET (CMAKE_CXX_FLAGS_DEBUG "-O0 -g" CACHE INTERNAL "compiler options" FORCE)
 SET (CMAKE_CXX_FLAGS_RELEASE "-O3" CACHE INTERNAL "compiler options" FORCE)
 
