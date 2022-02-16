@@ -117,14 +117,18 @@ public:
 		LOCK_ERR_PRIO,		// fail due to priority issue
 	};
 
-	uint32_t			get_data_ver() { return _tid_word.load(std::memory_order_relaxed).get_data_ver(); }
+	uint32_t			get_data_ver() {
+		return _tid_word.load(std::memory_order_relaxed).get_data_ver();
+	}
 
 	void 				init(row_t * row);
 	RC 					access(txn_man * txn, TsType type, row_t * local_row);
 	// this write only do copy, but not TID operation
 	// TID operation is done in writer_release
 	void				write(row_t * data);
-	void 				assert_lock() { assert(_tid_word.load(std::memory_order_relaxed).is_locked()); }
+	void 				assert_lock() {
+		assert(_tid_word.load(std::memory_order_relaxed).is_locked());
+	}
 
 	bool				validate(ts_t old_data_ver, bool in_write_set) {
 		TID_prio_t v = _tid_word.load(std::memory_order_relaxed);
@@ -199,7 +203,8 @@ public:
 	// in the case of abort, the writer update the data version and reset
 	// prioirty and ref_cnt
 	void		writer_release_commit(uint64_t data_ver) {
-		TID_prio_t v(data_ver, _tid_word.load(std::memory_order_relaxed).get_prio_ver() + 1);
+		TID_prio_t v(data_ver,
+			_tid_word.load(std::memory_order_relaxed).get_prio_ver() + 1);
 		_tid_word.store(v, std::memory_order_relaxed);
 	}
 };
