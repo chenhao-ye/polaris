@@ -9,6 +9,14 @@ uint64_t ycsb_query::the_n = 0;
 double ycsb_query::denom = 0;
 
 void ycsb_query::init(uint64_t thd_id, workload * h_wl, Query_thd * query_thd) {
+	// base_query init
+#if CC_ALG == SILO_PRIO
+	num_abort = 0;
+	double y;
+	drand48_r(&per_thread_rand_buf, &y);
+	prio = y < HIGH_PRIO_RATIO ? 1 : 0;
+#endif
+	// ycsb_query init
 	_query_thd = query_thd;
 	local_read_perc = g_read_perc;
 	local_req_per_query = REQ_PER_QUERY;

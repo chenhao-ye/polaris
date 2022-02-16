@@ -7,6 +7,8 @@
 #include "tpcc_query.h"
 #include "tpcc_helper.h"
 
+thread_local drand48_data per_thread_rand_buf;
+
 /*************************************************/
 //     class Query_queue
 /*************************************************/

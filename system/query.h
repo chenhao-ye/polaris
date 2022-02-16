@@ -7,6 +7,8 @@ class ycsb_query;
 class tpcc_query;
 class ycsb_request;
 
+extern thread_local drand48_data per_thread_rand_buf;
+
 class base_query {
 public:
 	virtual void init(uint64_t thd_id, workload * h_wl) = 0;
@@ -16,7 +18,7 @@ public:
 	bool rerun;
 #if CC_ALG == SILO_PRIO
 	uint32_t num_abort = 0;
-	uint32_t prio = drand48() < HIGH_PRIO_RATIO ? 1 : 0;
+	uint32_t prio = 0;
 	// note prio may be overwritten by subclass to support more complicated
 	// priority distribution, e.g. long-running txn
 #endif
