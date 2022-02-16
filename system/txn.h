@@ -157,7 +157,7 @@ class txn_man
 	uint32_t			prio;
     ts_t 			    _cur_data_ver;
 	// these two fields are temporarily set in `Row_silo_prio.access`
-	// and txn_mng then set it to access
+	// and txn_man then set it to access
 	uint32_t			last_prio_ver;
     ts_t 			    last_data_ver;
 	bool				last_is_owner;

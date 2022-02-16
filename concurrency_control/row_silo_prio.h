@@ -70,7 +70,7 @@ public:
 			inc_ref_cnt();
 			return true;
 		}
-		if (tid_prio.prio > prio) {
+		if (tid_prio.prio < prio) {
 			set_prio(prio);
 			set_ref_cnt(1);
 			return true;
