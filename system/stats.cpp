@@ -17,6 +17,10 @@ void Stats_thd::init(uint64_t thd_id) {
 
 void Stats_thd::clear() {
   ALL_METRICS(INIT_VAR, INIT_VAR, INIT_VAR)
+#if CC_ALG == SILO_PRIO
+  INIT_CNT(uint64_t, prio_txn_cnt, SILO_PRIO_NUM_PRIO_LEVEL);
+#endif
+  INIT_CNT(uint64_t, abort_txn_cnt, STAT_MAX_NUM_ABORT + 1);
 }
 
 void Stats_tmp::init() {

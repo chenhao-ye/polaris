@@ -1,5 +1,7 @@
 #pragma once
 
+#include "config.h"
+
 #define TMP_METRICS(x, y) \
   x(double, time_wait) x(double, time_man) x(double, time_index)
 #define ALL_METRICS(x, y, z) \
@@ -33,6 +35,17 @@
 #define WRITE_STAT_Y(tpe, name) \
   outf << STR_X(tpe, name) << "= " << VAL_Y(tpe, name) << ", ";
 
+// counter-array operators
+#define DEF_CNT(tpe, name, size) tpe name[size];
+#define INIT_CNT(tpe, name, size) memset(name, 0, size * sizeof(tpe)); \
+  assert(size == sizeof(name));
+#define PRINT_CNT(name, size) \
+  std::cout << STR(name) << " = [\n"; \
+  for (int i = 0; i < size; ++i) \
+    std::cout << '\t' << i << ": " << name[i] << ',\n'; \
+  std::cout << "]\n"; \
+  assert(size == sizeof(name));
+
 class Stats_thd {
  public:
   void init(uint64_t thd_id);
@@ -42,6 +55,14 @@ class Stats_thd {
   ALL_METRICS(DECLARE_VAR, DECLARE_VAR, DECLARE_VAR)
   uint64_t * all_debug1;
   uint64_t * all_debug2;
+
+#if CC_ALG == SILO_PRIO
+  // counter for txns for different priorities
+  DEF_CNT(uint64_t, prio_txn_cnt, SILO_PRIO_NUM_PRIO_LEVEL);
+#endif
+  // counter for txns with different num_abort (last one for overflow)
+  DEF_CNT(uint64_t, abort_txn_cnt, STAT_MAX_NUM_ABORT + 1);
+
   char _pad[CL_SIZE];
 };
 

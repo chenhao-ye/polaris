@@ -133,6 +133,13 @@ static_assert(SILO_PRIO_NUM_BITS_PRIO_VER + SILO_PRIO_NUM_BITS_PRIO \
 	+ SILO_PRIO_NUM_BITS_REF_CNT + SILO_PRIO_NUM_BITS_DATA_VER + 1 == 64,
 	"TID must be exactly 64 bits");
 
+// there is no SILO_PRIO_MAX_PRIO_VER, since we expect it to overflow
+#define SILO_PRIO_MAX_PRIO     ((1 << (SILO_PRIO_NUM_BITS_PRIO)) - 1)
+#define SILO_PRIO_MAX_REF_CNT  ((1 << (SILO_PRIO_NUM_BITS_REF_CNT)) - 1)
+#define SILO_PRIO_MAX_DATA_VER ((1 << (SILO_PRIO_NUM_BITS_DATA_VER)) - 1)
+
+#define SILO_PRIO_NUM_PRIO_LEVEL (1 << (SILO_PRIO_NUM_BITS_PRIO))
+
 // Workload-related config:
 //   priority distribution:
 //     High priority txn will be given prio 1 as beginning, and low priority txn
@@ -143,6 +150,10 @@ static_assert(SILO_PRIO_NUM_BITS_PRIO_VER + SILO_PRIO_NUM_BITS_PRIO \
 //     starts with prio 0, though the codebase does support to have two flags
 //     enabled together.
 #define HIGH_PRIO_RATIO 0
+//   we collect the query distribution in terms of num_abort; for
+//   abort_cnt < MAX_ABORT_CNT, we collect the exact number; for txn with more
+//   abort, we simply keep a counter for all of them
+#define STAT_MAX_NUM_ABORT (3 * (THREAD_CNT) + 10)
 
 /***********************************************/
 // Logging

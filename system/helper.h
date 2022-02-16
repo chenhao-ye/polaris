@@ -146,6 +146,10 @@
    if (STATS_ENABLE) \
      stats._stats[tid]->name = max(stats._stats[tid]->name, value);
 
+#define INC_STATS_CNT(tid, name, idx, value) \
+	if (STATS_ENABLE) \
+		stats._stats[tid]->name[idx] += value;
+
 /************************************************/
 // malloc helper
 /************************************************/

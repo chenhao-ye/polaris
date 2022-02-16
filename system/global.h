@@ -179,12 +179,3 @@ enum com_t {COM_INC, COM_DEC, COM_NONE};
 #ifndef UINT64_MAX
 #define UINT64_MAX 		18446744073709551615UL
 #endif // UINT64_MAX
-
-#if CC_ALG == SILO_PRIO
-
-// there is no SILO_PRIO_MAX_PRIO_VER, since we expect it to overflow
-#define SILO_PRIO_MAX_PRIO     ((1 << (SILO_PRIO_NUM_BITS_PRIO)) - 1)
-#define SILO_PRIO_MAX_REF_CNT  ((1 << (SILO_PRIO_NUM_BITS_REF_CNT)) - 1)
-#define SILO_PRIO_MAX_DATA_VER ((1 << (SILO_PRIO_NUM_BITS_DATA_VER)) - 1)
-
-#endif

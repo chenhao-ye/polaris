@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <sched.h>
 #include "global.h"
 #include "manager.h"
@@ -213,6 +214,11 @@ RC thread_t::run() {
                     INC_STATS(get_thd_id(), txn_cnt_long, 1);
             }
 #endif
+#if CC_ALG == SILO_PRIO
+            INC_STATS_CNT(get_thd_id(), prio_txn_cnt, m_txn->prio, 1);
+#endif
+            INC_STATS_CNT(get_thd_id(), abort_txn_cnt, \
+							std::min<int>(m_query->num_abort, STAT_MAX_NUM_ABORT), 1);
 			stats.commit(get_thd_id());
 			txn_cnt ++;
 		} else if (rc == Abort) {
