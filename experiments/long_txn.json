@@ -11,7 +11,7 @@
 	"PF_CS": "false",
 	"PF_ABORT": "false",
 
-	"CC_ALG": "BAMBOO",
+	"CC_ALG": "SILO_PRIO",
 	"WW_STARV_FREE": "false",
 	"BB_DYNAMIC_TS": "true",
 	"BB_OPT_RAW": "true",
