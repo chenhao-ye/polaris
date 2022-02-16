@@ -123,8 +123,13 @@ RC thread_t::run() {
         if (unlikely(m_txn->get_ts() == 0))
             m_txn->set_ts(get_next_ts());
 #elif CC_ALG == SILO_PRIO
+#if SILO_PRIO_FIXED_PRIO
 		m_txn->prio = m_query->prio;
-#endif
+#else
+		m_txn->prio = std::min<int>(SILO_PRIO_MAX_PRIO,
+			m_query->prio + (m_query->num_abort / SILO_PRIO_INC_PRIO_AFTER_NUM_ABORT));
+#endif // SILO_PRIO_FIXED_PRIO
+#endif // CC_ALG == SILO_PRIO
 		m_txn->set_txn_id(get_thd_id() + thd_txn_id * g_thread_cnt);
 		thd_txn_id ++;
 
@@ -172,6 +177,7 @@ RC thread_t::run() {
 		ts_t endtime = get_sys_clock();
 
 		if (rc == Abort) {
+			++(m_query->num_abort);
 			uint64_t penalty = 0;
 			if (ABORT_PENALTY != 0)  {
 				double r;

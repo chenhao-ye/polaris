@@ -15,6 +15,7 @@ public:
 	uint64_t * part_to_access;
 	bool rerun;
 #if CC_ALG == SILO_PRIO
+	uint32_t num_abort = 0;
 	uint32_t prio = 0;
 #endif
 };
