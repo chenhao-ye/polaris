@@ -55,7 +55,7 @@
     if (total_##name[i]) \
       std::cout << '\t' << i << ": " << total_##name[i] << ",\n"; \
   std::cout << "]\n"; \
-  assert(size == sizeof(name));
+  assert(size == sizeof(total_##name));
 
 class Stats_thd {
  public:
