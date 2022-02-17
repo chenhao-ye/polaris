@@ -143,14 +143,14 @@ txn_man::validate_silo_prio()
 	else 
 		_cur_data_ver ++;
 final:
-	// we release the priority and ref_cnt togther with the latch
+	// we release the priority and ref_cnt together with the latch
 	// for those rows with latch acquired (all read-only row and some write rows)
 	// we release them in cleanup()
 	if (rc == Abort) {
 		for (int i = 0; i < num_locks; i++) {
 			Access * access = accesses[ write_set[i] ];
 			access->orig_row->manager->writer_release_abort(prio, access->prio_ver);
-			assert(access->is_reserved);
+			assert(access->is_reserved || SILO_PRIO_NO_RESERVE_LOWEST_PRIO);
 			access->is_reserved = false;
 		}
 		cleanup(rc);
@@ -159,7 +159,7 @@ final:
 			Access * access = accesses[ write_set[i] ];
 			access->orig_row->manager->write(access->data);
 			access->orig_row->manager->writer_release_commit(_cur_data_ver);
-			assert(access->is_reserved);
+			assert(access->is_reserved || SILO_PRIO_NO_RESERVE_LOWEST_PRIO);
 			access->is_reserved = false;
 		}
 		cleanup(rc);
