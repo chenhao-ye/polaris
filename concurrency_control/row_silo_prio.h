@@ -90,6 +90,7 @@ public:
 
 	void release_prio(uint32_t prio, uint32_t prio_ver) {
 		if (tid_prio.prio != prio || tid_prio.prio_ver != prio_ver) return;
+		if (tid_prio.ref_cnt == 0) return;
 		dec_ref_cnt();
 		if (tid_prio.ref_cnt == 0) {
 			set_prio(0);
@@ -196,7 +197,7 @@ public:
 		TID_prio_t v, v2;
 		v = _tid_word.load(std::memory_order_relaxed);
 		assert (v.is_locked());
-		v2 = {v.get_data_ver(), v.get_prio_ver()};
+		v2 = {v.get_data_ver(), v.get_prio_ver() + 1};
 		assert (!v2.is_locked());
 		_tid_word.store(v2, std::memory_order_relaxed);
 	}
