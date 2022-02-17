@@ -42,7 +42,18 @@
 #define PRINT_CNT(name, size) \
   std::cout << STR(name) << " = [\n"; \
   for (int i = 0; i < size; ++i) \
-    std::cout << '\t' << i << ": " << name[i] << ',\n'; \
+    if (name[i]) std::cout << '\t' << i << ": " << name[i] << ',\n'; \
+  std::cout << "]\n"; \
+  assert(size == sizeof(name));
+#define INIT_TOTAL_CNT(tpe, name, size) tpe total_##name[size] = {};
+#define SUM_UP_CNT(name, size) \
+  for (int i = 0; i < size; ++i) \
+    total_##name[i] += _stats[tid]->name[i];
+#define PRINT_TOTAL_CNT(outf, name, size) \
+  outf << STR(name) << " = [\n"; \
+  for (int i = 0; i < size; ++i) \
+    if (total_##name[i]) \
+      std::cout << '\t' << i << ": " << total_##name[i] << ",\n"; \
   std::cout << "]\n"; \
   assert(size == sizeof(name));
 

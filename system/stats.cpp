@@ -92,12 +92,34 @@ void Stats::abort(uint64_t thd_id) {
 }
 
 void Stats::print() {
+#if CC_ALG == SILO_PRIO
+  printf("use_fixed_prio: %s\n", SILO_PRIO_FIXED_PRIO ? "true" : "false");
+  printf("inc_prio_after_num_abort: %d\n", SILO_PRIO_INC_PRIO_AFTER_NUM_ABORT);
+#endif
   ALL_METRICS(INIT_TOTAL_VAR, INIT_TOTAL_VAR, INIT_TOTAL_VAR)
+#if CC_ALG == SILO_PRIO
+  INIT_TOTAL_CNT(uint64_t, prio_txn_cnt, SILO_PRIO_NUM_PRIO_LEVEL)
+#endif
+  INIT_TOTAL_CNT(uint64_t, abort_txn_cnt, STAT_MAX_NUM_ABORT + 1)
   for (uint64_t tid = 0; tid < g_thread_cnt; tid ++) {
     ALL_METRICS(SUM_UP_STATS, SUM_UP_STATS, MAX_STATS)
     printf("[tid=%lu] txn_cnt=%lu,abort_cnt=%lu, user_abort_cnt=%lu\n",
         tid, _stats[tid]->txn_cnt, _stats[tid]->abort_cnt,
         _stats[tid]->user_abort_cnt);
+#if CC_ALG == SILO_PRIO
+    SUM_UP_CNT(prio_txn_cnt, SILO_PRIO_NUM_PRIO_LEVEL)
+    printf("\tprio_txn_cnt = [\n");
+    for (int i = 0; i < SILO_PRIO_NUM_PRIO_LEVEL; ++i) \
+      if (_stats[tid]->prio_txn_cnt[i])
+        printf("\t\t%d: %lu,\n", i, _stats[tid]->prio_txn_cnt[i]);
+    printf("\t]\n");
+#endif
+    SUM_UP_CNT(abort_txn_cnt, STAT_MAX_NUM_ABORT + 1)
+    printf("\tabort_txn_cnt = [\n");
+    for (int i = 0; i < STAT_MAX_NUM_ABORT + 1; ++i) \
+      if (_stats[tid]->abort_txn_cnt[i])
+        printf("\t\t%d: %lu,\n", i, _stats[tid]->abort_txn_cnt[i]);
+    printf("\t]\n");
   }
   total_latency = total_latency / total_txn_cnt;
   total_commit_latency = total_commit_latency / total_txn_cnt;
@@ -113,6 +135,10 @@ void Stats::print() {
       outf << "dl_detect_time=" << dl_detect_time / BILLION << ", ";
       outf << "dl_wait_time=" << dl_wait_time / BILLION << "\n";
       outf.close();
+#if CC_ALG == SILO_PRIO
+      PRINT_TOTAL_CNT(outf, prio_txn_cnt, SILO_PRIO_NUM_PRIO_LEVEL)
+#endif
+      PRINT_TOTAL_CNT(outf, abort_txn_cnt, STAT_MAX_NUM_ABORT + 1)
     }
   }
   std::cout << "[summary] throughput=" << total_txn_cnt / total_run_time *
@@ -122,6 +148,10 @@ void Stats::print() {
   std::cout << "cycle_detect=" << cycle_detect << ", ";
   std::cout << "dl_detect_time=" << dl_detect_time / BILLION << ", ";
   std::cout << "dl_wait_time=" << dl_wait_time / BILLION << "\n";
+#if CC_ALG == SILO_PRIO
+  PRINT_TOTAL_CNT(std::cout, prio_txn_cnt, SILO_PRIO_NUM_PRIO_LEVEL)
+#endif
+  PRINT_TOTAL_CNT(std::cout, abort_txn_cnt, STAT_MAX_NUM_ABORT + 1)
   if (g_prt_lat_distr)
     print_lat_distr();
 }
