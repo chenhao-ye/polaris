@@ -21,23 +21,19 @@ Row_silo_prio::access(txn_man * txn, TsType type, row_t * local_row) {
 	bool is_reserved;
 	v = _tid_word.load(std::memory_order_relaxed);
 retry:
-	if (v.is_locked()) {
+	while (v.is_locked()) {
 		PAUSE
 		v = _tid_word.load(std::memory_order_relaxed);
-		goto retry;
 	}
 	// for a write, abort if the current priority is higher
 	if (prio < v.get_prio()) {
 		if (type != R_REQ) return Abort;
-		COMPILER_BARRIER
-		// reread to ensure we read a consistent copy
-		if (v != _tid_word.load(std::memory_order_relaxed)) goto retry;
 	}
 	v2 = v;
 	is_reserved = v2.acquire_prio(prio);
 	local_row->copy(_row);
-	if (_tid_word.compare_exchange_strong(v, v2, std::memory_order_relaxed,
-			std::memory_order_relaxed))
+	if (_tid_word.compare_exchange_strong(v, v2, std::memory_order_acq_rel,
+		std::memory_order_acquire))
 		goto retry;
 	txn->last_is_owner = is_reserved;
 	txn->last_data_ver = v2.get_data_ver();

@@ -59,8 +59,12 @@ public:
 	uint32_t get_ref_cnt() const { return tid_prio.ref_cnt; }
 	uint32_t get_prio_ver() const { return tid_prio.prio_ver; }
 	uint32_t get_data_ver() const { return tid_prio.data_ver; }
-	bool operator==(const union TID_prio_t& rhs) { return this->raw_bits == rhs.raw_bits; }
-	bool operator!=(const union TID_prio_t& rhs) { return this->raw_bits != rhs.raw_bits; }
+	bool operator==(const union TID_prio_t& rhs) const {
+		return this->raw_bits == rhs.raw_bits;
+	}
+	bool operator!=(const union TID_prio_t& rhs) const {
+		return this->raw_bits != rhs.raw_bits;
+	}
 
 	void lock() { tid_prio.latch = 1; }
 	void unlock() { tid_prio.latch = 0; }
@@ -117,7 +121,7 @@ public:
 		LOCK_ERR_PRIO,		// fail due to priority issue
 	};
 
-	uint32_t			get_data_ver() {
+	uint32_t			get_data_ver() const {
 		return _tid_word.load(std::memory_order_relaxed).get_data_ver();
 	}
 
@@ -126,11 +130,11 @@ public:
 	// this write only do copy, but not TID operation
 	// TID operation is done in writer_release
 	void				write(row_t * data);
-	void 				assert_lock() {
+	void 				assert_lock() const {
 		assert(_tid_word.load(std::memory_order_relaxed).is_locked());
 	}
 
-	bool				validate(ts_t old_data_ver, bool in_write_set) {
+	bool				validate(ts_t old_data_ver, bool in_write_set) const {
 		TID_prio_t v = _tid_word.load(std::memory_order_relaxed);
 		if (!in_write_set && v.is_locked()) return false;
 		return v.get_data_ver() == old_data_ver;
@@ -138,12 +142,12 @@ public:
 
 	// if the transaction has lower priority, lock acquisition would fail
 	LOCK_STATUS 		lock(uint32_t prio) {
-		TID_prio_t v = _tid_word.load(std::memory_order_relaxed);
+		TID_prio_t v;
+		v = _tid_word.load(std::memory_order_relaxed);
 	retry:
-		if (v.is_locked()) {
+		while (v.is_locked()) {
 			PAUSE
 			v = _tid_word.load(std::memory_order_relaxed);
-			goto retry;
 		}
 		if (v.get_prio() > prio) return LOCK_STATUS::LOCK_ERR_PRIO;
 		// if fail, compare_exchange_strong will save the new value into v
@@ -154,7 +158,8 @@ public:
 	}
 
 	LOCK_STATUS			try_lock(uint32_t prio) {
-		TID_prio_t v = _tid_word.load(std::memory_order_relaxed);
+		TID_prio_t v;
+		v = _tid_word.load(std::memory_order_relaxed);
 	retry:
 		if (v.is_locked()) return LOCK_STATUS::LOCK_ERR_TAKEN;
 		if (v.get_prio() > prio) return LOCK_STATUS::LOCK_ERR_PRIO;
@@ -190,22 +195,19 @@ public:
 	void		writer_release_abort(uint32_t prio, uint32_t prio_ver) {
 		TID_prio_t v, v2;
 		v = _tid_word.load(std::memory_order_relaxed);
-	retry:
 		assert (v.is_locked());
-		v2 = v;
-		v2.unlock();
-		v2.release_prio(prio, prio_ver);
-		if (!_tid_word.compare_exchange_strong(v, v2, std::memory_order_relaxed,
-			std::memory_order_relaxed))
-			goto retry;
+		v2 = {v.get_data_ver(), v.get_prio_ver()};
+		assert (!v2.is_locked());
+		_tid_word.store(v2, std::memory_order_relaxed);
 	}
 
 	// in the case of abort, the writer update the data version and reset
 	// prioirty and ref_cnt
 	void		writer_release_commit(uint64_t data_ver) {
-		TID_prio_t v(data_ver,
-			_tid_word.load(std::memory_order_relaxed).get_prio_ver() + 1);
-		_tid_word.store(v, std::memory_order_relaxed);
+		TID_prio_t v, v2;
+		v = _tid_word.load(std::memory_order_relaxed);
+		v2 = {data_ver, v.get_prio_ver() + 1};
+		_tid_word.store(v2, std::memory_order_relaxed);
 	}
 };
 
