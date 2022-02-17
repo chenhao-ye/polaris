@@ -32,7 +32,7 @@ retry:
 	v2 = v;
 	is_reserved = v2.acquire_prio(prio);
 	local_row->copy(_row);
-	if (_tid_word.compare_exchange_strong(v, v2, std::memory_order_acq_rel,
+	if (!_tid_word.compare_exchange_strong(v, v2, std::memory_order_acq_rel,
 		std::memory_order_acquire))
 		goto retry;
 	txn->last_is_owner = is_reserved;
