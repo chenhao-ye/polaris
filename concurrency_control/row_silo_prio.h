@@ -172,6 +172,8 @@ public:
 
 	// temporarily release the lock
 	// only happen as a backoff in validation
+	// WARNING: release the latch bit alone can be dangerous, since other txns may
+	// assume its prio will be reset and thus don't release_prio
 	void				unlock() {
 		TID_prio_t v = _tid_word.load(std::memory_order_relaxed);
 		v.unlock();
@@ -203,7 +205,7 @@ public:
 	}
 
 	// in the case of abort, the writer update the data version and reset
-	// prioirty and ref_cnt
+	// priority and ref_cnt
 	void		writer_release_commit(uint64_t data_ver) {
 		TID_prio_t v, v2;
 		v = _tid_word.load(std::memory_order_relaxed);

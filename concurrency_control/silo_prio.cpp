@@ -95,6 +95,11 @@ txn_man::validate_silo_prio()
 			}
 		}
 	} else {
+		/**
+		 * This path does not work, since release the latch requires resetting prio
+		 * and prio_ver etc., we here simply disallow this operation.
+		 */
+		assert(false);
 		for (int i = 0; i < wr_cnt; i++) {
 			row_t * row = accesses[ write_set[i] ]->orig_row;
 			Row_silo_prio::LOCK_STATUS ls = row->manager->lock(prio);
