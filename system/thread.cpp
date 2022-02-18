@@ -218,7 +218,7 @@ RC thread_t::run() {
             INC_STATS_CNT(get_thd_id(), prio_txn_cnt, m_txn->prio, 1);
 #if SPLIT_ABORT_COUNT_PRIO
 						if (m_txn->prio > 0)
-							INC_STATS_CNT(get_thd_id(), high_abort_txn_cnt, \
+							INC_STATS_CNT(get_thd_id(), high_prio_abort_txn_cnt, \
 							std::min<int>(m_query->num_abort, STAT_MAX_NUM_ABORT), 1);
 #endif
 #endif
