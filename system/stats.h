@@ -68,6 +68,10 @@ class Stats_thd {
 #if CC_ALG == SILO_PRIO
   // counter for txns for different priorities
   DEF_CNT(uint64_t, prio_txn_cnt, SILO_PRIO_NUM_PRIO_LEVEL);
+#if SPLIT_ABORT_COUNT_PRIO
+  // counter for high-priority txns (i.e. nonzero priority)
+  DEF_CNT(uint64_t, high_prio_abort_txn_cnt, STAT_MAX_NUM_ABORT + 1);
+#endif
 #endif
   // counter for txns with different num_abort (last one for overflow)
   DEF_CNT(uint64_t, abort_txn_cnt, STAT_MAX_NUM_ABORT + 1);

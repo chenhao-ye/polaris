@@ -19,6 +19,9 @@ void Stats_thd::clear() {
   ALL_METRICS(INIT_VAR, INIT_VAR, INIT_VAR)
 #if CC_ALG == SILO_PRIO
   INIT_CNT(uint64_t, prio_txn_cnt, SILO_PRIO_NUM_PRIO_LEVEL);
+#if SPLIT_ABORT_COUNT_PRIO
+  INIT_CNT(uint64_t, high_prio_abort_txn_cnt, STAT_MAX_NUM_ABORT + 1);
+#endif
 #endif
   INIT_CNT(uint64_t, abort_txn_cnt, STAT_MAX_NUM_ABORT + 1);
 }
@@ -99,6 +102,9 @@ void Stats::print() {
   ALL_METRICS(INIT_TOTAL_VAR, INIT_TOTAL_VAR, INIT_TOTAL_VAR)
 #if CC_ALG == SILO_PRIO
   INIT_TOTAL_CNT(uint64_t, prio_txn_cnt, SILO_PRIO_NUM_PRIO_LEVEL)
+#if SPLIT_ABORT_COUNT_PRIO
+  INIT_TOTAL_CNT(uint64_t, high_prio_abort_txn_cnt, STAT_MAX_NUM_ABORT + 1);
+#endif
 #endif
   INIT_TOTAL_CNT(uint64_t, abort_txn_cnt, STAT_MAX_NUM_ABORT + 1)
   for (uint64_t tid = 0; tid < g_thread_cnt; tid ++) {
@@ -113,6 +119,14 @@ void Stats::print() {
       if (_stats[tid]->prio_txn_cnt[i])
         printf("\t\t%d: %lu,\n", i, _stats[tid]->prio_txn_cnt[i]);
     printf("\t]\n");
+#if SPLIT_ABORT_COUNT_PRIO
+    SUM_UP_CNT(high_prio_abort_txn_cnt, SILO_PRIO_NUM_PRIO_LEVEL)
+    printf("\thigh_prio_txn_cnt = [\n");
+    for (int i = 0; i < STAT_MAX_NUM_ABORT + 1; ++i) \
+      if (_stats[tid]->high_prio_abort_txn_cnt[i])
+        printf("\t\t%d: %lu,\n", i, _stats[tid]->high_prio_abort_txn_cnt[i]);
+    printf("\t]\n");
+#endif
 #endif
     SUM_UP_CNT(abort_txn_cnt, STAT_MAX_NUM_ABORT + 1)
     printf("\tabort_txn_cnt = [\n");
@@ -137,6 +151,9 @@ void Stats::print() {
       outf.close();
 #if CC_ALG == SILO_PRIO
       PRINT_TOTAL_CNT(outf, prio_txn_cnt, SILO_PRIO_NUM_PRIO_LEVEL)
+#if SPLIT_ABORT_COUNT_PRIO
+      PRINT_TOTAL_CNT(outf, high_prio_abort_txn_cnt, STAT_MAX_NUM_ABORT + 1)
+#endif
 #endif
       PRINT_TOTAL_CNT(outf, abort_txn_cnt, STAT_MAX_NUM_ABORT + 1)
     }
@@ -150,6 +167,9 @@ void Stats::print() {
   std::cout << "dl_wait_time=" << dl_wait_time / BILLION << "\n";
 #if CC_ALG == SILO_PRIO
   PRINT_TOTAL_CNT(std::cout, prio_txn_cnt, SILO_PRIO_NUM_PRIO_LEVEL)
+#if SPLIT_ABORT_COUNT_PRIO
+      PRINT_TOTAL_CNT(outf, high_prio_abort_txn_cnt, STAT_MAX_NUM_ABORT + 1)
+#endif
 #endif
   PRINT_TOTAL_CNT(std::cout, abort_txn_cnt, STAT_MAX_NUM_ABORT + 1)
   if (g_prt_lat_distr)
