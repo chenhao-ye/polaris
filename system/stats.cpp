@@ -168,7 +168,7 @@ void Stats::print() {
 #if CC_ALG == SILO_PRIO
   PRINT_TOTAL_CNT(std::cout, prio_txn_cnt, SILO_PRIO_NUM_PRIO_LEVEL)
 #if SPLIT_ABORT_COUNT_PRIO
-      PRINT_TOTAL_CNT(outf, high_prio_abort_txn_cnt, STAT_MAX_NUM_ABORT + 1)
+  PRINT_TOTAL_CNT(std::cout, high_prio_abort_txn_cnt, STAT_MAX_NUM_ABORT + 1)
 #endif
 #endif
   PRINT_TOTAL_CNT(std::cout, abort_txn_cnt, STAT_MAX_NUM_ABORT + 1)
