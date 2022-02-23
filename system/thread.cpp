@@ -205,9 +205,9 @@ RC thread_t::run() {
 		INC_STATS(get_thd_id(), run_time, timespan);
 		//stats.add_lat(get_thd_id(), timespan);
 		if (rc == RCOK) {
-            INC_STATS(get_thd_id(), commit_latency, timespan);
-            INC_STATS(get_thd_id(), latency, endtime - txn_starttime);
-            INC_STATS(get_thd_id(), txn_cnt, 1);
+			INC_STATS(get_thd_id(), commit_latency, timespan);
+			INC_STATS(get_thd_id(), latency, endtime - txn_starttime);
+			INC_STATS(get_thd_id(), txn_cnt, 1);
 #if WORKLOAD == YCSB
             if (unlikely(g_long_txn_ratio > 0)) {
                 if ( ((ycsb_query *) m_query)->request_cnt > REQ_PER_QUERY)
@@ -222,8 +222,9 @@ RC thread_t::run() {
 							std::min<int>(m_query->num_abort, STAT_MAX_NUM_ABORT), 1);
 #endif
 #endif
-            INC_STATS_CNT(get_thd_id(), abort_txn_cnt, \
+			INC_STATS_CNT(get_thd_id(), abort_txn_cnt, \
 							std::min<int>(m_query->num_abort, STAT_MAX_NUM_ABORT), 1);
+			stats._stats[get_thd_id()]->append_latency(endtime - txn_starttime);
 			stats.commit(get_thd_id());
 			txn_cnt ++;
 		} else if (rc == Abort) {

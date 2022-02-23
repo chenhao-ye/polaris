@@ -1,5 +1,7 @@
+#include <algorithm>
 #include <iostream>
 #include <fstream>
+#include <vector>
 #include "global.h"
 #include "helper.h"
 #include "stats.h"
@@ -8,11 +10,13 @@
 #define BILLION 1000000000UL
 
 void Stats_thd::init(uint64_t thd_id) {
-  clear();
+  latency_record = (uint64_t *)
+      _mm_malloc(sizeof(uint64_t) * MAX_TXN_PER_PART, 64);
   all_debug1 = (uint64_t *)
       _mm_malloc(sizeof(uint64_t) * MAX_TXN_PER_PART, 64);
   all_debug2 = (uint64_t *)
       _mm_malloc(sizeof(uint64_t) * MAX_TXN_PER_PART, 64);
+  clear();
 }
 
 void Stats_thd::clear() {
@@ -24,6 +28,8 @@ void Stats_thd::clear() {
 #endif
 #endif
   INIT_CNT(uint64_t, abort_txn_cnt, STAT_MAX_NUM_ABORT + 1);
+  memset(latency_record, 0, sizeof(uint64_t) * MAX_TXN_PER_PART);
+  latency_record_len = 0;
 }
 
 void Stats_tmp::init() {
@@ -172,6 +178,36 @@ void Stats::print() {
 #endif
 #endif
   PRINT_TOTAL_CNT(std::cout, abort_txn_cnt, STAT_MAX_NUM_ABORT + 1)
+
+  std::vector<uint64_t> total_latency_record;
+  total_latency_record.reserve(MAX_TXN_PER_PART * g_thread_cnt);
+  
+  for (uint32_t i = 0; i < g_thread_cnt; ++i)
+    for (uint64_t j = 0; j < _stats[i]->latency_record_len; ++j)
+      total_latency_record.emplace_back(_stats[i]->latency_record[j]);
+  std::sort(total_latency_record.begin(), total_latency_record.end());
+
+  // if smaller than 1000, we will have problems for p999
+  assert (total_latency_record.size() > 1000);
+
+  std::cout << "p50=" << total_latency_record[total_latency_record.size() * 50 / 100] / 1000.0 << "us\n";
+  std::cout << "p90=" << total_latency_record[total_latency_record.size() * 90 / 100] / 1000.0 << "us\n";
+  std::cout << "p99=" << total_latency_record[total_latency_record.size() * 99 / 100] / 1000.0 << "us\n";
+  std::cout << "p999=" << total_latency_record[total_latency_record.size() * 999 / 1000] / 1000.0 << "us\n";
+
+  if (total_latency_record.size() > 10000)
+    std::cout << "p9999=" << total_latency_record[total_latency_record.size() * 9999 / 10000] / 1000.0 << "us\n";
+
+  // dump the latency distribution in case we want to have a plot
+  if (DUMP_LATENCY) {
+    std::ofstream of(DUMP_LATENCY_FILENAME);
+    for (uint64_t lat: total_latency_record) of << lat << '\n';
+  }
+
+  // it doesn't make sense to have a zero-latency txn
+  assert(total_latency_record[0] > 0);
+  assert(total_latency_record.size() == total_txn_cnt);
+
   if (g_prt_lat_distr)
     print_lat_distr();
 }

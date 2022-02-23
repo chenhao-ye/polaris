@@ -59,9 +59,17 @@ class Stats_thd {
  public:
   void init(uint64_t thd_id);
   void clear();
+  void append_latency(uint64_t latency) {
+    latency_record[latency_record_len] = latency;
+    latency_record_len++;
+    assert(latency_record_len <= MAX_TXN_PER_PART);
+  }
 
   char _pad2[CL_SIZE];
   ALL_METRICS(DECLARE_VAR, DECLARE_VAR, DECLARE_VAR)
+  uint64_t * latency_record;
+  uint64_t latency_record_len;
+
   uint64_t * all_debug1;
   uint64_t * all_debug2;
 
