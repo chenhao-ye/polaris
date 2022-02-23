@@ -21,6 +21,20 @@ int main(int argc, char* argv[])
 {
 	parser(argc, argv);
 	
+#ifndef NDEBUG
+	uint64_t ts0, ts1;
+	ts0 = get_sys_clock();
+	sleep(1);
+	ts1 = get_sys_clock();
+	double ratio = ((double)(ts1 - ts0)) / 1000000000.0;
+	if (ratio < 0.99 || ratio > 1.00) {
+		fprintf(stderr, 
+			"FATAL ERROR: CPU freqency might be incorrectly configured: "
+			"real_time/cpu_ts_time=%f\n", ratio);
+		abort();
+	}
+#endif
+
 	mem_allocator.init(g_part_cnt, MEM_SIZE / g_part_cnt); 
 	stats.init();
 	glob_manager = (Manager *) _mm_malloc(sizeof(Manager), 64);

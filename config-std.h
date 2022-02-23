@@ -155,7 +155,7 @@ static_assert(SILO_PRIO_NUM_BITS_PRIO_VER + SILO_PRIO_NUM_BITS_PRIO \
 //   we collect the query distribution in terms of num_abort; for
 //   abort_cnt < MAX_ABORT_CNT, we collect the exact number; for txn with more
 //   abort, we simply keep a counter for all of them
-#define STAT_MAX_NUM_ABORT (3 * (THREAD_CNT) + 10)
+#define STAT_MAX_NUM_ABORT (50)
 
 /***********************************************/
 // Logging
