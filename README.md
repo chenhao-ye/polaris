@@ -42,9 +42,50 @@ Options to change/pass configuration:
 - Option 2: directly copy config-std.h to config.h and modify config.h. Then compile using ```make -j``` and execute through ```./rundb ```
 
 
+Experiment Configuration
+---------------
 
+These configuration are newly added to support priority-related experiments.
+```
+    SILO_PRIO_FIXED_PRIO               : whether use fixed priority.
+        Default is false. If set true, a transaction will has not change its
+        priority after abort.
+    SILO_PRIO_INC_PRIO_AFTER_NUM_ABORT : increment priority after every certain
+        number of aborts.
+        Default is 3. It controls how frequency a transaction will be prompted.
+        This option is only effective if SILO_PRIO_FIXED_PRIO is false.
+    HIGH_PRIO_RATIO                    : how many ratio of transactions begin
+        with priority 1 (others begin with priority zero).
+        Default is 0. It must be a number between 0 and 1. This flag is useful
+        with SILO_PRIO_FIXED_PRIO=true for a binary priority case.
+    SPLIT_ABORT_COUNT_PRIO             : whether keep an additional abort
+        counter for transactions with non-zero priority at commit time.
+        Default is false. Be aware that this option does not affect
+        abort_txn_cnt, which counts the abort number for all transactions.
+    DUMP_LATENCY                       : whether dump all latency into a file.
+        Default is true. Useful for plotting.
+    DUMP_LATENCY_FILENAME              : the name of latency file to dump.
+        Default is "latency_dump.csv".
+```
 
+The options above could be used as some combos.
 
+- Example 1: all transactions begin with priority zero and increment priority every 4 aborts.
 
+    ```
+    SILO_PRIO_INC_PRIO_AFTER_NUM_ABORT=4
+    ```
 
+- Example 2: only two levels of priority: high/low; 5% of transactions are high-priority and 95% are low
 
+    ```
+    SILO_PRIO_FIXED_PRIO=true HIGH_PRIO_RATIO=0.05 SPLIT_ABORT_COUNT_PRIO=true
+    ```
+
+- Example 3: same setting as example 1 but try to dump the latency file into "latency_inc4.csv"
+
+    ```
+    SILO_PRIO_INC_PRIO_AFTER_NUM_ABORT=4 DUMP_LATENCY_FILENAME=\"latency_inc4.csv\"
+    ```
+
+    Note here it's assumed to be fed as the command-line argument and subject to shell grammar, which is necessary to escape the quotation marks.

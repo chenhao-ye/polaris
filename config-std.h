@@ -122,7 +122,7 @@
 #define SILO_PRIO_FIXED_PRIO        false
 //   increment the priority of a query after how many aborts
 //   only effective if SILO_PRIO_FIXED_PRIO is false
-#define SILO_PRIO_INC_PRIO_AFTER_NUM_ABORT 2
+#define SILO_PRIO_INC_PRIO_AFTER_NUM_ABORT 3
 //   how to distribute the number of bits in TID (change is not recommended...)
 #define SILO_PRIO_NUM_BITS_PRIO_VER 4
 #define SILO_PRIO_NUM_BITS_PRIO     4
