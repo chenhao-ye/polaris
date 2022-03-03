@@ -152,9 +152,6 @@ class txn_man
     bool 			    _validation_no_wait;
     // [SILO_PRIO]
 #elif CC_ALG == SILO_PRIO
-	// the priority of the current transaction
-	// it could be just the number of time this transaction has aborted
-	uint32_t			prio;
     ts_t 			    _cur_data_ver;
 	// these two fields are temporarily set in `Row_silo_prio.access`
 	// and txn_man then set it to access
@@ -175,6 +172,10 @@ class txn_man
 #elif CC_ALG == HEKATON
     volatile void * volatile     history_entry;
 #endif
+	// the priority of the current transaction
+    // we make it generic for all types of CC, but for now, only SILO_PRIO uses
+    // this field
+	uint32_t			prio;
 
     // **************************************
     // General Main Functions

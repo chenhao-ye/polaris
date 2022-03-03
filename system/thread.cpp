@@ -123,14 +123,19 @@ RC thread_t::run() {
         // used for after warmup, since aborted txn keeps original ts
         if (unlikely(m_txn->get_ts() == 0))
             m_txn->set_ts(get_next_ts());
-#elif CC_ALG == SILO_PRIO
+#endif
+
+#if CC_ALG == SILO_PRIO
 #if SILO_PRIO_FIXED_PRIO
 		m_txn->prio = m_query->prio;
 #else
 		m_txn->prio = std::min<int>(SILO_PRIO_MAX_PRIO,
 			m_query->prio + (m_query->num_abort / SILO_PRIO_INC_PRIO_AFTER_NUM_ABORT));
 #endif // SILO_PRIO_FIXED_PRIO
+#else // CC_ALG == SILO_PRIO
+		m_txn->prio = m_query->prio;
 #endif // CC_ALG == SILO_PRIO
+
 		m_txn->set_txn_id(get_thd_id() + thd_txn_id * g_thread_cnt);
 		thd_txn_id ++;
 
@@ -201,12 +206,15 @@ RC thread_t::run() {
 			}
 		}
 
+		// this is the time of the last execution
 		uint64_t timespan = endtime - starttime;
+		// this is the time of the whole txn
+		uint64_t txn_timespan = endtime - txn_starttime;
 		INC_STATS(get_thd_id(), run_time, timespan);
 		//stats.add_lat(get_thd_id(), timespan);
 		if (rc == RCOK) {
 			INC_STATS(get_thd_id(), commit_latency, timespan);
-			INC_STATS(get_thd_id(), latency, endtime - txn_starttime);
+			INC_STATS(get_thd_id(), latency, txn_timespan);
 			INC_STATS(get_thd_id(), txn_cnt, 1);
 #if WORKLOAD == YCSB
             if (unlikely(g_long_txn_ratio > 0)) {
@@ -214,17 +222,22 @@ RC thread_t::run() {
                     INC_STATS(get_thd_id(), txn_cnt_long, 1);
             }
 #endif
-#if CC_ALG == SILO_PRIO
             INC_STATS_CNT(get_thd_id(), prio_txn_cnt, m_txn->prio, 1);
 #if SPLIT_ABORT_COUNT_PRIO
 						if (m_txn->prio > 0)
 							INC_STATS_CNT(get_thd_id(), high_prio_abort_txn_cnt, \
 							std::min<int>(m_query->num_abort, STAT_MAX_NUM_ABORT), 1);
 #endif
-#endif
 			INC_STATS_CNT(get_thd_id(), abort_txn_cnt, \
 							std::min<int>(m_query->num_abort, STAT_MAX_NUM_ABORT), 1);
-			stats._stats[get_thd_id()]->append_latency(endtime - txn_starttime);
+#if WORKLOAD == YCSB
+			stats._stats[get_thd_id()]->append_latency(
+				((ycsb_query *) m_query)->is_long, m_query->num_abort,
+				m_txn->prio, txn_timespan);
+#else
+			stats._stats[get_thd_id()]->append_latency(
+				false, m_query->num_abort, m_txn->prio, txn_timespan);
+#endif
 			stats.commit(get_thd_id());
 			txn_cnt ++;
 		} else if (rc == Abort) {

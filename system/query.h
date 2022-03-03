@@ -17,11 +17,9 @@ public:
 	uint64_t * part_to_access;
 	bool rerun;
 	uint32_t num_abort = 0;
-#if CC_ALG == SILO_PRIO
 	uint32_t prio = 0;
 	// note prio may be overwritten by subclass to support more complicated
 	// priority distribution, e.g. long-running txn
-#endif
 };
 
 // All the querise for a particular thread.

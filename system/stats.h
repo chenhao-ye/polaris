@@ -55,31 +55,55 @@
       std::cout << '\t' << i << ": " << total_##name[i] << ",\n"; \
   std::cout << "]\n";
 
+union LatencyRecord {
+  uint64_t raw_bits;
+  struct {
+    bool is_long: 1;
+    uint32_t abort_cnt : 7;
+    uint32_t prio : SILO_PRIO_NUM_BITS_PRIO;
+    uint64_t latency : (64 - 1 - 7 - SILO_PRIO_NUM_BITS_PRIO);
+  };
+
+  LatencyRecord() = default;
+  LatencyRecord(bool is_long, uint32_t abort_cnt, uint32_t prio, uint64_t latency):
+    is_long(is_long), abort_cnt(abort_cnt < 128 ? abort_cnt : 127),
+    prio(prio), latency(latency) {
+    assert (latency < (1 << (64 - 1 - SILO_PRIO_NUM_BITS_PRIO)));
+  }
+
+  // `is_long` cannot be both data member name and function name.. so let's call
+  // it `get_is_long` for now...
+  bool get_is_long() const { return is_long; }
+  uint32_t get_abort_cnt() const { return abort_cnt; }
+  uint32_t get_prio() const { return prio; }
+  uint64_t get_latency() const { return latency; }
+};
+
+static_assert(sizeof(LatencyRecord) == 8, "LatencyRecord must be 64-bit");
+
 class Stats_thd {
  public:
   void init(uint64_t thd_id);
   void clear();
-  void append_latency(uint64_t latency) {
-    latency_record[latency_record_len] = latency;
+  void append_latency(bool is_long, uint32_t abort_cnt, uint32_t prio, uint64_t latency) {
+    latency_record[latency_record_len] = {is_long, abort_cnt, prio, latency};
     latency_record_len++;
     assert(latency_record_len <= MAX_TXN_PER_PART);
   }
 
   char _pad2[CL_SIZE];
   ALL_METRICS(DECLARE_VAR, DECLARE_VAR, DECLARE_VAR)
-  uint64_t * latency_record;
+  LatencyRecord * latency_record;
   uint64_t latency_record_len;
 
   uint64_t * all_debug1;
   uint64_t * all_debug2;
 
-#if CC_ALG == SILO_PRIO
   // counter for txns for different priorities
   DEF_CNT(uint64_t, prio_txn_cnt, SILO_PRIO_NUM_PRIO_LEVEL);
 #if SPLIT_ABORT_COUNT_PRIO
   // counter for high-priority txns (i.e. nonzero priority)
   DEF_CNT(uint64_t, high_prio_abort_txn_cnt, STAT_MAX_NUM_ABORT + 1);
-#endif
 #endif
   // counter for txns with different num_abort (last one for overflow)
   DEF_CNT(uint64_t, abort_txn_cnt, STAT_MAX_NUM_ABORT + 1);
