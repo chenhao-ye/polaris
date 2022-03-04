@@ -58,10 +58,6 @@ These configuration are newly added to support priority-related experiments.
         with priority 1 (others begin with priority zero).
         Default is 0. It must be a number between 0 and 1. This flag is useful
         with SILO_PRIO_FIXED_PRIO=true for a binary priority case.
-    SPLIT_ABORT_COUNT_PRIO             : whether keep an additional abort
-        counter for transactions with non-zero priority at commit time.
-        Default is false. Be aware that this option does not affect
-        abort_txn_cnt, which counts the abort number for all transactions.
     DUMP_LATENCY                       : whether dump all latency into a file.
         Default is true. Useful for plotting.
     DUMP_LATENCY_FILENAME              : the name of latency file to dump.
@@ -79,7 +75,7 @@ The options above could be used as some combos.
 - Example 2: only two levels of priority: high/low; 5% of transactions are high-priority and 95% are low
 
     ```
-    SILO_PRIO_FIXED_PRIO=true HIGH_PRIO_RATIO=0.05 SPLIT_ABORT_COUNT_PRIO=true
+    SILO_PRIO_FIXED_PRIO=true HIGH_PRIO_RATIO=0.05
     ```
 
 - Example 3: same setting as example 1 but try to dump the latency file into "latency_inc4.csv"

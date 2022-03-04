@@ -48,7 +48,7 @@ union LatencyRecord {
   LatencyRecord(bool is_long, uint32_t abort_cnt, uint32_t prio, uint64_t latency):
     is_long(is_long), abort_cnt(abort_cnt < 128 ? abort_cnt : 127),
     prio(prio), latency(latency) {
-    assert (latency < (1 << (64 - 1 - SILO_PRIO_NUM_BITS_PRIO)));
+    assert (latency < (1UL << (64 - 1 - 7 - SILO_PRIO_NUM_BITS_PRIO)));
   }
 
   // `is_long` cannot be both data member name and function name.. so let's call
