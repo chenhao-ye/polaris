@@ -38,7 +38,7 @@ def compile(job):
         os.system("cp {} {}".format(dbms_cfg[0], dbms_cfg[1]))
 	# define workload
         for (param, value) in job.iteritems():
-		pattern = r"\#define\s*" + re.escape(param) + r'.*'
+		pattern = r"\#define\s*" + re.escape(param) + r'[\t ].*'
 		replacement = "#define " + param + ' ' + str(value)
 		replace(dbms_cfg[1], pattern, replacement)
 	os.system("make clean > temp.out 2>&1")
@@ -100,8 +100,7 @@ if __name__ == "__main__":
     if len(sys.argv) > idx:
         # has more args / overwrite existing args
         for item in sys.argv[idx:]:
-            key = item.split("=")[0]
-            value = item.split("=")[1]
+            key, value = item.split("=", 1)
             job[key] = value
     if not eval_arg(job, "EXEC_ONLY"):
         print("- compiling...")
