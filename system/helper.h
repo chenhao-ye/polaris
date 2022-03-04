@@ -146,9 +146,9 @@
    if (STATS_ENABLE) \
      stats._stats[tid]->name = max(stats._stats[tid]->name, value);
 
-#define INC_STATS_CNT(tid, name, idx, value) \
+#define ADD_PER_PRIO_STATS(tid, name, prio, value) \
 	if (STATS_ENABLE) \
-		stats._stats[tid]->name[idx] += value;
+		stats._stats[tid]->prio_metrics[prio].add_##name(value);
 
 /************************************************/
 // malloc helper

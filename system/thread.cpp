@@ -198,7 +198,7 @@ RC thread_t::run() {
 					if (_abort_buffer[i].query == NULL) {
 						_abort_buffer[i].query = m_query;
 						_abort_buffer[i].ready_time = get_sys_clock() + penalty;
-                        _abort_buffer[i].starttime = txn_starttime;
+						_abort_buffer[i].starttime = txn_starttime;
 						_abort_buffer_empty_slots --;
 						break;
 					}
@@ -222,14 +222,9 @@ RC thread_t::run() {
                     INC_STATS(get_thd_id(), txn_cnt_long, 1);
             }
 #endif
-            INC_STATS_CNT(get_thd_id(), prio_txn_cnt, m_txn->prio, 1);
-#if SPLIT_ABORT_COUNT_PRIO
-						if (m_txn->prio > 0)
-							INC_STATS_CNT(get_thd_id(), high_prio_abort_txn_cnt, \
-							std::min<int>(m_query->num_abort, STAT_MAX_NUM_ABORT), 1);
-#endif
-			INC_STATS_CNT(get_thd_id(), abort_txn_cnt, \
-							std::min<int>(m_query->num_abort, STAT_MAX_NUM_ABORT), 1);
+			ADD_PER_PRIO_STATS(get_thd_id(), exec_time, m_txn->prio, timespan);
+			ADD_PER_PRIO_STATS(get_thd_id(), txn_cnt, m_txn->prio, 1);
+			ADD_PER_PRIO_STATS(get_thd_id(), abort_cnt, m_txn->prio, m_query->num_abort);
 #if WORKLOAD == YCSB
 			stats._stats[get_thd_id()]->append_latency(
 				((ycsb_query *) m_query)->is_long, m_query->num_abort,
@@ -249,6 +244,7 @@ RC thread_t::run() {
                     INC_STATS(get_thd_id(), abort_cnt_long, 1);
             }
 #endif
+			ADD_PER_PRIO_STATS(get_thd_id(), abort_time, m_txn->prio, timespan);
 			stats.abort(get_thd_id());
 			m_txn->abort_cnt++;
 		} else if (rc == ERROR) {
@@ -262,6 +258,7 @@ RC thread_t::run() {
                     INC_STATS(get_thd_id(), abort_cnt_long, 1);
             }
 #endif
+            ADD_PER_PRIO_STATS(get_thd_id(), abort_time, m_txn->prio, timespan);
             stats.abort(get_thd_id());
             m_txn->abort_cnt ++;
 		}
