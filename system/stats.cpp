@@ -95,6 +95,7 @@ void Stats::abort(uint64_t thd_id) {
     tmp_stats[thd_id]->init();
 }
 
+// tag must be formatted as "[%s:tail]" to be captured by log parser
 void print_tail_latency(const std::vector<uint64_t>& total_latency_record, const char* tag) {
   uint64_t txn_cnt = total_latency_record.size();
   if (txn_cnt == 0) return;
