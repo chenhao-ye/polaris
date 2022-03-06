@@ -43,9 +43,11 @@ class thread_t {
 
     // A restart buffer for aborted txns.
     struct AbortBufferEntry	{
+        ts_t abort_time; // abort_time + penalty == ready_time
         ts_t ready_time;
         base_query * query;
         ts_t starttime;
+        uint64_t backoff_time; // accumulated backoff time
     };
     AbortBufferEntry * _abort_buffer;
     int _abort_buffer_size;

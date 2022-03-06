@@ -58,6 +58,7 @@ RC thread_t::run() {
 	uint64_t thd_txn_id = 0;
 	UInt64 txn_cnt = 0;
 	ts_t txn_starttime = 0;
+	uint64_t txn_backoff_time = 0;
 
 	while (true) {
 		ts_t starttime = get_sys_clock();
@@ -73,6 +74,7 @@ RC thread_t::run() {
 								m_query = _abort_buffer[i].query;
                                 m_query->rerun = true;
 								txn_starttime = _abort_buffer[i].starttime;
+								txn_backoff_time = _abort_buffer[i].backoff_time + (curr_time - _abort_buffer[i].abort_time);
 								_abort_buffer[i].query = NULL;
 								_abort_buffer_empty_slots ++;
 								break;
@@ -90,6 +92,7 @@ RC thread_t::run() {
                         m_txn->abort_cnt = 0;
 						assert(m_query);
                         txn_starttime = starttime;
+						txn_backoff_time = 0;
 #if CC_ALG == WAIT_DIE || (CC_ALG == WOUND_WAIT && WW_STARV_FREE)
 						m_txn->set_ts(get_next_ts());
 #endif
@@ -104,6 +107,7 @@ RC thread_t::run() {
 		            m_txn->abort_cnt = 0;
 					assert(m_query);
                     txn_starttime = starttime;
+					txn_backoff_time = 0;
 #if CC_ALG == WAIT_DIE || (CC_ALG == WOUND_WAIT && WW_STARV_FREE)
 					m_txn->set_ts(get_next_ts());
 #endif
@@ -197,8 +201,10 @@ RC thread_t::run() {
 				for (int i = 0; i < _abort_buffer_size; i ++) {
 					if (_abort_buffer[i].query == NULL) {
 						_abort_buffer[i].query = m_query;
-						_abort_buffer[i].ready_time = get_sys_clock() + penalty;
+						_abort_buffer[i].abort_time = get_sys_clock();
+						_abort_buffer[i].ready_time = _abort_buffer[i].abort_time + penalty;
 						_abort_buffer[i].starttime = txn_starttime;
+						_abort_buffer[i].backoff_time = txn_backoff_time;
 						_abort_buffer_empty_slots --;
 						break;
 					}
@@ -223,6 +229,7 @@ RC thread_t::run() {
             }
 #endif
 			ADD_PER_PRIO_STATS(get_thd_id(), exec_time, m_txn->prio, timespan);
+			ADD_PER_PRIO_STATS(get_thd_id(), backoff_time, m_txn->prio, txn_backoff_time);
 			ADD_PER_PRIO_STATS(get_thd_id(), txn_cnt, m_txn->prio, 1);
 			ADD_PER_PRIO_STATS(get_thd_id(), abort_cnt, m_txn->prio, m_query->num_abort);
 #if WORKLOAD == YCSB
