@@ -15,7 +15,7 @@ def replace(filename, pattern, replacement):
     f.close()
 
 def set_ndebug(ndebug):
-    f = open("system/global.h", "a+")
+    f = open("system/global.h", "r")
     found = None
     set_ndebug = False
     for line in f:
@@ -25,6 +25,7 @@ def set_ndebug(ndebug):
                 set_ndebug = True
         if "<cassert" in line:
             break
+    f.close()
     if found is None:
         if ndebug:
             replace("system/global.h", r"#include <cassert>", "#define NDEBUG\n#include <cassert>")
@@ -37,7 +38,7 @@ def set_ndebug(ndebug):
 def compile(job):
     os.system("cp {} {}".format(dbms_cfg[0], dbms_cfg[1]))
     # define workload
-    for (param, value) in job.iteritems():
+    for param, value in job.items():
         pattern = r"\#define\s*" + re.escape(param) + r'[\t ].*'
         replacement = "#define " + param + ' ' + str(value)
         replace(dbms_cfg[1], pattern, replacement)
@@ -55,10 +56,10 @@ def run(test = '', job=None, numa=True):
         app_flags = "-Ar -t1"
     if test == 'conflict':
         app_flags = "-Ac -t4"
-        if numa:
-            os.system("numactl --interleave all ./rundb %s | tee temp.out" % app_flags)
-        else:
-            os.system("./rundb %s | tee temp.out" % app_flags)
+    if numa:
+        os.system("numactl --interleave all ./rundb %s | tee temp.out" % app_flags)
+    else:
+        os.system("./rundb %s | tee temp.out" % app_flags)
     
 def eval_arg(job, arg):
     return ((arg in job) and (job[arg] == "true"))
@@ -120,4 +121,3 @@ if __name__ == "__main__":
             stats = open("outputs/stats.json", "a+")
             stats.write(json.dumps(job)+"\n")
             stats.close()
-
