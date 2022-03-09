@@ -61,7 +61,7 @@ def dump_throughput(datapoints: List[DataPoint], path: str, has_header: bool = T
             if not path.endswith('.csv'):
                 f.write('# ')
             f.write(f"cc_alg{sep}thread_cnt{sep}zipf_theta{sep}throughput\n")
-            for dp in datapoints:
+            for dp in sorted(datapoints, key=lambda dp: (int(dp.thread_cnt), float(dp.zipf_theta), dp.cc_alg)):
                 f.write(
                     f"{dp.cc_alg}{sep}{dp.thread_cnt}{sep}{dp.zipf_theta}{sep}{dp.throughput}\n")
 
@@ -125,6 +125,6 @@ if __name__ == "__main__":
         # if use ".csv", it will use ", " as separator
         # otherwise it will use "\t" and prefix the header with "#", which is
         # zplot's input format
-        dump_throughput(dp_list, f'results/{exper}/throughput.data')
-        dump_tail(dp_list, f'results/{exper}/tail.data')
-        dump_prio_breakdown(dp_list, f'results/{exper}/prio.data')
+        dump_throughput(dp_list, f'results/{exper}/throughput.csv')
+        dump_tail(dp_list, f'results/{exper}/tail.csv')
+        dump_prio_breakdown(dp_list, f'results/{exper}/prio.csv')
