@@ -56,7 +56,7 @@ def parse_datapoint(prefix: str, dirname: str) -> DataPoint:
 
 def dump_throughput(datapoints: List[DataPoint], path: str, has_header: bool = True):
     with open(path, 'w') as f:
-        sep = ', ' if path.endswith('.csv') else '\t'
+        sep = ',' if path.endswith('.csv') else '\t'
         if has_header:
             if not path.endswith('.csv'):
                 f.write('# ')
@@ -69,7 +69,7 @@ def dump_throughput(datapoints: List[DataPoint], path: str, has_header: bool = T
 def dump_tail(datapoints: List[DataPoint], path: str, has_header: bool = True):
     tail_metrics = ['p50', 'p99', 'p999', 'p9999']
     with open(path, 'w') as f:
-        sep = ', ' if path.endswith('.csv') else '\t'
+        sep = ',' if path.endswith('.csv') else '\t'
         if has_header:
             if not path.endswith('.csv'):
                 f.write('# ')
@@ -91,7 +91,7 @@ def dump_prio_breakdown(datapoints: List[DataPoint], path: str, has_header: bool
     prio_metrics = ['txn_cnt', 'abort_cnt',
                     'abort_time', 'exec_time', 'backoff_time']
     with open(path, 'w') as f:
-        sep = ', ' if path.endswith('.csv') else '\t'
+        sep = ',' if path.endswith('.csv') else '\t'
         if has_header:
             if not path.endswith('.csv'):
                 f.write('# ')
