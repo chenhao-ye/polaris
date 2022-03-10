@@ -46,13 +46,13 @@ def plot_throughput_vs_thread(exper: str):
 
     for i, cc_alg in enumerate(cc_algs):
         cc_df = df[(df["cc_alg"] == cc_alg)]
-        ax.bar(x + width * (i + 1.5 - len(thread_cnts) / 2),
-               cc_df["throughput"].tolist(),
-               width,
+        ax.bar(x=x + width * (i + 1.5 - len(thread_cnts) / 2),
+               height=cc_df["throughput"].tolist(),
+               width=width,
                color=color_map[cc_alg],
                label=cc_alg)
     ax.set_xlabel('# threads')
-    ax.set_ylabel('Throughput (Mtxn/s)')
+    ax.set_ylabel('throughput (Mtxn/s)')
 
     ax.set_xticks(x, list(f"{t}" for t in thread_cnts))
     ax.set_yticks(tp_ticks, list(
@@ -79,13 +79,13 @@ def plot_throughput_vs_zipf(exper: str, thread_cnt: int = None):
         cc_df = df[(df["cc_alg"] == cc_alg)]
         if thread_cnt is not None:
             cc_df = cc_df[(cc_df["thread_cnt"] == thread_cnt)]
-        ax.bar(x + width * (i + 2.5 - len(zipf_theta_list) / 2),
-               cc_df["throughput"].tolist(),
-               width,
+        ax.bar(x=x + width * (i + 2.5 - len(zipf_theta_list) / 2),
+               height=cc_df["throughput"].tolist(),
+               width=width,
                color=color_map[cc_alg],
                label=cc_alg)
     ax.set_xlabel('zipf_theta')
-    ax.set_ylabel('Throughput (Mtxn/s)')
+    ax.set_ylabel('throughput (Mtxn/s)')
 
     ax.set_xticks(x, list(f"{t}" for t in zipf_theta_list))
     ax.set_yticks(tp_ticks, list(
@@ -96,6 +96,40 @@ def plot_throughput_vs_zipf(exper: str, thread_cnt: int = None):
     fig.savefig(f"{exper}-{thread_cnt}-throughput.pdf")
 
 
+def plot_tail_latency_vs_thread(exper: str, metric: str = "p999"):
+    cc_algs = ["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO", "SILO_PRIO"]
+    thread_cnts = [1, 2, 4, 8, 16, 32, 64]
+    latency_ticks = list(range(0, 401, 100))
+    data_path = f"results/{exper}/tail.csv"
+
+    x = np.arange(len(thread_cnts))
+    width = 0.15
+
+    fig, ax = plt.subplots(figsize=(5, 2.7))
+    df = pd.read_csv(data_path, header=0)
+
+    for i, cc_alg in enumerate(cc_algs):
+        cc_df = df[(df["cc_alg"] == cc_alg)]
+        cc_df = cc_df[(cc_df["tag"] == "all")]
+        print(list(float(l) for l in cc_df[metric].tolist()))
+        ax.bar(x=x + width * (i + 1.5 - len(thread_cnts) / 2),
+               height=list(float(l) for l in cc_df[metric].tolist()),
+               width=width,
+               color=color_map[cc_alg],
+               label=cc_alg)
+    ax.set_xlabel('# threads')
+    ax.set_ylabel(f'{metric} tail latency (us)')
+
+    ax.set_xticks(x, list(f"{t}" for t in thread_cnts))
+    ax.set_yticks(latency_ticks, list(
+        f"{l}" for l in latency_ticks), rotation=90)
+
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(f"{exper}-tail-{metric}.pdf")
+
+
 plot_throughput_vs_thread("autoprio_thd")
 plot_throughput_vs_zipf("autoprio_zipf", 32)
 # plot_throughput_vs_zipf("autoprio_zipf", 64)
+plot_tail_latency_vs_thread("autoprio_thd", "p999")

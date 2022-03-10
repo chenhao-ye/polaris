@@ -78,7 +78,7 @@ def dump_tail(datapoints: List[DataPoint], path: str, has_header: bool = True):
             for m in tail_metrics[1:]:
                 f.write(f"{sep}{m}")
             f.write("\n")
-            for dp in datapoints:
+            for dp in sorted(datapoints, key=lambda dp: (int(dp.thread_cnt), float(dp.zipf_theta), dp.cc_alg)):
                 for tag, tail in dp.tail.items():
                     f.write(
                         f"{dp.cc_alg}{sep}{dp.thread_cnt}{sep}{dp.zipf_theta}{sep}{tag}{sep}{tail.get(tail_metrics[0])}")
@@ -100,7 +100,7 @@ def dump_prio_breakdown(datapoints: List[DataPoint], path: str, has_header: bool
             for m in prio_metrics[1:]:
                 f.write(f"{sep}{m}")
             f.write("\n")
-            for dp in datapoints:
+            for dp in sorted(datapoints, key=lambda dp: (int(dp.thread_cnt), float(dp.zipf_theta), dp.cc_alg)):
                 for prio, prio_metric in dp.prio_breakdown.items():
                     f.write(
                         f"{dp.cc_alg}{sep}{dp.thread_cnt}{sep}{dp.zipf_theta}{sep}{prio}{sep}{prio_metric.get(prio_metrics[0])}")
