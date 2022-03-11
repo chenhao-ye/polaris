@@ -47,7 +47,8 @@ def plot_throughput_vs_thread(exper: str):
     width = 0.15
 
     fig, ax = plt.subplots(figsize=FIG_SIZE)
-    df = pd.read_csv(data_path, header=0, na_values="None")
+    df = pd.read_csv(data_path, header=0, na_values="None",
+                     skipinitialspace=True)
 
     for i, cc_alg in enumerate(cc_algs):
         cc_df = df[(df["cc_alg"] == cc_alg)]
@@ -79,7 +80,8 @@ def plot_throughput_vs_zipf(exper: str, thread_cnt: int = None):
     width = 0.15
 
     fig, ax = plt.subplots(figsize=FIG_SIZE)
-    df = pd.read_csv(data_path, header=0, na_values="None")
+    df = pd.read_csv(data_path, header=0, na_values="None",
+                     skipinitialspace=True)
 
     for i, cc_alg in enumerate(cc_algs):
         cc_df = df[(df["cc_alg"] == cc_alg)]
@@ -115,7 +117,8 @@ def plot_tail_latency_vs_thread(exper: str,
     width = 0.15
 
     fig, ax = plt.subplots(figsize=FIG_SIZE)
-    df = pd.read_csv(data_path, header=0, na_values="None")
+    df = pd.read_csv(data_path, header=0, na_values="None",
+                     skipinitialspace=True)
 
     for i, cc_alg in enumerate(cc_algs):
         cc_df = df[(df["cc_alg"] == cc_alg) & (df["tag"] == tag)]
@@ -149,7 +152,8 @@ def plot_tail_latency_vs_zipf(exper: str,
     width = 0.15
 
     fig, ax = plt.subplots(figsize=FIG_SIZE)
-    df = pd.read_csv(data_path, header=0, na_values="None")
+    df = pd.read_csv(data_path, header=0, na_values="None",
+                     skipinitialspace=True)
 
     for i, cc_alg in enumerate(cc_algs):
         cc_df = df[(df["cc_alg"] == cc_alg) & (df["tag"] == "all")]
@@ -182,7 +186,8 @@ def plot_exec_time(exper: str, thread_cnt=64):
     width = 0.3
 
     fig, ax = plt.subplots(figsize=FIG_SIZE)
-    df = pd.read_csv(data_path, header=0, na_values="None")
+    df = pd.read_csv(data_path, header=0, na_values="None",
+                     skipinitialspace=True)
 
     height = {t: [] for t in time_bars}
 
@@ -226,7 +231,7 @@ def plot_exec_time(exper: str, thread_cnt=64):
 
 plot_throughput_vs_thread("autoprio_thd")
 plot_throughput_vs_zipf("autoprio_zipf", 32)
-# plot_throughput_vs_zipf("autoprio_zipf", 64)
+plot_throughput_vs_zipf("autoprio_zipf", 64)
 plot_tail_latency_vs_thread("autoprio_thd", "p999")
-plot_tail_latency_vs_zipf("autoprio_zipf", "p999", 16)
+plot_tail_latency_vs_zipf("autoprio_zipf", "p999", 64)
 plot_exec_time("autoprio_thd", 64)
