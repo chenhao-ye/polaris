@@ -2,6 +2,12 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
+# https://stackoverflow.com/a/31575603
+from matplotlib.ticker import FixedFormatter, FixedLocator
+from matplotlib import transforms as mtransforms
+from matplotlib import scale as mscale
+from numpy import ma
+
 # based on: https://colorbrewer2.org/#type=qualitative&scheme=Set3&n=5
 # this color map ensure the curves are still readable in grayscale
 color_map = {
@@ -53,7 +59,7 @@ def plot_throughput_vs_thread(exper: str):
     for i, cc_alg in enumerate(cc_algs):
         cc_df = df[(df["cc_alg"] == cc_alg)]
         ax.bar(x=x + width * (i + 1.5 - len(thread_cnts) / 2),
-               height=cc_df["throughput"].tolist(),
+               height=cc_df["throughput"].to_numpy(),
                width=width,
                color=color_map[cc_alg],
                label=cc_alg)
@@ -88,7 +94,7 @@ def plot_throughput_vs_zipf(exper: str, thread_cnt: int = None):
         if thread_cnt is not None:
             cc_df = cc_df[(cc_df["thread_cnt"] == thread_cnt)]
         ax.bar(x=x + width * (i + 2.5 - len(zipf_theta_list) / 2),
-               height=cc_df["throughput"].tolist(),
+               height=cc_df["throughput"].to_numpy(),
                width=width,
                color=color_map[cc_alg],
                label=cc_alg)
@@ -123,7 +129,7 @@ def plot_tail_latency_vs_thread(exper: str,
     for i, cc_alg in enumerate(cc_algs):
         cc_df = df[(df["cc_alg"] == cc_alg) & (df["tag"] == tag)]
         ax.bar(x=x + width * (i + 1.5 - len(thread_cnts) / 2),
-               height=cc_df[metric].tolist(),
+               height=cc_df[metric].to_numpy(),
                width=width,
                color=color_map[cc_alg],
                label=cc_alg)
@@ -160,7 +166,7 @@ def plot_tail_latency_vs_zipf(exper: str,
         if thread_cnt is not None:
             cc_df = cc_df[(cc_df["thread_cnt"] == thread_cnt)]
         ax.bar(x=x + width * (i + 2.5 - len(zipf_theta_list) / 2),
-               height=cc_df[metric].tolist(),
+               height=cc_df[metric].to_numpy(),
                width=width,
                color=color_map[cc_alg],
                label=cc_alg)
@@ -197,9 +203,9 @@ def plot_exec_time(exper: str, thread_cnt=64):
                        & (df["cc_alg"] == cc_alg)]
             cc_df = cc_df.groupby(['thread_cnt', 'zipf_theta', 'cc_alg']).sum()
             # first draw exec_time
-            time_tmp = cc_df[time_bar].tolist()
+            time_tmp = cc_df[time_bar].to_numpy()
             assert len(time_tmp) == 1
-            cnt_tmp = cc_df["txn_cnt"].tolist()
+            cnt_tmp = cc_df["txn_cnt"].to_numpy()
             assert len(cnt_tmp) == 1
             height[time_bar].append(time_tmp[0] / cnt_tmp[0])
 
@@ -229,9 +235,112 @@ def plot_exec_time(exper: str, thread_cnt=64):
     fig.savefig(f"{exper}-{thread_cnt}-thread_vs_exec.pdf")
 
 
+class CloseToOne(mscale.ScaleBase):
+    name = 'close_to_one'
+
+    def __init__(self, axis, **kwargs):
+        super().__init__(axis)
+        self.nines = kwargs.get('nines', 4)
+
+    def get_transform(self):
+        return self.Transform(self.nines)
+
+    def set_default_locators_and_formatters(self, axis):
+        axis.set_major_locator(FixedLocator(
+            np.array([1-10**(-k) for k in range(1+self.nines)])))
+        axis.set_major_formatter(FixedFormatter(
+            [f"p{''.join('9' * k)}" if k > 1 else "p90" if k > 0 else '0' for k in range(1+self.nines)]))
+
+    def limit_range_for_scale(self, vmin, vmax, minpos):
+        return 0, min(1 - 10**(-self.nines), vmax)
+
+    class Transform(mtransforms.Transform):
+        input_dims = 1
+        output_dims = 1
+        is_separable = True
+
+        def __init__(self, nines):
+            mtransforms.Transform.__init__(self)
+            self.nines = nines
+
+        def transform_non_affine(self, a):
+            masked = ma.masked_where(a > 1-10**(-1-self.nines), a)
+            if masked.mask.any():
+                return -ma.log10(1-a)
+            else:
+                return -np.log10(1-a)
+
+        def inverted(self):
+            return CloseToOne.InvertedTransform(self.nines)
+
+    class InvertedTransform(mtransforms.Transform):
+        input_dims = 1
+        output_dims = 1
+        is_separable = True
+
+        def __init__(self, nines):
+            mtransforms.Transform.__init__(self)
+            self.nines = nines
+
+        def transform_non_affine(self, a):
+            return 1. - 10**(-a)
+
+        def inverted(self):
+            return CloseToOne.Transform(self.nines)
+
+
+mscale.register_scale(CloseToOne)
+
+
+def plot_latency_logscale(exper: str, thread_cnt=64, zipf=0.9):
+    fig, ax = plt.subplots(figsize=FIG_SIZE)
+
+    for cc_alg in ["SILO"]:
+        data_path = f"results/{exper}/YCSB-CC={cc_alg}-THD={thread_cnt}-ZIPF={zipf}/latency_dump.csv"
+        df = pd.read_csv(data_path, header=0, names=[
+            'prio', 'latency'], na_values="None", skipinitialspace=True)
+        latency = df['latency'].to_numpy()
+        latency.sort()
+        latency = latency / 1000
+        p = np.arange(len(latency)) / len(latency)
+
+        ax.plot(latency, p, color=color_map[cc_alg],
+                linestyle=linestyle_map[cc_alg], label=cc_alg)
+
+    # then SILO_PRIO
+    data_path = f"results/{exper}/YCSB-CC=SILO_PRIO-THD={thread_cnt}-ZIPF={zipf}/latency_dump.csv"
+    df = pd.read_csv(data_path, header=0, names=[
+        'prio', 'latency'], na_values="None", skipinitialspace=True)
+
+    # prio=0
+    latency_p0 = df[(df['prio'] == 0)]['latency'].to_numpy()
+    latency_p0.sort()
+    latency_p0 = latency_p0 / 1000
+    p = np.arange(len(latency_p0)) / len(latency_p0)
+    ax.plot(latency_p0, p, label='SILO_PRIO:low')
+
+    # prio=1
+    latency_p1 = df[(df['prio'] == 1)]['latency'].to_numpy()
+    latency_p1.sort()
+    latency_p1 = latency_p1 / 1000
+    p = np.arange(len(latency_p1)) / len(latency_p1)
+    ax.plot(latency_p1, p, label='SILO_PRIO:high')
+
+    ax.set_xlabel('latency (us)')
+    # ax.set_ylabel(f'tail percentage (%)')
+
+    ax.set_xlim(0, 2000)
+
+    ax.set_yscale('close_to_one')
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(f"{exper}-{thread_cnt}-latency_logscale.pdf")
+
+
 plot_throughput_vs_thread("autoprio_thd")
 plot_throughput_vs_zipf("autoprio_zipf", 32)
 plot_throughput_vs_zipf("autoprio_zipf", 64)
 plot_tail_latency_vs_thread("autoprio_thd", "p999")
 plot_tail_latency_vs_zipf("autoprio_zipf", "p999", 64)
 plot_exec_time("autoprio_thd", 64)
+plot_latency_logscale("fixedprio_binary_thd")
