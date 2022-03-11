@@ -191,11 +191,12 @@ def plot_exec_time(exper: str, thread_cnt=64):
             cc_df = df[(df["thread_cnt"] == thread_cnt)
                        & (df["cc_alg"] == cc_alg)]
             cc_df = cc_df.groupby(['thread_cnt', 'zipf_theta', 'cc_alg']).sum()
-            print(cc_df)
             # first draw exec_time
-            tmp = cc_df[time_bar].tolist()
-            assert len(tmp) == 1
-            height[time_bar].append(tmp[0])
+            time_tmp = cc_df[time_bar].tolist()
+            assert len(time_tmp) == 1
+            cnt_tmp = cc_df["txn_cnt"].tolist()
+            assert len(cnt_tmp) == 1
+            height[time_bar].append(time_tmp[0] / cnt_tmp[0])
 
     scale_base = height["exec_time"][-1]  # SILO_PRIO's exec_time
 
@@ -213,7 +214,11 @@ def plot_exec_time(exper: str, thread_cnt=64):
            label='abort_time')
 
     ax.set_xticks(x, cc_algs)
-    # ax.set_yticks(range(0, 4, 0.2), rotation=90)
+    ax.set_yticks(range(0, 5, 1), rotation=90)
+
+    ax.set_xlabel('concurrency control algorithm')
+    ax.set_ylabel(f'scale')
+
     ax.legend()
     fig.tight_layout()
     fig.savefig(f"{exper}-{thread_cnt}-thread_vs_exec.pdf")
