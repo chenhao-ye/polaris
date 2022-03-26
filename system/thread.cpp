@@ -58,6 +58,7 @@ RC thread_t::run() {
 	uint64_t thd_txn_id = 0;
 	UInt64 txn_cnt = 0;
 	ts_t txn_starttime = 0;
+	uint64_t txn_exec_time_abort = 0;
 	uint64_t txn_backoff_time = 0;
 
 	while (true) {
@@ -74,7 +75,9 @@ RC thread_t::run() {
 								m_query = _abort_buffer[i].query;
                                 m_query->rerun = true;
 								txn_starttime = _abort_buffer[i].starttime;
-								txn_backoff_time = _abort_buffer[i].backoff_time + (curr_time - _abort_buffer[i].abort_time);
+								txn_exec_time_abort = _abort_buffer[i].exec_time_abort;
+								txn_backoff_time = _abort_buffer[i].backoff_time \
+									+ (curr_time - _abort_buffer[i].abort_time);
 								_abort_buffer[i].query = NULL;
 								_abort_buffer_empty_slots ++;
 								break;
@@ -92,6 +95,7 @@ RC thread_t::run() {
                         m_txn->abort_cnt = 0;
 						assert(m_query);
                         txn_starttime = starttime;
+						txn_exec_time_abort = 0;
 						txn_backoff_time = 0;
 #if CC_ALG == WAIT_DIE || (CC_ALG == WOUND_WAIT && WW_STARV_FREE)
 						m_txn->set_ts(get_next_ts());
@@ -107,6 +111,7 @@ RC thread_t::run() {
 		            m_txn->abort_cnt = 0;
 					assert(m_query);
                     txn_starttime = starttime;
+					txn_exec_time_abort = 0;
 					txn_backoff_time = 0;
 #if CC_ALG == WAIT_DIE || (CC_ALG == WOUND_WAIT && WW_STARV_FREE)
 					m_txn->set_ts(get_next_ts());
@@ -185,6 +190,11 @@ RC thread_t::run() {
 		}
 
 		ts_t endtime = get_sys_clock();
+		// this is the time of the last execution
+		uint64_t timespan = endtime - starttime;
+		// this is the time of the whole txn
+		uint64_t txn_timespan = endtime - txn_starttime;
+		INC_STATS(get_thd_id(), run_time, timespan);
 
 		if (rc == Abort) {
 			++(m_query->num_abort);
@@ -204,6 +214,7 @@ RC thread_t::run() {
 						_abort_buffer[i].abort_time = get_sys_clock();
 						_abort_buffer[i].ready_time = _abort_buffer[i].abort_time + penalty;
 						_abort_buffer[i].starttime = txn_starttime;
+						_abort_buffer[i].exec_time_abort = txn_exec_time_abort + timespan;
 						_abort_buffer[i].backoff_time = txn_backoff_time;
 						_abort_buffer_empty_slots --;
 						break;
@@ -212,12 +223,6 @@ RC thread_t::run() {
 			}
 		}
 
-		// this is the time of the last execution
-		uint64_t timespan = endtime - starttime;
-		// this is the time of the whole txn
-		uint64_t txn_timespan = endtime - txn_starttime;
-		INC_STATS(get_thd_id(), run_time, timespan);
-		//stats.add_lat(get_thd_id(), timespan);
 		if (rc == RCOK) {
 			INC_STATS(get_thd_id(), commit_latency, timespan);
 			INC_STATS(get_thd_id(), latency, txn_timespan);
@@ -228,7 +233,8 @@ RC thread_t::run() {
                     INC_STATS(get_thd_id(), txn_cnt_long, 1);
             }
 #endif
-			ADD_PER_PRIO_STATS(get_thd_id(), exec_time, m_txn->prio, timespan);
+			ADD_PER_PRIO_STATS(get_thd_id(), exec_time_commit, m_txn->prio, timespan);
+			ADD_PER_PRIO_STATS(get_thd_id(), exec_time_abort, m_txn->prio, txn_exec_time_abort);
 			ADD_PER_PRIO_STATS(get_thd_id(), backoff_time, m_txn->prio, txn_backoff_time);
 			ADD_PER_PRIO_STATS(get_thd_id(), txn_cnt, m_txn->prio, 1);
 			ADD_PER_PRIO_STATS(get_thd_id(), abort_cnt, m_txn->prio, m_query->num_abort);
@@ -251,7 +257,6 @@ RC thread_t::run() {
                     INC_STATS(get_thd_id(), abort_cnt_long, 1);
             }
 #endif
-			ADD_PER_PRIO_STATS(get_thd_id(), abort_time, m_txn->prio, timespan);
 			stats.abort(get_thd_id());
 			m_txn->abort_cnt++;
 		} else if (rc == ERROR) {
@@ -265,7 +270,6 @@ RC thread_t::run() {
                     INC_STATS(get_thd_id(), abort_cnt_long, 1);
             }
 #endif
-            ADD_PER_PRIO_STATS(get_thd_id(), abort_time, m_txn->prio, timespan);
             stats.abort(get_thd_id());
             m_txn->abort_cnt ++;
 		}

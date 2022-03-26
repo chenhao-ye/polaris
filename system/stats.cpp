@@ -164,8 +164,8 @@ void Stats::print() {
     PerPrioMetrics sum_metrics;
     memset(&sum_metrics, 0, sizeof(PerPrioMetrics));
     for (uint64_t tid = 0; tid < g_thread_cnt; ++tid) {
-      sum_metrics.total_abort_time += _stats[tid]->prio_metrics[p].total_abort_time;
-      sum_metrics.total_exec_time += _stats[tid]->prio_metrics[p].total_exec_time;
+      sum_metrics.total_exec_time_abort += _stats[tid]->prio_metrics[p].total_exec_time_abort;
+      sum_metrics.total_exec_time_commit += _stats[tid]->prio_metrics[p].total_exec_time_commit;
       sum_metrics.total_backoff_time += _stats[tid]->prio_metrics[p].total_backoff_time;
       sum_metrics.total_txn_cnt += _stats[tid]->prio_metrics[p].total_txn_cnt;
       sum_metrics.total_abort_cnt += _stats[tid]->prio_metrics[p].total_abort_cnt;
