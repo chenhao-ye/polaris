@@ -31,14 +31,6 @@ RC ycsb_txn_man::run_txn(base_query * query) {
 #else
     row_cnt = 0;
 #endif
-
-    // if long txn and not rerun aborted txn, generate queries
-    if (unlikely(m_query->is_long && !(m_query->rerun))) {
-        uint64_t starttime = get_sys_clock();
-        m_query->gen_requests(h_thd->get_thd_id(), h_wl);
-        DEC_STATS(h_thd->get_thd_id(), run_time, get_sys_clock() - starttime);
-    }
-
     for (uint32_t rid = 0; rid < m_query->request_cnt; rid ++) {
         ycsb_request * req = &m_query->requests[rid];
         int part_id = wl->key_to_part( req->key );

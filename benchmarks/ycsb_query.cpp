@@ -18,26 +18,17 @@ void ycsb_query::init(uint64_t thd_id, workload * h_wl, Query_thd * query_thd) {
 	_query_thd = query_thd;
 	local_read_perc = g_read_perc;
 	local_req_per_query = REQ_PER_QUERY;
+	is_long = false;
 	double x = (double)(rand() % 100) / 100.0;
 	if (x < g_long_txn_ratio) {
 		local_req_per_query = MAX_ROW_PER_TXN;
 		local_read_perc = g_long_txn_read_ratio;
-		// XXX(zhihan): point requests and part to access to a pre-allocate
-		// spot in the thd's query queue; so that dynamically generate queries.
-#if WORKLOAD == YCSB
-        requests = query_thd->long_txn;
-        part_to_access = query_thd->long_txn_part;
-#endif
         is_long = true; // used to identify long txn
-        zeta_2_theta = zeta(2, g_zipf_theta);
-        return;
-	} else {
-        requests = (ycsb_request *)
-            mem_allocator.alloc(sizeof(ycsb_request) * local_req_per_query, thd_id);
-        part_to_access = (uint64_t *)
-            mem_allocator.alloc(sizeof(uint64_t) * g_part_per_txn, thd_id);
-        is_long = false;
 	}
+	requests = (ycsb_request *)
+		mem_allocator.alloc(sizeof(ycsb_request) * local_req_per_query, thd_id);
+	part_to_access = (uint64_t *)
+		mem_allocator.alloc(sizeof(uint64_t) * g_part_per_txn, thd_id);
 	zeta_2_theta = zeta(2, g_zipf_theta);
 	assert(the_n != 0);
 	assert(denom != 0);
