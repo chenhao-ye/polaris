@@ -191,7 +191,7 @@ RC thread_t::run() {
 		}
 
 		ts_t endtime = get_sys_clock();
-		// this is the time of the last execution but includeing sleep if any
+		// this is the time of the last execution but including sleep if any
 		uint64_t timespan = endtime - starttime;
 		// this is the time of the last execution but excluding sleep
 		uint64_t exec_timespan = endtime - exec_start_time;
