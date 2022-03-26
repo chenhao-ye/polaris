@@ -119,7 +119,8 @@ RC thread_t::run() {
                 }
 			}
 		}
-		INC_STATS(_thd_id, time_query, get_sys_clock() - starttime);
+		ts_t exec_start_time = get_sys_clock();
+		INC_STATS(_thd_id, time_query, exec_start_time - starttime);
 //#if CC_ALG == VLL
 //		_wl->get_txn_man(m_txn, this);
 //#endif
@@ -190,8 +191,10 @@ RC thread_t::run() {
 		}
 
 		ts_t endtime = get_sys_clock();
-		// this is the time of the last execution
+		// this is the time of the last execution but includeing sleep if any
 		uint64_t timespan = endtime - starttime;
+		// this is the time of the last execution but excluding sleep
+		uint64_t exec_timespan = endtime - exec_start_time;
 		// this is the time of the whole txn
 		uint64_t txn_timespan = endtime - txn_starttime;
 		INC_STATS(get_thd_id(), run_time, timespan);
@@ -214,7 +217,7 @@ RC thread_t::run() {
 						_abort_buffer[i].abort_time = get_sys_clock();
 						_abort_buffer[i].ready_time = _abort_buffer[i].abort_time + penalty;
 						_abort_buffer[i].starttime = txn_starttime;
-						_abort_buffer[i].exec_time_abort = txn_exec_time_abort + timespan;
+						_abort_buffer[i].exec_time_abort = txn_exec_time_abort + exec_timespan;
 						_abort_buffer[i].backoff_time = txn_backoff_time;
 						_abort_buffer_empty_slots --;
 						break;
@@ -233,7 +236,7 @@ RC thread_t::run() {
                     INC_STATS(get_thd_id(), txn_cnt_long, 1);
             }
 #endif
-			ADD_PER_PRIO_STATS(get_thd_id(), exec_time_commit, m_txn->prio, timespan);
+			ADD_PER_PRIO_STATS(get_thd_id(), exec_time_commit, m_txn->prio, exec_timespan);
 			ADD_PER_PRIO_STATS(get_thd_id(), exec_time_abort, m_txn->prio, txn_exec_time_abort);
 			ADD_PER_PRIO_STATS(get_thd_id(), backoff_time, m_txn->prio, txn_backoff_time);
 			ADD_PER_PRIO_STATS(get_thd_id(), txn_cnt, m_txn->prio, 1);
