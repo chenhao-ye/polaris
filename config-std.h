@@ -107,7 +107,7 @@
 #define BB_AUTORETIRE               false
 #define BB_ALWAYS_RETIRE_READ       true
 // [WW]
-#define WW_STARV_FREE               false // set false if compared w/ bamboo
+#define WW_STARV_FREE               true // set false if compared w/ bamboo
 // [IC3]
 #define IC3_EAGER_EXEC              true 
 #define IC3_RENDEZVOUS              true
