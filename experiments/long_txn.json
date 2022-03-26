@@ -12,7 +12,7 @@
 	"PF_ABORT": "false",
 
 	"CC_ALG": "SILO_PRIO",
-	"WW_STARV_FREE": "false",
+	"WW_STARV_FREE": "true",
 	"BB_DYNAMIC_TS": "true",
 	"BB_OPT_RAW": "true",
 	"BB_LAST_RETIRE": 0,
