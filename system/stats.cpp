@@ -120,6 +120,7 @@ done:
 void Stats::print() {
 #if CC_ALG == SILO_PRIO
   printf("use_fixed_prio: %s\n", SILO_PRIO_FIXED_PRIO ? "true" : "false");
+  printf("abort_threshold_before_inc_prio: %d\n", SILO_PRIO_ABORT_THRESHOLD_BEFORE_INC_PRIO);
   printf("inc_prio_after_num_abort: %d\n", SILO_PRIO_INC_PRIO_AFTER_NUM_ABORT);
 #endif
   ALL_METRICS(INIT_TOTAL_VAR, INIT_TOTAL_VAR, INIT_TOTAL_VAR)

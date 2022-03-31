@@ -133,8 +133,14 @@ RC thread_t::run() {
 #if SILO_PRIO_FIXED_PRIO
 		m_txn->prio = m_query->prio;
 #else
-		m_txn->prio = std::min<int>(SILO_PRIO_MAX_PRIO,
-			m_query->prio + (m_query->num_abort / SILO_PRIO_INC_PRIO_AFTER_NUM_ABORT));
+		if (m_query->num_abort <= SILO_PRIO_ABORT_THRESHOLD_BEFORE_INC_PRIO)
+			m_txn->prio = m_query->prio;
+		else
+			m_txn->prio = std::min<int>(
+				SILO_PRIO_MAX_PRIO,
+				m_query->prio + \
+					((m_query->num_abort - SILO_PRIO_ABORT_THRESHOLD_BEFORE_INC_PRIO) / \
+					SILO_PRIO_INC_PRIO_AFTER_NUM_ABORT));
 #endif // SILO_PRIO_FIXED_PRIO
 #else // CC_ALG == SILO_PRIO
 		m_txn->prio = m_query->prio;
