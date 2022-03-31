@@ -120,6 +120,11 @@
 //   whether use fixed priority; if true, a query's priority won't be
 //   incremented no matter how many times it has aborted
 #define SILO_PRIO_FIXED_PRIO        false
+//   don't increment the priority until specific number of aborts. for txns only
+//   aborts 5 times don't contribute to the tail latency, so there is no point
+//   to give these txns priority
+#define SILO_PRIO_ABORT_THRESHOLD_BEFORE_INC_PRIO 8
+//   after num_abort exceeds the threshold, start to increment priority
 //   increment the priority of a query after how many aborts
 //   only effective if SILO_PRIO_FIXED_PRIO is false
 #define SILO_PRIO_INC_PRIO_AFTER_NUM_ABORT 3
