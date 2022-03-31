@@ -78,7 +78,7 @@ def plot_throughput_vs_thread(exper: str):
 
 def plot_throughput_vs_zipf(exper: str, thread_cnt: int = None):
     cc_algs = ["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO", "SILO_PRIO"]
-    zipf_theta_list = [0.1, 0.3, 0.5, 0.7, 0.9, 0.99, 1.1, 1.3, 1.5]
+    zipf_theta_list = [0.9, 0.99, 1.1, 1.3, 1.5]
     tp_ticks = list(range(0, 1000001, 200000))
     data_path = f"results/{exper}/throughput.csv"
 
@@ -137,9 +137,9 @@ def plot_tail_latency_vs_thread(exper: str,
     ax.set_ylabel(f'{metric} tail latency (us)')
 
     ax.set_xticks(x, list(f"{t}" for t in thread_cnts))
-    ax.set_yticks(latency_ticks,
-                  list(f"{l}" for l in latency_ticks),
-                  rotation=90)
+    # ax.set_yticks(latency_ticks,
+    #               list(f"{l}" for l in latency_ticks),
+    #               rotation=90)
 
     ax.legend()
     fig.tight_layout()
@@ -150,7 +150,7 @@ def plot_tail_latency_vs_zipf(exper: str,
                               metric: str = "p999",
                               thread_cnt: int = None):
     cc_algs = ["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO", "SILO_PRIO"]
-    zipf_theta_list = [0.1, 0.3, 0.5, 0.7, 0.9, 0.99, 1.1, 1.3, 1.5]
+    zipf_theta_list = [0.9, 0.99, 1.1, 1.3, 1.5]
     latency_ticks = list(range(0, 401, 100))
     data_path = f"results/{exper}/tail.csv"
 
@@ -292,7 +292,7 @@ class CloseToOne(mscale.ScaleBase):
 mscale.register_scale(CloseToOne)
 
 
-def plot_latency_logscale(exper: str, thread_cnt=64, zipf=0.9):
+def plot_latency_logscale(exper: str, thread_cnt=64, zipf=0.99):
     fig, ax = plt.subplots(figsize=FIG_SIZE)
 
     for cc_alg in ["SILO"]:

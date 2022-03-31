@@ -1,6 +1,6 @@
 exper=autoprio_longtxn
 mkdir -p results
-zipf=0.9
+zipf=0.99
 
 for thd in 1 2 4 8 16 32 64; do
 	for alg in SILO SILO_PRIO WOUND_WAIT NO_WAIT WAIT_DIE; do
