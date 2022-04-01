@@ -93,7 +93,7 @@ def plot_throughput_vs_zipf(exper: str, thread_cnt: int = None):
         cc_df = df[(df["cc_alg"] == cc_alg)]
         if thread_cnt is not None:
             cc_df = cc_df[(cc_df["thread_cnt"] == thread_cnt)]
-        ax.bar(x=x + width * (i + 2.5 - len(zipf_theta_list) / 2),
+        ax.bar(x=x + width * (i + 0.5 - len(zipf_theta_list) / 2),
                height=cc_df["throughput"].to_numpy(),
                width=width,
                color=color_map[cc_alg],
@@ -165,7 +165,7 @@ def plot_tail_latency_vs_zipf(exper: str,
         cc_df = df[(df["cc_alg"] == cc_alg) & (df["tag"] == "all")]
         if thread_cnt is not None:
             cc_df = cc_df[(cc_df["thread_cnt"] == thread_cnt)]
-        ax.bar(x=x + width * (i + 2.5 - len(zipf_theta_list) / 2),
+        ax.bar(x=x + width * (i + 0.5 - len(zipf_theta_list) / 2),
                height=cc_df[metric].to_numpy(),
                width=width,
                color=color_map[cc_alg],
@@ -174,9 +174,9 @@ def plot_tail_latency_vs_zipf(exper: str,
     ax.set_ylabel(f'{metric} tail latency (us)')
 
     ax.set_xticks(x, list(f"{t}" for t in zipf_theta_list))
-    ax.set_yticks(latency_ticks,
-                  list(f"{l}" for l in latency_ticks),
-                  rotation=90)
+    # ax.set_yticks(latency_ticks,
+    #               list(f"{l}" for l in latency_ticks),
+    #               rotation=90)
 
     ax.legend()
     fig.tight_layout()
@@ -343,4 +343,4 @@ plot_throughput_vs_zipf("autoprio_zipf", 64)
 plot_tail_latency_vs_thread("autoprio_thd", "p999")
 plot_tail_latency_vs_zipf("autoprio_zipf", "p999", 64)
 plot_exec_time("autoprio_thd", 64)
-plot_latency_logscale("fixedprio_binary_thd")
+# plot_latency_logscale("fixedprio_binary_thd")
