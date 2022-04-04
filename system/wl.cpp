@@ -9,7 +9,7 @@
 #include "mem_alloc.h"
 
 RC workload::init() {
-	sim_done = false;
+	sim_done.store(false, std::memory_order_release);
 	return RCOK;
 }
 

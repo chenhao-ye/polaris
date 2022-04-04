@@ -37,7 +37,7 @@ public:
 	// ic3 helpers
 	virtual SC_PIECE * get_cedges(TPCCTxnType txn_type, int piece_id); 
 
-	bool sim_done;
+	std::atomic_bool sim_done;
 protected:
 	void index_insert(string index_name, uint64_t key, row_t * row);
 	void index_insert(INDEX * index, uint64_t key, row_t * row, int64_t part_id = -1);
