@@ -159,7 +159,7 @@ static_assert(SILO_PRIO_NUM_BITS_PRIO_VER + SILO_PRIO_NUM_BITS_PRIO \
 //   abort_cnt < MAX_ABORT_CNT, we collect the exact number; for txn with more
 //   abort, we simply keep a counter for all of them
 #define STAT_MAX_NUM_ABORT 50
-#define DUMP_LATENCY true
+#define DUMP_LATENCY false
 #define DUMP_LATENCY_FILENAME "latency_dump.csv"
 
 /***********************************************/
