@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+from typing import List, Dict
 
 # https://stackoverflow.com/a/31575603
 from matplotlib.ticker import FixedFormatter, FixedLocator
@@ -38,201 +39,35 @@ marker_map = {
     "SILO_PRIO": "o",
 }
 
+label_map = {
+    "NO_WAIT": "NO_WAIT",
+    "WAIT_DIE": "WAIT_DIE",
+    "WOUND_WAIT": "WOUND_WAIT",
+    "SILO": "SILO",
+    "SILO_PRIO": "SILO_PRIO",
+}
+
 marker_size = 3
 
 FIG_SIZE = (5, 2.7)
 
 
-def plot_throughput_vs_thread(exper: str):
-    cc_algs = ["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO", "SILO_PRIO"]
-    thread_cnts = [1, 2, 4, 8, 16, 32, 64]
-    tp_ticks = list(range(0, 1000001, 200000))
-    data_path = f"results/{exper}/throughput.csv"
-
-    x = np.arange(len(thread_cnts))
-    width = 0.15
-
-    fig, ax = plt.subplots(figsize=FIG_SIZE)
-    df = pd.read_csv(data_path, header=0, na_values="None",
-                     skipinitialspace=True)
-
-    for i, cc_alg in enumerate(cc_algs):
-        cc_df = df[(df["cc_alg"] == cc_alg)]
-        ax.bar(x=x + width * (i + 1.5 - len(thread_cnts) / 2),
-               height=cc_df["throughput"].to_numpy(),
-               width=width,
-               color=color_map[cc_alg],
-               label=cc_alg)
-    ax.set_xlabel('# threads')
-    ax.set_ylabel('throughput (Mtxn/s)')
-
-    ax.set_xticks(x, list(f"{t}" for t in thread_cnts))
-    ax.set_yticks(tp_ticks,
-                  list(f"{tp/1000000}" if tp > 0 else "0" for tp in tp_ticks),
-                  rotation=90)
-
-    ax.legend()
-    fig.tight_layout()
-    fig.savefig(f"{exper}-thread_vs_throughput.pdf")
+def set_fig(fig, fig_size=FIG_SIZE):
+    # handle all figure parameters tuning
+    fig.set_tight_layout({"pad": 0.1, "w_pad": 0.5, "h_pad": 0.5})
+    fig.set_size_inches(*fig_size)
 
 
-def plot_throughput_vs_zipf(exper: str, thread_cnt: int = None):
-    cc_algs = ["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO", "SILO_PRIO"]
-    zipf_theta_list = [0.9, 0.99, 1.1, 1.3, 1.5]
-    tp_ticks = list(range(0, 1000001, 200000))
-    data_path = f"results/{exper}/throughput.csv"
-
-    x = np.arange(len(zipf_theta_list))
-    width = 0.15
-
-    fig, ax = plt.subplots(figsize=FIG_SIZE)
-    df = pd.read_csv(data_path, header=0, na_values="None",
-                     skipinitialspace=True)
-
-    for i, cc_alg in enumerate(cc_algs):
-        cc_df = df[(df["cc_alg"] == cc_alg)]
-        if thread_cnt is not None:
-            cc_df = cc_df[(cc_df["thread_cnt"] == thread_cnt)]
-        ax.bar(x=x + width * (i + 0.5 - len(zipf_theta_list) / 2),
-               height=cc_df["throughput"].to_numpy(),
-               width=width,
-               color=color_map[cc_alg],
-               label=cc_alg)
-    ax.set_xlabel('zipf_theta')
-    ax.set_ylabel('throughput (Mtxn/s)')
-
-    ax.set_xticks(x, list(f"{t}" for t in zipf_theta_list))
-    ax.set_yticks(tp_ticks,
-                  list(f"{tp/1000000}" if tp > 0 else "0" for tp in tp_ticks),
-                  rotation=90)
-
-    ax.legend()
-    fig.tight_layout()
-    fig.savefig(f"{exper}-{thread_cnt}-zipf_vs_throughput.pdf")
+def get_subplots_2UD(sharex=True, fig_size=FIG_SIZE):
+    fig, axes = plt.subplots(nrows=2, ncols=1, sharex=sharex)
+    set_fig(fig, fig_size=fig_size)
+    return fig, axes
 
 
-def plot_tail_latency_vs_thread(exper: str,
-                                metric: str = "p999",
-                                tag: str = "all"):
-    cc_algs = ["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO", "SILO_PRIO"]
-    thread_cnts = [1, 2, 4, 8, 16, 32, 64]
-    latency_ticks = list(range(0, 401, 100))
-    data_path = f"results/{exper}/tail.csv"
-
-    x = np.arange(len(thread_cnts))
-    width = 0.15
-
-    fig, ax = plt.subplots(figsize=FIG_SIZE)
-    df = pd.read_csv(data_path, header=0, na_values="None",
-                     skipinitialspace=True)
-
-    for i, cc_alg in enumerate(cc_algs):
-        cc_df = df[(df["cc_alg"] == cc_alg) & (df["tag"] == tag)]
-        ax.bar(x=x + width * (i + 1.5 - len(thread_cnts) / 2),
-               height=cc_df[metric].to_numpy(),
-               width=width,
-               color=color_map[cc_alg],
-               label=cc_alg)
-    ax.set_xlabel('# threads')
-    ax.set_ylabel(f'{metric} tail latency (us)')
-
-    ax.set_xticks(x, list(f"{t}" for t in thread_cnts))
-    # ax.set_yticks(latency_ticks,
-    #               list(f"{l}" for l in latency_ticks),
-    #               rotation=90)
-
-    ax.legend()
-    fig.tight_layout()
-    fig.savefig(f"{exper}-{tag}-thread_vs_tail-{metric}.pdf")
-
-
-def plot_tail_latency_vs_zipf(exper: str,
-                              metric: str = "p999",
-                              thread_cnt: int = None):
-    cc_algs = ["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO", "SILO_PRIO"]
-    zipf_theta_list = [0.9, 0.99, 1.1, 1.3, 1.5]
-    latency_ticks = list(range(0, 401, 100))
-    data_path = f"results/{exper}/tail.csv"
-
-    x = np.arange(len(zipf_theta_list))
-    width = 0.15
-
-    fig, ax = plt.subplots(figsize=FIG_SIZE)
-    df = pd.read_csv(data_path, header=0, na_values="None",
-                     skipinitialspace=True)
-
-    for i, cc_alg in enumerate(cc_algs):
-        cc_df = df[(df["cc_alg"] == cc_alg) & (df["tag"] == "all")]
-        if thread_cnt is not None:
-            cc_df = cc_df[(cc_df["thread_cnt"] == thread_cnt)]
-        ax.bar(x=x + width * (i + 0.5 - len(zipf_theta_list) / 2),
-               height=cc_df[metric].to_numpy(),
-               width=width,
-               color=color_map[cc_alg],
-               label=cc_alg)
-    ax.set_xlabel('zipf_theta')
-    ax.set_ylabel(f'{metric} tail latency (us)')
-
-    ax.set_xticks(x, list(f"{t}" for t in zipf_theta_list))
-    # ax.set_yticks(latency_ticks,
-    #               list(f"{l}" for l in latency_ticks),
-    #               rotation=90)
-
-    ax.legend()
-    fig.tight_layout()
-    fig.savefig(f"{exper}-{thread_cnt}-zipf_vs_tail-{metric}.pdf")
-
-
-def plot_exec_time(exper: str, thread_cnt=64):
-    time_bars = ["exec_time", "abort_time"]
-    cc_algs = ["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO", "SILO_PRIO"]
-    data_path = f"results/{exper}/prio.csv"
-
-    x = np.arange(len(cc_algs))
-    width = 0.3
-
-    fig, ax = plt.subplots(figsize=FIG_SIZE)
-    df = pd.read_csv(data_path, header=0, na_values="None",
-                     skipinitialspace=True)
-
-    height = {t: [] for t in time_bars}
-
-    for cc_alg in cc_algs:
-        for time_bar in time_bars:
-            cc_df = df[(df["thread_cnt"] == thread_cnt)
-                       & (df["cc_alg"] == cc_alg)]
-            cc_df = cc_df.groupby(['thread_cnt', 'zipf_theta', 'cc_alg']).sum()
-            # first draw exec_time
-            time_tmp = cc_df[time_bar].to_numpy()
-            assert len(time_tmp) == 1
-            cnt_tmp = cc_df["txn_cnt"].to_numpy()
-            assert len(cnt_tmp) == 1
-            height[time_bar].append(time_tmp[0] / cnt_tmp[0])
-
-    scale_base = height["exec_time"][-1]  # SILO_PRIO's exec_time
-
-    ax.bar(x=x,
-           height=np.array(height["exec_time"]) / scale_base,
-           width=width,
-           color=color_map['exec_time'],
-           label='exec_time')
-
-    ax.bar(x=x,
-           height=np.array(height["abort_time"]) / scale_base,
-           width=width,
-           bottom=np.array(height["exec_time"]) / scale_base,
-           color=color_map['abort_time'],
-           label='abort_time')
-
-    ax.set_xticks(x, cc_algs)
-    ax.set_yticks(range(0, 5, 1), rotation=90)
-
-    ax.set_xlabel('concurrency control algorithm')
-    ax.set_ylabel(f'scale')
-
-    ax.legend()
-    fig.tight_layout()
-    fig.savefig(f"{exper}-{thread_cnt}-thread_vs_exec.pdf")
+def get_subplots_2LR(sharex=True, fig_size=FIG_SIZE):
+    fig, axes = plt.subplots(nrows=1, ncols=2, sharex=sharex)
+    set_fig(fig, fig_size=fig_size)
+    return fig, axes
 
 
 class CloseToOne(mscale.ScaleBase):
@@ -265,10 +100,7 @@ class CloseToOne(mscale.ScaleBase):
 
         def transform_non_affine(self, a):
             masked = ma.masked_where(a > 1-10**(-1-self.nines), a)
-            if masked.mask.any():
-                return -ma.log10(1-a)
-            else:
-                return -np.log10(1-a)
+            return -ma.log10(1-a) if masked.mask.any() else -np.log10(1-a)
 
         def inverted(self):
             return CloseToOne.InvertedTransform(self.nines)
@@ -290,6 +122,119 @@ class CloseToOne(mscale.ScaleBase):
 
 
 mscale.register_scale(CloseToOne)
+
+
+def make_subplot(df: pd.DataFrame, ax, x_col: str, y_col: str, z_col: str, x_range: List[int], z_range: List,
+                 filters: Dict):
+    filter_df = df
+    for fk, fv in filters.items():
+        filter_df = filter_df[(filter_df[fk] == fv)]
+
+    # each z corresponds to a legend
+    for z_val in z_range:
+        z_df = filter_df[(filter_df[z_col] == z_val)]
+        y_data = []
+        for x_val in x_range:
+            d = z_df[(z_df[x_col] == x_val)]
+            if d.shape[0] != 1:
+                print(f"{x_val}, {z_val}")
+            assert d.shape[0] == 1
+            y_data.append(d.head(1)[y_col])
+        ax.plot(x_range, y_data,
+                color=color_map[z_val],
+                marker=marker_map[z_val],
+                markersize=marker_size,
+                label=label_map[z_val])
+
+
+def plot_thread_vs_throughput_tail(exper: str, tail_metric='p999', layout='LR'):
+    assert layout in {"LR", "UD"}
+    fig, axes = get_subplots_2LR() if layout == 'LR' else get_subplots_2UD()
+    ax_tp, ax_tail = axes
+
+    cc_algs = ["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO", "SILO_PRIO"]
+    thread_cnts = [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64]
+
+    # plot throughput
+    tp_df = pd.read_csv(f"results/{exper}/throughput.csv", header=0,
+                        na_values="None", skipinitialspace=True)
+    make_subplot(df=tp_df, ax=ax_tp, x_col='thread_cnt', y_col='throughput',
+                 z_col='cc_alg', x_range=thread_cnts, z_range=cc_algs,
+                 filters={"zipf_theta": 0.99})
+
+    # plot tail latency
+    tail_df = pd.read_csv(f"results/{exper}/tail.csv", header=0,
+                          na_values="None", skipinitialspace=True)
+    make_subplot(df=tail_df, ax=ax_tail, x_col='thread_cnt', y_col=tail_metric,
+                 z_col='cc_alg', x_range=thread_cnts, z_range=cc_algs,
+                 filters={"zipf_theta": 0.99, 'tag': 'all'})
+
+    ax_tp.set_ylabel('Throughput (Mtxn/s)')
+    ax_tail.set_ylabel(f'{tail_metric} (ms)')
+    ax_tp.set_xlabel('Number of threads')
+    ax_tail.set_xlabel('Number of threads')
+
+    ax_tp.set_xticks([1, 8, 16, 32, 48, 64])
+    ax_tail.set_xticks([1, 8, 16, 32, 48, 64])
+    ax_tp.set_xlim(0)
+    ax_tail.set_xlim(0)
+
+    tp_ticks = list(range(0, 1000001, 200000))
+    ax_tp.set_yticks(
+        tp_ticks, [f"{t/1000000}" if t > 0 else "0" for t in tp_ticks], rotation=90)
+    ax_tp.set_ylim([0, 1000000])
+
+    tail_ticks = list(range(0, 1251, 250))
+    ax_tail.set_yticks(
+        tail_ticks, [f"{t/1000}" if t > 0 else "0" for t in tail_ticks], rotation=90)
+    ax_tail.set_ylim([0, 1250])
+
+    fig.savefig(f"{exper}-thread_vs_throughput_tail.pdf")
+
+
+def plot_zipf_vs_throughput_tail(exper: str, tail_metric='p999', layout='LR'):
+    assert layout in {"LR", "UD"}
+    fig, axes = get_subplots_2LR() if layout == 'LR' else get_subplots_2UD()
+    ax_tp, ax_tail = axes
+
+    cc_algs = ["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO", "SILO_PRIO"]
+    zipf_thetas = [0.9, 0.99, 1.1, 1.2, 1.3, 1.4, 1.5]
+
+    # plot throughput
+    tp_df = pd.read_csv(f"results/{exper}/throughput.csv", header=0,
+                        na_values="None", skipinitialspace=True)
+    make_subplot(df=tp_df, ax=ax_tp, x_col='zipf_theta', y_col='throughput',
+                 z_col='cc_alg', x_range=zipf_thetas, z_range=cc_algs,
+                 filters={"thread_cnt": 64})
+
+    # plot tail latency
+    tail_df = pd.read_csv(f"results/{exper}/tail.csv", header=0,
+                          na_values="None", skipinitialspace=True)
+    make_subplot(df=tail_df, ax=ax_tail, x_col='zipf_theta', y_col=tail_metric,
+                 z_col='cc_alg', x_range=zipf_thetas, z_range=cc_algs,
+                 filters={"thread_cnt": 64, 'tag': 'all'})
+
+    ax_tp.set_ylabel('Throughput (Mtxn/s)')
+    ax_tail.set_ylabel(f'{tail_metric} (ms)')
+    ax_tp.set_xlabel('Zipfian theta')
+    ax_tail.set_xlabel('Zipfian theta')
+
+    zipf_ticks = [0.9, 0.99, 1.1, 1.3, 1.5]
+    ax_tp.set_xticks(
+        zipf_ticks, [f"{t:.1f}" if t != 0.99 else f"{t:.2f}" for t in zipf_ticks])
+    ax_tail.set_xticks(zipf_thetas)
+
+    tp_ticks = list(range(0, 1000001, 200000))
+    ax_tp.set_yticks(
+        tp_ticks, [f"{t/1000000}" if t > 0 else "0" for t in tp_ticks], rotation=90)
+    ax_tp.set_ylim([0, 1000000])
+
+    tail_ticks = list(range(0, 2501, 500))
+    ax_tail.set_yticks(
+        tail_ticks, [f"{t/1000}" if t > 0 else "0" for t in tail_ticks], rotation=90)
+    ax_tail.set_ylim([0, 2500])
+
+    fig.savefig(f"{exper}-zipf_vs_throughput_tail.pdf")
 
 
 def plot_latency_logscale(exper: str, thread_cnt=64, zipf=0.99):
@@ -337,11 +282,6 @@ def plot_latency_logscale(exper: str, thread_cnt=64, zipf=0.99):
     fig.savefig(f"{exper}-{thread_cnt}-latency_logscale.pdf")
 
 
-plot_throughput_vs_thread("autoprio_thd")
-plot_throughput_vs_zipf("autoprio_zipf", 32)
-plot_throughput_vs_zipf("autoprio_zipf", 64)
-plot_tail_latency_vs_thread("autoprio_thd", "p999")
-plot_tail_latency_vs_zipf("autoprio_zipf", "p999", 32)
-plot_tail_latency_vs_zipf("autoprio_zipf", "p999", 64)
-plot_exec_time("autoprio_thd", 64)
-# plot_latency_logscale("fixedprio_binary_thd")
+plot_thread_vs_throughput_tail("autoprio_thd")
+plot_zipf_vs_throughput_tail("autoprio_zipf")
+plot_thread_vs_throughput_tail("autoprio_longtxn")
