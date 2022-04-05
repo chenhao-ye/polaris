@@ -13,7 +13,7 @@ void ycsb_query::init(uint64_t thd_id, workload * h_wl, Query_thd * query_thd) {
 	num_abort = 0;
 	double y;
 	drand48_r(&per_thread_rand_buf, &y);
-	prio = y < HIGH_PRIO_RATIO ? 1 : 0;
+	prio = y < HIGH_PRIO_RATIO ? ((SILO_PRIO_MAX_PRIO + 1) / 2) : 0;
 	// ycsb_query init
 	_query_thd = query_thd;
 	local_read_perc = g_read_perc;
