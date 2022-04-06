@@ -288,22 +288,21 @@ RC thread_t::run() {
 			return FINISH;
 		}
 
+
+		if (warmup_finish) {
 #if TERMINATE_BY_COUNT
-		if (warmup_finish && txn_cnt >= MAX_TXN_PER_PART) {
-			assert(txn_cnt == MAX_TXN_PER_PART);
-			_wl->sim_done.store(true, std::memory_order_release);
-		}
+			if (txn_cnt >= MAX_TXN_PER_PART)
 #else
-		// even not TERMINATE_BY_COUNT, the execution still must stop when 
-		// txn_cnt >= MAX_TXN_PER_PART; otherwise, it will cause buffer overflow
-		if (warmup_finish && \
-			(stats._stats[get_thd_id()]->run_time >= MAX_RUNTIME * 1000000000 \
-				|| txn_cnt >= MAX_TXN_PER_PART))
-		{
-			assert(txn_cnt <= MAX_TXN_PER_PART);
-			_wl->sim_done.store(true, std::memory_order_release);
-		}
+			// even not TERMINATE_BY_COUNT, the execution still must stop when 
+			// txn_cnt >= MAX_TXN_PER_PART; otherwise, it will cause buffer overflow
+			if (txn_cnt >= MAX_TXN_PER_PART || \
+				stats._stats[get_thd_id()]->run_time / 1000000000 >= MAX_RUNTIME)
 #endif
+			{
+				assert(txn_cnt <= MAX_TXN_PER_PART);
+				_wl->sim_done.store(true, std::memory_order_release);
+			}
+		}
 
 		if (_wl->sim_done.load(std::memory_order_acquire)) {
 #if CC_ALG == IC3
