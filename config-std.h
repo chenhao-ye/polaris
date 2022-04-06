@@ -186,7 +186,7 @@ static_assert(SILO_PRIO_NUM_BITS_PRIO_VER + SILO_PRIO_NUM_BITS_PRIO \
 #define MAX_TUPLE_SIZE				1024 // in bytes
 #define MAX_FIELD_SIZE                          50
 // ==== [YCSB] ====
-#define INIT_PARALLELISM			40
+#define INIT_PARALLELISM			THREAD_CNT
 #define SYNTH_TABLE_SIZE 			(1024 * 5)
 #define ZIPF_THETA 					0.9
 #define READ_PERC 					1
