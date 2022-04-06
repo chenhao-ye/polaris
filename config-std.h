@@ -155,6 +155,9 @@ static_assert(SILO_PRIO_NUM_BITS_PRIO_VER + SILO_PRIO_NUM_BITS_PRIO \
 //     starts with prio 0, though the codebase does support to have two flags
 //     enabled together.
 #define HIGH_PRIO_RATIO 0
+//   priority growing space:
+//     Low priority txn cannot grow its priority over the bound
+#define LOW_PRIO_BOUND SILO_PRIO_MAX_PRIO
 //   we collect the query distribution in terms of num_abort; for
 //   abort_cnt < MAX_ABORT_CNT, we collect the exact number; for txn with more
 //   abort, we simply keep a counter for all of them

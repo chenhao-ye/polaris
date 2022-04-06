@@ -18,6 +18,7 @@ public:
 	bool rerun;
 	uint32_t num_abort = 0;
 	uint32_t prio = 0;
+	uint32_t max_prio = LOW_PRIO_BOUND;
 	// note prio may be overwritten by subclass to support more complicated
 	// priority distribution, e.g. long-running txn
 };
