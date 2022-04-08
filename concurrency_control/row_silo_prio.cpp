@@ -32,9 +32,16 @@ retry:
 	v2 = v;
 	is_reserved = v2.acquire_prio(prio);
 	local_row->copy(_row);
-	if (!_tid_word.compare_exchange_strong(v, v2, std::memory_order_acq_rel,
-		std::memory_order_acquire))
-		goto retry;
+	if (is_reserved) {
+		if (!_tid_word.compare_exchange_strong(v, v2, std::memory_order_acq_rel,
+			std::memory_order_acquire))
+			goto retry;
+	} else {
+		assert (v2 == v);
+		v = _tid_word.load(std::memory_order_acquire);
+		if (v != v2)
+			goto retry;
+	}
 	txn->last_is_reserved = is_reserved;
 	txn->last_data_ver = v2.get_data_ver();
 	if (is_reserved) txn->last_prio_ver = v2.get_prio_ver();
