@@ -8,9 +8,8 @@ from typing import List
 
 class DataPoint():
     # regex for directory name, which encoding experiment metadata
-    # if YCSB, ZIPF is a float-point number; if TPCC, ZIPF="X"
     re_dirname = re.compile(
-        r'\AYCSB-CC=(?P<cc_alg>[A-Z_]+)-THD=(?P<thread_cnt>[0-9]+)-ZIPF=(?P<zipf_theta>[0-9.X]+)\Z')
+        r'\A(?P<wl>[A-Z]+)-CC=(?P<cc_alg>[A-Z_]+)-THD=(?P<thread_cnt>[0-9]+)(-ZIPF=(?P<zipf_theta>[0-9.]+))?(-NUM_WH=(?P<num_wh>[0-9]+))?(-PRIO_RATIO=(?P<prio_ratio>[0-9.]+))?\Z')
     # regex to filter throughput
     re_throughput = re.compile(
         r'\A\[summary\] throughput=(?P<throughput>[0-9.e+]+),')
@@ -23,9 +22,9 @@ class DataPoint():
 
     def __init__(self, prefix: str, dirname: str) -> None:
         d = self.re_dirname.match(dirname).groupdict()
-        self.cc_alg = d['cc_alg']
-        self.thread_cnt = d['thread_cnt']
-        self.zipf_theta = d['zipf_theta']
+        self.wl = d['wl']
+        assert self.wl in {"YCSB", "TPCC"}
+        self.params = d  # cc_alg, thread_cnt, zipf_theta, num_wh, prio_ratio
         self.throughput = None
         self.tail = {}
         self.prio_breakdown = {}
@@ -46,6 +45,41 @@ class DataPoint():
                         self.prio_breakdown[d['prio']] = {
                             k: v for k, v in d.items() if k != 'prio'}
 
+    def get_base_header(self) -> List[str]:
+        return [
+            p for p in ["cc_alg", "thread_cnt", "zipf_theta", "num_wh", "prio_ratio"]
+            if self.params.get(p)
+        ]
+
+    def get_base_data(self) -> List:
+        return [
+            self.params.get(p) for p in ["cc_alg", "thread_cnt", "zipf_theta", "num_wh", "prio_ratio"]
+            if self.params.get(p)
+        ]
+
+    def get_throughput_header(self) -> List[str]:
+        h = self.get_base_header()
+        h.append("throughput")
+        return h
+
+    def get_throughput_data(self) -> List[str]:
+        d = self.get_base_data()
+        d.append(str(self.throughput))
+        return d
+
+    def get_tail_header(self) -> List[str]:
+        h = self.get_base_header()
+        h.extend(['tag', 'p50', 'p99', 'p999', 'p9999'])
+        return h
+
+    def get_tail_data(self) -> List[List]:
+        d = self.get_base_data()
+        return [
+            d + [tag, str(tail['p50']), str(tail['p99']),
+                 str(tail['p999']), str(tail['p9999'])]
+            for tag, tail in self.tail.items()
+        ]
+
 
 def parse_datapoint(prefix: str, dirname: str) -> DataPoint:
     if dirname.startswith("YCSB") or dirname.startswith("TPCC"):
@@ -56,75 +90,31 @@ def parse_datapoint(prefix: str, dirname: str) -> DataPoint:
 
 def dump_throughput(datapoints: List[DataPoint], path: str, has_header: bool = True):
     with open(path, 'w') as f:
-        sep = ',' if path.endswith('.csv') else '\t'
         if has_header:
-            if not path.endswith('.csv'):
-                f.write('# ')
-            f.write(f"cc_alg{sep}thread_cnt{sep}zipf_theta{sep}throughput\n")
-            for dp in sorted(datapoints, key=lambda dp: (int(dp.thread_cnt), float(dp.zipf_theta), dp.cc_alg)):
-                f.write(
-                    f"{dp.cc_alg}{sep}{dp.thread_cnt}{sep}{dp.zipf_theta}{sep}{dp.throughput}\n")
+            f.write(f"{','.join(datapoints[0].get_throughput_header())}\n")
+        for dp in datapoints:
+            f.write(f"{','.join(dp.get_throughput_data())}\n")
 
 
 def dump_tail(datapoints: List[DataPoint], path: str, has_header: bool = True):
-    tail_metrics = ['p50', 'p99', 'p999', 'p9999']
     with open(path, 'w') as f:
-        sep = ',' if path.endswith('.csv') else '\t'
         if has_header:
-            if not path.endswith('.csv'):
-                f.write('# ')
-            f.write(
-                f"cc_alg{sep}thread_cnt{sep}zipf_theta{sep}tag{sep}{tail_metrics[0]}")
-            for m in tail_metrics[1:]:
-                f.write(f"{sep}{m}")
-            f.write("\n")
-            for dp in sorted(datapoints, key=lambda dp: (int(dp.thread_cnt), float(dp.zipf_theta), dp.cc_alg)):
-                for tag, tail in dp.tail.items():
-                    f.write(
-                        f"{dp.cc_alg}{sep}{dp.thread_cnt}{sep}{dp.zipf_theta}{sep}{tag}{sep}{tail.get(tail_metrics[0])}")
-                    for m in tail_metrics[1:]:
-                        f.write(f"{sep}{tail.get(m)}")
-                    f.write("\n")
-
-
-def dump_prio_breakdown(datapoints: List[DataPoint], path: str, has_header: bool = True):
-    prio_metrics = ['txn_cnt', 'abort_cnt',
-                    'abort_time', 'exec_time', 'backoff_time']
-    with open(path, 'w') as f:
-        sep = ',' if path.endswith('.csv') else '\t'
-        if has_header:
-            if not path.endswith('.csv'):
-                f.write('# ')
-            f.write(
-                f"cc_alg{sep}thread_cnt{sep}zipf_theta{sep}prio{sep}{prio_metrics[0]}")
-            for m in prio_metrics[1:]:
-                f.write(f"{sep}{m}")
-            f.write("\n")
-            for dp in sorted(datapoints, key=lambda dp: (int(dp.thread_cnt), float(dp.zipf_theta), dp.cc_alg)):
-                for prio, prio_metric in dp.prio_breakdown.items():
-                    f.write(
-                        f"{dp.cc_alg}{sep}{dp.thread_cnt}{sep}{dp.zipf_theta}{sep}{prio}{sep}{prio_metric.get(prio_metrics[0])}")
-                    for m in prio_metrics[1:]:
-                        f.write(f"{sep}{prio_metric.get(m)}")
-                    f.write("\n")
+            if has_header:
+                f.write(f"{','.join(datapoints[0].get_tail_header())}\n")
+            for dp in datapoints:
+                for l in dp.get_tail_data():
+                    f.write(f"{','.join(l)}\n")
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        exper_list = sys.argv[1:]
-    else:
-        exper_list = ['autoprio_thd', 'autoprio_zipf',
-                      'autoprio_longtxn', 'fixedprio_binary_thd']
+    if not len(sys.argv) > 1:
+        print(f"Usage: {sys.argv[0]} exper1 [exper2 [exper3...]]")
+    exper_list = sys.argv[1:]
 
     for exper in exper_list:
         dp_list = []
         for d in os.listdir(f'results/{exper}'):
             if os.path.isdir(f'results/{exper}/{d}'):
                 dp_list.append(parse_datapoint(f'results/{exper}', d))
-        # the output file can be ".csv" or other
-        # if use ".csv", it will use ", " as separator
-        # otherwise it will use "\t" and prefix the header with "#", which is
-        # zplot's input format
         dump_throughput(dp_list, f'results/{exper}/throughput.csv')
         dump_tail(dp_list, f'results/{exper}/tail.csv')
-        dump_prio_breakdown(dp_list, f'results/{exper}/prio.csv')

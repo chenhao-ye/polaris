@@ -1,8 +1,8 @@
-exper=autoprio_thd
+exper=ycsb_zipf
 mkdir -p results
-zipf=0.99
+thd=64
 
-for thd in 1 2 4 8 16 24 32 40 48 56 64; do
+for zipf in 0.9 0.99 1.1 1.2 1.3 1.4 1.5; do
 	for alg in SILO SILO_PRIO WOUND_WAIT NO_WAIT WAIT_DIE; do
 		data_dir="results/${exper}/YCSB-CC=${alg}-THD=${thd}-ZIPF=${zipf}"
 		mkdir -p "${data_dir}"
