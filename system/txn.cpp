@@ -334,9 +334,9 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
 #elif CC_ALG == SILO
     accesses[row_cnt]->tid = last_tid;
 #elif CC_ALG == SILO_PRIO
-	accesses[row_cnt]->is_reserved = last_is_owner;
+	accesses[row_cnt]->is_reserved = last_is_reserved;
     accesses[row_cnt]->data_ver = last_data_ver;
-	if (last_is_owner) accesses[row_cnt]->prio_ver = last_prio_ver;
+	if (last_is_reserved) accesses[row_cnt]->prio_ver = last_prio_ver;
 #elif CC_ALG == HEKATON
   accesses[row_cnt]->history_entry = history_entry;
 #endif

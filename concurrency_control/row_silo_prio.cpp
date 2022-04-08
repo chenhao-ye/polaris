@@ -35,7 +35,7 @@ retry:
 	if (!_tid_word.compare_exchange_strong(v, v2, std::memory_order_acq_rel,
 		std::memory_order_acquire))
 		goto retry;
-	txn->last_is_owner = is_reserved;
+	txn->last_is_reserved = is_reserved;
 	txn->last_data_ver = v2.get_data_ver();
 	if (is_reserved) txn->last_prio_ver = v2.get_prio_ver();
 	return RCOK;

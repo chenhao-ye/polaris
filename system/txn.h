@@ -157,7 +157,7 @@ class txn_man
 	// and txn_man then set it to access
 	uint32_t			last_prio_ver;
     ts_t 			    last_data_ver;
-	bool				last_is_owner;
+	bool				last_is_reserved;
     bool 			    _pre_abort;
     bool 			    _validation_no_wait;
     // [IC3]
