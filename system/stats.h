@@ -63,9 +63,9 @@ static_assert(sizeof(LatencyRecord) == 8, "LatencyRecord must be 64-bit");
 
 struct PerPrioMetrics {
   // how long spent on the executions that eventually abort
-  uint64_t total_abort_time;
+  uint64_t total_exec_time_abort;
   // how long spent on the execution that eventually commit
-  uint64_t total_exec_time;
+  uint64_t total_exec_time_commit;
   // how long spent on backoff (abort buffer)
   uint64_t total_backoff_time;
   // how many txns (in this prio) in total
@@ -74,8 +74,8 @@ struct PerPrioMetrics {
   uint64_t total_abort_cnt;
   uint64_t per_abort_cnts[STAT_MAX_NUM_ABORT + 1];
 
-  void add_abort_time(uint64_t t) { total_abort_time += t; }
-  void add_exec_time(uint64_t t) { total_exec_time += t; }
+  void add_exec_time_abort(uint64_t t) { total_exec_time_abort += t; }
+  void add_exec_time_commit(uint64_t t) { total_exec_time_commit += t; }
   void add_backoff_time(uint64_t t) { total_backoff_time += t; }
   void add_txn_cnt(uint64_t cnt) { total_txn_cnt += cnt; }
   void add_abort_cnt(uint64_t abort_cnt) {
@@ -88,8 +88,8 @@ struct PerPrioMetrics {
     std::cout << tag << " ";
     std::cout << "txn_cnt=" << total_txn_cnt << ", ";
     std::cout << "abort_cnt=" << total_abort_cnt << ", ";
-    std::cout << "abort_time=" << total_abort_time << ", ";
-    std::cout << "exec_time=" << total_exec_time << ", ";
+    std::cout << "exec_time_abort=" << total_exec_time_abort << ", ";
+    std::cout << "exec_time_commit=" << total_exec_time_commit << ", ";
     std::cout << "backoff_time=" << total_backoff_time << ", ";
     std::cout << "abort_cnt_distr=[";
     for (int i = 0; i < STAT_MAX_NUM_ABORT; ++i) {

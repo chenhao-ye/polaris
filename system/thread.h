@@ -47,6 +47,7 @@ class thread_t {
         ts_t ready_time;
         base_query * query;
         ts_t starttime;
+        uint64_t exec_time_abort; // exec time that eventually aborts
         uint64_t backoff_time; // accumulated backoff time
     };
     AbortBufferEntry * _abort_buffer;
