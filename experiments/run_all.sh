@@ -1,10 +1,8 @@
-./ycsb_long_txn.sh
-./ycsb_thd.sh
-./ycsb_zipf.sh
-./ic3.sh
-./tpcc_thd.sh
-./tpcc_wh.sh
-#./hs1_pos.sh
-./hs2_fix.sh
-#./hs2_flip.sh
-./ycsb_read_ratio.sh
+bash experiments/run_ycsb_thread.sh
+bash experiments/run_ycsb_zipf.sh
+bash experiments/run_ycsb_udprio.sh
+bash experiments/run_ycsb_longtxn.sh
+bash experiments/run_ycsb_readonly.sh
+bash experiments/run_tpcc_thread.sh
+bash experiments/run_tpcc_wh.sh
+bash experiments/run_ycsb_prio_sen.sh
