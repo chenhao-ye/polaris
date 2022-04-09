@@ -346,7 +346,7 @@ def plot_ycsb_prio_ratio_vs_throughput(exper: str):
     fig, ax = plt.subplots(nrows=1, ncols=1)
     set_fig(fig, [FIG_SIZE[0] // 1.5, FIG_SIZE[1]])
 
-    pr_range = [0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    pr_range = [0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
 
     tp_df = pd.read_csv(f"results/{exper}/throughput.csv", header=0,
                         na_values="None", skipinitialspace=True)
@@ -394,10 +394,13 @@ def plot3():
         tp_ticks, [f"{t/1e6}" if t > 0 else "0" for t in tp_ticks], rotation=90)
     ax_tp.set_ylim([0, 160000])
 
-    tail_ticks = list(range(0, 16001, 4000))
+    tail_ticks = list(range(0, 20001, 5000))
     ax_tail.set_yticks(
-        tail_ticks, [f"{t//1e3}" if t > 0 else "0" for t in tail_ticks], rotation=90)
-    ax_tail.set_ylim([0, 16000])
+        tail_ticks, [f"{t//1000}" if t > 0 else "0" for t in tail_ticks], rotation=90)
+    ax_tail.set_ylim([0, 20000])
+
+    ax_tp.set_ylabel('Throughput (Mtxn/s)')
+    ax_tail.set_ylabel(f'Tail latency p999 (ms)')
 
     fig.savefig(
         f"ycsb_longtxn_thread_vs_throughput_tail.{IMAGE_TYPE}", transparent=True)
@@ -460,10 +463,10 @@ def plot6():
 def plot7():
     fig, ax = plot_ycsb_prio_ratio_vs_throughput("ycsb_prio_sen")
 
-    tp_ticks = list(range(0, 500001, 100000))
+    tp_ticks = list(range(0, 600001, 100000))
     ax.set_yticks(
         tp_ticks, [f"{t/1e6}" if t > 0 else "0" for t in tp_ticks], rotation=90)
-    ax.set_ylim([0, 500000])
+    ax.set_ylim([0, 600000])
     ax.set_ylabel('Throughput (Mtxn/s)')
 
     fig.savefig(
@@ -475,5 +478,5 @@ plot2()
 plot3()
 plot4()
 plot5()
-plot6()
+# plot6()
 plot7()
