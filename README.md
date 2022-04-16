@@ -1,23 +1,15 @@
 DBx1000-Bamboo
 ==============
-The repository is built on DBx1000: https://github.com/yxymit/DBx1000 
+The repository is built on DBx1000: https://github.com/yxymit/DBx1000 and https://github.com/ScarletGuo/Bamboo-Public
 
     Staring into the Abyss: An Evaluation of Concurrency Control with One Thousand Cores
     Xiangyao Yu, George Bezerra, Andrew Pavlo, Srinivas Devadas, Michael Stonebraker
     http://www.vldb.org/pvldb/vol8/p209-yu.pdf
     
-The major changes made in this repository:
-- added support for Bamboo and its optimizations. Bamboo is a concurrency control protocol proposed in:
-```
+
     Releasing Locks As Early As You Can: Reducing Contention of Hotspots by Violating Two-Phase Locking
     Zhihan Guo, Kan Wu, Cong Yan, Xiangyao Yu
-    link (TBA)
-```
-- focused on support for: NO_WAIT, WOUND_WAIT, WAIT_DIE, SILO, IC3
-- changed the memory allocation for lock entry to be static
-- added support for MCS Lock in addition to mutex and spinlock
-- modified test scripts for easier evaluation
-
+    https://doi.org/10.1145/3448016.3457294
 
 Build & Test
 ------------
@@ -54,8 +46,10 @@ These configuration are newly added to support priority-related experiments.
         number of aborts.
         Default is 3. It controls how frequency a transaction will be prompted.
         This option is only effective if SILO_PRIO_FIXED_PRIO is false.
+    SILO_PRIO_ABORT_THRESHOLD_BEFORE_INC_PRIO : threshold before SILO_PRIO_INC_PRIO_AFTER_NUM_ABORT starts to work.
+        Default is 8.
     HIGH_PRIO_RATIO                    : how many ratio of transactions begin
-        with priority 1 (others begin with priority zero).
+        with priority 8 (others begin with priority zero).
         Default is 0. It must be a number between 0 and 1. This flag is useful
         with SILO_PRIO_FIXED_PRIO=true for a binary priority case.
     DUMP_LATENCY                       : whether dump all latency into a file.
