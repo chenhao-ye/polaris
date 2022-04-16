@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import pandas as pd
 import numpy as np
 from typing import List, Dict, Tuple, Optional
@@ -566,6 +567,69 @@ def plot_ycsb_longtxn():
         f"ycsb_longtxn_thread_vs_throughput_tail.{IMAGE_TYPE}", transparent=True)
 
 
+def make_legend(keys: List[str],
+                fname: str,
+                height=0.13,
+                ncol=None,
+                fontsize=10,
+                columnspacing=2):
+    if ncol is None:
+        ncol = len(keys)
+    pseudo_fig = plt.figure()
+    ax = pseudo_fig.add_subplot(111)
+
+    lines = []
+    for k in keys:
+        line, = ax.plot([], [],
+                        color=color_map[k],
+                        marker=marker_map[k],
+                        markersize=marker_size + 2,
+                        label=label_map[k])
+        lines.append(line)
+
+    legend_fig = plt.figure()
+    legend_fig.set_tight_layout({"pad": 0, "w_pad": 0, "h_pad": 0})
+    legend_fig.set_size_inches(FIG_SIZE[0], height)
+    legend_fig.legend(lines, [label_map[k] for k in keys],
+                      loc='center',
+                      ncol=ncol,
+                      fontsize=fontsize,
+                      frameon=False,
+                      columnspacing=columnspacing,
+                      labelspacing=0.4)
+    legend_fig.savefig(f"{fname}.{IMAGE_TYPE}", transparent=True)
+
+
+def make_legend_udprio(height=0.13,
+                       columnspacing=1, fontsize=10):
+    pseudo_fig = plt.figure()
+    ax = pseudo_fig.add_subplot(111)
+
+    cc_algs = ["SILO", "SILO_PRIO_FIXED", "SILO_PRIO"]
+    bars = [
+        mpatches.Patch(color=color_map[cc], label=label_map[cc])
+        for cc in cc_algs
+    ]
+
+    lines = []
+    line, = ax.plot([], [], color='black', linestyle='-', label="High")
+    lines.append(line)
+    line, = ax.plot([], [], color='black', linestyle='--', label="Low")
+    lines.append(line)
+
+    cc_legend_fig = plt.figure()
+    cc_legend_fig.set_tight_layout({"pad": 0, "w_pad": 0, "h_pad": 0})
+    cc_legend_fig.set_size_inches(FIG_SIZE[0], height)
+    cc_legend_fig.legend(lines + bars, ["High", "Low"] + [label_map[cc] for cc in cc_algs],
+                         loc='center',
+                         ncol=5,
+                         fontsize=fontsize,
+                         frameon=False,
+                         columnspacing=columnspacing,
+                         labelspacing=0.4)
+    cc_legend_fig.savefig(f"legend_udprio.{IMAGE_TYPE}", transparent=True)
+
+
 if __name__ == "__main__":
     plot_fig1()
     plot_fig2()
@@ -575,3 +639,11 @@ if __name__ == "__main__":
     plot_fig6()
     plot_fig7()
     plot_fig8()
+
+    make_legend(["NO_WAIT", "WAIT_DIE", "WOUND_WAIT"], "2pl_legend")
+    make_legend(["SILO", "SILO_PRIO"], "occ_legend", columnspacing=4)
+    make_legend(["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO", "SILO_PRIO"],
+                "legend_cc", columnspacing=1, fontsize=8.5)
+    make_legend(["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO"],
+                "legend_4cc", columnspacing=1, fontsize=8.5)
+    make_legend_udprio(fontsize=8.5)
