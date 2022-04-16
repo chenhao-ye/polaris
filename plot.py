@@ -215,65 +215,7 @@ def plot_ycsb_zipf_vs_throughput_tail(exper: str, tail_metric='p999', layout='LR
     return fig, (ax_tp, ax_tail)
 
 
-def plot_latency_logscale_throughput(exper: str, thread_cnt=64, zipf=0.99):
-    fig, (ax_tail, ax_tp) = get_subplots_2L1R()
-
-    # SILO
-    cc_alg = "SILO"
-    data_path = f"results/{exper}/YCSB-CC={cc_alg}-THD={thread_cnt}-ZIPF={zipf}/latency_dump.csv"
-    df = pd.read_csv(data_path, header=0, names=['prio', 'latency'],
-                     na_values="None", skipinitialspace=True)
-    make_tail_latency_subplot(df, ax_tail, "SILO")
-
-    # then SILO_PRIO_FIXED
-    cc_alg = "SILO_PRIO_FIXED"
-    data_path = f"results/{exper}/YCSB-CC={cc_alg}-THD={thread_cnt}-ZIPF={zipf}/latency_dump.csv"
-    df = pd.read_csv(data_path, header=0, names=['prio', 'latency'],
-                     na_values="None", skipinitialspace=True)
-    make_tail_latency_subplot(df, ax_tail, f"{cc_alg}:High", [8, 15])
-    make_tail_latency_subplot(df, ax_tail, f"{cc_alg}:Low", [0, 7])
-
-    # finally, SILO_PRIO
-    cc_alg = "SILO_PRIO"
-    data_path = f"results/{exper}/YCSB-CC={cc_alg}-THD={thread_cnt}-ZIPF={zipf}/latency_dump.csv"
-    df = pd.read_csv(data_path, header=0, names=['prio', 'latency'],
-                     na_values="None", skipinitialspace=True)
-    make_tail_latency_subplot(df, ax_tail, f"{cc_alg}:High", [8, 15])
-    make_tail_latency_subplot(df, ax_tail, f"{cc_alg}:Low", [0, 7])
-
-    ax_tail.grid(True, axis='y', linestyle='--', linewidth=0.1)
-
-    ax_tail.set_xlim(0, 3)
-    ax_tail.set_ylim(0, 4)
-
-    ax_tail.set_yticks([0, 1, 2, 3, 4], ["0", "p90", "p99", "p999", "p9999"],
-                       rotation=90)
-
-    ax_tail.set_xlabel("Latency (ms)")
-    ax_tail.set_ylabel(f"Tail percentage")
-
-    # then draw bar-graph for throughput
-    tp_df = pd.read_csv(f"results/{exper}/throughput.csv", header=0,
-                        na_values="None", skipinitialspace=True)
-    for i, cc_alg in enumerate(["SILO", "SILO_PRIO_FIXED", "SILO_PRIO"]):
-        d = tp_df[(tp_df["cc_alg"] == cc_alg)]
-        assert d.shape[0] == 1
-        ax_tp.bar(i, d.head(1)["throughput"],
-                  width=0.6, color=color_map[cc_alg], label=label_map[cc_alg])
-
-    # ax_tp.set_xticks([0, 1, 2], ["SILO", "SILO_PRIO_FIXED", "SILO_PRIO"], rotation=45)
-    plt.xticks([], [])
-    tp_ticks = list(range(0, 600001, 100000))
-    ax_tp.set_yticks(tp_ticks, [f"{t / 1e6}" for t in tp_ticks], rotation=90)
-    ax_tp.set_ylim([0, 600000])
-
-    ax_tp.set_xlabel('Algorithm')
-    ax_tp.set_ylabel('Throughput (Mtxn/s)')
-
-    return fig, (ax_tail, ax_tp)
-
-
-def plot_tpcc_thread_vs_throughput_tail(exper: str, tail_metric='p999', layout='LR'):
+def plot_tpcc_thread_vs_throughput_tail(exper: str, num_wh=1, tail_metric='p999', layout='LR'):
     assert layout in {"LR", "UD"}
     fig, (ax_tp, ax_tail) = get_subplots_LR() \
         if layout == 'LR' else get_subplots_UD()
@@ -286,14 +228,14 @@ def plot_tpcc_thread_vs_throughput_tail(exper: str, tail_metric='p999', layout='
                         na_values="None", skipinitialspace=True)
     make_subplot(df=tp_df, ax=ax_tp, x_col='thread_cnt', y_col='throughput',
                  z_col='cc_alg', x_range=thread_cnts, z_range=cc_algs,
-                 filters={"num_wh": 1})
+                 filters={"num_wh": num_wh})
 
     # plot tail latency
     tail_df = pd.read_csv(f"results/{exper}/tail.csv", header=0,
                           na_values="None", skipinitialspace=True)
     make_subplot(df=tail_df, ax=ax_tail, x_col='thread_cnt', y_col=tail_metric,
                  z_col='cc_alg', x_range=thread_cnts, z_range=cc_algs,
-                 filters={"num_wh": 1, 'tag': 'all'})
+                 filters={"num_wh": num_wh, 'tag': 'all'})
 
     ax_tp.set_xlabel('Number of threads')
     ax_tail.set_xlabel('Number of threads')
@@ -360,7 +302,71 @@ def plot_ycsb_prio_ratio_vs_throughput(exper: str):
     return fig, ax
 
 
-def plot1():
+def plot_fig1():
+    exper = "ycsb_latency"
+    thread_cnt = 64
+    zipf = 0.99
+    fig, (ax_tail, ax_tp) = get_subplots_2L1R()
+
+    # this is for background, so no silo_prio
+    cc_algs = ["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO"]
+
+    for cc_alg in cc_algs:
+        data_path = f"results/{exper}/YCSB-CC={cc_alg}-THD={thread_cnt}-ZIPF={zipf}/latency_dump.csv"
+        df = pd.read_csv(data_path, header=0, names=['prio', 'latency'],
+                         na_values="None", skipinitialspace=True)
+        make_tail_latency_subplot(df, ax_tail, cc_alg)
+
+    ax_tail.grid(True, axis='y', linestyle='--', linewidth=0.1)
+
+    ax_tail.set_xlim(0, 3)
+    ax_tail.set_ylim(0, 4)
+
+    ax_tail.set_yticks([0, 1, 2, 3, 4], ["0", "p90", "p99", "p999", "p9999"],
+                       rotation=90)
+
+    ax_tail.set_xlabel("Latency (ms)")
+    ax_tail.set_ylabel(f"Tail percentage")
+
+    # then draw bar-graph for throughput
+    tp_df = pd.read_csv(f"results/{exper}/throughput.csv", header=0,
+                        na_values="None", skipinitialspace=True)
+    for i, cc_alg in enumerate(cc_algs):
+        d = tp_df[(tp_df["cc_alg"] == cc_alg)]
+        assert d.shape[0] == 1
+        ax_tp.bar(i, d.head(1)["throughput"],
+                  width=0.5, color=color_map[cc_alg], label=label_map[cc_alg])
+
+    plt.xticks([], [])
+    tp_ticks = list(range(0, 600001, 100000))
+    ax_tp.set_yticks(tp_ticks, [f"{t / 1e6}" for t in tp_ticks], rotation=90)
+    ax_tp.set_ylim([0, 600000])
+
+    ax_tp.set_xlabel('Algorithm')
+    ax_tp.set_ylabel('Throughput (Mtxn/s)')
+
+    tp_ticks = list(range(0, 600001, 100000))
+    ax_tp.set_yticks(
+        tp_ticks, [f"{t/1e6}" if t > 0 else "0" for t in tp_ticks], rotation=90)
+    ax_tp.set_ylim([0, 600000])
+    fig.savefig(
+        f"ycsb_latency_allcc.{IMAGE_TYPE}", transparent=True)
+
+
+def plot_fig2():
+    fig, ax = plot_ycsb_prio_ratio_vs_throughput("ycsb_prio_sen")
+
+    tp_ticks = list(range(0, 600001, 100000))
+    ax.set_yticks(
+        tp_ticks, [f"{t/1e6}" if t > 0 else "0" for t in tp_ticks], rotation=90)
+    ax.set_ylim([0, 600000])
+    ax.set_ylabel('Throughput (Mtxn/s)')
+
+    fig.savefig(
+        f"ycsb_prio_ratio_vs_throughput.{IMAGE_TYPE}", transparent=True)
+
+
+def plot_fig3():
     fig, (ax_tp, ax_tail) = plot_ycsb_thread_vs_throughput_tail("ycsb_thread")
 
     tp_ticks = list(range(0, 600001, 100000))
@@ -380,33 +386,92 @@ def plot1():
         f"ycsb_thread_vs_throughput_tail.{IMAGE_TYPE}", transparent=True)
 
 
-def plot2():
-    fig, (ax_tp, ax_tail) = plot_ycsb_zipf_vs_throughput_tail("ycsb_zipf")
-    fig.savefig(f"ycsb_zipf_vs_throughput_tail.{IMAGE_TYPE}",
-                transparent=True)
+def plot_fig4():
+    fig, (ax_tp, ax_tail) = plot_ycsb_thread_vs_throughput_tail("ycsb_readonly")
 
-
-def plot3():
-    fig, (ax_tp, ax_tail) = plot_ycsb_thread_vs_throughput_tail("ycsb_longtxn")
-
-    tp_ticks = list(range(0, 160001, 40000))
+    tp_ticks = list(range(0, 8000001, 2000000))
     ax_tp.set_yticks(
-        tp_ticks, [f"{t/1e6}" if t > 0 else "0" for t in tp_ticks], rotation=90)
-    ax_tp.set_ylim([0, 160000])
+        tp_ticks, [f"{t//1000000}" if t > 0 else "0" for t in tp_ticks], rotation=90)
+    ax_tp.set_ylim([0, 8000000])
 
-    tail_ticks = list(range(0, 20001, 5000))
+    tail_ticks = list(range(0, 161, 40))
     ax_tail.set_yticks(
-        tail_ticks, [f"{t//1000}" if t > 0 else "0" for t in tail_ticks], rotation=90)
-    ax_tail.set_ylim([0, 20000])
+        tail_ticks, [f"{t/1e3}" if t > 0 else "0" for t in tail_ticks], rotation=90)
+    ax_tail.set_ylim([0, 160])
 
     ax_tp.set_ylabel('Throughput (Mtxn/s)')
     ax_tail.set_ylabel(f'Tail latency p999 (ms)')
 
     fig.savefig(
-        f"ycsb_longtxn_thread_vs_throughput_tail.{IMAGE_TYPE}", transparent=True)
+        f"ycsb_thread_vs_throughput_tail_readonly.{IMAGE_TYPE}", transparent=True)
 
 
-def plot4():
+def plot_fig5():
+    fig, (ax_tp, ax_tail) = plot_ycsb_zipf_vs_throughput_tail("ycsb_zipf")
+    fig.savefig(f"ycsb_zipf_vs_throughput_tail.{IMAGE_TYPE}",
+                transparent=True)
+
+
+def plot_fig6():
+    exper = "ycsb_udprio"
+    thread_cnt = 64
+    zipf = 0.99
+    fig, (ax_tail, ax_tp) = get_subplots_2L1R()
+
+    # SILO
+    cc_alg = "SILO"
+    data_path = f"results/{exper}/YCSB-CC={cc_alg}-THD={thread_cnt}-ZIPF={zipf}/latency_dump.csv"
+    df = pd.read_csv(data_path, header=0, names=['prio', 'latency'],
+                     na_values="None", skipinitialspace=True)
+    make_tail_latency_subplot(df, ax_tail, "SILO")
+
+    # then SILO_PRIO_FIXED
+    cc_alg = "SILO_PRIO_FIXED"
+    data_path = f"results/{exper}/YCSB-CC={cc_alg}-THD={thread_cnt}-ZIPF={zipf}/latency_dump.csv"
+    df = pd.read_csv(data_path, header=0, names=['prio', 'latency'],
+                     na_values="None", skipinitialspace=True)
+    make_tail_latency_subplot(df, ax_tail, f"{cc_alg}:High", [8, 15])
+    make_tail_latency_subplot(df, ax_tail, f"{cc_alg}:Low", [0, 7])
+
+    # finally, SILO_PRIO
+    cc_alg = "SILO_PRIO"
+    data_path = f"results/{exper}/YCSB-CC={cc_alg}-THD={thread_cnt}-ZIPF={zipf}/latency_dump.csv"
+    df = pd.read_csv(data_path, header=0, names=['prio', 'latency'],
+                     na_values="None", skipinitialspace=True)
+    make_tail_latency_subplot(df, ax_tail, f"{cc_alg}:High", [8, 15])
+    make_tail_latency_subplot(df, ax_tail, f"{cc_alg}:Low", [0, 7])
+
+    ax_tail.grid(True, axis='y', linestyle='--', linewidth=0.1)
+
+    ax_tail.set_xlim(0, 3)
+    ax_tail.set_ylim(0, 4)
+
+    ax_tail.set_yticks([0, 1, 2, 3, 4], ["0", "p90", "p99", "p999", "p9999"],
+                       rotation=90)
+
+    ax_tail.set_xlabel("Latency (ms)")
+    ax_tail.set_ylabel(f"Tail percentage")
+
+    # then draw bar-graph for throughput
+    tp_df = pd.read_csv(f"results/{exper}/throughput.csv", header=0,
+                        na_values="None", skipinitialspace=True)
+    for i, cc_alg in enumerate(["SILO", "SILO_PRIO_FIXED", "SILO_PRIO"]):
+        d = tp_df[(tp_df["cc_alg"] == cc_alg)]
+        assert d.shape[0] == 1
+        ax_tp.bar(i, d.head(1)["throughput"],
+                  width=0.6, color=color_map[cc_alg], label=label_map[cc_alg])
+
+    # ax_tp.set_xticks([0, 1, 2], ["SILO", "SILO_PRIO_FIXED", "SILO_PRIO"], rotation=45)
+    plt.xticks([], [])
+    tp_ticks = list(range(0, 600001, 100000))
+    ax_tp.set_yticks(tp_ticks, [f"{t / 1e6}" for t in tp_ticks], rotation=90)
+    ax_tp.set_ylim([0, 600000])
+
+    ax_tp.set_xlabel('Algorithm')
+    ax_tp.set_ylabel('Throughput (Mtxn/s)')
+
+    return fig, (ax_tail, ax_tp)
+
     fig, (ax_tail, ax_tp) = plot_latency_logscale_throughput("ycsb_udprio")
     tp_ticks = list(range(0, 600001, 100000))
     ax_tp.set_yticks(
@@ -416,7 +481,7 @@ def plot4():
         f"ycsb_latency_logscale_throughput.{IMAGE_TYPE}", transparent=True)
 
 
-def plot5():
+def plot_fig7():
     fig, (ax_tp, ax_tail) = plot_tpcc_thread_vs_throughput_tail("tpcc_thread")
 
     tp_ticks = list(range(0, 300001, 100000))
@@ -436,7 +501,28 @@ def plot5():
         f"tpcc_thread_vs_throughput_tail.{IMAGE_TYPE}", transparent=True)
 
 
-def plot6():
+def plot_fig8():
+    fig, (ax_tp, ax_tail) = plot_tpcc_thread_vs_throughput_tail(
+        "tpcc_thread", num_wh=64)
+
+    tp_ticks = list(range(0, 5000001, 1000000))
+    ax_tp.set_yticks(
+        tp_ticks, [f"{t//1000000}" if t > 0 else "0" for t in tp_ticks], rotation=90)
+    ax_tp.set_ylim([0, 5000000])
+
+    tail_ticks = list(range(0, 81, 20))
+    ax_tail.set_yticks(
+        tail_ticks, [f"{t/1e3}" if t > 0 else "0" for t in tail_ticks], rotation=90)
+    ax_tail.set_ylim([0, 80])
+
+    ax_tp.set_ylabel('Throughput (Mtxn/s)')
+    ax_tail.set_ylabel(f'Tail latency p999 (ms)')
+
+    fig.savefig(
+        f"tpcc_thread_vs_throughput_tail_wh64.{IMAGE_TYPE}", transparent=True)
+
+
+def plot_tpcc_warehouse():
     fig, (ax_tp, ax_tail) = plot_tpcc_warehouse_vs_throughput_tail("tpcc_wh")
 
     tp_ticks = list(range(0, 4000001, 1000000))
@@ -460,23 +546,32 @@ def plot6():
         f"tpcc_warehouse_vs_throughput_tail.{IMAGE_TYPE}", transparent=True)
 
 
-def plot7():
-    fig, ax = plot_ycsb_prio_ratio_vs_throughput("ycsb_prio_sen")
+def plot_ycsb_longtxn():
+    fig, (ax_tp, ax_tail) = plot_ycsb_thread_vs_throughput_tail("ycsb_longtxn")
 
-    tp_ticks = list(range(0, 600001, 100000))
-    ax.set_yticks(
+    tp_ticks = list(range(0, 160001, 40000))
+    ax_tp.set_yticks(
         tp_ticks, [f"{t/1e6}" if t > 0 else "0" for t in tp_ticks], rotation=90)
-    ax.set_ylim([0, 600000])
-    ax.set_ylabel('Throughput (Mtxn/s)')
+    ax_tp.set_ylim([0, 160000])
+
+    tail_ticks = list(range(0, 20001, 5000))
+    ax_tail.set_yticks(
+        tail_ticks, [f"{t//1000}" if t > 0 else "0" for t in tail_ticks], rotation=90)
+    ax_tail.set_ylim([0, 20000])
+
+    ax_tp.set_ylabel('Throughput (Mtxn/s)')
+    ax_tail.set_ylabel(f'Tail latency p999 (ms)')
 
     fig.savefig(
-        f"ycsb_prio_ratio_vs_throughput.{IMAGE_TYPE}", transparent=True)
+        f"ycsb_longtxn_thread_vs_throughput_tail.{IMAGE_TYPE}", transparent=True)
 
 
-plot1()
-plot2()
-plot3()
-plot4()
-plot5()
-# plot6()
-plot7()
+if __name__ == "__main__":
+    plot_fig1()
+    plot_fig2()
+    plot_fig3()
+    plot_fig4()
+    plot_fig5()
+    plot_fig6()
+    plot_fig7()
+    plot_fig8()
