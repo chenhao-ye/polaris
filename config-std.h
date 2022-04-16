@@ -131,8 +131,8 @@
 //   how to distribute the number of bits in TID (change is not recommended...)
 #define SILO_PRIO_NUM_BITS_PRIO_VER 4
 #define SILO_PRIO_NUM_BITS_PRIO     4
-#define SILO_PRIO_NUM_BITS_REF_CNT  12
-#define SILO_PRIO_NUM_BITS_DATA_VER 43
+#define SILO_PRIO_NUM_BITS_REF_CNT  10
+#define SILO_PRIO_NUM_BITS_DATA_VER 45
 
 static_assert(SILO_PRIO_NUM_BITS_PRIO_VER + SILO_PRIO_NUM_BITS_PRIO \
 	+ SILO_PRIO_NUM_BITS_REF_CNT + SILO_PRIO_NUM_BITS_DATA_VER + 1 == 64,
