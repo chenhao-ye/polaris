@@ -1,6 +1,6 @@
 <meta name="robots" content="noindex">
 
-DBx1000-Bamboo
+DBx1000
 ==============
 The repository is built on DBx1000: https://github.com/yxymit/DBx1000 and https://github.com/ScarletGuo/Bamboo-Public
 
