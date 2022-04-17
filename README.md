@@ -35,11 +35,12 @@ Options to change/pass configuration:
     e.g. ```python test.py experiments/default.json WORKLOAD=TPCC NUM_WH=1```
 - Option 2: directly copy config-std.h to config.h and modify config.h. Then compile using ```make -j``` and execute through ```./rundb ```
 
+`experiments` directory contains some handy scripts for experiments with varying configurations. `parse.py` will process the experiments results into CSV files and `plot.py` can visualize them.
 
 Experiment Configuration
 ---------------
 
-These configuration are newly added to support priority-related experiments.
+These configuration are newly added to support priority-related experiments. Note they are not exhaustive, and more details can be found by reading `config-std.h`.
 ```
     SILO_PRIO_FIXED_PRIO               : whether use fixed priority.
         Default is false. If set true, a transaction will has not change its
