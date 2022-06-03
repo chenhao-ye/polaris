@@ -1,84 +1,61 @@
-<meta name="robots" content="noindex">
+DBx1000-Polaris
+===============
 
-DBx1000
-==============
-The repository is built on DBx1000: https://github.com/yxymit/DBx1000 and https://github.com/ScarletGuo/Bamboo-Public
+Polaris is an optimistic concurrency control algorithm with priority support. This repository implements Polaris on top of [DBx1000](https://github.com/yxymit/DBx1000) and [DBx1000-Bamboo](https://github.com/ScarletGuo/Bamboo-Public).
 
-    Staring into the Abyss: An Evaluation of Concurrency Control with One Thousand Cores
-    Xiangyao Yu, George Bezerra, Andrew Pavlo, Srinivas Devadas, Michael Stonebraker
-    http://www.vldb.org/pvldb/vol8/p209-yu.pdf
-    
+- DBx1000: [Staring into the Abyss: An Evaluation of Concurrency Control with One Thousand Cores](http://www.vldb.org/pvldb/vol8/p209-yu.pdf). Xiangyao Yu, George Bezerra, Andrew Pavlo, Srinivas Devadas, Michael Stonebraker.
+- Bamboo: [Releasing Locks As Early As You Can: Reducing Contention of Hotspots by Violating Two-Phase Locking](https://doi.org/10.1145/3448016.3457294). Zhihan Guo, Kan Wu, Cong Yan, Xiangyao Yu.
 
-    Releasing Locks As Early As You Can: Reducing Contention of Hotspots by Violating Two-Phase Locking
-    Zhihan Guo, Kan Wu, Cong Yan, Xiangyao Yu
-    https://doi.org/10.1145/3448016.3457294
+These repositories implement other concurrency control algorithms (e.g., No-Wait, Wait-Die, Wound-Wait, Silo) as the baseline for Polaris evaluation.
 
-Build & Test
+Quick Start: Build & Test
 ------------
 
 To test the database
 
-    python test.py experiments/default.json
+```shell
+python3 test.py experiments/default.json
+```
 
-    
-Configure & Run
+The command above will compile the code with the configuration specified in `experiments/default.json` and run experiments. `test.py` will read the configuration and the existing `config-std.h` to generate a new `config.h`.
+
+You can find other configuration files (`*.json`) under `experiments/`.
+
+Advanced: Configure & Run
 ---------------
 
-Supported configuration parameters can be found in config-std.h file. Extra configuration parameters include: 
-```
-    UNSET_NUMA        : default is false. If set false, it will disable numa effect by interleavingly allocate data. 
-    NDEBUG            : default is true. If set true, it will disable all assert()
-    COMPILE_ONLY      : defalut is false. If set false, it will compile first and then automatically execute. 
-```
-Options to change/pass configuration:
-- Option 1: use basic configurations provided in experiments/default.json. overwrite existing configurations or pass extra configurations through arguments. 
-    e.g. ```python test.py experiments/default.json WORKLOAD=TPCC NUM_WH=1```
-- Option 2: directly copy config-std.h to config.h and modify config.h. Then compile using ```make -j``` and execute through ```./rundb ```
+The parameters are set by `config-std.h` and the configuration file. You could overwrite parameters by specifying them from the command-line.
 
-`experiments` directory contains some handy scripts for experiments with varying configurations. `parse.py` will process the experiments results into CSV files and `plot.py` can visualize them.
-
-Experiment Configuration
----------------
-
-These configuration are newly added to support priority-related experiments. Note they are not exhaustive, and more details can be found by reading `config-std.h`.
-```
-    SILO_PRIO_FIXED_PRIO               : whether use fixed priority.
-        Default is false. If set true, a transaction will has not change its
-        priority after abort.
-    SILO_PRIO_INC_PRIO_AFTER_NUM_ABORT : increment priority after every certain
-        number of aborts.
-        Default is 3. It controls how frequency a transaction will be prompted.
-        This option is only effective if SILO_PRIO_FIXED_PRIO is false.
-    SILO_PRIO_ABORT_THRESHOLD_BEFORE_INC_PRIO : threshold before SILO_PRIO_INC_PRIO_AFTER_NUM_ABORT starts to work.
-        Default is 8.
-    HIGH_PRIO_RATIO                    : how many ratio of transactions begin
-        with priority 8 (others begin with priority zero).
-        Default is 0. It must be a number between 0 and 1. This flag is useful
-        with SILO_PRIO_FIXED_PRIO=true for a binary priority case.
-    DUMP_LATENCY                       : whether dump all latency into a file.
-        Default is true. Useful for plotting.
-    DUMP_LATENCY_FILENAME              : the name of latency file to dump.
-        Default is "latency_dump.csv".
+```shell
+python3 test.py experiments/default.json COMPILE_ONLY=true
 ```
 
-The options above could be used as some combos.
+This command would only compile the code but not run the experiment.
 
-- Example 1: all transactions begin with priority zero and increment priority every 4 aborts.
+Below are parameters that affect `test.py` behavior:
 
-    ```
-    SILO_PRIO_INC_PRIO_AFTER_NUM_ABORT=4
-    ```
+- `UNSET_NUMA`: If set false, it will interleavingly allocate data. Default is `false`.
+- `COMPILE_ONLY`: Only compile the code but not run the experiments. Default is `false`.
+- `NDEBUG`: Disable all `assert`. Default is `true`.
 
-- Example 2: only two levels of priority: high/low; 5% of transactions are high-priority and 95% are low
+Below is a list of basic build parameters. They typically turn certain features on or off for evaluation purposes. The list is not exhaustive and you can find more on `config-std.h`.
 
-    ```
-    SILO_PRIO_FIXED_PRIO=true HIGH_PRIO_RATIO=0.05
-    ```
+- `CC_ALG`: Which concurrency control algorithm to use. Default is `SILO_PRIO`, which is an alias name of Polaris\*.
+- `THREAD_CNT`: How many threads to use.
+- `WORKLOAD`: Which workload to run. Either `YCSB` or `TPCC`.
+- `ZIPF_THETA`: What is the Zipfian theta value in YCSB workload. Only useful when `WORKLOAD=YCSB`.
+- `NUM_WH`: How many warehouses in TPC-C workload. Only useful when `WORKLOAD=TPCC`.
+- `DUMP_LATENCY`: Whether dump the latency of all transactions to a file. Useful for latency distribution plotting.
+- `DUMP_LATENCY_FILENAME`: If `DUMP_LATENCY=true`, what's the filename of the dump.
 
-- Example 3: same setting as example 1 but try to dump the latency file into "latency_inc4.csv"
+\* **Fun fact**: Polaris is implemented based on Silo but with priority support, so it was previously termed `SILO_PRIO`. The name `POLARIS` came from a letter rearrangement of `SILO_PRIO` with an additional `A`.
 
-    ```
-    SILO_PRIO_INC_PRIO_AFTER_NUM_ABORT=4 DUMP_LATENCY_FILENAME=\"latency_inc4.csv\"
-    ```
+Below is another list of build parameters introduced for Polaris:
 
-    Note here it's assumed to be fed as the command-line argument and subject to shell grammar, which is necessary to escape the quotation marks.
+- `SILO_PRIO_NO_RESERVE_LOWEST_PRIO`: Whether turn on the lowest-priority optimization for Polaris. Default is `true` and it should be set true all the time (unless you want to benchmark how much gain from this optimization).
+- `SILO_PRIO_FIXED_PRIO`: Whether fix the priority of each transaction. If `false`, Polaris will assign priority based on its own policy.
+- `SILO_PRIO_ABORT_THRESHOLD_BEFORE_INC_PRIO`: Do not increment the priority until the transaction's abort counter reaches this threshold.
+- `SILO_PRIO_INC_PRIO_AFTER_NUM_ABORT`: After reaching the threshold, increment the priority by one for every specified number of aborts.
+- `HIGH_PRIO_RATIO`: What's the ratio of transactions that start with high (i.e., nonzero) priority. Useful to simulate the case of user-specified priority.
+
+There are other handy tools included in this repository. `experiments/*.sh` are scripts to reproduce the experiments described in our paper. `parse.py` will process the experiment results into CSV files and `plot.py` can visualize them.
