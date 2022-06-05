@@ -15,6 +15,10 @@ struct LockEntry;
 struct BBLockEntry;
 #endif
 
+#if CC_ALG == ARIA
+#include "row_aria.h"
+#endif
+
 // each thread has a txn_man. 
 // a txn_man corresponds to a single transaction.
 
@@ -160,6 +164,9 @@ class txn_man
 	bool				last_is_reserved;
     bool 			    _pre_abort;
     bool 			    _validation_no_wait;
+#elif CC_ALG == ARIA
+    // this aria_txn_id encodes prio, batch_id, etc.
+    TID_aria_t 			aria_tid;
     // [IC3]
 #elif CC_ALG == IC3
     TPCCTxnType         curr_type;
