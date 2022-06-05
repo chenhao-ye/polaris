@@ -12,6 +12,7 @@
 #include "row_tictoc.h"
 #include "row_silo.h"
 #include "row_silo_prio.h"
+#include "row_aria.h"
 #include "row_vll.h"
 #include "row_ww.h"
 #include "row_bamboo.h"

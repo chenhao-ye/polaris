@@ -14,7 +14,7 @@ Row_aria::init(row_t * row) {
 RC
 Row_aria::access(txn_man * txn, TsType type, row_t * local_row) {
 	if (type != R_REQ) {
-		if (!try_reserve(txn->aria_tid))
+		if (!try_reserve(txn->batch_id, txn->prio, txn->get_txn_id()))
 			return Abort;
 	}
 	// when in execution phase, everything is read-only except TID, so it is safe

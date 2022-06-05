@@ -15,10 +15,6 @@ struct LockEntry;
 struct BBLockEntry;
 #endif
 
-#if CC_ALG == ARIA
-#include "row_aria.h"
-#endif
-
 // each thread has a txn_man. 
 // a txn_man corresponds to a single transaction.
 
@@ -47,7 +43,7 @@ class Access {
     ts_t 		epoch;
 	bool		is_reserved;
 // #elif CC_ALG == ARIA
-//   there is no fields needed to remember for aria
+//   there is no fields to remember for Aria
 #elif CC_ALG == HEKATON
     void * 	history_entry;
 #elif CC_ALG == IC3
@@ -166,11 +162,9 @@ class txn_man
 	bool				last_is_reserved;
     bool 			    _pre_abort;
     bool 			    _validation_no_wait;
+    // [ARIA]
 #elif CC_ALG == ARIA
-    // this aria_txn_id encodes prio, batch_id, etc.
-    // this is unchanged when txn acceses different records so we keep one copy
-    // instead of composing one at each access
-    TID_aria_t 			aria_tid;
+    uint64_t            batch_id; // unlike other CC, Aria uses batching.
     // [IC3]
 #elif CC_ALG == IC3
     TPCCTxnType         curr_type;

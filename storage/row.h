@@ -34,6 +34,7 @@ class Row_occ;
 class Row_tictoc;
 class Row_silo;
 class Row_silo_prio;
+class Row_aria;
 class Row_vll;
 class Row_ww;
 class Row_bamboo;
