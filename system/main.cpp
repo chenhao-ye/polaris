@@ -55,6 +55,8 @@ int main(int argc, char* argv[])
 	printf("SILO\n");
 #elif CC_ALG == SILO_PRIO
 	printf("SILO_PRIO\n");
+#elif CC_ALG == ARIA
+	printf("ARIA\n");
 #elif CC_ALG == IC3
 	printf("IC3\n");
 #endif

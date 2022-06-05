@@ -132,6 +132,8 @@ class row_t
   	Row_silo * manager;
   #elif CC_ALG == SILO_PRIO
   	Row_silo_prio * manager;
+  #elif CC_ALG == ARIA
+  	Row_aria * manager;
   #elif CC_ALG == VLL
   	Row_vll * manager;
   #elif CC_ALG == WOUND_WAIT

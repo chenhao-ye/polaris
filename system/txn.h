@@ -46,6 +46,8 @@ class Access {
     uint32_t	prio_ver;
     ts_t 		epoch;
 	bool		is_reserved;
+// #elif CC_ALG == ARIA
+//   there is no fields needed to remember for aria
 #elif CC_ALG == HEKATON
     void * 	history_entry;
 #elif CC_ALG == IC3
@@ -166,6 +168,8 @@ class txn_man
     bool 			    _validation_no_wait;
 #elif CC_ALG == ARIA
     // this aria_txn_id encodes prio, batch_id, etc.
+    // this is unchanged when txn acceses different records so we keep one copy
+    // instead of composing one at each access
     TID_aria_t 			aria_tid;
     // [IC3]
 #elif CC_ALG == IC3
@@ -180,8 +184,8 @@ class txn_man
     volatile void * volatile     history_entry;
 #endif
 	// the priority of the current transaction
-    // we make it generic for all types of CC, but for now, only SILO_PRIO uses
-    // this field
+    // we make it generic for all types of CC, but for now, only SILO_PRIO and
+    // ARIA use this field
 	uint32_t			prio;
 
     // **************************************
@@ -294,6 +298,8 @@ class txn_man
     RC				    validate_silo();
 #elif CC_ALG == SILO_PRIO
     RC				    validate_silo_prio();
+#elif CC_ALG == ARIA
+    RC				    validate_aria();
 #endif
 
   protected:
