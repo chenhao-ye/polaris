@@ -3,6 +3,8 @@
 #include <pthread.h>
 #include "config.h"
 
+class base_query;
+
 // coordinate threads to agree on the batch and phrase.
 namespace AriaCoord {
 // there is one leader (thread 0) and many followers (other threads)
@@ -67,10 +69,16 @@ void leader_wait_for_done(uint64_t batch_id) {
 		ctrl_blocks[i]->follower_block.leader_says_start.store(batch_id,
 			std::memory_order_release);
 }
+
+void start_new_phase(uint64_t thd_id, uint64_t batch_id) {
+	if (!thd_id) { // leader
+		leader_wait_for_done(batch_id);
+	} else { // followers
+		uint64_t leader_batch_id = follower_wait_for_start(thd_id);
+		assert(leader_batch_id == batch_id); // followers must match leader's
+	}
+}
 } // namespace AriaCoord
-
-class base_query;
-
 
 class AriaBatchMgr {
 	struct BatchEntry {
@@ -88,6 +96,11 @@ class AriaBatchMgr {
 		void push(base_query* q, ts_t t = 0) {
 			assert(end < ARIA_BATCH_SIZE);
 			batch[end] = {q, t};
+			++end;
+		}
+		void push(struct BatchBuffer* other) {
+			assert(end < ARIA_BATCH_SIZE);
+			batch[end] = *other;
 			++end;
 		}
 		BatchEntry* pop() {
@@ -111,7 +124,7 @@ class AriaBatchMgr {
 	// get one entry from the current batch
 	BatchEntry* get_curr() { return curr_batch->pop(); }
 	// a txn aborted, push it into the next batch
-	void put_next(BatchEntry* e) { next_batch->push(e->query, e->starttime); }
+	void put_next(BatchEntry* e) { next_batch->push(e); }
 	// admit new query into the buffer
 	void admit_new_query(base_query* q) { 
 		assert(curr_has_space);

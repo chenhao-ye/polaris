@@ -164,7 +164,8 @@ class txn_man
     bool 			    _validation_no_wait;
     // [ARIA]
 #elif CC_ALG == ARIA
-    uint64_t            batch_id; // unlike other CC, Aria uses batching.
+    uint64_t            batch_id; // unlike other CC, Aria uses batching
+    AriaBatchMgr        bacth_mgr;
     // [IC3]
 #elif CC_ALG == IC3
     TPCCTxnType         curr_type;
