@@ -58,7 +58,6 @@ RC thread_t::run() {
 /******************************************************************************/
 #if CC_ALG != ARIA /* Only run if not Aria, as Aria requires batching *********/
 /******************************************************************************/
-
 	while (true) {
 		ts_t starttime = get_sys_clock();
 		if (WORKLOAD != TEST) {
@@ -322,7 +321,30 @@ RC thread_t::run() {
 /******************************************************************************/
 
 	// first register with AriaCoord
-	// AriaCood::register_ctrl_block(get_thd_id());
+	AriaCoord::register_ctrl_block(get_thd_id());
+
+	while (true) {
+		ts_t starttime = get_sys_clock();
+		// preparing new batch
+		m_txn->bacth_mgr.start_new_batch();
+		while (m_txn->bacth_mgr.curr_has_space()) {
+			// TODO: WHAT IF there is no more query in query_queue
+			base_query* q = query_queue->get_next_query(get_thd_id());
+			bacth_mgr->push(q);
+		}
+		INC_STATS(_thd_id, time_query, exec_start_time - starttime);
+	
+		++m_txn->batch_id; // batch_id must be nonzero
+		/********* start execution phase *********/
+		AriaCoord::start_new_phase(get_thd_id(), m_txn->batch_id);
+		
+
+
+		/********* start commit phase *********/
+		AriaCoord::start_new_phase(get_thd_id(), m_txn->batch_id);
+
+	}
+
 #endif
 
 	assert(false);
