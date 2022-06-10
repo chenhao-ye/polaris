@@ -55,6 +55,10 @@ RC thread_t::run() {
 	uint64_t txn_exec_time_abort = 0;
 	uint64_t txn_backoff_time = 0;
 
+/******************************************************************************/
+#if CC_ALG != ARIA /* Only run if not Aria, as Aria requires batching *********/
+/******************************************************************************/
+
 	while (true) {
 		ts_t starttime = get_sys_clock();
 		if (WORKLOAD != TEST) {
@@ -312,6 +316,15 @@ RC thread_t::run() {
 			return FINISH;
 		}
 	}
+
+/******************************************************************************/
+#else /* If use Aria, run this loop, which perform batching *******************/
+/******************************************************************************/
+
+	// first register with AriaCoord
+	// AriaCood::register_ctrl_block(get_thd_id());
+#endif
+
 	assert(false);
 }
 
