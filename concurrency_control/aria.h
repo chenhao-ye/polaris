@@ -84,30 +84,28 @@ class AriaBatchMgr {
 	struct BatchEntry {
 		base_query * query;
 		ts_t starttime; // if zero, meaning it is a newly start one
+		RC rc; // current state; can be Abort if its reservation fails
 	};
 
 	struct BatchBuffer { // this should be a FIFO queue
 		BatchEntry batch[ARIA_BATCH_SIZE] {};
-		int begin = 0;
-		int end = 0;
+		int size = 0;
 
 		BatchBuffer() = default;
-		void reset() { begin = 0; end = 0; }
-		void push(base_query* q, ts_t t = 0) {
-			assert(end < ARIA_BATCH_SIZE);
-			batch[end] = {q, t};
-			++end;
+		void reset() { size = 0; }
+		void append(base_query* q, ts_t t = 0) {
+			assert(size < ARIA_BATCH_SIZE);
+			batch[size] = {q, t, RCOK};
+			++size;
 		}
-		void push(struct BatchBuffer* other) {
-			assert(end < ARIA_BATCH_SIZE);
-			batch[end] = *other;
-			++end;
+		void append(struct BatchEntry* other) {
+			assert(size < ARIA_BATCH_SIZE);
+			batch[size] = *other;
+			++size;
 		}
-		BatchEntry* pop() {
-			if (begin == end) return nullptr; // nothing to pop
-			BatchEntry* ret = &batch[begin];
-			++begin;
-			return ret;
+		BatchEntry* get(int idx) {
+			if (idx >= size) return nullptr; // nothing to pop
+			return &batch[idx];
 		}
 	};
 
@@ -119,17 +117,19 @@ class AriaBatchMgr {
  public:
 	AriaBatchMgr(): batch_buf0(), batch_buf1(), curr_batch(&batch_buf0), 
 									next_batch(&batch_buf1) {}
-	// whether there is any space left on the current batch
-	bool curr_has_space() { return curr_batch->end < ARIA_BATCH_SIZE; }
 	// get one entry from the current batch
-	BatchEntry* get_curr() { return curr_batch->pop(); }
-	// a txn aborted, push it into the next batch
-	void put_next(BatchEntry* e) { next_batch->push(e); }
+	BatchEntry* get_entry(int idx) const { return curr_batch->get(idx); }
+	// a txn aborted, put it into the next batch
+	void put_next(BatchEntry* e) { next_batch->append(e); }
+
+	// whether there is any space left on the current batch
+	bool can_admit() { return curr_batch->size < ARIA_BATCH_SIZE; }
 	// admit new query into the buffer
 	void admit_new_query(base_query* q) { 
 		assert(curr_has_space);
-		curr_batch->push(q);
+		curr_batch->append(q);
 	}
+
 	// start a new batch:
 	// next_batch becomes "curr_batch"; recycle the old one as new "next_batch"
 	void start_new_batch() {

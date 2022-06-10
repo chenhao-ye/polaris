@@ -15,6 +15,10 @@ struct LockEntry;
 struct BBLockEntry;
 #endif
 
+#if CC_ALG == ARIA
+class AriaBatchMgr;
+#endif
+
 // each thread has a txn_man. 
 // a txn_man corresponds to a single transaction.
 
@@ -165,7 +169,7 @@ class txn_man
     // [ARIA]
 #elif CC_ALG == ARIA
     uint64_t            batch_id; // unlike other CC, Aria uses batching
-    AriaBatchMgr        bacth_mgr;
+    AriaBatchMgr*       batch_mgr;
     // [IC3]
 #elif CC_ALG == IC3
     TPCCTxnType         curr_type;

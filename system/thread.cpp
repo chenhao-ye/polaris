@@ -9,6 +9,7 @@
 #include "plock.h"
 #include "occ.h"
 #include "vll.h"
+#include "aria.h"
 #include "ycsb_query.h"
 #include "tpcc_query.h"
 #include "mem_alloc.h"
@@ -51,13 +52,13 @@ RC thread_t::run() {
 	base_query * m_query = NULL;
 	uint64_t thd_txn_id = 0;
 	UInt64 txn_cnt = 0;
-	ts_t txn_starttime = 0;
-	uint64_t txn_exec_time_abort = 0;
-	uint64_t txn_backoff_time = 0;
 
 /******************************************************************************/
 #if CC_ALG != ARIA /* Only run if not Aria, as Aria requires batching *********/
 /******************************************************************************/
+	ts_t txn_starttime = 0;
+	uint64_t txn_exec_time_abort = 0;
+	uint64_t txn_backoff_time = 0;
 	while (true) {
 		ts_t starttime = get_sys_clock();
 		if (WORKLOAD != TEST) {
@@ -324,25 +325,81 @@ RC thread_t::run() {
 	AriaCoord::register_ctrl_block(get_thd_id());
 
 	while (true) {
-		ts_t starttime = get_sys_clock();
+		ts_t q_starttime = get_sys_clock();
 		// preparing new batch
-		m_txn->bacth_mgr.start_new_batch();
-		while (m_txn->bacth_mgr.curr_has_space()) {
-			// TODO: WHAT IF there is no more query in query_queue
+		m_txn->batch_mgr->start_new_batch();
+		while (m_txn->batch_mgr->can_admit()) {
+			// TODO: WHAT IF there is no more query in query_queue?
 			base_query* q = query_queue->get_next_query(get_thd_id());
-			bacth_mgr->push(q);
+			m_txn->batch_mgr->admit_new_query(q);
 		}
-		INC_STATS(_thd_id, time_query, exec_start_time - starttime);
+		INC_STATS(_thd_id, time_query, get_sys_clock() - q_starttime);
 	
 		++m_txn->batch_id; // batch_id must be nonzero
+
 		/********* start execution phase *********/
 		AriaCoord::start_new_phase(get_thd_id(), m_txn->batch_id);
-		
+		for (int q_idx = 0; q_idx < ARIA_BATCH_SIZE; ++q_idx) {
+			auto entry = m_txn->batch_mgr->get_entry(q_idx);
+			m_query = entry->query;
+			entry->starttime = get_sys_clock();
 
+			// prepare m_txn
+			m_txn->prio = m_query->prio;
+			m_txn->set_txn_id(get_thd_id() + thd_txn_id * g_thread_cnt);
+			thd_txn_id++;
+
+			// execute txn
+			// TODO: impl exec_txn (separated from run_txn)
+			entry->rc = m_txn->exec_txn(m_query);
+		}
 
 		/********* start commit phase *********/
 		AriaCoord::start_new_phase(get_thd_id(), m_txn->batch_id);
 
+		// TODO: impl this
+		// we may need to have to put read/write set into BatchEntry
+		for (int q_idx = 0; q_idx < ARIA_BATCH_SIZE; ++q_idx) {
+			auto entry = m_txn->batch_mgr->get_entry(q_idx);
+			if (entry->rc == RCOK) { // if already abort, no need validation
+				// TODO: impl val_txn (separated from run_txn)
+				entry->rc = m_txn->val_txn(entry);
+			}
+
+			if (entry->rc == RCOK) {
+
+			} else if (entry->rc == Abort) {
+
+			} else if (entry->rc == ERROR) {
+
+			} else if (entry->rc == FINISH) {
+
+			}
+		}
+
+		if (!warmup_finish && txn_cnt >= WARMUP / g_thread_cnt) {
+			stats.clear( get_thd_id() );
+			return FINISH;
+		}
+
+
+		if (warmup_finish) {
+#if TERMINATE_BY_COUNT
+			if (txn_cnt >= MAX_TXN_PER_PART)
+#else
+			// even not TERMINATE_BY_COUNT, the execution still must stop when 
+			// txn_cnt >= MAX_TXN_PER_PART; otherwise, it will cause buffer overflow
+			if (txn_cnt >= MAX_TXN_PER_PART || \
+				stats._stats[get_thd_id()]->run_time / 1000000000 >= MAX_RUNTIME)
+#endif
+			{
+				assert(txn_cnt <= MAX_TXN_PER_PART);
+				_wl->sim_done.store(true, std::memory_order_release);
+			}
+		}
+
+		if (_wl->sim_done.load(std::memory_order_acquire))
+			return FINISH;
 	}
 
 #endif
