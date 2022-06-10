@@ -10,13 +10,11 @@ class thread_t {
     uint64_t _thd_id;
     workload * _wl;
 
-    uint64_t 	get_thd_id();
-
-    uint64_t 	get_host_cid();
-    void 	 	set_host_cid(uint64_t cid);
-
-    uint64_t 	get_cur_cid();
-    void 		set_cur_cid(uint64_t cid);
+    constexpr uint64_t  get_thd_id() { return _thd_id; }
+    constexpr uint64_t  get_host_cid() { return _host_cid; }
+    void    set_host_cid(uint64_t cid) { _host_cid = cid; }
+    constexpr uint64_t  get_cur_cid() { return _cur_cid; }
+    void   set_cur_cid(uint64_t cid) { _cur_cid = cid; }
 
     void 		init(uint64_t thd_id, workload * workload);
     // the following function must be in the form void* (*)(void*)
