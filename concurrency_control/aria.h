@@ -1,3 +1,5 @@
+#pragma once
+
 #if CC_ALG == ARIA
 
 #include <pthread.h>

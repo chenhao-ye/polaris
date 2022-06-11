@@ -188,7 +188,16 @@ class txn_man
     virtual void        init(thread_t * h_thd, workload * h_wl, uint64_t
     part_id);
     void                release();
-    virtual RC 		    run_txn(base_query * m_query) = 0;
+
+    /* Previously, `run_txn` includes execution phrase and commit phrase, and
+     * the commit phrase is usually implemented as calling `finish`.
+     * Now to implement batching, which requires to split execution and commit
+     * phases, we separate `finish` call out and name the rest of code in
+     * `run_txn` as `exec_txn`.
+     * Note we leave `run_txn` in test_txn alone since they are unrelated
+     */
+    // virtual RC 		    run_txn(base_query * m_query) = 0;
+    virtual RC 		    exec_txn(base_query * m_query) = 0;
     RC 			        finish(RC rc);
     void 			    cleanup(RC rc);
 
