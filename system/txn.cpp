@@ -58,7 +58,6 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
     _cur_data_ver = 0;
 #elif CC_ALG == ARIA
     batch_id = 0;
-    batch_mgr = new AriaBatchMgr();
 #elif CC_ALG == IC3
   depqueue = (TxnEntry **) _mm_malloc(sizeof(void *)*THREAD_CNT, 64);
   for (int i = 0; i < THREAD_CNT; i++)

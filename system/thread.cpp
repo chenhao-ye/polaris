@@ -4,6 +4,7 @@
 #include "manager.h"
 #include "thread.h"
 #include "txn.h"
+#include "batch.h"
 #include "wl.h"
 #include "query.h"
 #include "plock.h"
@@ -18,6 +19,9 @@
 void thread_t::init(uint64_t thd_id, workload * workload) {
 	_thd_id = thd_id;
 	_wl = workload;
+#if CC_ALG == ARIA
+	batch_mgr = new BatchMgr();
+#endif
 	srand48_r((_thd_id + 1) * get_sys_clock(), &buffer);
 	_abort_buffer_size = ABORT_BUFFER_SIZE;
 	_abort_buffer = (AbortBufferEntry *) _mm_malloc(sizeof(AbortBufferEntry) * _abort_buffer_size, 64);
@@ -42,13 +46,8 @@ RC thread_t::run() {
 
 	myrand rdm;
 	rdm.init(get_thd_id());
-	RC rc = RCOK;
-	txn_man * m_txn;
-	// get txn man from workload
-	rc = _wl->get_txn_man(m_txn, this);
-	assert (rc == RCOK);
-	glob_manager->set_txn_man(m_txn);
 
+	txn_man * m_txn;
 	base_query * m_query = NULL;
 	uint64_t thd_txn_id = 0;
 	UInt64 txn_cnt = 0;
@@ -56,6 +55,12 @@ RC thread_t::run() {
 /******************************************************************************/
 #if CC_ALG != ARIA /* Only run if not Aria, as Aria requires batching *********/
 /******************************************************************************/
+	RC rc = RCOK;
+	// get txn man from workload
+	rc = _wl->get_txn_man(m_txn, this);
+	assert (rc == RCOK);
+	glob_manager->set_txn_man(m_txn);
+
 	ts_t txn_starttime = 0;
 	uint64_t txn_exec_time_abort = 0;
 	uint64_t txn_backoff_time = 0;
@@ -320,34 +325,34 @@ RC thread_t::run() {
 /******************************************************************************/
 #else /* If use Aria, run this loop, which perform batching *******************/
 /******************************************************************************/
-
 	// first register with AriaCoord
 	AriaCoord::register_ctrl_block(get_thd_id());
+	batch_mgr->init_txn(_wl, this);
 
 	while (true) {
 		ts_t q_starttime = get_sys_clock();
 		// preparing new batch
-		m_txn->batch_mgr->start_new_batch();
-		while (m_txn->batch_mgr->can_admit()) {
+		batch_mgr->start_new_batch();
+		while (batch_mgr->can_admit()) {
 			// TODO: WHAT IF there is no more query in query_queue?
 			base_query* q = query_queue->get_next_query(get_thd_id());
-			m_txn->batch_mgr->admit_new_query(q);
+			batch_mgr->admit_new_query(q);
 		}
 		INC_STATS(_thd_id, time_query, get_sys_clock() - q_starttime);
 	
-		++m_txn->batch_id; // batch_id must be nonzero
-
 		/********* start execution phase *********/
-		AriaCoord::start_new_phase(get_thd_id(), m_txn->batch_id);
+		AriaCoord::start_new_phase(get_thd_id(), batch_mgr->get_batch_id());
 		for (int q_idx = 0; q_idx < ARIA_BATCH_SIZE; ++q_idx) {
-			auto entry = m_txn->batch_mgr->get_entry(q_idx);
+			auto entry = batch_mgr->get_entry(q_idx);
+			m_txn = entry->txn;
 			m_query = entry->query;
 			entry->starttime = get_sys_clock();
 
 			// prepare m_txn
 			m_txn->prio = m_query->prio;
+			m_txn->batch_id = batch_mgr->get_batch_id();
 			m_txn->set_txn_id(get_thd_id() + thd_txn_id * g_thread_cnt);
-			thd_txn_id++;
+			++thd_txn_id;
 
 			// execute txn
 			// TODO: impl exec_txn (separated from run_txn)
@@ -355,15 +360,17 @@ RC thread_t::run() {
 		}
 
 		/********* start commit phase *********/
-		AriaCoord::start_new_phase(get_thd_id(), m_txn->batch_id);
+		AriaCoord::start_new_phase(get_thd_id(), batch_mgr->get_batch_id());
 
 		// TODO: impl this
 		// we may need to have to put read/write set into BatchEntry
 		for (int q_idx = 0; q_idx < ARIA_BATCH_SIZE; ++q_idx) {
-			auto entry = m_txn->batch_mgr->get_entry(q_idx);
+			auto entry = batch_mgr->get_entry(q_idx);
+			m_txn = entry->txn;
+			m_query = entry->query;
 			if (entry->rc == RCOK) { // if already abort, no need validation
 				// TODO: impl val_txn (separated from run_txn)
-				entry->rc = m_txn->val_txn(entry);
+				entry->rc = m_txn->commit_txn(m_query);
 			}
 
 			if (entry->rc == RCOK) {
@@ -378,7 +385,7 @@ RC thread_t::run() {
 		}
 
 		if (!warmup_finish && txn_cnt >= WARMUP / g_thread_cnt) {
-			stats.clear( get_thd_id() );
+			stats.clear(get_thd_id());
 			return FINISH;
 		}
 

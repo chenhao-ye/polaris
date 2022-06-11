@@ -4,11 +4,16 @@
 
 class workload;
 class base_query;
+class BatchMgr;
 
 class thread_t {
   public:
     uint64_t _thd_id;
     workload * _wl;
+
+#if CC_ALG == ARIA
+    BatchMgr* batch_mgr;
+#endif
 
     constexpr uint64_t  get_thd_id() { return _thd_id; }
     constexpr uint64_t  get_host_cid() { return _host_cid; }

@@ -15,10 +15,6 @@ struct LockEntry;
 struct BBLockEntry;
 #endif
 
-#if CC_ALG == ARIA
-class AriaBatchMgr;
-#endif
-
 // each thread has a txn_man. 
 // a txn_man corresponds to a single transaction.
 
@@ -169,7 +165,6 @@ class txn_man
     // [ARIA]
 #elif CC_ALG == ARIA
     uint64_t            batch_id; // unlike other CC, Aria uses batching
-    AriaBatchMgr*       batch_mgr;
     // [IC3]
 #elif CC_ALG == IC3
     TPCCTxnType         curr_type;
@@ -193,7 +188,14 @@ class txn_man
     virtual void        init(thread_t * h_thd, workload * h_wl, uint64_t
     part_id);
     void                release();
+// if use batching, run_txn must be splitted into two phrases: execution and
+// commit phrases. currently only Aria uses batching.
+#if CC_ALG != ARIA
     virtual RC 		    run_txn(base_query * m_query) = 0;
+#else
+    virtual RC 		    exec_txn(base_query * m_query) = 0;
+    virtual RC 		    commit_txn(base_query * m_query) = 0;
+#endif
     RC 			        finish(RC rc);
     void 			    cleanup(RC rc);
 
