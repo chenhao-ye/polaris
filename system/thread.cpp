@@ -368,10 +368,7 @@ RC thread_t::run() {
 			auto entry = batch_mgr->get_entry(q_idx);
 			m_txn = entry->txn;
 			m_query = entry->query;
-			if (entry->rc == RCOK) { // if already abort, no need validation
-				// TODO: impl val_txn (separated from run_txn)
-				entry->rc = m_txn->commit_txn(m_query);
-			}
+			entry->rc = m_txn->finish(entry->rc);
 
 			if (entry->rc == RCOK) {
 

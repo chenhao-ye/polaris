@@ -188,14 +188,7 @@ class txn_man
     virtual void        init(thread_t * h_thd, workload * h_wl, uint64_t
     part_id);
     void                release();
-// if use batching, run_txn must be splitted into two phrases: execution and
-// commit phrases. currently only Aria uses batching.
-#if CC_ALG != ARIA
     virtual RC 		    run_txn(base_query * m_query) = 0;
-#else
-    virtual RC 		    exec_txn(base_query * m_query) = 0;
-    virtual RC 		    commit_txn(base_query * m_query) = 0;
-#endif
     RC 			        finish(RC rc);
     void 			    cleanup(RC rc);
 
