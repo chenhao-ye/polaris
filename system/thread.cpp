@@ -340,7 +340,7 @@ RC thread_t::run() {
 			batch_mgr->admit_new_query(q);
 		}
 		INC_STATS(_thd_id, time_query, get_sys_clock() - q_starttime);
-	
+
 		/********* start execution phase *********/
 		AriaCoord::start_new_phase(get_thd_id(), batch_mgr->get_batch_id());
 		for (int q_idx = 0; q_idx < ARIA_BATCH_SIZE; ++q_idx) {
@@ -356,7 +356,6 @@ RC thread_t::run() {
 			++thd_txn_id;
 
 			// execute txn
-			// TODO: impl exec_txn (separated from run_txn)
 			entry->rc = m_txn->exec_txn(m_query);
 		}
 
@@ -382,11 +381,11 @@ RC thread_t::run() {
 			}
 		}
 
+		/********* check whether to stop execution *********/
 		if (!warmup_finish && txn_cnt >= WARMUP / g_thread_cnt) {
 			stats.clear(get_thd_id());
 			return FINISH;
 		}
-
 
 		if (warmup_finish) {
 #if TERMINATE_BY_COUNT

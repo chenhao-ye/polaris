@@ -41,8 +41,7 @@ public:
 	// TID operation is done in writer_release
 	void write(row_t * data);
 
-	bool validate(uint64_t batch_id, uint32_t prio, uint64_t txn_id) const
-	{
+	bool validate(uint64_t batch_id, uint32_t prio, uint64_t txn_id) const {
 		TID_aria_t v = _tid_word.load(std::memory_order_relaxed);
 		// compared record's TID with txn's tid:
 		// - if reserved by a txn from another batch; no one reserves it in the
@@ -73,7 +72,7 @@ public:
 
 private:
 	std::atomic<TID_aria_t>	_tid_word; // reserved by which txn
-	row_t * 				_row;
+	row_t * 								_row;
 };
 
 #endif

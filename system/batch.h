@@ -5,9 +5,9 @@
 
 struct BatchEntry {
 	base_query* query; // the current query to execute
+	txn_man* txn; // init once and reused repeatedly
 	ts_t starttime; // if zero, meaning it is a newly start one
 	RC rc; // current state; can be Abort if its reservation fails
-	txn_man* txn; // init once and reused repeatedly
 };
 
 /*
