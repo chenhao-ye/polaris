@@ -194,7 +194,7 @@ void txn_man::cleanup(RC rc) {
         }
 #endif
 
-#if CC_ALG != TICTOC && (CC_ALG != SILO) && (CC_ALG != WOUND_WAIT) && (CC_ALG!= BAMBOO) && (CC_ALG != SILO_PRIO)
+#if (CC_ALG != TICTOC) && (CC_ALG != SILO) && (CC_ALG != WOUND_WAIT) && (CC_ALG!= BAMBOO) && (CC_ALG != SILO_PRIO) && (CC_ALG != ARIA)
         // invalidate ptr for cc keeping globally visible ptr
     accesses[rid]->data = NULL;
 #endif
@@ -250,7 +250,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
     access->com_op = COM_NONE;
 #endif
         accesses[row_cnt] = access;
-#if (CC_ALG == SILO || CC_ALG == TICTOC || CC_ALG == SILO_PRIO)
+#if (CC_ALG == SILO || CC_ALG == TICTOC || CC_ALG == SILO_PRIO || CC_ALG == ARIA)
         access->data = (row_t *) _mm_malloc(sizeof(row_t), 64);
         access->data->init(MAX_TUPLE_SIZE);
         access->orig_data = (row_t *) _mm_malloc(sizeof(row_t), 64);
