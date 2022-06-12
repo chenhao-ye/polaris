@@ -85,7 +85,23 @@ void start_new_phase(uint64_t thd_id, uint64_t batch_id) {
 RC
 txn_man::validate_aria()
 {
-	// TODO: impl this
+	RC rc = RCOK;
+	for (int rid = 0; rid < row_cnt; rid++) {
+		if (!accesses[rid]->orig_row->manager->validate(batch_id, prio,
+		                                                get_txn_id()))
+		{
+			rc = Abort;
+			goto final;
+		}
+	}
+
+	for (int rid = 0; rid < row_cnt; rid++)
+		if (accesses[rid]->type == WR)
+			accesses[rid]->orig_row->manager->write(accesses[rid]->data);
+
+final:
+	cleanup(rc);
+	return rc;
 }
 
 #endif

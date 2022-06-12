@@ -4,8 +4,8 @@
 #include "txn.h"
 
 struct BatchEntry {
-	base_query* query; // the current query to execute
 	txn_man* txn; // init once and reused repeatedly
+	base_query* query; // the current query to execute
 	ts_t starttime; // if zero, meaning it is a newly start one
 	RC rc; // current state; can be Abort if its reservation fails
 };
@@ -25,7 +25,9 @@ class BatchMgr {
 		void reset() { size = 0; }
 		void append(base_query* q, ts_t t = 0) {
 			assert(size < ARIA_BATCH_SIZE);
-			batch[size] = {q, t, RCOK};
+			batch[size].query = q;
+			batch[size].starttime = t;
+			batch[size].rc = RCOK;
 			++size;
 		}
 		void append(struct BatchEntry* other) {

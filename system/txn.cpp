@@ -467,6 +467,11 @@ RC txn_man::finish(RC rc) {
 		rc = validate_silo_prio();
 	else 
 		cleanup(rc);
+#elif CC_ALG == ARIA
+  if (rc == RCOK)
+		rc = validate_aria();
+	else 
+		cleanup(rc);
 #elif CC_ALG == IC3
   if (rc == RCOK) {
     rc = validate_ic3();
