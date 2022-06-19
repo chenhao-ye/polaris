@@ -327,8 +327,8 @@ RC thread_t::run() {
 #else /* If use Aria, run this loop, which perform batching *******************/
 /******************************************************************************/
 	// first register with AriaCoord
-	AriaCoord::register_ctrl_block(get_thd_id());
 	batch_mgr->init_txn(_wl, this);
+	AriaCoord::register_ctrl_block(get_thd_id());
 
 	while (true) {
 		/********* prepare what queries to execute *********/
