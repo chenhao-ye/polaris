@@ -74,7 +74,8 @@ class BatchMgr {
 	// whether there is any space left on the current batch
 	bool can_admit() { return curr_batch->size < ARIA_BATCH_SIZE; }
 	// admit new query into the buffer
-	void admit_new_query(base_query* q) { 
+	void admit_new_query(base_query* q) {
+		assert(q);
 		assert(curr_has_space);
 		curr_batch->append(q);
 	}

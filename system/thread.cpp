@@ -154,7 +154,7 @@ RC thread_t::run() {
 #else // CC_ALG == SILO_PRIO
 		m_txn->prio = m_query->prio;
 #endif // CC_ALG == SILO_PRIO
-
+		// TODO: txn_id assignment policy: maybe use previously assigned txn_id
 		m_txn->set_txn_id(get_thd_id() + thd_txn_id * g_thread_cnt);
 		thd_txn_id ++;
 
@@ -338,6 +338,7 @@ RC thread_t::run() {
 		while (batch_mgr->can_admit()) {
 			// TODO: WHAT IF there is no more query in query_queue?
 			base_query* q = query_queue->get_next_query(get_thd_id());
+			q->rerun = false;
 			batch_mgr->admit_new_query(q);
 		}
 		INC_STATS(get_thd_id(), time_query, get_sys_clock() - query_start_ts);
@@ -380,7 +381,7 @@ RC thread_t::run() {
 
 			uint64_t commit_timespan = commit_end_ts - commit_begin_ts;
 			// this is the time of the last execution but excluding sleep
-			uint64_t exec_timespan = commit_timespan + entry->exec_time_curr;
+			uint64_t exec_timespan = entry->exec_time_curr + commit_timespan;
 			// this is the time of the whole txn
 			uint64_t txn_timespan = commit_end_ts - entry->start_ts;
 
@@ -429,10 +430,12 @@ RC thread_t::run() {
 				}
 #endif
 				stats.abort(get_thd_id());
-				m_txn->abort_cnt++;
+				// m_txn->abort_cnt does not seem to be used...
+				// m_txn->abort_cnt++;
 
 				if (entry->rc == Abort) {
 					++(m_query->num_abort);
+					m_query->rerun = true;
 					batch_mgr->put_next(entry); // put into the next batch
 				} else { // ERROR == user initiated aborts
 					INC_STATS(get_thd_id(), user_abort_cnt, 1);
