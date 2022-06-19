@@ -6,8 +6,11 @@
 struct BatchEntry {
 	txn_man* txn; // init once and reused repeatedly
 	base_query* query; // the current query to execute
-	ts_t starttime; // if zero, meaning it is a newly start one
 	RC rc; // current state; can be Abort if its reservation fails
+	ts_t start_ts; // if zero, meaning it is a newly start one
+	// the name is a little confusing: exec_time here includes validation phases
+	uint64_t exec_time_curr; // current execution time (not yet abort/commit)
+	uint64_t exec_time_abort; // how much execution time spent eventually aborts
 };
 
 /*
@@ -23,16 +26,22 @@ class BatchMgr {
 		void init_txn(workload* wl, thread_t* thd);
 	
 		void reset() { size = 0; }
-		void append(base_query* q, ts_t t = 0) {
+		void append(base_query* q) {
 			assert(size < ARIA_BATCH_SIZE);
 			batch[size].query = q;
-			batch[size].starttime = t;
 			batch[size].rc = RCOK;
+			batch[size].start_ts = 0;
+			batch[size].exec_time_curr = 0;
+			batch[size].exec_time_abort = 0;
 			++size;
 		}
 		void append(struct BatchEntry* other) {
 			assert(size < ARIA_BATCH_SIZE);
-			batch[size] = *other;
+			batch[size].query = other->query;
+			batch[size].rc = RCOK;
+			batch[size].start_ts = other->start_ts;
+			batch[size].exec_time_curr = 0;
+			batch[size].exec_time_abort = other->exec_time_abort;
 			++size;
 		}
 		BatchEntry* get(int idx) {

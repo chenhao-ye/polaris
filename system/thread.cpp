@@ -331,15 +331,16 @@ RC thread_t::run() {
 	batch_mgr->init_txn(_wl, this);
 
 	while (true) {
-		ts_t q_starttime = get_sys_clock();
-		// preparing new batch
+		/********* prepare what queries to execute *********/
+		ts_t batch_start_ts = get_sys_clock();
+		ts_t query_start_ts = batch_start_ts;
 		batch_mgr->start_new_batch();
 		while (batch_mgr->can_admit()) {
 			// TODO: WHAT IF there is no more query in query_queue?
 			base_query* q = query_queue->get_next_query(get_thd_id());
 			batch_mgr->admit_new_query(q);
 		}
-		INC_STATS(_thd_id, time_query, get_sys_clock() - q_starttime);
+		INC_STATS(get_thd_id(), time_query, get_sys_clock() - query_start_ts);
 
 		/********* start execution phase *********/
 		AriaCoord::start_new_phase(get_thd_id(), batch_mgr->get_batch_id());
@@ -347,7 +348,11 @@ RC thread_t::run() {
 			auto entry = batch_mgr->get_entry(q_idx);
 			m_txn = entry->txn;
 			m_query = entry->query;
-			entry->starttime = get_sys_clock();
+			assert(entry->rc == RCOK);
+			ts_t exec_start_ts = get_sys_clock();
+			assert(entry->exec_time_curr == 0);
+			if (entry->start_ts == 0)
+				entry->start_ts = exec_start_ts;
 
 			// prepare m_txn
 			m_txn->prio = m_query->prio;
@@ -357,28 +362,85 @@ RC thread_t::run() {
 
 			// execute txn
 			entry->rc = m_txn->exec_txn(m_query);
+			entry->exec_time_curr = get_sys_clock() - exec_start_ts;
 		}
 
 		/********* start commit phase *********/
 		AriaCoord::start_new_phase(get_thd_id(), batch_mgr->get_batch_id());
+		INC_STATS(get_thd_id(), run_time, get_sys_clock() - batch_start_ts);
 
-		// TODO: impl this
-		// we may need to have to put read/write set into BatchEntry
 		for (int q_idx = 0; q_idx < ARIA_BATCH_SIZE; ++q_idx) {
 			auto entry = batch_mgr->get_entry(q_idx);
 			m_txn = entry->txn;
 			m_query = entry->query;
+
+			ts_t commit_begin_ts = get_sys_clock();
 			entry->rc = m_txn->finish(entry->rc);
+			ts_t commit_end_ts = get_sys_clock();
+
+			uint64_t commit_timespan = commit_end_ts - commit_begin_ts;
+			// this is the time of the last execution but excluding sleep
+			uint64_t exec_timespan = commit_timespan + entry->exec_time_curr;
+			// this is the time of the whole txn
+			uint64_t txn_timespan = commit_end_ts - entry->start_ts;
+
+			// non-batching mode excludes time spent handling rc and INC_STATS;
+			// for fairness reason, we exclude that too
+			INC_STATS(get_thd_id(), run_time, commit_timespan);
 
 			if (entry->rc == RCOK) {
+				// `commit_latency` is defined as the time spent on execution that
+				// eventually commits; but this metric is not very equivalent to what in
+				// non-batching mode
+				INC_STATS(get_thd_id(), commit_latency, exec_timespan);
+				// `latency` is just end-to-end latency of a txn, from its exec start to
+				// its final commit
+				INC_STATS(get_thd_id(), latency, txn_timespan);
+				INC_STATS(get_thd_id(), txn_cnt, 1);
+#if WORKLOAD == YCSB
+				if (unlikely(g_long_txn_ratio > 0)) {
+					if ( ((ycsb_query *) m_query)->request_cnt > REQ_PER_QUERY)
+						INC_STATS(get_thd_id(), txn_cnt_long, 1);
+				}
+#endif
+				ADD_PER_PRIO_STATS(get_thd_id(), exec_time_commit, m_txn->prio, exec_timespan);
+				ADD_PER_PRIO_STATS(get_thd_id(), exec_time_abort, m_txn->prio, entry->exec_time_abort);
+				ADD_PER_PRIO_STATS(get_thd_id(), txn_cnt, m_txn->prio, 1);
+				ADD_PER_PRIO_STATS(get_thd_id(), abort_cnt, m_txn->prio, m_query->num_abort);
+#if WORKLOAD == YCSB
+				stats._stats[get_thd_id()]->append_latency(
+					((ycsb_query *) m_query)->is_long, m_query->num_abort,
+					m_txn->prio, txn_timespan);
+#else
+				stats._stats[get_thd_id()]->append_latency(
+					false, m_query->num_abort, m_txn->prio, txn_timespan);
+#endif
+				stats.commit(get_thd_id());
+				txn_cnt++;
+			} else if (entry->rc == Abort || entry->rc == ERROR) {
+				entry->exec_time_abort += exec_timespan;
 
-			} else if (entry->rc == Abort) {
+				INC_STATS(get_thd_id(), time_abort, exec_timespan);
+				INC_STATS(get_thd_id(), abort_cnt, 1);
+#if WORKLOAD == YCSB
+				if (unlikely(g_long_txn_ratio > 0)) {
+						if ( ((ycsb_query *) m_query)->request_cnt > REQ_PER_QUERY)
+								INC_STATS(get_thd_id(), abort_cnt_long, 1);
+				}
+#endif
+				stats.abort(get_thd_id());
+				m_txn->abort_cnt++;
 
-			} else if (entry->rc == ERROR) {
-
-			} else if (entry->rc == FINISH) {
-
+				if (entry->rc == Abort) {
+					++(m_query->num_abort);
+					batch_mgr->put_next(entry); // put into the next batch
+				} else { // ERROR == user initiated aborts
+					INC_STATS(get_thd_id(), user_abort_cnt, 1);
+				}
 			}
+
+			if (entry->rc == FINISH)
+				return entry->rc;
 		}
 
 		/********* check whether to stop execution *********/
