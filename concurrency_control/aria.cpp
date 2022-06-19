@@ -29,16 +29,16 @@ union ctrl_block_t {
 	struct {
 		std::atomic_uint64_t leader_says_start;
 	} follower_block;
-	char padding[64]; // cacheline padding
+	char padding[CL_SIZE]; // cacheline padding
 
-	ctrl_block_t() { memset(padding, 0, 64); }
+	ctrl_block_t() { memset(padding, 0, CL_SIZE); }
 };
-static_assert(sizeof(ctrl_block_t) == 64, "ctrl_block_t must be cacheline-aligned");
+static_assert(sizeof(ctrl_block_t) == CL_SIZE, "ctrl_block_t must be cacheline-aligned");
 
 static ctrl_block_t* ctrl_blocks[THREAD_CNT];
 
 void register_ctrl_block(uint64_t thd_id) {
-	ctrl_block_t* ctrl_block = (ctrl_block_t*) _mm_malloc(sizeof(ctrl_block_t), 64);
+	ctrl_block_t* ctrl_block = (ctrl_block_t*) _mm_malloc(sizeof(ctrl_block_t), CL_SIZE);
 	if (thd_id == 0) {
 		for (int i = 1; i < THREAD_CNT; ++i) {
 			while (!ctrl_blocks[i]) PAUSE

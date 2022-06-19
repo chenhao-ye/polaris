@@ -187,7 +187,7 @@ RC thread_t::run() {
 			if (WORKLOAD == TEST)
 				rc = runTest(m_txn);
 			else {
-			    rc = m_txn->exec_txn(m_query);
+					rc = m_txn->exec_txn(m_query);
 					rc = m_txn->finish(rc);
 			}
 #endif
