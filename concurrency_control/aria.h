@@ -8,7 +8,8 @@ class base_query;
 namespace AriaCoord {
 
 void register_ctrl_block(uint64_t thd_id);
-void start_new_phase(uint64_t thd_id, uint64_t batch_id);
+bool start_exec_phase(uint64_t thd_id, uint64_t batch_id, bool sim_done);
+void start_commit_phase(uint64_t thd_id, uint64_t batch_id);
 
 } // namespace AriaCoord
 

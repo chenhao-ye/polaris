@@ -329,11 +329,20 @@ RC thread_t::run() {
 	// first register with AriaCoord
 	batch_mgr->init_txn(_wl, this);
 	AriaCoord::register_ctrl_block(get_thd_id());
+	bool sim_done = false;
 
 	while (true) {
-		/********* prepare what queries to execute *********/
-		ts_t batch_start_ts = get_sys_clock();
-		ts_t query_start_ts = batch_start_ts;
+		/********* start execution phase *********/
+		ts_t batch_start_ts = get_sys_clock(); // wait time is counted into runtime
+		if (!AriaCoord::start_exec_phase(
+			get_thd_id(), batch_mgr->get_batch_id(), sim_done))
+		{
+			// this is the only place to return because in the batching mode, all
+			// threads must agree on sim_done
+			return FINISH;
+		}
+		// prepare what queries to execute
+		ts_t query_start_ts = get_sys_clock();
 		batch_mgr->start_new_batch();
 		while (batch_mgr->can_admit()) {
 			// TODO: WHAT IF there is no more query in query_queue?
@@ -343,8 +352,6 @@ RC thread_t::run() {
 		}
 		INC_STATS(get_thd_id(), time_query, get_sys_clock() - query_start_ts);
 
-		/********* start execution phase *********/
-		AriaCoord::start_new_phase(get_thd_id(), batch_mgr->get_batch_id());
 		for (int q_idx = 0; q_idx < ARIA_BATCH_SIZE; ++q_idx) {
 			auto entry = batch_mgr->get_entry(q_idx);
 			m_txn = entry->txn;
@@ -362,12 +369,13 @@ RC thread_t::run() {
 			++thd_txn_id;
 
 			// execute txn
+			assert(WORKLOAD != TEST);
 			entry->rc = m_txn->exec_txn(m_query);
 			entry->exec_time_curr = get_sys_clock() - exec_start_ts;
 		}
 
 		/********* start commit phase *********/
-		AriaCoord::start_new_phase(get_thd_id(), batch_mgr->get_batch_id());
+		AriaCoord::start_commit_phase(get_thd_id(), batch_mgr->get_batch_id());
 		INC_STATS(get_thd_id(), run_time, get_sys_clock() - batch_start_ts);
 
 		for (int q_idx = 0; q_idx < ARIA_BATCH_SIZE; ++q_idx) {
@@ -442,14 +450,17 @@ RC thread_t::run() {
 				}
 			}
 
-			if (entry->rc == FINISH)
-				return entry->rc;
+			if (entry->rc == FINISH) {
+				sim_done = true;
+				break;
+			}
 		}
 
 		/********* check whether to stop execution *********/
-		if (!warmup_finish && txn_cnt >= WARMUP / g_thread_cnt) {
+		if (!warmup_finish && txn_cnt >= WARMUP / g_thread_cnt - ARIA_BATCH_SIZE) {
 			stats.clear(get_thd_id());
-			return FINISH;
+			sim_done = true;
+			continue;
 		}
 
 		if (warmup_finish) {
@@ -463,12 +474,10 @@ RC thread_t::run() {
 #endif
 			{
 				assert(txn_cnt <= MAX_TXN_PER_PART);
-				_wl->sim_done.store(true, std::memory_order_release);
+				sim_done = true;
+				continue;
 			}
 		}
-
-		if (_wl->sim_done.load(std::memory_order_acquire))
-			return FINISH;
 	}
 
 #endif

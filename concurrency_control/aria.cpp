@@ -25,20 +25,22 @@ namespace AriaCoord {
 union ctrl_block_t {
 	struct {
 		std::atomic_uint64_t follower_done_cnt;
+		std::atomic_bool sim_done;
 	} leader_block;
 	struct {
 		std::atomic_uint64_t leader_says_start;
 	} follower_block;
 	char padding[CL_SIZE]; // cacheline padding
-
-	ctrl_block_t() { memset(padding, 0, CL_SIZE); }
 };
 static_assert(sizeof(ctrl_block_t) == CL_SIZE, "ctrl_block_t must be cacheline-aligned");
 
 static ctrl_block_t* ctrl_blocks[THREAD_CNT];
 
+constexpr uint64_t BATCH_ID_SIM_DONE = std::numeric_limits<uint64_t>::max();
+
 void register_ctrl_block(uint64_t thd_id) {
 	ctrl_block_t* ctrl_block = (ctrl_block_t*) _mm_malloc(sizeof(ctrl_block_t), CL_SIZE);
+	memset(ctrl_block->padding, 0, sizeof(CL_SIZE));
 	if (thd_id == 0) {
 		for (int i = 1; i < THREAD_CNT; ++i) {
 			while (!ctrl_blocks[i]) PAUSE
@@ -52,7 +54,7 @@ void register_ctrl_block(uint64_t thd_id) {
 	}
 }
 
-uint64_t follower_wait_for_start(uint64_t thd_id) {
+uint64_t follower_wait_for_start(uint64_t thd_id, bool sim_done) {
 	assert(thd_id != 0);
 	assert(thd_id < THREAD_CNT);
 	// leader saves a nonzero value into leader_says_start to trigger
@@ -62,35 +64,56 @@ uint64_t follower_wait_for_start(uint64_t thd_id) {
 	auto& done_cnt = ctrl_blocks[0]->leader_block.follower_done_cnt;
 	auto& leader_cmd = ctrl_blocks[thd_id]->follower_block.leader_says_start;
 	
+	if (sim_done)
+		ctrl_blocks[0]->leader_block.sim_done.store(true, std::memory_order_release);
 	done_cnt.fetch_add(1, std::memory_order_acq_rel);
 	while (!(batch_id = leader_cmd.load(std::memory_order_relaxed)))
 		PAUSE
 	leader_cmd.store(0, std::memory_order_release);
+	assert(!sim_done || batch_id == BATCH_ID_SIM_DONE);
 	return batch_id;
 }
 
-void leader_wait_for_done(uint64_t batch_id) {
+uint64_t leader_wait_for_done(uint64_t batch_id) {
 	assert(batch_id != 0);
 	auto& done_cnt = ctrl_blocks[0]->leader_block.follower_done_cnt;
 
 	while (done_cnt.load(std::memory_order_relaxed) != THREAD_CNT - 1)
 		PAUSE
+
+	if (ctrl_blocks[0]->leader_block.sim_done.load(std::memory_order_acquire))
+		batch_id = BATCH_ID_SIM_DONE;
+
 	done_cnt.store(0, std::memory_order_release);
 	for (uint64_t i = 1; i < THREAD_CNT; ++i)
 		ctrl_blocks[i]->follower_block.leader_says_start.store(batch_id,
 			std::memory_order_release);
+	return batch_id;
 }
 
-void start_new_phase(uint64_t thd_id, uint64_t batch_id) {
+bool start_new_phase(uint64_t thd_id, uint64_t batch_id, bool sim_done=false) {
+	if (sim_done) batch_id = BATCH_ID_SIM_DONE;
 	if (thd_id == 0) { // leader
-		leader_wait_for_done(batch_id);
-	} else { // followers
-		uint64_t leader_batch_id = follower_wait_for_start(thd_id);
-		assert(leader_batch_id == batch_id); // followers must match leader's
+		batch_id = leader_wait_for_done(batch_id);
+		if (batch_id == BATCH_ID_SIM_DONE) return false;
+	} else {
+		uint64_t leader_batch_id = follower_wait_for_start(thd_id, sim_done);
+		if (leader_batch_id == BATCH_ID_SIM_DONE) return false;
+		assert(leader_batch_id == batch_id);
 	}
+	return true;
 }
 
+bool start_exec_phase(uint64_t thd_id, uint64_t batch_id, bool sim_done) {
+	return start_new_phase(thd_id, batch_id, sim_done);
 }
+
+void start_commit_phase(uint64_t thd_id, uint64_t batch_id) {
+	bool ret = start_new_phase(thd_id, batch_id);
+	assert(ret);
+}
+
+} // namespace AriaCoord
 
 RC
 txn_man::validate_aria() {

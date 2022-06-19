@@ -27,7 +27,7 @@ class Row_aria {
 	// - if txn A has higher prio than txn B, A is serialized before B
 	// - else if txn A has lower txn_id than txn B, A is serialized before B
 	static bool is_order_before(uint32_t lhs_prio, uint64_t lhs_txn_id,
-								uint32_t rhs_prio, uint64_t rhs_txn_id)
+		uint32_t rhs_prio, uint64_t rhs_txn_id)
 	{
 		if (lhs_prio != rhs_prio)
 			return lhs_prio > rhs_prio;
@@ -37,8 +37,6 @@ class Row_aria {
 public:
 	void init(row_t * row);
 	RC access(txn_man * txn, TsType type, row_t * local_row);
-	// this write only do copy, but not TID operation
-	// TID operation is done in writer_release
 	void write(row_t * data);
 
 	bool validate(uint64_t batch_id, uint32_t prio, uint64_t txn_id) const {
@@ -47,8 +45,8 @@ public:
 		// - if reserved by a txn from another batch; no one reserves it in the
 		//   current batch; pass
 		if (v.tid_aria.batch_id != batch_id) return true;
-		// - else for a validation to pass, the txn that reserves the record
-		//   must not be serialized before the current txn
+		// - else for a validation to pass, the txn that reserves the record must
+		//   not be serialized before the current txn
 		return !is_order_before(v.tid_aria.prio, v.tid_aria.txn_id, prio, txn_id);
 	}
 
@@ -63,7 +61,7 @@ public:
 			|| !is_order_before(v.tid_aria.prio, v.tid_aria.txn_id, prio, txn_id))
 		{
 			if (!_tid_word.compare_exchange_strong(v, new_tid,
-				std::memory_order_acq_rel, std::memory_order_acquire))
+				std::memory_order_relaxed, std::memory_order_relaxed))
 				goto retry;
 			return true;
 		}
