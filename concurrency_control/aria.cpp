@@ -39,7 +39,11 @@ static ctrl_block_t* ctrl_blocks[THREAD_CNT];
 constexpr uint64_t BATCH_ID_SIM_DONE = std::numeric_limits<uint64_t>::max();
 
 void register_ctrl_block(uint64_t thd_id) {
-	ctrl_block_t* ctrl_block = (ctrl_block_t*) _mm_malloc(sizeof(ctrl_block_t), CL_SIZE);
+	ctrl_block_t* ctrl_block;
+	if (ctrl_blocks[thd_id])
+		ctrl_block = ctrl_blocks[thd_id];
+	else
+		ctrl_block = (ctrl_block_t*) _mm_malloc(sizeof(ctrl_block_t), CL_SIZE);
 	memset(ctrl_block->padding, 0, sizeof(CL_SIZE));
 	if (thd_id == 0) {
 		for (int i = 1; i < THREAD_CNT; ++i) {

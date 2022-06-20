@@ -334,8 +334,9 @@ RC thread_t::run() {
 	while (true) {
 		/********* start execution phase *********/
 		ts_t batch_start_ts = get_sys_clock(); // wait time is counted into runtime
-		if (!AriaCoord::start_exec_phase(
-			get_thd_id(), batch_mgr->get_batch_id(), sim_done))
+		batch_mgr->start_new_batch();
+		if (!AriaCoord::start_exec_phase(get_thd_id(), batch_mgr->get_batch_id(),
+			sim_done))
 		{
 			// this is the only place to return because in the batching mode, all
 			// threads must agree on sim_done
@@ -343,7 +344,6 @@ RC thread_t::run() {
 		}
 		// prepare what queries to execute
 		ts_t query_start_ts = get_sys_clock();
-		batch_mgr->start_new_batch();
 		while (batch_mgr->can_admit()) {
 			// TODO: WHAT IF there is no more query in query_queue?
 			base_query* q = query_queue->get_next_query(get_thd_id());

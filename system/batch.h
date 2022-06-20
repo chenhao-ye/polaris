@@ -60,6 +60,8 @@ class BatchMgr {
 	BatchMgr(): batch_id(0), batch_buf0(), batch_buf1(), curr_batch(&batch_buf0), 
 							next_batch(&batch_buf1) {}
 	void init_txn(workload* wl, thread_t* thd) {
+		batch_buf0.reset();
+		batch_buf1.reset();
 		batch_buf0.init_txn(wl, thd);
 		batch_buf1.init_txn(wl, thd);
 	}
