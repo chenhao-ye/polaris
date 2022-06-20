@@ -151,7 +151,8 @@ void txn_man::cleanup(RC rc) {
 
 #if CC_ALG == SILO_PRIO
 		// actually, if a writer hasn't acquired the latch yet, we also release it here
-		if (accesses[rid]->is_reserved) orig_r->manager->reader_release(prio, accesses[rid]->prio_ver);
+		if (accesses[rid]->is_reserved)
+            orig_r->manager->reader_release(prio, accesses[rid]->prio_ver);
 #endif
 
 #if COMMUTATIVE_OPS
