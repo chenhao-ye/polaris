@@ -8,6 +8,51 @@
 
 namespace AriaCoord {
 
+constexpr uint64_t BATCH_ID_SIM_DONE = std::numeric_limits<uint64_t>::max();
+
+#if ARIA_USE_PTHREAD_BARRIER
+
+static pthread_barrier_t phase_barrier;
+static char padding1[CL_SIZE];
+static std::atomic_uint64_t global_batch_id;
+static char padding2[CL_SIZE];
+
+void init() {
+	int ret = pthread_barrier_init(&phase_barrier, NULL, THREAD_CNT);
+	assert(ret == 0);
+	global_batch_id.store(0, std::memory_order_release);
+}
+
+// there is nothing to do if using pthread barrier
+// but this function itself works as a barrier
+void register_thread(uint64_t thd_id) { pthread_barrier_wait(&phase_barrier); }
+void unregister_thread(uint64_t thd_id) { return; }
+
+bool start_exec_phase(uint64_t thd_id, uint64_t batch_id, bool sim_done) {
+	if (sim_done)
+		global_batch_id.store(BATCH_ID_SIM_DONE, std::memory_order_release);
+#ifndef NDEBUG // only in debug mode we store this batch_id
+	else if (thd_id == 0)
+		global_batch_id.store(batch_id, std::memory_order_release);
+#endif
+	pthread_barrier_wait(&phase_barrier);
+	std::uint64_t curr_batch_id = global_batch_id.load(std::memory_order_acquire);
+	if (curr_batch_id == BATCH_ID_SIM_DONE)
+		return false;
+	assert(curr_batch_id == batch_id);
+	return true;
+}
+
+void start_commit_phase(uint64_t thd_id, uint64_t batch_id) {
+	assert(global_batch_id.load(std::memory_order_acquire) == batch_id);
+	pthread_barrier_wait(&phase_barrier);
+}
+
+
+#else // ARIA_USE_PTHREAD_BARRIER
+
+void init() { return; }
+
 // there is one leader (thread 0) and many followers (other threads)
 // there are THREAD_CNT ctrl_block, where the first one is leader_block and
 // the rest are follower_block
@@ -35,8 +80,6 @@ union ctrl_block_t {
 static_assert(sizeof(ctrl_block_t) == CL_SIZE, "ctrl_block_t must be cacheline-aligned");
 
 static ctrl_block_t* ctrl_blocks[THREAD_CNT];
-
-constexpr uint64_t BATCH_ID_SIM_DONE = std::numeric_limits<uint64_t>::max();
 
 void register_thread(uint64_t thd_id) {
 	assert(!ctrl_blocks[thd_id]);
@@ -119,6 +162,8 @@ void start_commit_phase(uint64_t thd_id, uint64_t batch_id) {
 	bool ret = start_new_phase(thd_id, batch_id);
 	assert(ret);
 }
+
+#endif // ARIA_USE_PTHREAD_BARRIER
 
 } // namespace AriaCoord
 

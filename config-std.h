@@ -154,6 +154,7 @@ static_assert(ARIA_NUM_BITS_BATCH_ID + ARIA_NUM_BITS_PRIO \
 #define ARIA_MAX_PRIO             ((1 << ARIA_NUM_BITS_PRIO) - 1)
 
 #define ARIA_BATCH_SIZE           16
+#define ARIA_USE_PTHREAD_BARRIER  true
 
 // Workload-related config:
 //   priority distribution:

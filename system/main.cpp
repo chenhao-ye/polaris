@@ -9,6 +9,7 @@
 #include "plock.h"
 #include "occ.h"
 #include "vll.h"
+#include "aria.h"
 
 void * f(void *);
 
@@ -77,6 +78,10 @@ int main(int argc, char* argv[])
 	}
 	m_wl->init();
 	printf("workload initialized!\n");
+
+#if CC_ALG == ARIA
+	AriaCoord::init();
+#endif
 	
 	uint64_t thd_cnt = g_thread_cnt;
 	pthread_t p_thds[thd_cnt - 1];
