@@ -81,7 +81,7 @@ class BatchMgr {
 	// admit new query into the buffer
 	void admit_new_query(base_query* q) {
 		assert(q);
-		assert(curr_has_space);
+		assert(can_admit());
 		curr_batch->append(q);
 	}
 
