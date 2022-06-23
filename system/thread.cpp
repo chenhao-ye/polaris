@@ -49,12 +49,12 @@ RC thread_t::run() {
 
 	txn_man * m_txn;
 	base_query * m_query = NULL;
-	uint64_t thd_txn_id = 0;
 	UInt64 txn_cnt = 0;
 
 /******************************************************************************/
 #if CC_ALG != ARIA /* Only run if not Aria, as Aria requires batching *********/
 /******************************************************************************/
+	uint64_t thd_txn_id = 0;
 	RC rc = RCOK;
 	// get txn man from workload
 	rc = _wl->get_txn_man(m_txn, this);
@@ -360,14 +360,26 @@ RC thread_t::run() {
 			assert(entry->rc == RCOK);
 			ts_t exec_start_ts = get_sys_clock();
 			assert(entry->exec_time_curr == 0);
-			if (entry->start_ts == 0)
+			assert(m_query->rerun == (entry->start_ts != 0));
+			if (!m_query->rerun) { // fresh start
+				assert(entry->start_ts == 0);
+				assert(entry->txn_id == 0);
 				entry->start_ts = exec_start_ts;
+				entry->txn_id = (ARIA_BATCH_SIZE * batch_mgr->get_batch_id() + q_idx) \
+					* THREAD_CNT + get_thd_id();
+			} else { // rerun
+				assert(entry->start_ts != 0);
+				assert(entry->txn_id != 0);
+#if ARIA_NEW_TXN_ID_REEXEC
+				entry->txn_id = (ARIA_BATCH_SIZE * batch_mgr->get_batch_id() + q_idx) \
+					* THREAD_CNT + get_thd_id();
+#endif
+			}
 
 			// prepare m_txn
 			m_txn->prio = m_query->prio;
 			m_txn->batch_id = batch_mgr->get_batch_id();
-			m_txn->set_txn_id(get_thd_id() + thd_txn_id * g_thread_cnt);
-			++thd_txn_id;
+			m_txn->set_txn_id(entry->txn_id);
 
 			// execute txn
 			assert(WORKLOAD != TEST);

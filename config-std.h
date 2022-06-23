@@ -153,7 +153,9 @@ static_assert(ARIA_NUM_BITS_BATCH_ID + ARIA_NUM_BITS_PRIO \
 	+ ARIA_NUM_BITS_TXN_ID == 64);
 #define ARIA_MAX_PRIO             ((1 << ARIA_NUM_BITS_PRIO) - 1)
 
-#define ARIA_BATCH_SIZE           16
+#define ARIA_BATCH_SIZE           4
+// if aborts and reexecute, whether uses a new txn_id or the previous one
+#define ARIA_NEW_TXN_ID_REEXEC    false
 #define ARIA_USE_PTHREAD_BARRIER  true
 
 // Workload-related config:

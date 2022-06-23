@@ -11,6 +11,7 @@ struct BatchEntry {
 	// the name is a little confusing: exec_time here includes validation phases
 	uint64_t exec_time_curr; // current execution time (not yet abort/commit)
 	uint64_t exec_time_abort; // how much execution time spent eventually aborts
+	uint64_t txn_id;
 };
 
 /*
@@ -33,6 +34,7 @@ class BatchMgr {
 			batch[size].start_ts = 0;
 			batch[size].exec_time_curr = 0;
 			batch[size].exec_time_abort = 0;
+			batch[size].txn_id = 0;
 			++size;
 		}
 		void append(struct BatchEntry* other) {
@@ -42,6 +44,7 @@ class BatchMgr {
 			batch[size].start_ts = other->start_ts;
 			batch[size].exec_time_curr = 0;
 			batch[size].exec_time_abort = other->exec_time_abort;
+			batch[size].txn_id = other->txn_id;
 			++size;
 		}
 		BatchEntry* get(int idx) {
