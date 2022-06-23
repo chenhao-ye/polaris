@@ -326,10 +326,10 @@ RC thread_t::run() {
 /******************************************************************************/
 #else /* If use Aria, run this loop, which perform batching *******************/
 /******************************************************************************/
+	bool sim_done = false;
 	// first register with AriaCoord
 	batch_mgr->init_txn(_wl, this);
-	AriaCoord::register_ctrl_block(get_thd_id());
-	bool sim_done = false;
+	AriaCoord::register_thread(get_thd_id());
 
 	while (true) {
 		/********* start execution phase *********/
@@ -340,6 +340,7 @@ RC thread_t::run() {
 		{
 			// this is the only place to return because in the batching mode, all
 			// threads must agree on sim_done
+			AriaCoord::unregister_thread(get_thd_id());
 			return FINISH;
 		}
 		// prepare what queries to execute
