@@ -9,7 +9,6 @@ namespace AriaCoord {
 
 void init();
 void register_thread(uint64_t thd_id);
-void unregister_thread(uint64_t thd_id);
 bool start_exec_phase(uint64_t thd_id, uint64_t batch_id, bool sim_done);
 void start_commit_phase(uint64_t thd_id, uint64_t batch_id);
 

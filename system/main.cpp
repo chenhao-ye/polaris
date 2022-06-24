@@ -123,6 +123,10 @@ int main(int argc, char* argv[])
 #endif
 	pthread_barrier_init( &warmup_bar, NULL, g_thread_cnt );
 
+#if CC_ALG == ARIA
+	AriaCoord::init(); // re-init
+#endif
+
 	// spawn and run txns again.
 	int64_t starttime = get_server_clock();
 	for (uint32_t i = 0; i < thd_cnt - 1; i++) {

@@ -340,7 +340,6 @@ RC thread_t::run() {
 		{
 			// this is the only place to return because in the batching mode, all
 			// threads must agree on sim_done
-			AriaCoord::unregister_thread(get_thd_id());
 			return FINISH;
 		}
 		// prepare what queries to execute
