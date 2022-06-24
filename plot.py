@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import pandas as pd
 import numpy as np
+import math
 from typing import List, Dict, Tuple, Optional
 
 # "pdf", "eps", "png", etc
@@ -323,8 +324,8 @@ def plot_fig1():
     ax_tail.set_xlim(0, 3)
     ax_tail.set_ylim(0, 4)
 
-    ax_tail.set_yticks([0, 1, 2, 3, 4], ["0", "p90", "p99", "p999", "p9999"],
-                       rotation=90)
+    ax_tail.set_yticks([-math.log10(0.5), 1, 2, 3, 4],
+        ["p50", "p90", "p99", "p999", "p9999"], rotation=90)
 
     ax_tail.set_xlabel("Latency (ms)")
     ax_tail.set_ylabel(f"Tail percentage")
@@ -447,8 +448,8 @@ def plot_fig6():
     ax_tail.set_xlim(0, 3)
     ax_tail.set_ylim(0, 4)
 
-    ax_tail.set_yticks([0, 1, 2, 3, 4], ["0", "p90", "p99", "p999", "p9999"],
-                       rotation=90)
+    ax_tail.set_yticks([-math.log10(0.5), 1, 2, 3, 4],
+        ["p50", "p90", "p99", "p999", "p9999"], rotation=90)
 
     ax_tail.set_xlabel("Latency (ms)")
     ax_tail.set_ylabel(f"Tail percentage")
@@ -471,9 +472,6 @@ def plot_fig6():
     ax_tp.set_xlabel('Algorithm')
     ax_tp.set_ylabel('Throughput (Mtxn/s)')
 
-    return fig, (ax_tail, ax_tp)
-
-    fig, (ax_tail, ax_tp) = plot_latency_logscale_throughput("ycsb_udprio")
     tp_ticks = list(range(0, 600001, 100000))
     ax_tp.set_yticks(
         tp_ticks, [f"{t/1e6}" if t > 0 else "0" for t in tp_ticks], rotation=90)
