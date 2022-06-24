@@ -8,6 +8,51 @@
 
 namespace AriaCoord {
 
+#if ARIA_USE_PTHREAD_BARRIER
+
+static pthread_barrier_t phase_barrier;
+static char padding1[CL_SIZE];
+static std::atomic_bool global_sim_done;
+static char padding2[CL_SIZE];
+#ifndef NDEBUG
+static uint64_t global_batch_id;
+static char padding3[CL_SIZE];
+#endif
+
+// also works as "re-init"
+void init() {
+	int ret = pthread_barrier_init(&phase_barrier, NULL, THREAD_CNT);
+	assert(ret == 0);
+	global_sim_done.store(false, std::memory_order_release);
+#ifndef NDEBUG
+	global_batch_id = 0;
+#endif
+}
+
+// there is nothing to do if using pthread barrier
+// but this function itself works as a barrier
+void register_thread(uint64_t thd_id) { pthread_barrier_wait(&phase_barrier); }
+
+bool start_exec_phase(uint64_t thd_id, uint64_t batch_id, bool sim_done) {
+	if (sim_done) global_sim_done.store(true, std::memory_order_release);
+#ifndef NDEBUG // only in debug mode we maintain global_batch_id
+	if (thd_id == 0) global_batch_id = batch_id;
+#endif
+	pthread_barrier_wait(&phase_barrier);
+	assert(global_batch_id == batch_id);
+	return !global_sim_done.load(std::memory_order_acquire);
+}
+
+void start_commit_phase(uint64_t thd_id, uint64_t batch_id) {
+	assert(global_batch_id == batch_id);
+	assert(!global_sim_done.load(std::memory_order_acquire));
+	pthread_barrier_wait(&phase_barrier);
+}
+
+#else // ARIA_USE_PTHREAD_BARRIER
+
+constexpr uint64_t BATCH_ID_SIM_DONE = std::numeric_limits<uint64_t>::max();
+
 // there is one leader (thread 0) and many followers (other threads)
 // there are THREAD_CNT ctrl_block, where the first one is leader_block and
 // the rest are follower_block
@@ -36,7 +81,13 @@ static_assert(sizeof(ctrl_block_t) == CL_SIZE, "ctrl_block_t must be cacheline-a
 
 static ctrl_block_t* ctrl_blocks[THREAD_CNT];
 
-constexpr uint64_t BATCH_ID_SIM_DONE = std::numeric_limits<uint64_t>::max();
+// also works for re-init
+void init() {
+	for (int i = 0; i < THREAD_CNT; ++i) {
+		_mm_free(ctrl_blocks[i]);
+		ctrl_blocks[i] = nullptr;
+	}
+}
 
 void register_thread(uint64_t thd_id) {
 	assert(!ctrl_blocks[thd_id]);
@@ -53,12 +104,6 @@ void register_thread(uint64_t thd_id) {
 		ctrl_blocks[thd_id] = ctrl_block;
 		while (!ctrl_blocks[0]) PAUSE // wait for the leader registered
 	}
-}
-
-void unregister_thread(uint64_t thd_id) {
-	assert(ctrl_blocks[thd_id]);
-	_mm_free(ctrl_blocks[thd_id]);
-	ctrl_blocks[thd_id] = nullptr;
 }
 
 uint64_t follower_wait_for_start(uint64_t thd_id, bool sim_done) {
@@ -119,6 +164,8 @@ void start_commit_phase(uint64_t thd_id, uint64_t batch_id) {
 	bool ret = start_new_phase(thd_id, batch_id);
 	assert(ret);
 }
+
+#endif // ARIA_USE_PTHREAD_BARRIER
 
 } // namespace AriaCoord
 
