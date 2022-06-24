@@ -37,5 +37,5 @@
 
 	"UNSET_NUMA": "false",
 	"COMPILE_ONLY": "false",
-	"NDEBUG": "true"
+	"NDEBUG": "false"
 }
