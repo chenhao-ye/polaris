@@ -79,9 +79,6 @@ int main(int argc, char* argv[])
 	m_wl->init();
 	printf("workload initialized!\n");
 
-#if CC_ALG == ARIA
-	AriaCoord::init();
-#endif
 	
 	uint64_t thd_cnt = g_thread_cnt;
 	pthread_t p_thds[thd_cnt - 1];
@@ -101,6 +98,8 @@ int main(int argc, char* argv[])
 	occ_man.init();
 #elif CC_ALG == VLL
 	vll_man.init();
+#elif CC_ALG == ARIA
+	AriaCoord::init();
 #endif
 
 	for (uint32_t i = 0; i < thd_cnt; i++) 
