@@ -61,36 +61,62 @@ label_map = {
 
 marker_size = 4
 
-FIG_SIZE = (5, 2.5)
+SUBFIG_LEN = 2.5
 
 
-def set_fig(fig, fig_size=FIG_SIZE):
+def set_fig(fig, nrows: int, ncols: int):
     # handle all figure parameters tuning
     fig.set_tight_layout({"pad": 0.01, "w_pad": 0.5, "h_pad": 0})
-    fig.set_size_inches(*fig_size)
+    fig.set_size_inches(ncols * SUBFIG_LEN, nrows * SUBFIG_LEN)
 
 
-def get_subplots_UD(fig_size=FIG_SIZE):
+def get_subplots_UD():
     fig, axes = plt.subplots(nrows=2, ncols=1)
-    set_fig(fig, fig_size=fig_size)
+    set_fig(fig=fig, nrows=2, ncols=1)
     return fig, axes
 
 
-def get_subplots_LR(fig_size=FIG_SIZE):
+def get_subplots_LR():
     fig, axes = plt.subplots(nrows=1, ncols=2)
-    set_fig(fig, fig_size=fig_size)
+    set_fig(fig=fig, nrows=1, ncols=2)
     return fig, axes
 
 
-def get_subplots_2L1R(fig_size=FIG_SIZE):
+def get_subplots_LMR():
+    fig, axes = plt.subplots(nrows=1, ncols=3)
+    set_fig(fig=fig, nrows=1, ncols=3)
+    return fig, axes
+
+
+def get_subplots_2L1R():
     fig = plt.figure()
     ax_l = fig.add_subplot(1, 3, (1, 2))
     ax_r = fig.add_subplot(1, 3, 3)
-    set_fig(fig, fig_size=fig_size)
+    set_fig(fig=fig, nrows=1, ncols=3)
     return fig, (ax_l, ax_r)
 
 
-def make_subplot(df: pd.DataFrame, ax, x_col: str, y_col: str, z_col: str,
+def load_throughput(exper: str):
+    return pd.read_csv(f"results/{exper}/throughput.csv", header=0,
+                       na_values="None", skipinitialspace=True)
+
+
+def load_tail(exper: str):
+    return pd.read_csv(f"results/{exper}/tail.csv", header=0,
+                       na_values="None", skipinitialspace=True)
+
+
+def load_latency(exper: str, cc_alg: str, thread_cnt: str, *, zipf=None, num_wh=None):
+    assert (zipf is None) != (num_wh is None)
+    data_path = \
+        f"results/{exper}/YCSB-CC={cc_alg}-THD={thread_cnt}-ZIPF={zipf}/latency_dump.csv" \
+        if zipf else \
+        f"results/{exper}/TPCC-CC={cc_alg}-THD={thread_cnt}-NUM_WH={num_wh}/latency_dump.csv"
+    return pd.read_csv(data_path, header=0, names=['prio', 'latency'],
+                       na_values="None", skipinitialspace=True)
+
+
+def make_subplot(ax, df: pd.DataFrame, x_col: str, y_col: str, z_col: str,
                  x_range: List[int], z_range: List, filters: Dict):
     filter_df = df
     for fk, fv in filters.items():
@@ -103,8 +129,9 @@ def make_subplot(df: pd.DataFrame, ax, x_col: str, y_col: str, z_col: str,
         for x_val in x_range:
             d = z_df[(z_df[x_col] == x_val)]
             if d.shape[0] != 1:
-                raise ValueError(
-                    f"Unexpected data: ({x_col}={x_val},{z_col}={z_val}): shape {d.shape}")
+                raise ValueError("Unexpected data: "
+                                 f"({x_col}={x_val},{z_col}={z_val}): "
+                                 f"shape {d.shape}")
             y_data.append(d.head(1)[y_col])
         ax.plot(x_range, y_data,
                 color=color_map[z_val],
@@ -113,162 +140,179 @@ def make_subplot(df: pd.DataFrame, ax, x_col: str, y_col: str, z_col: str,
                 label=label_map[z_val])
 
 
-def make_tail_latency_subplot(df: pd.DataFrame, ax, z_col: str,
-                              prio_range: Optional[Tuple[int, int]] = None):
+def make_cdf(ax, df: pd.DataFrame, z_col: str,
+             prio_range: Optional[Tuple[int, int]] = None):
     filtered_df = df
     if prio_range:
         prio_min, prio_max = prio_range
         filtered_df = df[(df['prio'] >= prio_min) & (df['prio'] <= prio_max)]
     latency = filtered_df['latency'].to_numpy()
     latency.sort()
-    latency = latency / 1e6
     p = np.arange(len(latency)) / len(latency)
 
     ax.plot(latency, -np.log10(1 - p), color=color_map[z_col],
             linestyle=linestyle_map[z_col], label=label_map[z_col])
 
 
-def plot_ycsb_thread_vs_throughput_tail(exper: str, tail_metric='p999', layout='LR'):
-    assert layout in {"LR", "UD"}
-    fig, (ax_tp, ax_tail) = get_subplots_LR() \
-        if layout == 'LR' else get_subplots_UD()
+def make_subplot_latency_cdf(ax, dfs: Dict[str, pd.DataFrame], cc_algs: List[str]):
+    # this one does not support filtering by prio
+    for cc_alg in cc_algs:
+        df = dfs[cc_alg]
+        make_cdf(ax, df, cc_alg)
+
+    ax.grid(True, axis='y', linestyle='--', linewidth=0.1)
+
+    ax.set_ylim(0, 3)
+    ax.set_yticks([-math.log10(0.5), 1, 2, 3, 4],
+                  ["p50", "p90", "p99", "p999", "p9999"], rotation=90)
+
+    ax.set_xlabel("Latency (ms)")
+    ax.set_ylabel("Tail percentage")
+
+
+def set_x_threads(ax):
+    ax.set_xlabel("Number of threads")
+    ax.set_xticks([1, 8, 16, 32, 48, 64])
+    ax.set_xlim(0)
+
+
+def set_tp_ticks(ax_tp, tick, num_ticks):
+    # tick unit is Mtxn/s
+    tp_ticks = [tick * i * 1000000 for i in range(num_ticks + 1)]
+    ax_tp.set_yticks(tp_ticks,
+                     [f"{tick * i:g}"
+                         for i in range(num_ticks + 1)],
+                     rotation=90)
+    ax_tp.set_ylim([0, tick * num_ticks * 1000000])
+    ax_tp.set_ylabel("Throughput (Mtxn/s)")
+
+
+def set_tail_ticks(ax_tail, tick, num_ticks, tail_metric='p999'):
+    tail_ticks = [tick * i * 1000 for i in range(num_ticks + 1)]
+    ax_tail.set_yticks(tail_ticks,
+                       [f"{tick * i:g}" if i > 0 else "0"
+                        for i in range(num_ticks + 1)],
+                       rotation=90)
+    ax_tail.set_ylim([0, tick * num_ticks * 1000])
+    ax_tail.set_ylabel(f"Tail latency {tail_metric} (ms)")
+
+
+# this is for latency cdf
+def set_lat_ticks(ax_lat, tick, num_ticks):
+    lat_ticks = [tick * i * 1000000 for i in range(num_ticks + 1)]
+    ax_lat.set_xticks(lat_ticks,
+                      [f"{tick * i:g}" if i > 0 else "0"
+                       for i in range(num_ticks + 1)],
+                      rotation=90)
+    ax_lat.set_xlim([0, tick * num_ticks * 1000000])
+    ax_lat.set_xlabel("Latency (ms)")
+
+
+def plot_ycsb_thread_vs_throughput_tail(exper: str, tail_metric='p999'):
+    fig, (ax_tp, ax_tail, ax_lat) = get_subplots_LMR()
 
     cc_algs = ["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO", "SILO_PRIO"]
     thread_cnts = [1, 4, 8, 16, 24, 32, 40, 48, 56, 64]
 
     # plot throughput
-    tp_df = pd.read_csv(f"results/{exper}/throughput.csv", header=0,
-                        na_values="None", skipinitialspace=True)
-    make_subplot(df=tp_df, ax=ax_tp, x_col='thread_cnt', y_col='throughput',
+    tp_df = load_throughput(exper)
+    make_subplot(ax=ax_tp, df=tp_df, x_col='thread_cnt', y_col='throughput',
                  z_col='cc_alg', x_range=thread_cnts, z_range=cc_algs,
                  filters={"zipf_theta": 0.99})
 
     # plot tail latency
-    tail_df = pd.read_csv(f"results/{exper}/tail.csv", header=0,
-                          na_values="None", skipinitialspace=True)
-    make_subplot(df=tail_df, ax=ax_tail, x_col='thread_cnt', y_col=tail_metric,
+    tail_df = load_tail(exper)
+    make_subplot(ax=ax_tail, df=tail_df, x_col='thread_cnt', y_col=tail_metric,
                  z_col='cc_alg', x_range=thread_cnts, z_range=cc_algs,
                  filters={"zipf_theta": 0.99, 'tag': 'all'})
 
-    ax_tp.set_xlabel('Number of threads')
-    ax_tail.set_xlabel('Number of threads')
+    set_x_threads(ax_tp)
+    set_x_threads(ax_tail)
 
-    ax_tp.set_xticks([1, 8, 16, 32, 48, 64])
-    ax_tail.set_xticks([1, 8, 16, 32, 48, 64])
-    ax_tp.set_xlim(0)
-    ax_tail.set_xlim(0)
+    lat_dfs = {
+        cc_alg: load_latency(exper, cc_alg, 64, zipf=0.99)
+        for cc_alg in cc_algs
+    }
+    make_subplot_latency_cdf(ax_lat, lat_dfs, cc_algs)
 
-    return fig, (ax_tp, ax_tail)
+    return fig, (ax_tp, ax_tail, ax_lat)
 
 
-def plot_ycsb_zipf_vs_throughput_tail(exper: str, tail_metric='p999', layout='LR'):
-    assert layout in {"LR", "UD"}
-    fig, (ax_tp, ax_tail) = get_subplots_LR() \
-        if layout == 'LR' else get_subplots_UD()
+def plot_ycsb_zipf_vs_throughput_tail(exper: str, zipf_thetas, tail_metric='p999'):
+    fig, (ax_tp, ax_tail, ax_lat) = get_subplots_LMR()
 
     cc_algs = ["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO", "SILO_PRIO"]
-    zipf_thetas = [0.9, 0.99, 1.1, 1.2, 1.3, 1.4, 1.5]
 
     # plot throughput
-    tp_df = pd.read_csv(f"results/{exper}/throughput.csv", header=0,
-                        na_values="None", skipinitialspace=True)
-    make_subplot(df=tp_df, ax=ax_tp, x_col='zipf_theta', y_col='throughput',
+    tp_df = load_throughput(exper)
+    make_subplot(ax=ax_tp, df=tp_df, x_col='zipf_theta', y_col='throughput',
                  z_col='cc_alg', x_range=zipf_thetas, z_range=cc_algs,
                  filters={"thread_cnt": 64})
 
     # plot tail latency
-    tail_df = pd.read_csv(f"results/{exper}/tail.csv", header=0,
-                          na_values="None", skipinitialspace=True)
-    make_subplot(df=tail_df, ax=ax_tail, x_col='zipf_theta', y_col=tail_metric,
+    tail_df = load_tail(exper)
+    make_subplot(ax=ax_tail, df=tail_df, x_col='zipf_theta', y_col=tail_metric,
                  z_col='cc_alg', x_range=zipf_thetas, z_range=cc_algs,
                  filters={"thread_cnt": 64, 'tag': 'all'})
 
     zipf_ticks = zipf_thetas
-    ax_tp.set_xticks(
-        zipf_ticks, [f"{t:.1f}" if t != 0.99 else f"{t:.2f}" for t in zipf_ticks])
-    ax_tail.set_xticks(
-        zipf_ticks, [f"{t:.1f}" if t != 0.99 else f"{t:.2f}" for t in zipf_ticks])
+    ax_tp.set_xticks(zipf_ticks, [f"{t:g}" for t in zipf_ticks])
+    ax_tail.set_xticks(zipf_ticks, [f"{t:g}" for t in zipf_ticks])
 
-    tp_ticks = list(range(0, 600001, 100000))
-    ax_tp.set_yticks(
-        tp_ticks, [f"{t/1e6}" if t > 0 else "0" for t in tp_ticks], rotation=90)
-    ax_tp.set_ylim([0, 600000])
+    set_tp_ticks(ax_tp, 0.1, 6)
+    set_tail_ticks(ax_tail, 4, 4)
 
-    tail_ticks = list(range(0, 16001, 4000))
-    ax_tail.set_yticks(
-        tail_ticks, [f"{t//1000}" if t > 0 else "0" for t in tail_ticks], rotation=90)
-    ax_tail.set_ylim([0, 16000])
-
-    ax_tp_zoom = ax_tp.inset_axes([0.45, 0.45, 0.5, 0.5])
-    make_subplot(df=tp_df, ax=ax_tp_zoom, x_col='zipf_theta', y_col='throughput',
-                 z_col='cc_alg', x_range=[1.2, 1.3, 1.4, 1.5], z_range=cc_algs,
-                 filters={"thread_cnt": 64})
-    tp_ticks_zoom = list(range(0, 160001, 80000))
-    ax_tp_zoom.set_xticks([1.2, 1.3, 1.4, 1.5])
-    ax_tp_zoom.set_yticks(
-        tp_ticks_zoom, [f"{t/1e6}" if t > 0 else "0" for t in tp_ticks_zoom], rotation=90)
-    ax_tp_zoom.set_ylim([0, 160000])
-
-    ax_tp.set_ylabel('Throughput (Mtxn/s)')
-    ax_tail.set_ylabel(f'Tail latency {tail_metric} (ms)')
     ax_tp.set_xlabel('Zipfian theta')
     ax_tail.set_xlabel('Zipfian theta')
 
-    return fig, (ax_tp, ax_tail)
+    return fig, (ax_tp, ax_tail, ax_lat)
 
 
-def plot_tpcc_thread_vs_throughput_tail(exper: str, num_wh=1, tail_metric='p999', layout='LR'):
-    assert layout in {"LR", "UD"}
-    fig, (ax_tp, ax_tail) = get_subplots_LR() \
-        if layout == 'LR' else get_subplots_UD()
+def plot_tpcc_thread_vs_throughput_tail(exper: str, num_wh=1, tail_metric='p999'):
+    fig, (ax_tp, ax_tail, ax_lat) = get_subplots_LMR()
 
     cc_algs = ["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO", "SILO_PRIO"]
     thread_cnts = [1, 4, 8, 16, 24, 32, 40, 48, 56, 64]
 
     # plot throughput
-    tp_df = pd.read_csv(f"results/{exper}/throughput.csv", header=0,
-                        na_values="None", skipinitialspace=True)
-    make_subplot(df=tp_df, ax=ax_tp, x_col='thread_cnt', y_col='throughput',
+    tp_df = load_throughput(exper)
+    make_subplot(ax=ax_tp, df=tp_df, x_col='thread_cnt', y_col='throughput',
                  z_col='cc_alg', x_range=thread_cnts, z_range=cc_algs,
                  filters={"num_wh": num_wh})
 
     # plot tail latency
-    tail_df = pd.read_csv(f"results/{exper}/tail.csv", header=0,
-                          na_values="None", skipinitialspace=True)
-    make_subplot(df=tail_df, ax=ax_tail, x_col='thread_cnt', y_col=tail_metric,
+    tail_df = load_tail(exper)
+    make_subplot(ax=ax_tail, df=tail_df, x_col='thread_cnt', y_col=tail_metric,
                  z_col='cc_alg', x_range=thread_cnts, z_range=cc_algs,
                  filters={"num_wh": num_wh, 'tag': 'all'})
 
-    ax_tp.set_xlabel('Number of threads')
-    ax_tail.set_xlabel('Number of threads')
+    set_x_threads(ax_tp)
+    set_x_threads(ax_tail)
 
-    ax_tp.set_xticks([1, 8, 16, 32, 48, 64])
-    ax_tail.set_xticks([1, 8, 16, 32, 48, 64])
-    ax_tp.set_xlim(0)
-    ax_tail.set_xlim(0)
+    lat_dfs = {
+        cc_alg: load_latency(exper, cc_alg, 64, num_wh=num_wh)
+        for cc_alg in cc_algs
+    }
+    make_subplot_latency_cdf(ax_lat, lat_dfs, cc_algs)
 
-    return fig, (ax_tp, ax_tail)
+    return fig, (ax_tp, ax_tail, ax_lat)
 
 
-def plot_tpcc_warehouse_vs_throughput_tail(exper: str, tail_metric='p999', layout='LR'):
-    assert layout in {"LR", "UD"}
-    fig, (ax_tp, ax_tail) = get_subplots_LR() \
-        if layout == 'LR' else get_subplots_UD()
+def plot_tpcc_warehouse_vs_throughput_tail(exper: str, tail_metric='p999'):
+    fig, (ax_tp, ax_tail, ax_lat) = get_subplots_LMR()
 
     cc_algs = ["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO", "SILO_PRIO"]
     num_wh_range = [1, 8, 16, 32, 64]
 
     # plot throughput
-    tp_df = pd.read_csv(f"results/{exper}/throughput.csv", header=0,
-                        na_values="None", skipinitialspace=True)
-    make_subplot(df=tp_df, ax=ax_tp, x_col='num_wh', y_col='throughput',
+    tp_df = load_throughput(exper)
+    make_subplot(ax=ax_tp, df=tp_df, x_col='num_wh', y_col='throughput',
                  z_col='cc_alg', x_range=num_wh_range, z_range=cc_algs,
                  filters={"thread_cnt": 64})
 
     # plot tail latency
-    tail_df = pd.read_csv(f"results/{exper}/tail.csv", header=0,
-                          na_values="None", skipinitialspace=True)
-    make_subplot(df=tail_df, ax=ax_tail, x_col='num_wh', y_col=tail_metric,
+    tail_df = load_tail(exper)
+    make_subplot(ax=ax_tail, df=tail_df, x_col='num_wh', y_col=tail_metric,
                  z_col='cc_alg', x_range=num_wh_range, z_range=cc_algs,
                  filters={"thread_cnt": 64, 'tag': 'all'})
 
@@ -283,18 +327,17 @@ def plot_tpcc_warehouse_vs_throughput_tail(exper: str, tail_metric='p999', layou
     ax_tp.set_xlim(0)
     ax_tail.set_xlim(0)
 
-    return fig, (ax_tp, ax_tail)
+    return fig, (ax_tp, ax_tail, ax_lat)
 
 
 def plot_ycsb_prio_ratio_vs_throughput(exper: str):
     fig, ax = plt.subplots(nrows=1, ncols=1)
-    set_fig(fig, [FIG_SIZE[0] // 1.5, FIG_SIZE[1]])
+    set_fig(fig, 1, 2)
 
     pr_range = [0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
 
-    tp_df = pd.read_csv(f"results/{exper}/throughput.csv", header=0,
-                        na_values="None", skipinitialspace=True)
-    make_subplot(df=tp_df, ax=ax, x_col='prio_ratio', y_col='throughput',
+    tp_df = load_throughput(exper)
+    make_subplot(ax=ax, df=tp_df, x_col='prio_ratio', y_col='throughput',
                  z_col='cc_alg', x_range=pr_range, z_range=["SILO_PRIO"],
                  filters={"zipf_theta": 0.99})
 
@@ -314,25 +357,22 @@ def plot_fig1():
     cc_algs = ["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO"]
 
     for cc_alg in cc_algs:
-        data_path = f"results/{exper}/YCSB-CC={cc_alg}-THD={thread_cnt}-ZIPF={zipf}/latency_dump.csv"
-        df = pd.read_csv(data_path, header=0, names=['prio', 'latency'],
-                         na_values="None", skipinitialspace=True)
-        make_tail_latency_subplot(df, ax_tail, cc_alg)
+        df = load_latency(exper, cc_alg, thread_cnt, zipf=zipf)
+        make_cdf(ax_tail, df, cc_alg)
 
     ax_tail.grid(True, axis='y', linestyle='--', linewidth=0.1)
 
-    ax_tail.set_xlim(0, 3)
-    ax_tail.set_ylim(0, 4)
+    ax_tail.set_xlim(0, 2)
+    ax_tail.set_ylim(0, 3)
 
-    ax_tail.set_yticks([-math.log10(0.5), 1, 2, 3, 4],
-        ["p50", "p90", "p99", "p999", "p9999"], rotation=90)
+    ax_tail.set_yticks([-math.log10(0.5), 1, 2, 3],
+                       ["p50", "p90", "p99", "p999"], rotation=90)
 
     ax_tail.set_xlabel("Latency (ms)")
-    ax_tail.set_ylabel(f"Tail percentage")
+    ax_tail.set_ylabel("Tail percentage")
 
     # then draw bar-graph for throughput
-    tp_df = pd.read_csv(f"results/{exper}/throughput.csv", header=0,
-                        na_values="None", skipinitialspace=True)
+    tp_df = load_throughput(exper)
     for i, cc_alg in enumerate(cc_algs):
         d = tp_df[(tp_df["cc_alg"] == cc_alg)]
         assert d.shape[0] == 1
@@ -357,59 +397,47 @@ def plot_fig1():
 
 def plot_fig2():
     fig, ax = plot_ycsb_prio_ratio_vs_throughput("ycsb_prio_sen")
-
-    tp_ticks = list(range(0, 600001, 100000))
-    ax.set_yticks(
-        tp_ticks, [f"{t/1e6}" if t > 0 else "0" for t in tp_ticks], rotation=90)
-    ax.set_ylim([0, 600000])
-    ax.set_ylabel('Throughput (Mtxn/s)')
-
+    set_tp_ticks(ax, 0.1, 6)
     fig.savefig(
         f"ycsb_prio_ratio_vs_throughput.{IMAGE_TYPE}", transparent=True)
 
 
 def plot_fig3():
-    fig, (ax_tp, ax_tail) = plot_ycsb_thread_vs_throughput_tail("ycsb_thread")
-
-    tp_ticks = list(range(0, 600001, 100000))
-    ax_tp.set_yticks(
-        tp_ticks, [f"{t/1e6}" if t > 0 else "0" for t in tp_ticks], rotation=90)
-    ax_tp.set_ylim([0, 600000])
-
-    tail_ticks = list(range(0, 1601, 400))
-    ax_tail.set_yticks(
-        tail_ticks, [f"{t/1e3}" if t > 0 else "0" for t in tail_ticks], rotation=90)
-    ax_tail.set_ylim([0, 1600])
-
-    ax_tp.set_ylabel('Throughput (Mtxn/s)')
-    ax_tail.set_ylabel(f'Tail latency p999 (ms)')
+    fig, (ax_tp, ax_tail, ax_lat) = \
+        plot_ycsb_thread_vs_throughput_tail("ycsb_thread")
+    set_tp_ticks(ax_tp, 0.1, 6)
+    set_tail_ticks(ax_tail, 0.4, 4)
+    set_lat_ticks(ax_lat, 0.5, 4)
 
     fig.savefig(
         f"ycsb_thread_vs_throughput_tail.{IMAGE_TYPE}", transparent=True)
 
 
 def plot_fig4():
-    fig, (ax_tp, ax_tail) = plot_ycsb_thread_vs_throughput_tail("ycsb_readonly")
-
-    tp_ticks = list(range(0, 8000001, 2000000))
-    ax_tp.set_yticks(
-        tp_ticks, [f"{t//1000000}" if t > 0 else "0" for t in tp_ticks], rotation=90)
-    ax_tp.set_ylim([0, 8000000])
-
-    tail_ticks = list(range(0, 161, 40))
-    ax_tail.set_yticks(
-        tail_ticks, [f"{t/1e3}" if t > 0 else "0" for t in tail_ticks], rotation=90)
-    ax_tail.set_ylim([0, 160])
-
-    ax_tp.set_ylabel('Throughput (Mtxn/s)')
-    ax_tail.set_ylabel(f'Tail latency p999 (ms)')
+    fig, (ax_tp, ax_tail, ax_lat) = \
+        plot_ycsb_thread_vs_throughput_tail("ycsb_readonly")
+    set_tp_ticks(ax_tp, 2, 4)
+    set_tail_ticks(ax_tail, 0.04, 4)
+    set_lat_ticks(ax_lat, 0.1, 4)
 
     fig.savefig(
         f"ycsb_thread_vs_throughput_tail_readonly.{IMAGE_TYPE}", transparent=True)
 
 
 def plot_fig5():
-    fig, (ax_tp, ax_tail) = plot_ycsb_zipf_vs_throughput_tail("ycsb_zipf")
+    fig, (ax_tp, ax_tail, ax_lat) = \
+        plot_ycsb_zipf_vs_throughput_tail("ycsb_zipf",
+                                          [0.99, 1.1, 1.2, 1.3, 1.4, 1.5])
+
+    # add a zoom-in graph
+    cc_algs = ["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO", "SILO_PRIO"]
+    tp_df = load_throughput("ycsb_zipf")
+    ax_tp_zoom = ax_tp.inset_axes([0.45, 0.45, 0.5, 0.5])
+    make_subplot(ax=ax_tp_zoom, df=tp_df, x_col='zipf_theta', y_col='throughput',
+                 z_col='cc_alg', x_range=[1.2, 1.3, 1.4, 1.5], z_range=cc_algs,
+                 filters={"thread_cnt": 64})
+
+    set_tp_ticks(ax_tp_zoom, 0.08, 2)
     fig.savefig(f"ycsb_zipf_vs_throughput_tail.{IMAGE_TYPE}",
                 transparent=True)
 
@@ -422,41 +450,34 @@ def plot_fig6():
 
     # SILO
     cc_alg = "SILO"
-    data_path = f"results/{exper}/YCSB-CC={cc_alg}-THD={thread_cnt}-ZIPF={zipf}/latency_dump.csv"
-    df = pd.read_csv(data_path, header=0, names=['prio', 'latency'],
-                     na_values="None", skipinitialspace=True)
-    make_tail_latency_subplot(df, ax_tail, "SILO")
+    df = load_latency(exper, cc_alg, thread_cnt, zipf=zipf)
+    make_cdf(ax_tail, df, "SILO")
 
     # then SILO_PRIO_FIXED
     cc_alg = "SILO_PRIO_FIXED"
-    data_path = f"results/{exper}/YCSB-CC={cc_alg}-THD={thread_cnt}-ZIPF={zipf}/latency_dump.csv"
-    df = pd.read_csv(data_path, header=0, names=['prio', 'latency'],
-                     na_values="None", skipinitialspace=True)
-    make_tail_latency_subplot(df, ax_tail, f"{cc_alg}:High", [8, 15])
-    make_tail_latency_subplot(df, ax_tail, f"{cc_alg}:Low", [0, 7])
+    df = load_latency(exper, cc_alg, thread_cnt, zipf=zipf)
+    make_cdf(ax_tail, df, f"{cc_alg}:High", [8, 15])
+    make_cdf(ax_tail, df, f"{cc_alg}:Low", [0, 7])
 
     # finally, SILO_PRIO
     cc_alg = "SILO_PRIO"
-    data_path = f"results/{exper}/YCSB-CC={cc_alg}-THD={thread_cnt}-ZIPF={zipf}/latency_dump.csv"
-    df = pd.read_csv(data_path, header=0, names=['prio', 'latency'],
-                     na_values="None", skipinitialspace=True)
-    make_tail_latency_subplot(df, ax_tail, f"{cc_alg}:High", [8, 15])
-    make_tail_latency_subplot(df, ax_tail, f"{cc_alg}:Low", [0, 7])
+    df = load_latency(exper, cc_alg, thread_cnt, zipf=zipf)
+    make_cdf(ax_tail, df, f"{cc_alg}:High", [8, 15])
+    make_cdf(ax_tail, df, f"{cc_alg}:Low", [0, 7])
 
     ax_tail.grid(True, axis='y', linestyle='--', linewidth=0.1)
 
-    ax_tail.set_xlim(0, 3)
-    ax_tail.set_ylim(0, 4)
+    ax_tail.set_xlim(0, 2)
+    ax_tail.set_ylim(0, 3)
 
-    ax_tail.set_yticks([-math.log10(0.5), 1, 2, 3, 4],
-        ["p50", "p90", "p99", "p999", "p9999"], rotation=90)
+    ax_tail.set_yticks([0, -math.log10(0.5), 1, 2, 3],
+                       ["0", "p50", "p90", "p99", "p999"], rotation=90)
 
     ax_tail.set_xlabel("Latency (ms)")
-    ax_tail.set_ylabel(f"Tail percentage")
+    ax_tail.set_ylabel("Tail percentage")
 
     # then draw bar-graph for throughput
-    tp_df = pd.read_csv(f"results/{exper}/throughput.csv", header=0,
-                        na_values="None", skipinitialspace=True)
+    tp_df = load_throughput(exper)
     for i, cc_alg in enumerate(["SILO", "SILO_PRIO_FIXED", "SILO_PRIO"]):
         d = tp_df[(tp_df["cc_alg"] == cc_alg)]
         assert d.shape[0] == 1
@@ -481,48 +502,29 @@ def plot_fig6():
 
 
 def plot_fig7():
-    fig, (ax_tp, ax_tail) = plot_tpcc_thread_vs_throughput_tail("tpcc_thread")
+    fig, (ax_tp, ax_tail, ax_lat) = plot_tpcc_thread_vs_throughput_tail(
+        "tpcc_thread")
 
-    tp_ticks = list(range(0, 300001, 100000))
-    ax_tp.set_yticks(
-        tp_ticks, [f"{t/1e6}" if t > 0 else "0" for t in tp_ticks], rotation=90)
-    ax_tp.set_ylim([0, 300000])
-
-    tail_ticks = list(range(0, 2001, 500))
-    ax_tail.set_yticks(
-        tail_ticks, [f"{t/1e3}" if t > 0 else "0" for t in tail_ticks], rotation=90)
-    ax_tail.set_ylim([0, 2000])
-
-    ax_tp.set_ylabel('Throughput (Mtxn/s)')
-    ax_tail.set_ylabel(f'Tail latency p999 (ms)')
+    set_tp_ticks(ax_tp, 0.1, 3)
+    set_tail_ticks(ax_tail, 0.5, 4)
 
     fig.savefig(
         f"tpcc_thread_vs_throughput_tail.{IMAGE_TYPE}", transparent=True)
 
 
 def plot_fig8():
-    fig, (ax_tp, ax_tail) = plot_tpcc_thread_vs_throughput_tail(
+    fig, (ax_tp, ax_tail, ax_lat) = plot_tpcc_thread_vs_throughput_tail(
         "tpcc_thread", num_wh=64)
 
-    tp_ticks = list(range(0, 5000001, 1000000))
-    ax_tp.set_yticks(
-        tp_ticks, [f"{t//1000000}" if t > 0 else "0" for t in tp_ticks], rotation=90)
-    ax_tp.set_ylim([0, 5000000])
-
-    tail_ticks = list(range(0, 81, 20))
-    ax_tail.set_yticks(
-        tail_ticks, [f"{t/1e3}" if t > 0 else "0" for t in tail_ticks], rotation=90)
-    ax_tail.set_ylim([0, 80])
-
-    ax_tp.set_ylabel('Throughput (Mtxn/s)')
-    ax_tail.set_ylabel(f'Tail latency p999 (ms)')
+    set_tp_ticks(ax_tp, 1, 5)
+    set_tail_ticks(ax_tail, 0.02, 4)
 
     fig.savefig(
         f"tpcc_thread_vs_throughput_tail_wh64.{IMAGE_TYPE}", transparent=True)
 
 
 def plot_tpcc_warehouse():
-    fig, (ax_tp, ax_tail) = plot_tpcc_warehouse_vs_throughput_tail("tpcc_wh")
+    fig, (ax_tp, ax_tail, ax_lat) = plot_tpcc_warehouse_vs_throughput_tail("tpcc_wh")
 
     tp_ticks = list(range(0, 4000001, 1000000))
     ax_tp.set_yticks(
@@ -540,29 +542,9 @@ def plot_tpcc_warehouse():
     ax_tail.set_ylim([0, 4000])
 
     ax_tp.set_ylabel('Throughput (Mtxn/s)')
-    ax_tail.set_ylabel(f'Tail latency p999 (ms)')
+    ax_tail.set_ylabel('Tail latency p999 (ms)')
     fig.savefig(
         f"tpcc_warehouse_vs_throughput_tail.{IMAGE_TYPE}", transparent=True)
-
-
-def plot_ycsb_longtxn():
-    fig, (ax_tp, ax_tail) = plot_ycsb_thread_vs_throughput_tail("ycsb_longtxn")
-
-    tp_ticks = list(range(0, 160001, 40000))
-    ax_tp.set_yticks(
-        tp_ticks, [f"{t/1e6}" if t > 0 else "0" for t in tp_ticks], rotation=90)
-    ax_tp.set_ylim([0, 160000])
-
-    tail_ticks = list(range(0, 20001, 5000))
-    ax_tail.set_yticks(
-        tail_ticks, [f"{t//1000}" if t > 0 else "0" for t in tail_ticks], rotation=90)
-    ax_tail.set_ylim([0, 20000])
-
-    ax_tp.set_ylabel('Throughput (Mtxn/s)')
-    ax_tail.set_ylabel(f'Tail latency p999 (ms)')
-
-    fig.savefig(
-        f"ycsb_longtxn_thread_vs_throughput_tail.{IMAGE_TYPE}", transparent=True)
 
 
 def make_legend(keys: List[str],
@@ -587,7 +569,7 @@ def make_legend(keys: List[str],
 
     legend_fig = plt.figure()
     legend_fig.set_tight_layout({"pad": 0, "w_pad": 0, "h_pad": 0})
-    legend_fig.set_size_inches(FIG_SIZE[0], height)
+    legend_fig.set_size_inches(SUBFIG_LEN * 3, height)
     legend_fig.legend(lines, [label_map[k] for k in keys],
                       loc='center',
                       ncol=ncol,
@@ -609,15 +591,13 @@ def make_legend_udprio(height=0.13,
         for cc in cc_algs
     ]
 
-    lines = []
-    line, = ax.plot([], [], color='black', linestyle='-', label="High")
-    lines.append(line)
-    line, = ax.plot([], [], color='black', linestyle='--', label="Low")
-    lines.append(line)
+    line_high, = ax.plot([], [], color='black', linestyle='-', label="High")
+    line_low, = ax.plot([], [], color='black', linestyle='--', label="Low")
+    lines = [line_high, line_low]
 
     cc_legend_fig = plt.figure()
     cc_legend_fig.set_tight_layout({"pad": 0, "w_pad": 0, "h_pad": 0})
-    cc_legend_fig.set_size_inches(FIG_SIZE[0], height)
+    cc_legend_fig.set_size_inches(SUBFIG_LEN * 3, height)
     cc_legend_fig.legend(lines + bars, ["High", "Low"] + [label_map[cc] for cc in cc_algs],
                          loc='center',
                          ncol=5,
