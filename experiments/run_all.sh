@@ -6,3 +6,5 @@ bash experiments/run_ycsb_readonly.sh
 bash experiments/run_tpcc_thread.sh
 bash experiments/run_tpcc_wh.sh
 bash experiments/run_ycsb_prio_sen.sh
+bash experiments/run_ycsb_latency.sh
+bash experiments/run_tpcc_latency.sh
