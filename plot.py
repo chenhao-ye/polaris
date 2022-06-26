@@ -241,7 +241,9 @@ def plot_ycsb_thread_vs_throughput_tail(exper: str, tail_metric='p999'):
     return fig, (ax_tp, ax_tail, ax_lat)
 
 
-def plot_ycsb_zipf_vs_throughput_tail(exper: str, zipf_thetas, tail_metric='p999'):
+def plot_ycsb_zipf_vs_throughput_tail(exper: str, zipf_thetas, tick_thetas=None, tail_metric='p999'):
+    if not tick_thetas:
+        tick_thetas = zipf_thetas
     fig, (ax_tp, ax_tail, ax_lat) = get_subplots_LMR()
 
     cc_algs = ["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO", "SILO_PRIO"]
@@ -258,7 +260,7 @@ def plot_ycsb_zipf_vs_throughput_tail(exper: str, zipf_thetas, tail_metric='p999
                  z_col='cc_alg', x_range=zipf_thetas, z_range=cc_algs,
                  filters={"thread_cnt": 64, 'tag': 'all'})
 
-    zipf_ticks = zipf_thetas
+    zipf_ticks = tick_thetas
     ax_tp.set_xticks(zipf_ticks, [f"{t:g}" for t in zipf_ticks])
     ax_tail.set_xticks(zipf_ticks, [f"{t:g}" for t in zipf_ticks])
 
@@ -393,10 +395,22 @@ def plot_fig4():
         f"ycsb_thread_vs_throughput_tail_readonly.{IMAGE_TYPE}", transparent=True)
 
 
-def plot_fig5():
-    fig, (ax_tp, ax_tail, ax_lat) = \
-        plot_ycsb_zipf_vs_throughput_tail("ycsb_zipf",
-                                          [0.99, 1.1, 1.2, 1.3, 1.4, 1.5])
+def plot_fig5a():
+    fig, (ax_tp, ax_tail, ax_lat) = plot_ycsb_zipf_vs_throughput_tail(
+        "ycsb_zipf", [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
+        tick_thetas=[0, 0.3, 0.6, 0.9])
+
+    set_tp_ticks(ax_tp, 1, 4)
+    set_tail_ticks(ax_tail, 0.25, 4)
+    set_lat_ticks(ax_lat, 0.25, 4)
+
+    fig.savefig(f"ycsb_low_zipf_vs_throughput_tail.{IMAGE_TYPE}",
+                transparent=True)
+
+
+def plot_fig5b():
+    fig, (ax_tp, ax_tail, ax_lat) = plot_ycsb_zipf_vs_throughput_tail(
+        "ycsb_zipf", [0.99, 1.1, 1.2, 1.3, 1.4, 1.5])
 
     set_tp_ticks(ax_tp, 0.1, 6)
     set_tail_ticks(ax_tail, 4, 4)
@@ -414,7 +428,7 @@ def plot_fig5():
 
     set_tp_ticks(ax_tp_zoom, 0.08, 2, False)
     ax_tp_zoom.set_xticks(zipf_ticks_zoom, [f"{t:g}" for t in zipf_ticks_zoom])
-    fig.savefig(f"ycsb_zipf_vs_throughput_tail.{IMAGE_TYPE}",
+    fig.savefig(f"ycsb_high_zipf_vs_throughput_tail.{IMAGE_TYPE}",
                 transparent=True)
 
 
@@ -446,8 +460,8 @@ def plot_fig6():
     ax_tail.set_xlim(0, 2)
     ax_tail.set_ylim(0, 3)
 
-    ax_tail.set_yticks([0, -math.log10(0.5), 1, 2, 3],
-                       ["0", "p50", "p90", "p99", "p999"], rotation=90)
+    ax_tail.set_yticks([-math.log10(0.5), 1, 2, 3],
+                       ["p50", "p90", "p99", "p999"], rotation=90)
 
     ax_tail.set_xlabel("Latency (ms)")
     ax_tail.set_ylabel("Tail percentage")
@@ -479,14 +493,14 @@ def plot_fig6():
 
 def plot_fig7():
     fig, (ax_tp, ax_tail, ax_lat) = plot_tpcc_thread_vs_throughput_tail(
-        "tpcc_thread")
+        "tpcc_thread", num_wh=1)
 
     set_tp_ticks(ax_tp, 0.1, 3)
     set_tail_ticks(ax_tail, 0.5, 4)
     set_lat_ticks(ax_lat, 0.5, 4)
 
     fig.savefig(
-        f"tpcc_thread_vs_throughput_tail.{IMAGE_TYPE}", transparent=True)
+        f"tpcc_thread_vs_throughput_tail_wh1.{IMAGE_TYPE}", transparent=True)
 
 
 def plot_fig8():
@@ -567,7 +581,8 @@ if __name__ == "__main__":
     plot_fig2()
     plot_fig3()
     plot_fig4()
-    plot_fig5()
+    plot_fig5a()
+    plot_fig5b()
     plot_fig6()
     plot_fig7()
     plot_fig8()
