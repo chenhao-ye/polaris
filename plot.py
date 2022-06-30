@@ -116,6 +116,48 @@ def load_latency(exper: str, cc_alg: str, thread_cnt: str, *, zipf=None, num_wh=
                        na_values="None", skipinitialspace=True)
 
 
+def set_x_threads(ax, threads: List = [1, 8, 16, 32, 48, 64]):
+    ax.set_xlabel("Number of threads")
+    ax.set_xticks(threads)
+    ax.set_xlim(0)
+
+
+def set_y_lat(ax):
+    ax.set_yticks([-math.log10(0.5), 1, 2, 3, 4],
+                  ["p50", "p90", "p99", "p999", "p9999"], rotation=90)
+
+
+def set_tp_ticks(ax_tp, tick, num_ticks, *, set_label=True):
+    # tick unit is Mtxn/s
+    tp_ticks = [tick * i * 1000000 for i in range(num_ticks + 1)]
+    ax_tp.set_yticks(tp_ticks,
+                     [f"{tick * i:g}"
+                         for i in range(num_ticks + 1)],
+                     rotation=90)
+    ax_tp.set_ylim([0, tick * num_ticks * 1000000])
+    if set_label:
+        ax_tp.set_ylabel("Throughput (Mtxn/s)")
+
+
+def set_tail_ticks(ax_tail, tick, num_ticks, tail_metric='p999'):
+    tail_ticks = [tick * i * 1000 for i in range(num_ticks + 1)]
+    ax_tail.set_yticks(tail_ticks,
+                       [f"{tick * i:g}" if i > 0 else "0"
+                        for i in range(num_ticks + 1)],
+                       rotation=90)
+    ax_tail.set_ylim([0, tick * num_ticks * 1000])
+    ax_tail.set_ylabel(f"Tail latency {tail_metric} (ms)")
+
+
+# this is for latency cdf
+def set_lat_ticks(ax_lat, tick, num_ticks):
+    lat_ticks = [tick * i * 1000000 for i in range(num_ticks + 1)]
+    ax_lat.set_xticks(lat_ticks,
+                      [f"{tick * i:g}" if i > 0 else "0"
+                       for i in range(num_ticks + 1)])
+    ax_lat.set_xlim([0, tick * num_ticks * 1000000])
+
+
 def make_subplot(ax, df: pd.DataFrame, x_col: str, y_col: str, z_col: str,
                  x_range: List[int], z_range: List, filters: Dict):
     filter_df = df
@@ -164,51 +206,13 @@ def make_subplot_latency_cdf(ax, dfs: Dict[str, pd.DataFrame],
     ax.grid(True, axis='y', linestyle='--', linewidth=0.1)
 
     ax.set_ylim(0, 3)
-    ax.set_yticks([-math.log10(0.5), 1, 2, 3, 4],
-                  ["p50", "p90", "p99", "p999", "p9999"], rotation=90)
+    set_y_lat(ax)
 
     if xlabel_suffix:
         ax.set_xlabel(f"Latency (ms), {xlabel_suffix}")
     else:
         ax.set_xlabel("Latency (ms)")
     ax.set_ylabel("Tail percentage")
-
-
-def set_x_threads(ax):
-    ax.set_xlabel("Number of threads")
-    ax.set_xticks([1, 8, 16, 32, 48, 64])
-    ax.set_xlim(0)
-
-
-def set_tp_ticks(ax_tp, tick, num_ticks, set_label=True):
-    # tick unit is Mtxn/s
-    tp_ticks = [tick * i * 1000000 for i in range(num_ticks + 1)]
-    ax_tp.set_yticks(tp_ticks,
-                     [f"{tick * i:g}"
-                         for i in range(num_ticks + 1)],
-                     rotation=90)
-    ax_tp.set_ylim([0, tick * num_ticks * 1000000])
-    if set_label:
-        ax_tp.set_ylabel("Throughput (Mtxn/s)")
-
-
-def set_tail_ticks(ax_tail, tick, num_ticks, tail_metric='p999'):
-    tail_ticks = [tick * i * 1000 for i in range(num_ticks + 1)]
-    ax_tail.set_yticks(tail_ticks,
-                       [f"{tick * i:g}" if i > 0 else "0"
-                        for i in range(num_ticks + 1)],
-                       rotation=90)
-    ax_tail.set_ylim([0, tick * num_ticks * 1000])
-    ax_tail.set_ylabel(f"Tail latency {tail_metric} (ms)")
-
-
-# this is for latency cdf
-def set_lat_ticks(ax_lat, tick, num_ticks):
-    lat_ticks = [tick * i * 1000000 for i in range(num_ticks + 1)]
-    ax_lat.set_xticks(lat_ticks,
-                      [f"{tick * i:g}" if i > 0 else "0"
-                       for i in range(num_ticks + 1)])
-    ax_lat.set_xlim([0, tick * num_ticks * 1000000])
 
 
 def plot_ycsb_thread_vs_throughput_tail(exper: str, tail_metric='p999'):
@@ -241,7 +245,8 @@ def plot_ycsb_thread_vs_throughput_tail(exper: str, tail_metric='p999'):
     return fig, (ax_tp, ax_tail, ax_lat)
 
 
-def plot_ycsb_zipf_vs_throughput_tail(exper: str, zipf_thetas, tick_thetas=None, tail_metric='p999'):
+def plot_ycsb_zipf_vs_throughput_tail(exper: str, zipf_thetas, tick_thetas=None,
+                                      tail_metric='p999'):
     if not tick_thetas:
         tick_thetas = zipf_thetas
     fig, (ax_tp, ax_tail, ax_lat) = get_subplots_LMR()
@@ -342,8 +347,7 @@ def plot_fig1():
     ax_tail.set_xlim(0, 2)
     ax_tail.set_ylim(0, 3)
 
-    ax_tail.set_yticks([-math.log10(0.5), 1, 2, 3],
-                       ["p50", "p90", "p99", "p999"], rotation=90)
+    set_y_lat(ax_tail)
 
     ax_tail.set_xlabel("Latency (ms)")
     ax_tail.set_ylabel("Tail percentage")
@@ -426,7 +430,7 @@ def plot_fig5b():
                  z_col='cc_alg', x_range=zipf_ticks_zoom, z_range=cc_algs,
                  filters={"thread_cnt": 64})
 
-    set_tp_ticks(ax_tp_zoom, 0.08, 2, False)
+    set_tp_ticks(ax_tp_zoom, 0.08, 2, set_label=False)
     ax_tp_zoom.set_xticks(zipf_ticks_zoom, [f"{t:g}" for t in zipf_ticks_zoom])
     fig.savefig(f"ycsb_high_zipf_vs_throughput_tail.{IMAGE_TYPE}",
                 transparent=True)
@@ -460,8 +464,7 @@ def plot_fig6():
     ax_tail.set_xlim(0, 2)
     ax_tail.set_ylim(0, 3)
 
-    ax_tail.set_yticks([-math.log10(0.5), 1, 2, 3],
-                       ["p50", "p90", "p99", "p999"], rotation=90)
+    set_y_lat(ax_tail)
 
     ax_tail.set_xlabel("Latency (ms)")
     ax_tail.set_ylabel("Tail percentage")
