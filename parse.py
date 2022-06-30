@@ -9,7 +9,7 @@ from typing import List
 class DataPoint():
     # regex for directory name, which encoding experiment metadata
     re_dirname = re.compile(
-        r'\A(?P<wl>[A-Z]+)-CC=(?P<cc_alg>[A-Z_]+)-THD=(?P<thread_cnt>[0-9]+)(-ZIPF=(?P<zipf_theta>[0-9.]+))?(-NUM_WH=(?P<num_wh>[0-9]+))?(-PRIO_RATIO=(?P<prio_ratio>[0-9.]+))?\Z')
+        r'\A(?P<wl>[A-Z]+)-CC=(?P<cc_alg>[A-Z_0-9]+)-THD=(?P<thread_cnt>[0-9]+)(-ZIPF=(?P<zipf_theta>[0-9.]+))?(-NUM_WH=(?P<num_wh>[0-9]+))?(-PRIO_RATIO=(?P<prio_ratio>[0-9.]+))?\Z')
     # regex to filter throughput
     re_throughput = re.compile(
         r'\A\[summary\] throughput=(?P<throughput>[0-9.e+]+),')

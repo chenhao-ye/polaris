@@ -22,6 +22,10 @@ color_map = {
     "SILO_PRIO_FIXED": "#bebada",
     "SILO_PRIO_FIXED:High": "#bebada",
     "SILO_PRIO_FIXED:Low": "#bebada",
+    "ARIA_1": "#8dd3c7",
+    "ARIA_2": "#80b1d3",
+    "ARIA_4": "#bebada",
+    "ARIA_8": "#fdaa48",
 }
 
 # linestyle and marker are unused if making bar graph instead of plot
@@ -44,6 +48,10 @@ marker_map = {
     "WOUND_WAIT": "d",
     "SILO": "x",
     "SILO_PRIO": "o",
+    "ARIA_1": "^",
+    "ARIA_2": "s",
+    "ARIA_4": "d",
+    "ARIA_8": "x",
 }
 
 label_map = {
@@ -57,6 +65,10 @@ label_map = {
     "SILO_PRIO:Low": "SILO_PRIO:Low",
     "SILO_PRIO_FIXED:High": "SILO_PRIO_FIXED:High",
     "SILO_PRIO_FIXED:Low": "SILO_PRIO_FIXED:Low",
+    "ARIA_1": "ARIA_1",
+    "ARIA_2": "ARIA_2",
+    "ARIA_4": "ARIA_4",
+    "ARIA_8": "ARIA_8",
 }
 
 marker_size = 4
@@ -575,6 +587,52 @@ def make_legend_udprio(height=0.13,
                          labelspacing=0.4)
     cc_legend_fig.savefig(f"legend_udprio.{IMAGE_TYPE}", transparent=True)
 
+
+def plot_aria_batch(zipf: float):
+    exper = "ycsb_aria_batch_thread"
+    fig, (ax_tp, ax_tail) = get_subplots_LR()
+
+    cc_algs = ["ARIA_1", "ARIA_2", "ARIA_4", "ARIA_8"]
+    thread_cnts = [1, 4, 8, 16, 24, 32, 40, 48, 56, 64]
+
+    # plot throughput
+    tp_df = load_throughput(exper)
+    make_subplot(ax=ax_tp, df=tp_df, x_col='thread_cnt', y_col='throughput',
+                 z_col='cc_alg', x_range=thread_cnts, z_range=cc_algs,
+                 filters={"zipf_theta": zipf})
+
+    # plot tail latency
+    tail_df = load_tail(exper)
+    make_subplot(ax=ax_tail, df=tail_df, x_col='thread_cnt', y_col='p999',
+                 z_col='cc_alg', x_range=thread_cnts, z_range=cc_algs,
+                 filters={"zipf_theta": zipf, 'tag': 'all'})
+
+    set_x_threads(ax_tp)
+    set_x_threads(ax_tail)
+
+    return fig, (ax_tp, ax_tail)
+
+
+def plot_figX():
+    fig, (ax_tp, ax_tail) = plot_aria_batch(zipf=0.5)
+    set_tp_ticks(ax_tp, 1, 4)
+    set_tail_ticks(ax_tail, 0.1, 5)
+    ax_tp.legend()
+    fig.savefig(
+        f"ycsb_aria_thread_vs_throughput_tail_zipf0.5.{IMAGE_TYPE}", transparent=True)
+
+
+def plot_figY():
+    fig, (ax_tp, ax_tail) = plot_aria_batch(zipf=0.99)
+    set_tp_ticks(ax_tp, 0.05, 5)
+    set_tail_ticks(ax_tail, 0.2, 5)
+    ax_tp.legend()
+    fig.savefig(
+        f"ycsb_aria_thread_vs_throughput_tail_zipf0.99.{IMAGE_TYPE}", transparent=True)
+
+
+plot_figX()
+plot_figY()
 
 if __name__ == "__main__":
     # plot_fig1()
