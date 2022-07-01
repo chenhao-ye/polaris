@@ -40,6 +40,10 @@ linestyle_map = {
     "SILO_PRIO:Low": "--",
     "SILO_PRIO_FIXED:High": "-",
     "SILO_PRIO_FIXED:Low": "--",
+    "ARIA_1": "-",
+    "ARIA_2": "-",
+    "ARIA_4": "-",
+    "ARIA_8": "-",
 }
 
 marker_map = {
@@ -593,10 +597,11 @@ def make_legend_udprio(height=0.13,
 
 
 def plot_aria_batch(zipf: float):
-    exper = "ycsb_aria_batch_thread"
-    fig, (ax_tp, ax_tail) = get_subplots_LR()
+    exper = "ycsb_aria_batch"
+    fig, ((ax_tp, ax_tail), (ax_lat_l, ax_lat_r)) = \
+        get_subplots(nrows=2, ncols=2)
 
-    cc_algs = ["ARIA_1", "ARIA_2", "ARIA_4", "ARIA_8"]
+    cc_algs = ["ARIA_1", "ARIA_2", "ARIA_4", "ARIA_8", "SILO_PRIO"]
     thread_cnts = [1, 4, 8, 16, 24, 32, 40, 48, 56, 64]
 
     # plot throughput
@@ -614,29 +619,38 @@ def plot_aria_batch(zipf: float):
     set_x_threads(ax_tp)
     set_x_threads(ax_tail)
 
-    return fig, (ax_tp, ax_tail)
+    set_x_threads(ax_tp)
+    set_x_threads(ax_tail)
+
+    for thd, ax in zip([16, 64], [ax_lat_l, ax_lat_r]):
+        lat_dfs = {cc_alg: load_latency(exper, cc_alg, thd, zipf=zipf)
+                   for cc_alg in cc_algs}
+        make_subplot_latency_cdf(ax, lat_dfs, cc_algs, f"{thd} threads")
+
+    return fig, ((ax_tp, ax_tail), (ax_lat_l, ax_lat_r))
 
 
-def plot_figX():
-    fig, (ax_tp, ax_tail) = plot_aria_batch(zipf=0.5)
+def plot_fig9():
+    fig, ((ax_tp, ax_tail), (ax_lat_l, ax_lat_r)) = plot_aria_batch(zipf=0.5)
     set_tp_ticks(ax_tp, 1, 4)
     set_tail_ticks(ax_tail, 0.1, 5)
+    set_lat_ticks(ax_lat_l, 0.05, 4)
+    set_lat_ticks(ax_lat_r, 0.2, 4)
     ax_tp.legend()
     fig.savefig(
         f"ycsb_aria_thread_vs_throughput_tail_zipf0.5.{IMAGE_TYPE}", transparent=True)
 
 
-def plot_figY():
-    fig, (ax_tp, ax_tail) = plot_aria_batch(zipf=0.99)
-    set_tp_ticks(ax_tp, 0.05, 5)
-    set_tail_ticks(ax_tail, 0.2, 5)
+def plot_fig10():
+    fig, ((ax_tp, ax_tail), (ax_lat_l, ax_lat_r)) = plot_aria_batch(zipf=0.99)
+    set_tp_ticks(ax_tp, 0.1, 6)
+    set_tail_ticks(ax_tail, 1, 4)
+    set_lat_ticks(ax_lat_l, 0.5, 4)
+    set_lat_ticks(ax_lat_r, 2, 4)
     ax_tp.legend()
     fig.savefig(
         f"ycsb_aria_thread_vs_throughput_tail_zipf0.99.{IMAGE_TYPE}", transparent=True)
 
-
-plot_figX()
-plot_figY()
 
 if __name__ == "__main__":
     # plot_fig1()
@@ -648,6 +662,8 @@ if __name__ == "__main__":
     plot_fig6()
     plot_fig7()
     plot_fig8()
+    plot_fig9()
+    plot_fig10()
 
     make_legend(["NO_WAIT", "WAIT_DIE", "WOUND_WAIT"], "2pl_legend")
     make_legend(["SILO", "SILO_PRIO"], "occ_legend", columnspacing=4)
