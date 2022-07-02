@@ -12,6 +12,7 @@
 #include "row_tictoc.h"
 #include "row_silo.h"
 #include "row_silo_prio.h"
+#include "row_aria.h"
 #include "row_vll.h"
 #include "row_ww.h"
 #include "row_bamboo.h"
@@ -73,6 +74,8 @@ void row_t::init_manager(row_t * row) {
   manager = (Row_silo *) _mm_malloc(sizeof(Row_silo), 64);
 #elif CC_ALG == SILO_PRIO
   manager = (Row_silo_prio *) _mm_malloc(sizeof(Row_silo_prio), 64);
+#elif CC_ALG == ARIA
+  manager = (Row_aria *) _mm_malloc(sizeof(Row_aria), 64);
 #elif CC_ALG == VLL
   manager = (Row_vll *) mem_allocator.alloc(sizeof(Row_vll), _part_id);
 #elif CC_ALG == WOUND_WAIT
@@ -368,7 +371,7 @@ RC row_t::get_row(access_t type, txn_man * txn, row_t *& row, Access * access) {
 	rc = this->manager->access(txn, R_REQ);
 	row = txn->cur_row;
 	return rc;
-#elif CC_ALG == TICTOC || CC_ALG == SILO || CC_ALG == SILO_PRIO
+#elif CC_ALG == TICTOC || CC_ALG == SILO || CC_ALG == SILO_PRIO || CC_ALG == ARIA
 	// like OCC, tictoc also makes a local copy for each read/write
 	row->table = get_table();
 	TsType ts_type = (type == RD)? R_REQ : P_REQ; 
@@ -445,7 +448,7 @@ void row_t::return_row(access_t type, txn_man * txn, row_t * row) {
 	row->free_row();
 	mem_allocator.free(row, sizeof(row_t));
 	return;
-#elif CC_ALG == TICTOC || CC_ALG == SILO || CC_ALG == SILO_PRIO
+#elif CC_ALG == TICTOC || CC_ALG == SILO || CC_ALG == SILO_PRIO || CC_ALG == ARIA
   assert (row != NULL);
 	return;
 #elif CC_ALG == HSTORE || CC_ALG == VLL

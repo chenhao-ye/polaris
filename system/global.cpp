@@ -7,6 +7,7 @@
 #include "plock.h"
 #include "occ.h"
 #include "vll.h"
+#include "aria.h"
 
 mem_alloc mem_allocator;
 Stats stats;

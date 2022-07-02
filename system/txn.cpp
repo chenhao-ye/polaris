@@ -20,6 +20,7 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
     lock_ready = false;
     lock_abort = false;
     timestamp = 0;
+    prio = 0;
 #if PF_ABORT 
     abort_chain = 0;
 #endif
@@ -55,7 +56,8 @@ void txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
     _cur_tid = 0;
 #elif CC_ALG == SILO_PRIO
     _cur_data_ver = 0;
-    prio = 0;
+#elif CC_ALG == ARIA
+    batch_id = 0;
 #elif CC_ALG == IC3
   depqueue = (TxnEntry **) _mm_malloc(sizeof(void *)*THREAD_CNT, 64);
   for (int i = 0; i < THREAD_CNT; i++)
@@ -149,7 +151,8 @@ void txn_man::cleanup(RC rc) {
 
 #if CC_ALG == SILO_PRIO
 		// actually, if a writer hasn't acquired the latch yet, we also release it here
-		if (accesses[rid]->is_reserved) orig_r->manager->reader_release(prio, accesses[rid]->prio_ver);
+		if (accesses[rid]->is_reserved)
+            orig_r->manager->reader_release(prio, accesses[rid]->prio_ver);
 #endif
 
 #if COMMUTATIVE_OPS
@@ -192,7 +195,7 @@ void txn_man::cleanup(RC rc) {
         }
 #endif
 
-#if CC_ALG != TICTOC && (CC_ALG != SILO) && (CC_ALG != WOUND_WAIT) && (CC_ALG!= BAMBOO) && (CC_ALG != SILO_PRIO)
+#if (CC_ALG != TICTOC) && (CC_ALG != SILO) && (CC_ALG != WOUND_WAIT) && (CC_ALG!= BAMBOO) && (CC_ALG != SILO_PRIO) && (CC_ALG != ARIA)
         // invalidate ptr for cc keeping globally visible ptr
     accesses[rid]->data = NULL;
 #endif
@@ -248,7 +251,7 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
     access->com_op = COM_NONE;
 #endif
         accesses[row_cnt] = access;
-#if (CC_ALG == SILO || CC_ALG == TICTOC || CC_ALG == SILO_PRIO)
+#if (CC_ALG == SILO || CC_ALG == TICTOC || CC_ALG == SILO_PRIO || CC_ALG == ARIA)
         access->data = (row_t *) _mm_malloc(sizeof(row_t), 64);
         access->data->init(MAX_TUPLE_SIZE);
         access->orig_data = (row_t *) _mm_malloc(sizeof(row_t), 64);
@@ -463,6 +466,11 @@ RC txn_man::finish(RC rc) {
 #elif CC_ALG == SILO_PRIO
   if (rc == RCOK)
 		rc = validate_silo_prio();
+	else 
+		cleanup(rc);
+#elif CC_ALG == ARIA
+  if (rc == RCOK)
+		rc = validate_aria();
 	else 
 		cleanup(rc);
 #elif CC_ALG == IC3

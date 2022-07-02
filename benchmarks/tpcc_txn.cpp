@@ -13,7 +13,7 @@
 #define RETIRE_ROW(row_cnt) { \
   access_cnt = row_cnt - 1; \
   if (retire_row(access_cnt) == Abort) \
-    return finish(Abort); \
+    return Abort; \
 }
 
 void tpcc_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
@@ -21,7 +21,7 @@ void tpcc_txn_man::init(thread_t * h_thd, workload * h_wl, uint64_t thd_id) {
   _wl = (tpcc_wl *) h_wl;
 }
 
-RC tpcc_txn_man::run_txn(base_query * query) {
+RC tpcc_txn_man::exec_txn(base_query * query) {
   tpcc_query * m_query = (tpcc_query *) query;
 #if CC_ALG == IC3
   curr_type = m_query->type;
@@ -29,21 +29,21 @@ RC tpcc_txn_man::run_txn(base_query * query) {
 #endif
   switch (m_query->type) {
     case TPCC_PAYMENT :
-      return run_payment(m_query); break;
+      return exec_payment(m_query); break;
     case TPCC_NEW_ORDER :
-      return run_new_order(m_query); break;
+      return exec_new_order(m_query); break;
     case TPCC_ORDER_STATUS :
-      return run_order_status(m_query); break;
+      return exec_order_status(m_query); break;
     case TPCC_DELIVERY :
-      return run_delivery(m_query); break;
+      return exec_delivery(m_query); break;
     case TPCC_STOCK_LEVEL :
-      return run_stock_level(m_query); break;
+      return exec_stock_level(m_query); break;
     default:
       assert(false); return Abort;
   }
 }
 
-RC tpcc_txn_man::run_payment(tpcc_query * query) {
+RC tpcc_txn_man::exec_payment(tpcc_query * query) {
 
 #if CC_ALG == BAMBOO && (THREAD_CNT > 1)
   int access_cnt;
@@ -105,7 +105,7 @@ warehouse_piece:
   r_wh_local = get_row(r_wh, RD);
 #endif
   if (r_wh_local == NULL) {
-    return finish(Abort);
+    return Abort;
   }
 
 #if !COMMUTATIVE_OPS
@@ -156,7 +156,7 @@ district_piece:
   row_t * r_dist_local = get_row(r_dist, RD);
 #endif
   if (r_dist_local == NULL) {
-    return finish(Abort);
+    return Abort;
   }
 #if !COMMUTATIVE_OPS
   r_dist_local->get_value(D_YTD, tmp_value);
@@ -247,7 +247,7 @@ district_piece:
    +======================================================================*/
   r_cust_local = get_row(r_cust, WR);
   if (r_cust_local == NULL) {
-    return finish(Abort);
+    return Abort;
   }
   r_cust_local->get_value(C_BALANCE, c_balance);
   r_cust_local->set_value(C_BALANCE, c_balance - query->h_amount);
@@ -312,10 +312,10 @@ district_piece:
   // XXX(zhihan): no index maintained for history table.
   //END: [HISTORY] - WR
   assert( rc == RCOK );
-  return finish(rc);
+  return rc;
 }
 
-RC tpcc_txn_man::run_new_order(tpcc_query * query) {
+RC tpcc_txn_man::exec_new_order(tpcc_query * query) {
   RC rc = RCOK;
   uint64_t key;
   itemid_t * item;
@@ -394,7 +394,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
   row_t * r_wh = ((row_t *)item->location);
   row_t * r_wh_local = get_row(r_wh, RD);
   if (r_wh_local == NULL) {
-    return finish(Abort);
+    return Abort;
   }
   //retrieve the tax of warehouse
   r_wh_local->get_value(W_TAX, w_tax);
@@ -421,7 +421,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
   r_dist = ((row_t *)item->location);
   r_dist_local = get_row(r_dist, WR);
   if (r_dist_local == NULL) {
-    return finish(Abort);
+    return Abort;
   }
 
   //d_tax = *(double *) r_dist_local->get_value(D_TAX);
@@ -433,7 +433,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
 
 #if CC_ALG == BAMBOO && (THREAD_CNT != 1)
   if (retire_row(row_cnt-1) == Abort)
-      return finish(Abort);
+      return Abort;
 #endif
 
 #if CC_ALG == IC3
@@ -451,7 +451,7 @@ RC tpcc_txn_man::run_new_order(tpcc_query * query) {
   r_cust = (row_t *) item->location;
   r_cust_local = get_row(r_cust, RD);
   if (r_cust_local == NULL) {
-    return finish(Abort);
+    return Abort;
   }
   //retrieve data
   uint64_t c_discount;
@@ -526,7 +526,7 @@ item_piece: // 5
     // XXX(zhihan): if key is invalid, abort. user-initiated abort
     // according to tpc-c documentation
     if (ol_i_id == 0)
-      return finish(ERROR);
+      return ERROR;
 #endif
     ol_supply_w_id = query->items[ol_number].ol_supply_w_id;
     ol_quantity = query->items[ol_number].ol_quantity;
@@ -536,7 +536,7 @@ item_piece: // 5
     r_item = ((row_t *)item->location);
     r_item_local = get_row(r_item, RD);
     if (r_item_local == NULL) {
-      return finish(Abort);
+      return Abort;
     }
     r_item_local->get_value(I_PRICE, i_price);
     r_item_local->get_value(I_NAME);
@@ -575,7 +575,7 @@ stock_piece: // 6
     r_stock_local = get_row(r_stock, WR);
     assert(r_stock_local->data);
     if (r_stock_local == NULL) {
-      return finish(Abort);
+      return Abort;
     }
     // XXX s_dist_xx are not retrieved.
     s_quantity = *(int64_t *)r_stock_local->get_value(S_QUANTITY);
@@ -685,7 +685,7 @@ orderline_piece: // 7
         // XXX(zhihan): if key is invalid, abort. user-initiated abort
         // according to tpc-c documentation
         if (ol_i_id == 0)
-          return finish(ERROR);
+          return ERROR;
 #endif
         ol_supply_w_id = query->items[ol_number].ol_supply_w_id;
         ol_quantity = query->items[ol_number].ol_quantity;
@@ -701,7 +701,7 @@ orderline_piece: // 7
         r_item = ((row_t *)item->location);
         r_item_local = get_row(r_item, RD);
         if (r_item_local == NULL) {
-            return finish(Abort);
+            return Abort;
         }
 
         r_item_local->get_value(I_PRICE, i_price);
@@ -728,7 +728,7 @@ orderline_piece: // 7
         r_stock = ((row_t *)stock_item->location);
         r_stock_local = get_row(r_stock, WR);
         if (r_stock_local == NULL) {
-            return finish(Abort);
+            return Abort;
         }
 
         // XXX s_dist_xx are not retrieved.
@@ -769,7 +769,7 @@ orderline_piece: // 7
 
 #if CC_ALG == BAMBOO && (THREAD_CNT != 1)
     if (retire_row(row_cnt-1) == Abort)
-      return finish(Abort);
+      return Abort;
 #endif
 
         /*====================================================+
@@ -828,11 +828,11 @@ orderline_piece: // 7
 
 #endif // if CC_ALG == IC3
   assert( rc == RCOK );
-  return finish(rc);
+  return rc;
 }
 
 RC
-tpcc_txn_man::run_order_status(tpcc_query * query) {
+tpcc_txn_man::exec_order_status(tpcc_query * query) {
 /*	row_t * r_cust;
 	if (query->by_last_name) {
 		// EXEC SQL SELECT count(c_id) INTO :namecnt FROM customer
@@ -878,7 +878,7 @@ tpcc_txn_man::run_order_status(tpcc_query * query) {
 
 	row_t * r_cust_local = get_row(r_cust, RD);
 	if (r_cust_local == NULL) {
-		return finish(Abort);
+		return Abort;
 	}
 	double c_balance;
 	r_cust_local->get_value(C_BALANCE, c_balance);
@@ -896,7 +896,7 @@ tpcc_txn_man::run_order_status(tpcc_query * query) {
 	row_t * r_order_local = get_row(r_order, RD);
 	if (r_order_local == NULL) {
 		assert(false); 
-		return finish(Abort);
+		return Abort;
 	}
 
 	uint64_t o_id, o_entry_d, o_carrier_id;
@@ -947,7 +947,7 @@ tpcc_txn_man::run_order_status(tpcc_query * query) {
 
 final:
 	assert( rc == RCOK );
-	return finish(rc)*/
+	return rc*/
   return RCOK;
 }
 
@@ -956,11 +956,11 @@ final:
 // In correct states may happen with the current code.
 
 RC
-tpcc_txn_man::run_delivery(tpcc_query * query) {
+tpcc_txn_man::exec_delivery(tpcc_query * query) {
 /*
 	// XXX HACK if another delivery txn is running on this warehouse, simply commit.
 	if ( !ATOM_CAS(_wl->delivering[query->w_id], false, true) )
-		return finish(RCOK);
+		return RCOK;
 
 	for (int d_id = 1; d_id <= DIST_PER_WARE; d_id++) {
 		uint64_t key = distKey(d_id, query->w_id);
@@ -1013,6 +1013,6 @@ tpcc_txn_man::run_delivery(tpcc_query * query) {
 }
 
 RC
-tpcc_txn_man::run_stock_level(tpcc_query * query) {
+tpcc_txn_man::exec_stock_level(tpcc_query * query) {
   return RCOK;
 }

@@ -42,6 +42,8 @@ class Access {
     uint32_t	prio_ver;
     ts_t 		epoch;
 	bool		is_reserved;
+// #elif CC_ALG == ARIA
+//   there is no fields to remember for Aria
 #elif CC_ALG == HEKATON
     void * 	history_entry;
 #elif CC_ALG == IC3
@@ -160,6 +162,9 @@ class txn_man
 	bool				last_is_reserved;
     bool 			    _pre_abort;
     bool 			    _validation_no_wait;
+    // [ARIA]
+#elif CC_ALG == ARIA
+    uint64_t            batch_id; // unlike other CC, Aria uses batching
     // [IC3]
 #elif CC_ALG == IC3
     TPCCTxnType         curr_type;
@@ -173,8 +178,8 @@ class txn_man
     volatile void * volatile     history_entry;
 #endif
 	// the priority of the current transaction
-    // we make it generic for all types of CC, but for now, only SILO_PRIO uses
-    // this field
+    // we make it generic for all types of CC, but for now, only SILO_PRIO and
+    // ARIA use this field
 	uint32_t			prio;
 
     // **************************************
@@ -183,7 +188,16 @@ class txn_man
     virtual void        init(thread_t * h_thd, workload * h_wl, uint64_t
     part_id);
     void                release();
-    virtual RC 		    run_txn(base_query * m_query) = 0;
+
+    /* Previously, `run_txn` includes execution phrase and commit phrase, and
+     * the commit phrase is usually implemented as calling `finish`.
+     * Now to implement batching, which requires to split execution and commit
+     * phases, we separate `finish` call out and name the rest of code in
+     * `run_txn` as `exec_txn`.
+     * Note we leave `run_txn` in test_txn alone since they are unrelated
+     */
+    // virtual RC 		    run_txn(base_query * m_query) = 0;
+    virtual RC 		    exec_txn(base_query * m_query) = 0;
     RC 			        finish(RC rc);
     void 			    cleanup(RC rc);
 
@@ -287,6 +301,8 @@ class txn_man
     RC				    validate_silo();
 #elif CC_ALG == SILO_PRIO
     RC				    validate_silo_prio();
+#elif CC_ALG == ARIA
+    RC				    validate_aria();
 #endif
 
   protected:

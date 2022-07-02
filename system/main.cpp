@@ -9,6 +9,7 @@
 #include "plock.h"
 #include "occ.h"
 #include "vll.h"
+#include "aria.h"
 
 void * f(void *);
 
@@ -55,6 +56,8 @@ int main(int argc, char* argv[])
 	printf("SILO\n");
 #elif CC_ALG == SILO_PRIO
 	printf("SILO_PRIO\n");
+#elif CC_ALG == ARIA
+	printf("ARIA\n");
 #elif CC_ALG == IC3
 	printf("IC3\n");
 #endif
@@ -75,6 +78,7 @@ int main(int argc, char* argv[])
 	}
 	m_wl->init();
 	printf("workload initialized!\n");
+
 	
 	uint64_t thd_cnt = g_thread_cnt;
 	pthread_t p_thds[thd_cnt - 1];
@@ -94,6 +98,8 @@ int main(int argc, char* argv[])
 	occ_man.init();
 #elif CC_ALG == VLL
 	vll_man.init();
+#elif CC_ALG == ARIA
+	AriaCoord::init();
 #endif
 
 	for (uint32_t i = 0; i < thd_cnt; i++) 
@@ -116,6 +122,10 @@ int main(int argc, char* argv[])
 	CarbonBarrierInit(&enable_barrier, g_thread_cnt);
 #endif
 	pthread_barrier_init( &warmup_bar, NULL, g_thread_cnt );
+
+#if CC_ALG == ARIA
+	AriaCoord::init(); // re-init
+#endif
 
 	// spawn and run txns again.
 	int64_t starttime = get_server_clock();

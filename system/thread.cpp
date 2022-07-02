@@ -4,11 +4,13 @@
 #include "manager.h"
 #include "thread.h"
 #include "txn.h"
+#include "batch.h"
 #include "wl.h"
 #include "query.h"
 #include "plock.h"
 #include "occ.h"
 #include "vll.h"
+#include "aria.h"
 #include "ycsb_query.h"
 #include "tpcc_query.h"
 #include "mem_alloc.h"
@@ -17,6 +19,9 @@
 void thread_t::init(uint64_t thd_id, workload * workload) {
 	_thd_id = thd_id;
 	_wl = workload;
+#if CC_ALG == ARIA
+	batch_mgr = new BatchMgr();
+#endif
 	srand48_r((_thd_id + 1) * get_sys_clock(), &buffer);
 	_abort_buffer_size = ABORT_BUFFER_SIZE;
 	_abort_buffer = (AbortBufferEntry *) _mm_malloc(sizeof(AbortBufferEntry) * _abort_buffer_size, 64);
@@ -41,20 +46,24 @@ RC thread_t::run() {
 
 	myrand rdm;
 	rdm.init(get_thd_id());
-	RC rc = RCOK;
+
 	txn_man * m_txn;
+	base_query * m_query = NULL;
+	UInt64 txn_cnt = 0;
+
+/******************************************************************************/
+#if CC_ALG != ARIA /* Only run if not Aria, as Aria requires batching *********/
+/******************************************************************************/
+	uint64_t thd_txn_id = 0;
+	RC rc = RCOK;
 	// get txn man from workload
 	rc = _wl->get_txn_man(m_txn, this);
 	assert (rc == RCOK);
 	glob_manager->set_txn_man(m_txn);
 
-	base_query * m_query = NULL;
-	uint64_t thd_txn_id = 0;
-	UInt64 txn_cnt = 0;
 	ts_t txn_starttime = 0;
 	uint64_t txn_exec_time_abort = 0;
 	uint64_t txn_backoff_time = 0;
-
 	while (true) {
 		ts_t starttime = get_sys_clock();
 		if (WORKLOAD != TEST) {
@@ -145,7 +154,7 @@ RC thread_t::run() {
 #else // CC_ALG == SILO_PRIO
 		m_txn->prio = m_query->prio;
 #endif // CC_ALG == SILO_PRIO
-
+		// TODO: txn_id assignment policy: maybe use previously assigned txn_id
 		m_txn->set_txn_id(get_thd_id() + thd_txn_id * g_thread_cnt);
 		thd_txn_id ++;
 
@@ -178,7 +187,8 @@ RC thread_t::run() {
 			if (WORKLOAD == TEST)
 				rc = runTest(m_txn);
 			else {
-			    rc = m_txn->run_txn(m_query);
+					rc = m_txn->exec_txn(m_query);
+					rc = m_txn->finish(rc);
 			}
 #endif
 #if CC_ALG == HSTORE
@@ -312,6 +322,178 @@ RC thread_t::run() {
 			return FINISH;
 		}
 	}
+
+/******************************************************************************/
+#else /* If use Aria, run this loop, which perform batching *******************/
+/******************************************************************************/
+	bool sim_done = false;
+	// first register with AriaCoord
+	batch_mgr->init_txn(_wl, this);
+	AriaCoord::register_thread(get_thd_id());
+
+	while (true) {
+		/********* start execution phase *********/
+		ts_t batch_start_ts = get_sys_clock(); // wait time is counted into runtime
+		batch_mgr->start_new_batch();
+		if (!AriaCoord::start_exec_phase(get_thd_id(), batch_mgr->get_batch_id(),
+			sim_done))
+		{
+			// this is the only place to return because in the batching mode, all
+			// threads must agree on sim_done
+			return FINISH;
+		}
+		// prepare what queries to execute
+		ts_t query_start_ts = get_sys_clock();
+		while (batch_mgr->can_admit()) {
+			// TODO: WHAT IF there is no more query in query_queue?
+			base_query* q = query_queue->get_next_query(get_thd_id());
+			q->rerun = false;
+			batch_mgr->admit_new_query(q);
+		}
+		INC_STATS(get_thd_id(), time_query, get_sys_clock() - query_start_ts);
+
+		for (int q_idx = 0; q_idx < ARIA_BATCH_SIZE; ++q_idx) {
+			auto entry = batch_mgr->get_entry(q_idx);
+			m_txn = entry->txn;
+			m_query = entry->query;
+			assert(entry->rc == RCOK);
+			ts_t exec_start_ts = get_sys_clock();
+			assert(entry->exec_time_curr == 0);
+			assert(m_query->rerun == (entry->start_ts != 0));
+			if (!m_query->rerun) { // fresh start
+				assert(entry->start_ts == 0);
+				assert(entry->txn_id == 0);
+				entry->start_ts = exec_start_ts;
+				entry->txn_id = (ARIA_BATCH_SIZE * batch_mgr->get_batch_id() + q_idx) \
+					* THREAD_CNT + get_thd_id();
+			} else { // rerun
+				assert(entry->start_ts != 0);
+				assert(entry->txn_id != 0);
+#if ARIA_NEW_TXN_ID_REEXEC
+				entry->txn_id = (ARIA_BATCH_SIZE * batch_mgr->get_batch_id() + q_idx) \
+					* THREAD_CNT + get_thd_id();
+#endif
+			}
+
+			// prepare m_txn
+			m_txn->prio = m_query->prio;
+			m_txn->batch_id = batch_mgr->get_batch_id();
+			m_txn->set_txn_id(entry->txn_id);
+
+			// execute txn
+			assert(WORKLOAD != TEST);
+			entry->rc = m_txn->exec_txn(m_query);
+			entry->exec_time_curr = get_sys_clock() - exec_start_ts;
+		}
+
+		/********* start commit phase *********/
+		AriaCoord::start_commit_phase(get_thd_id(), batch_mgr->get_batch_id());
+		INC_STATS(get_thd_id(), run_time, get_sys_clock() - batch_start_ts);
+
+		for (int q_idx = 0; q_idx < ARIA_BATCH_SIZE; ++q_idx) {
+			auto entry = batch_mgr->get_entry(q_idx);
+			m_txn = entry->txn;
+			m_query = entry->query;
+
+			ts_t commit_begin_ts = get_sys_clock();
+			entry->rc = m_txn->finish(entry->rc);
+			ts_t commit_end_ts = get_sys_clock();
+
+			uint64_t commit_timespan = commit_end_ts - commit_begin_ts;
+			// this is the time of the last execution but excluding sleep
+			uint64_t exec_timespan = entry->exec_time_curr + commit_timespan;
+			// this is the time of the whole txn
+			uint64_t txn_timespan = commit_end_ts - entry->start_ts;
+
+			// non-batching mode excludes time spent handling rc and INC_STATS;
+			// for fairness reason, we exclude that too
+			INC_STATS(get_thd_id(), run_time, commit_timespan);
+
+			if (entry->rc == RCOK) {
+				// `commit_latency` is defined as the time spent on execution that
+				// eventually commits; but this metric is not very equivalent to what in
+				// non-batching mode
+				INC_STATS(get_thd_id(), commit_latency, exec_timespan);
+				// `latency` is just end-to-end latency of a txn, from its exec start to
+				// its final commit
+				INC_STATS(get_thd_id(), latency, txn_timespan);
+				INC_STATS(get_thd_id(), txn_cnt, 1);
+#if WORKLOAD == YCSB
+				if (unlikely(g_long_txn_ratio > 0)) {
+					if ( ((ycsb_query *) m_query)->request_cnt > REQ_PER_QUERY)
+						INC_STATS(get_thd_id(), txn_cnt_long, 1);
+				}
+#endif
+				ADD_PER_PRIO_STATS(get_thd_id(), exec_time_commit, m_txn->prio, exec_timespan);
+				ADD_PER_PRIO_STATS(get_thd_id(), exec_time_abort, m_txn->prio, entry->exec_time_abort);
+				ADD_PER_PRIO_STATS(get_thd_id(), txn_cnt, m_txn->prio, 1);
+				ADD_PER_PRIO_STATS(get_thd_id(), abort_cnt, m_txn->prio, m_query->num_abort);
+#if WORKLOAD == YCSB
+				stats._stats[get_thd_id()]->append_latency(
+					((ycsb_query *) m_query)->is_long, m_query->num_abort,
+					m_txn->prio, txn_timespan);
+#else
+				stats._stats[get_thd_id()]->append_latency(
+					false, m_query->num_abort, m_txn->prio, txn_timespan);
+#endif
+				stats.commit(get_thd_id());
+				txn_cnt++;
+			} else if (entry->rc == Abort || entry->rc == ERROR) {
+				entry->exec_time_abort += exec_timespan;
+
+				INC_STATS(get_thd_id(), time_abort, exec_timespan);
+				INC_STATS(get_thd_id(), abort_cnt, 1);
+#if WORKLOAD == YCSB
+				if (unlikely(g_long_txn_ratio > 0)) {
+						if ( ((ycsb_query *) m_query)->request_cnt > REQ_PER_QUERY)
+								INC_STATS(get_thd_id(), abort_cnt_long, 1);
+				}
+#endif
+				stats.abort(get_thd_id());
+				// m_txn->abort_cnt does not seem to be used...
+				// m_txn->abort_cnt++;
+
+				if (entry->rc == Abort) {
+					++(m_query->num_abort);
+					m_query->rerun = true;
+					batch_mgr->put_next(entry); // put into the next batch
+				} else { // ERROR == user initiated aborts
+					INC_STATS(get_thd_id(), user_abort_cnt, 1);
+				}
+			}
+
+			if (entry->rc == FINISH) {
+				sim_done = true;
+				break;
+			}
+		}
+
+		/********* check whether to stop execution *********/
+		if (!warmup_finish && txn_cnt >= WARMUP / g_thread_cnt - ARIA_BATCH_SIZE) {
+			stats.clear(get_thd_id());
+			sim_done = true;
+			continue;
+		}
+
+		if (warmup_finish) {
+#if TERMINATE_BY_COUNT
+			if (txn_cnt >= MAX_TXN_PER_PART)
+#else
+			// even not TERMINATE_BY_COUNT, the execution still must stop when 
+			// txn_cnt >= MAX_TXN_PER_PART; otherwise, it will cause buffer overflow
+			if (txn_cnt >= MAX_TXN_PER_PART || \
+				stats._stats[get_thd_id()]->run_time / 1000000000 >= MAX_RUNTIME)
+#endif
+			{
+				assert(txn_cnt <= MAX_TXN_PER_PART);
+				sim_done = true;
+				continue;
+			}
+		}
+	}
+
+#endif
+
 	assert(false);
 }
 

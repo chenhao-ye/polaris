@@ -145,6 +145,20 @@ static_assert(SILO_PRIO_NUM_BITS_PRIO_VER + SILO_PRIO_NUM_BITS_PRIO \
 
 #define SILO_PRIO_NUM_PRIO_LEVEL (1 << (SILO_PRIO_NUM_BITS_PRIO))
 
+// [ARIA]
+#define ARIA_NUM_BITS_BATCH_ID    32
+#define ARIA_NUM_BITS_PRIO        4
+#define ARIA_NUM_BITS_TXN_ID      28
+static_assert(ARIA_NUM_BITS_BATCH_ID + ARIA_NUM_BITS_PRIO \
+	+ ARIA_NUM_BITS_TXN_ID == 64);
+#define ARIA_MAX_PRIO             ((1 << ARIA_NUM_BITS_PRIO) - 1)
+
+#define ARIA_BATCH_SIZE           1
+// if aborts and reexecute, whether uses a new txn_id or the previous one
+#define ARIA_NEW_TXN_ID_REEXEC    false
+#define ARIA_USE_PTHREAD_BARRIER  false
+#define ARIA_REORDER              true
+
 // Workload-related config:
 //   priority distribution:
 //     High priority txn will be given prio 1 as beginning, and low priority txn
@@ -319,6 +333,7 @@ extern TestCases					g_test_case;
 #define BAMBOO                      13
 #define IC3                         14
 #define SILO_PRIO					15
+#define ARIA						16
 //Isolation Levels
 #define SERIALIZABLE				1
 #define SNAPSHOT					2
