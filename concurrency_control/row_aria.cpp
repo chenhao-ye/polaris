@@ -8,15 +8,23 @@
 void 
 Row_aria::init(row_t * row) {
 	_row = row;
-	_tid_word.store(0, std::memory_order_relaxed);
+	_write_resv.store(0, std::memory_order_relaxed);
+#if ARIA_REORDER
+	_read_resv.store(0, std::memory_order_relaxed);
+#endif
 }
 
 RC
 Row_aria::access(txn_man * txn, TsType type, row_t * local_row) {
 	if (type != R_REQ) {
-		if (!try_reserve(txn->batch_id, txn->prio, txn->get_txn_id()))
+		if (!reserve_write(txn->batch_id, txn->prio, txn->get_txn_id()))
 			return Abort;
 	}
+#if ARIA_REORDER
+	else {
+		reserve_read(txn->batch_id, txn->prio, txn->get_txn_id());
+	}
+#endif
 	// when in execution phase, everything is read-only except TID, so it is safe
 	// to copy record data without any lock
 	local_row->copy(_row);
