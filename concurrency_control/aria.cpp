@@ -174,7 +174,9 @@ txn_man::validate_aria() {
 	RC rc = RCOK;
 
 #if ARIA_REORDER
-	// first validate WAW
+	bool has_conflict_raw = false; // whether has read-after-write conflict
+
+	// first validate WAW (write-after-write)
 	for (int rid = 0; rid < row_cnt; rid++) {
 		if (accesses[rid]->type == WR \
 			&& !accesses[rid]->orig_row->manager->validate_write(batch_id, prio,
@@ -185,20 +187,20 @@ txn_man::validate_aria() {
 		}
 	}
 
-	// then validate RAW
+	// then validate RAW (read-after-write)
 	for (int rid = 0; rid < row_cnt; rid++) {
 		if (accesses[rid]->type != WR \
 			&& !accesses[rid]->orig_row->manager->validate_write(batch_id, prio,
 				get_txn_id()))
 		{
-			rc = Abort;
+			has_conflict_raw = true;
 			break;
 		}
 	}
 	// if we pass RAW validation, we can just commit; if not, we must try reorder
-	if (rc == RCOK) goto commit;
+	if (!has_conflict_raw) goto commit;
 
-	// validate WAR to reorder
+	// try reorder; validate WAR (write-after-read)
 	for (int rid = 0; rid < row_cnt; rid++) {
 		if (accesses[rid]->type == WR \
 			&& !accesses[rid]->orig_row->manager->validate_read(batch_id, prio,
