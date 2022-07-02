@@ -205,7 +205,7 @@ txn_man::validate_aria() {
 				get_txn_id()))
 		{
 			rc = Abort;
-			break;
+			goto final;
 		}
 	}
 #else // !ARIA_REORDER
