@@ -69,13 +69,13 @@ label_map = {
     "SILO_PRIO:Low": "SILO_PRIO:Low",
     "SILO_PRIO_FIXED:High": "SILO_PRIO_FIXED:High",
     "SILO_PRIO_FIXED:Low": "SILO_PRIO_FIXED:Low",
-    "ARIA_1": "ARIA_1",
-    "ARIA_2": "ARIA_2",
-    "ARIA_4": "ARIA_4",
-    "ARIA_8": "ARIA_8",
+    "ARIA_1": "ARIA-1",
+    "ARIA_2": "ARIA-2",
+    "ARIA_4": "ARIA-4",
+    "ARIA_8": "ARIA-8",
 }
 
-marker_size = 4
+marker_size = 5
 
 SUBFIG_LEN = 2.5
 
