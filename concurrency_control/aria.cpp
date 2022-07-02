@@ -172,15 +172,54 @@ void start_commit_phase(uint64_t thd_id, uint64_t batch_id) {
 RC
 txn_man::validate_aria() {
 	RC rc = RCOK;
+
+#if ARIA_REORDER
+	// first validate WAW
 	for (int rid = 0; rid < row_cnt; rid++) {
-		if (!accesses[rid]->orig_row->manager->validate(batch_id, prio,
-		                                                get_txn_id()))
+		if (accesses[rid]->type == WR \
+			&& !accesses[rid]->orig_row->manager->validate_write(batch_id, prio,
+				get_txn_id()))
 		{
 			rc = Abort;
 			goto final;
 		}
 	}
 
+	// then validate RAW
+	for (int rid = 0; rid < row_cnt; rid++) {
+		if (accesses[rid]->type != WR \
+			&& !accesses[rid]->orig_row->manager->validate_write(batch_id, prio,
+				get_txn_id()))
+		{
+			rc = Abort;
+			break;
+		}
+	}
+	// if we pass RAW validation, we can just commit; if not, we must try reorder
+	if (rc == RCOK) goto commit;
+
+	// validate WAR to reorder
+	for (int rid = 0; rid < row_cnt; rid++) {
+		if (accesses[rid]->type == WR \
+			&& !accesses[rid]->orig_row->manager->validate_read(batch_id, prio,
+				get_txn_id()))
+		{
+			rc = Abort;
+			break;
+		}
+	}
+#else // !ARIA_REORDER
+	for (int rid = 0; rid < row_cnt; rid++) {
+		if (!accesses[rid]->orig_row->manager->validate_write(batch_id, prio,
+			get_txn_id()))
+		{
+			rc = Abort;
+			goto final;
+		}
+	}
+#endif // ARIA_REORDER
+
+commit:
 	for (int rid = 0; rid < row_cnt; rid++)
 		if (accesses[rid]->type == WR)
 			accesses[rid]->orig_row->manager->write(accesses[rid]->data);
