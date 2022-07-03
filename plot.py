@@ -383,19 +383,11 @@ def plot_fig1():
     # this is for background, so no silo_prio
     cc_algs = ["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO"]
 
-    for cc_alg in cc_algs:
-        df = load_latency(exper, cc_alg, thread_cnt, zipf=zipf)
-        make_cdf(ax_tail, df, cc_alg)
-
-    ax_tail.grid(True, axis='y', linestyle='--', linewidth=0.1)
+    lat_dfs = {cc_alg: load_latency(exper, cc_alg, thread_cnt, zipf=zipf)
+               for cc_alg in cc_algs}
+    make_subplot_latency_cdf(ax_tail, lat_dfs, cc_algs)
 
     ax_tail.set_xlim(0, 2)
-    ax_tail.set_ylim(0, 3)
-
-    set_y_lat(ax_tail)
-
-    ax_tail.set_xlabel("Latency (ms)")
-    ax_tail.set_ylabel("Tail percentage")
 
     # then draw bar-graph for throughput
     tp_df = load_throughput(exper)
@@ -405,7 +397,7 @@ def plot_fig1():
         ax_tp.bar(i, d.head(1)["throughput"],
                   width=0.5, color=color_map[cc_alg], label=label_map[cc_alg])
 
-    plt.xticks([], [])
+    ax_tp.set_xticks([])
     set_tp_ticks(ax_tp, 0.1, 6)
 
     ax_tp.set_xlabel('Algorithm')
@@ -527,19 +519,9 @@ def plot_fig7():
         ax_tp.bar(i, d.head(1)["throughput"],
                   width=0.6, color=color_map[cc_alg], label=label_map[cc_alg])
 
-    # ax_tp.set_xticks([0, 1, 2], ["SILO", "SILO_PRIO_FIXED", "SILO_PRIO"], rotation=45)
-    plt.xticks([], [])
-    tp_ticks = list(range(0, 600001, 100000))
-    ax_tp.set_yticks(tp_ticks, [f"{t / 1e6}" for t in tp_ticks], rotation=90)
-    ax_tp.set_ylim([0, 600000])
-
+    ax_tp.set_xticks([])
     ax_tp.set_xlabel('Algorithm')
-    ax_tp.set_ylabel('Throughput (Mtxn/s)')
-
-    tp_ticks = list(range(0, 600001, 100000))
-    ax_tp.set_yticks(
-        tp_ticks, [f"{t/1e6}" if t > 0 else "0" for t in tp_ticks], rotation=90)
-    ax_tp.set_ylim([0, 600000])
+    set_tp_ticks(ax_tp, 0.1, 6)
     fig.savefig(f"ycsb_latency_logscale_throughput.{IMAGE_TYPE}",
                 transparent=True)
 
@@ -592,7 +574,7 @@ def plot_fig11():
 
 def make_legend(keys: List[str],
                 fname: str,
-                height=0.13,
+                height=0.14,
                 ncol=None,
                 fontsize=10,
                 columnspacing=2):
@@ -606,7 +588,7 @@ def make_legend(keys: List[str],
         line, = ax.plot([], [],
                         color=color_map[k],
                         marker=marker_map[k],
-                        markersize=marker_size + 2,
+                        markersize=marker_size,
                         label=label_map[k])
         lines.append(line)
 
@@ -623,7 +605,7 @@ def make_legend(keys: List[str],
     legend_fig.savefig(f"{fname}.{IMAGE_TYPE}", transparent=True)
 
 
-def make_legend_udprio(height=0.13,
+def make_legend_udprio(height=0.14,
                        columnspacing=1, fontsize=10):
     pseudo_fig = plt.figure()
     ax = pseudo_fig.add_subplot(111)
@@ -652,7 +634,7 @@ def make_legend_udprio(height=0.13,
 
 
 if __name__ == "__main__":
-    # plot_fig1()
+    plot_fig1()
     plot_fig2()
     plot_fig3()
     plot_fig4()
