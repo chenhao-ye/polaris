@@ -4,7 +4,7 @@
 	"ABORT_PENALTY": 1000,
 	"LATCH": "LH_MCSLOCK",
 	"TERMINATE_BY_COUNT": "false",
-	"MAX_RUNTIME": 15,
+	"MAX_RUNTIME": 20,
 
 	"PF_BASIC": "true",
 	"PF_CS": "false",
