@@ -84,6 +84,7 @@ plt.rcParams['ytick.major.pad'] = '2'
 plt.rcParams['xtick.major.size'] = '2.5'
 plt.rcParams['ytick.major.size'] = '2.5'
 plt.rcParams['axes.labelpad'] = '3'
+plt.rcParams['figure.max_open_warning'] = '30'
 
 
 def set_fig(fig, nrows: int, ncols: int):
