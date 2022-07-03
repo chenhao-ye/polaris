@@ -460,12 +460,12 @@ def plot_fig6():
     tp_df = load_throughput("ycsb_zipf")
 
     zipf_ticks_zoom = [1.2, 1.3, 1.4, 1.5]
-    ax_tp_zoom = ax_tp.inset_axes([0.45, 0.45, 0.5, 0.5])
+    ax_tp_zoom = ax_tp.inset_axes([0.4, 0.4, 0.55, 0.55])
     make_subplot(ax=ax_tp_zoom, df=tp_df, x_col='zipf_theta', y_col='throughput',
                  z_col='cc_alg', x_range=zipf_ticks_zoom, z_range=cc_algs,
                  filters={"thread_cnt": 64})
 
-    set_tp_ax(ax_tp_zoom, 0.08, 2, ylabel=None)
+    set_tp_ax(ax_tp_zoom, 0.06, 2, ylabel=None)
     ax_tp_zoom.set_xticks(zipf_ticks_zoom, [f"{t:g}" for t in zipf_ticks_zoom])
     fig.savefig(f"ycsb_high_zipf_vs_throughput_tail.{IMAGE_TYPE}",
                 transparent=True)
@@ -609,24 +609,24 @@ def make_legend_udprio(height=0.14,
 
 
 if __name__ == "__main__":
-    plot_fig1()
-    plot_fig2()
-    plot_fig3()
-    plot_fig4()
-    plot_fig5()
+    # plot_fig1()
+    # plot_fig2()
+    # plot_fig3()
+    # plot_fig4()
+    # plot_fig5()
     plot_fig6()
-    plot_fig7()
-    plot_fig8()
-    plot_fig9()
-    plot_fig10()
-    plot_fig11()
+    # plot_fig7()
+    # plot_fig8()
+    # plot_fig9()
+    # plot_fig10()
+    # plot_fig11()
 
-    make_legend(["NO_WAIT", "WAIT_DIE", "WOUND_WAIT"], "2pl_legend")
-    make_legend(["SILO", "SILO_PRIO"], "occ_legend", columnspacing=4)
-    make_legend(["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO", "SILO_PRIO"],
-                "legend_cc", columnspacing=1, fontsize=8.5)
-    make_legend(["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO"],
-                "legend_4cc", columnspacing=1, fontsize=8.5)
-    make_legend(["ARIA_1", "ARIA_2", "ARIA_4", "ARIA_8", "SILO_PRIO"],
-                "legend_aria", columnspacing=1, fontsize=8.5)
-    make_legend_udprio(fontsize=8.5)
+    # make_legend(["NO_WAIT", "WAIT_DIE", "WOUND_WAIT"], "2pl_legend")
+    # make_legend(["SILO", "SILO_PRIO"], "occ_legend", columnspacing=4)
+    # make_legend(["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO", "SILO_PRIO"],
+    #             "legend_cc", columnspacing=1, fontsize=8.5)
+    # make_legend(["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO"],
+    #             "legend_4cc", columnspacing=1, fontsize=8.5)
+    # make_legend(["ARIA_1", "ARIA_2", "ARIA_4", "ARIA_8", "SILO_PRIO"],
+    #             "legend_aria", columnspacing=1, fontsize=8.5)
+    # make_legend_udprio(fontsize=8.5)
