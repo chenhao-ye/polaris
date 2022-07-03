@@ -88,7 +88,7 @@ plt.rcParams['axes.labelpad'] = '3'
 
 def set_fig(fig, nrows: int, ncols: int):
     # handle all figure parameters tuning
-    fig.set_tight_layout({"pad": 0.01, "w_pad": 0.5, "h_pad": 0.3})
+    fig.set_tight_layout({"pad": 0.01, "w_pad": 0.3, "h_pad": 0.3})
     fig.set_size_inches(ncols * SUBFIG_LEN, nrows * SUBFIG_LEN)
 
 
@@ -324,7 +324,7 @@ def plot_tpcc_thread_vs_throughput_tail(exper: str, num_wh=1, tail_metric='p999'
 
 def plot_ycsb_prio_ratio_vs_throughput(exper: str):
     fig, ax = plt.subplots(nrows=1, ncols=1)
-    set_fig(fig, 1, 2)
+    set_fig(fig, 1, 1.5)
 
     pr_range = [0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
 
@@ -444,7 +444,7 @@ def plot_fig4():
                 transparent=True)
 
 
-def plot_fig5a():
+def plot_fig5():
     fig, ((ax_tp, ax_tail), (ax_lat_l, ax_lat_r)) = \
         plot_ycsb_zipf_vs_throughput_tail(
             "ycsb_zipf", [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
@@ -459,7 +459,7 @@ def plot_fig5a():
                 transparent=True)
 
 
-def plot_fig5b():
+def plot_fig6():
     fig, ((ax_tp, ax_tail), (ax_lat_l, ax_lat_r)) = \
         plot_ycsb_zipf_vs_throughput_tail("ycsb_zipf",
                                           [0.99, 1.1, 1.2, 1.3, 1.4, 1.5])
@@ -485,7 +485,7 @@ def plot_fig5b():
                 transparent=True)
 
 
-def plot_fig6():
+def plot_fig7():
     exper = "ycsb_udprio"
     thread_cnt = 64
     zipf = 0.99
@@ -543,7 +543,7 @@ def plot_fig6():
                 transparent=True)
 
 
-def plot_fig7():
+def plot_fig8():
     fig, ((ax_tp, ax_tail), (ax_lat_l, ax_lat_r)) = \
         plot_tpcc_thread_vs_throughput_tail("tpcc_thread", num_wh=1)
 
@@ -556,7 +556,7 @@ def plot_fig7():
                 transparent=True)
 
 
-def plot_fig8():
+def plot_fig9():
     fig, ((ax_tp, ax_tail), (ax_lat_l, ax_lat_r)) = \
         plot_tpcc_thread_vs_throughput_tail("tpcc_thread", num_wh=64)
 
@@ -569,24 +569,22 @@ def plot_fig8():
                 transparent=True)
 
 
-def plot_fig9():
+def plot_fig10():
     fig, ((ax_tp, ax_tail), (ax_lat_l, ax_lat_r)) = plot_aria_batch(zipf=0.5)
     set_tp_ticks(ax_tp, 1, 4)
     set_tail_ticks(ax_tail, 0.1, 5)
     set_lat_ticks(ax_lat_l, 0.05, 4)
     set_lat_ticks(ax_lat_r, 0.2, 4)
-    ax_tp.legend()
     fig.savefig(f"ycsb_aria_thread_vs_throughput_tail_zipf0.5.{IMAGE_TYPE}",
                 transparent=True)
 
 
-def plot_fig10():
+def plot_fig11():
     fig, ((ax_tp, ax_tail), (ax_lat_l, ax_lat_r)) = plot_aria_batch(zipf=0.99)
     set_tp_ticks(ax_tp, 0.1, 6)
     set_tail_ticks(ax_tail, 1, 4)
     set_lat_ticks(ax_lat_l, 0.5, 4)
     set_lat_ticks(ax_lat_r, 2, 4)
-    ax_tp.legend()
     fig.savefig(f"ycsb_aria_thread_vs_throughput_tail_zipf0.99.{IMAGE_TYPE}",
                 transparent=True)
 
@@ -613,7 +611,7 @@ def make_legend(keys: List[str],
 
     legend_fig = plt.figure()
     legend_fig.set_tight_layout({"pad": 0, "w_pad": 0, "h_pad": 0})
-    legend_fig.set_size_inches(SUBFIG_LEN * 3, height)
+    legend_fig.set_size_inches(SUBFIG_LEN * 2, height)
     legend_fig.legend(lines, [label_map[k] for k in keys],
                       loc='center',
                       ncol=ncol,
@@ -641,7 +639,7 @@ def make_legend_udprio(height=0.13,
 
     cc_legend_fig = plt.figure()
     cc_legend_fig.set_tight_layout({"pad": 0, "w_pad": 0, "h_pad": 0})
-    cc_legend_fig.set_size_inches(SUBFIG_LEN * 3, height)
+    cc_legend_fig.set_size_inches(SUBFIG_LEN * 2, height)
     cc_legend_fig.legend(lines + bars, ["High", "Low"] + [label_map[cc] for cc in cc_algs],
                          loc='center',
                          ncol=5,
@@ -657,13 +655,13 @@ if __name__ == "__main__":
     plot_fig2()
     plot_fig3()
     plot_fig4()
-    plot_fig5a()
-    plot_fig5b()
+    plot_fig5()
     plot_fig6()
     plot_fig7()
     plot_fig8()
     plot_fig9()
     plot_fig10()
+    plot_fig11()
 
     make_legend(["NO_WAIT", "WAIT_DIE", "WOUND_WAIT"], "2pl_legend")
     make_legend(["SILO", "SILO_PRIO"], "occ_legend", columnspacing=4)
