@@ -170,6 +170,7 @@ def set_lat_ax(ax_lat, tick, num_ticks, xlabel="Latency (ms)", *,
     ax_lat.set_xlabel(
         f"{xlabel}, {xlabel_suffix}" if xlabel_suffix else xlabel)
     ax_lat.set_ylabel("Tail percentage")
+    ax_lat.grid(True, axis='y', linestyle='--', linewidth=0.1)
 
 
 def make_subplot(ax, df: pd.DataFrame, x_col: str, y_col: str, z_col: str,
@@ -217,15 +218,14 @@ def make_subplot_latency_cdf(ax, dfs: Dict[str, pd.DataFrame],
         df = dfs[cc_alg]
         make_cdf(ax, df, cc_alg)
 
-    ax.grid(True, axis='y', linestyle='--', linewidth=0.1)
-
 
 def make_bar(ax, df: pd.DataFrame, cc_algs: List[str]):
     for i, cc_alg in enumerate(cc_algs):
         d = df[(df["cc_alg"] == cc_alg)]
         assert d.shape[0] == 1
         ax.bar(i, d.head(1)["throughput"],
-               width=0.5, color=color_map[cc_alg], label=label_map[cc_alg])
+               width=0.5, color=color_map[cc_alg],
+               label=label_map[cc_alg])
 
     ax.set_xticks([])
     ax.set_xlabel('Concurrency Control Algorithm')
@@ -390,8 +390,7 @@ def plot_fig1():
     lat_dfs = {cc_alg: load_latency(exper, cc_alg, thread_cnt, zipf=zipf)
                for cc_alg in cc_algs}
     make_subplot_latency_cdf(ax_tail, lat_dfs, cc_algs)
-
-    ax_tail.set_xlim(0, 2)
+    set_lat_ax(ax_tail, 0.5, 6)
 
     # then draw bar-graph for throughput
     tp_df = load_throughput(exper)
@@ -487,9 +486,7 @@ def plot_fig7():
         make_cdf(ax_tail, df, f"{cc_alg}:High", [8, 15])
         make_cdf(ax_tail, df, f"{cc_alg}:Low", [0, 7])
 
-    ax_tail.grid(True, axis='y', linestyle='--', linewidth=0.1)
-
-    set_lat_ax(ax_tail, 0.5, 4)
+    set_lat_ax(ax_tail, 0.5, 6)
 
     ax_tail.set_xlabel("Latency (ms)")
     ax_tail.set_ylabel("Tail percentage")
