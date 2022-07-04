@@ -1,4 +1,4 @@
-exper=ycsb_udprio # ud: user-defined
+exper=ycsb_latency
 mkdir -p results
 zipf=0.99
 thd=64
