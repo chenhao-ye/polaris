@@ -609,24 +609,24 @@ def make_legend_udprio(height=0.14,
 
 
 if __name__ == "__main__":
-    # plot_fig1()
-    # plot_fig2()
-    # plot_fig3()
-    # plot_fig4()
-    # plot_fig5()
+    plot_fig1()
+    plot_fig2()
+    plot_fig3()
+    plot_fig4()
+    plot_fig5()
     plot_fig6()
-    # plot_fig7()
-    # plot_fig8()
-    # plot_fig9()
-    # plot_fig10()
-    # plot_fig11()
+    plot_fig7()
+    plot_fig8()
+    plot_fig9()
+    plot_fig10()
+    plot_fig11()
 
-    # make_legend(["NO_WAIT", "WAIT_DIE", "WOUND_WAIT"], "2pl_legend")
-    # make_legend(["SILO", "SILO_PRIO"], "occ_legend", columnspacing=4)
-    # make_legend(["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO", "SILO_PRIO"],
-    #             "legend_cc", columnspacing=1, fontsize=8.5)
-    # make_legend(["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO"],
-    #             "legend_4cc", columnspacing=1, fontsize=8.5)
-    # make_legend(["ARIA_1", "ARIA_2", "ARIA_4", "ARIA_8", "SILO_PRIO"],
-    #             "legend_aria", columnspacing=1, fontsize=8.5)
-    # make_legend_udprio(fontsize=8.5)
+    make_legend(["NO_WAIT", "WAIT_DIE", "WOUND_WAIT"], "2pl_legend")
+    make_legend(["SILO", "SILO_PRIO"], "occ_legend", columnspacing=4)
+    make_legend(["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO", "SILO_PRIO"],
+                "legend_cc", columnspacing=1, fontsize=8.5)
+    make_legend(["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO"],
+                "legend_4cc", columnspacing=1, fontsize=8.5)
+    make_legend(["ARIA_1", "ARIA_2", "ARIA_4", "ARIA_8", "SILO_PRIO"],
+                "legend_aria", columnspacing=1, fontsize=8.5)
+    make_legend_udprio(fontsize=8.5)
