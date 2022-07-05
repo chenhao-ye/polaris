@@ -7,32 +7,33 @@ from typing import List, Dict, Tuple, Optional
 
 # "pdf", "eps", "png", etc
 IMAGE_TYPE = "pdf"
+IS_TRANSPARENT = True
 
 # based on: https://colorbrewer2.org/#type=qualitative&scheme=Set3&n=5
 # this color map ensure the curves are still readable in grayscale
 color_map = {
-    "NO_WAIT": "#8dd3c7",
-    "WAIT_DIE": "#80b1d3",
-    "WOUND_WAIT": "#bebada",
-    "SILO": "#fdaa48",
-    "SILO_PRIO": "#fb8072",
+    "NO_WAIT": "#abdda4",
+    "WAIT_DIE": "#abd9e9",
+    "WOUND_WAIT": "#2c7bb6",
+    "SILO": "#fdae61",
+    "SILO_PRIO": "#f03b20",
     # log scale plot
-    "SILO_PRIO:High": "#fb8072",
-    "SILO_PRIO:Low": "#fb8072",
-    "SILO_PRIO_FIXED": "#bebada",
-    "SILO_PRIO_FIXED:High": "#bebada",
-    "SILO_PRIO_FIXED:Low": "#bebada",
-    "ARIA_1": "#8dd3c7",
-    "ARIA_2": "#80b1d3",
-    "ARIA_4": "#bebada",
-    "ARIA_8": "#fdaa48",
+    "SILO_PRIO:High": "#f03b20",
+    "SILO_PRIO:Low": "#f03b20",
+    "SILO_PRIO_FIXED": "#abd9e9",
+    "SILO_PRIO_FIXED:High": "#abd9e9",
+    "SILO_PRIO_FIXED:Low": "#abd9e9",
+    "ARIA_1": "#bdd7e7",
+    "ARIA_2": "#6baed6",
+    "ARIA_4": "#3182bd",
+    "ARIA_8": "#08519c",
 }
 
 # linestyle and marker are unused if making bar graph instead of plot
 linestyle_map = {
-    "NO_WAIT": "-",
-    "WAIT_DIE": "-",
-    "WOUND_WAIT": "-",
+    "NO_WAIT": ":",
+    "WAIT_DIE": "-.",
+    "WOUND_WAIT": "--",
     "SILO": "-",
     "SILO_PRIO": "-",
     # log scale plot:
@@ -41,9 +42,9 @@ linestyle_map = {
     "SILO_PRIO_FIXED:High": "-",
     "SILO_PRIO_FIXED:Low": "--",
     "ARIA_1": "-",
-    "ARIA_2": "-",
-    "ARIA_4": "-",
-    "ARIA_8": "-",
+    "ARIA_2": "--",
+    "ARIA_4": "-.",
+    "ARIA_8": ":",
 }
 
 marker_map = {
@@ -192,6 +193,7 @@ def make_subplot(ax, df: pd.DataFrame, x_col: str, y_col: str, z_col: str,
             y_data.append(d.head(1)[y_col])
         ax.plot(x_range, y_data,
                 color=color_map[z_val],
+                linestyle=linestyle_map[z_val],
                 marker=marker_map[z_val],
                 markersize=marker_size,
                 label=label_map[z_val])
@@ -396,14 +398,14 @@ def plot_fig1():
     tp_df = load_throughput(exper)
     make_bar(ax_tp, tp_df, cc_algs)
     set_tp_ax(ax_tp, 0.1, 6)
-    fig.savefig(f"ycsb_latency_allcc.{IMAGE_TYPE}", transparent=True)
+    fig.savefig(f"ycsb_latency_allcc.{IMAGE_TYPE}", transparent=IS_TRANSPARENT)
 
 
 def plot_fig2():
     fig, ax = plot_ycsb_prio_ratio_vs_throughput("ycsb_prio_sen")
     set_tp_ax(ax, 0.1, 6)
     fig.savefig(f"ycsb_prio_ratio_vs_throughput.{IMAGE_TYPE}",
-                transparent=True)
+                transparent=IS_TRANSPARENT)
 
 
 def plot_fig3():
@@ -415,7 +417,7 @@ def plot_fig3():
     set_lat_ax(ax_lat_r, 0.5, 4, xlabel_suffix="64 threads")
 
     fig.savefig(f"ycsb_thread_vs_throughput_tail.{IMAGE_TYPE}",
-                transparent=True)
+                transparent=IS_TRANSPARENT)
 
 
 def plot_fig4():
@@ -427,7 +429,7 @@ def plot_fig4():
     set_lat_ax(ax_lat_r, 0.05, 4, xlabel_suffix="64 threads")
 
     fig.savefig(f"ycsb_thread_vs_throughput_tail_readonly.{IMAGE_TYPE}",
-                transparent=True)
+                transparent=IS_TRANSPARENT)
 
 
 def plot_fig5():
@@ -442,7 +444,7 @@ def plot_fig5():
     set_lat_ax(ax_lat_r, 0.4, 3, xlabel_suffix="theta 0.9")
 
     fig.savefig(f"ycsb_low_zipf_vs_throughput_tail.{IMAGE_TYPE}",
-                transparent=True)
+                transparent=IS_TRANSPARENT)
 
 
 def plot_fig6():
@@ -468,7 +470,7 @@ def plot_fig6():
     set_tp_ax(ax_tp_zoom, 0.06, 2, ylabel=None)
     ax_tp_zoom.set_xticks(zipf_ticks_zoom, [f"{t:g}" for t in zipf_ticks_zoom])
     fig.savefig(f"ycsb_high_zipf_vs_throughput_tail.{IMAGE_TYPE}",
-                transparent=True)
+                transparent=IS_TRANSPARENT)
 
 
 def plot_fig7():
@@ -497,7 +499,7 @@ def plot_fig7():
 
     set_tp_ax(ax_tp, 0.1, 6)
     fig.savefig(f"ycsb_latency_logscale_throughput.{IMAGE_TYPE}",
-                transparent=True)
+                transparent=IS_TRANSPARENT)
 
 
 def plot_fig8():
@@ -510,7 +512,7 @@ def plot_fig8():
     set_lat_ax(ax_lat_r, 0.4, 4, xlabel_suffix="64 threads")
 
     fig.savefig(f"tpcc_thread_vs_throughput_tail_wh1.{IMAGE_TYPE}",
-                transparent=True)
+                transparent=IS_TRANSPARENT)
 
 
 def plot_fig9():
@@ -523,7 +525,7 @@ def plot_fig9():
     set_lat_ax(ax_lat_r, 0.02, 4, xlabel_suffix="64 threads")
 
     fig.savefig(f"tpcc_thread_vs_throughput_tail_wh64.{IMAGE_TYPE}",
-                transparent=True)
+                transparent=IS_TRANSPARENT)
 
 
 def plot_fig10():
@@ -533,7 +535,7 @@ def plot_fig10():
     set_lat_ax(ax_lat_l, 0.05, 4, xlabel_suffix="16 threads")
     set_lat_ax(ax_lat_r, 0.2, 4, xlabel_suffix="64 threads")
     fig.savefig(f"ycsb_aria_thread_vs_throughput_tail_zipf0.5.{IMAGE_TYPE}",
-                transparent=True)
+                transparent=IS_TRANSPARENT)
 
 
 def plot_fig11():
@@ -543,7 +545,7 @@ def plot_fig11():
     set_lat_ax(ax_lat_l, 0.5, 4, xlabel_suffix="16 threads")
     set_lat_ax(ax_lat_r, 2, 4, xlabel_suffix="64 threads")
     fig.savefig(f"ycsb_aria_thread_vs_throughput_tail_zipf0.99.{IMAGE_TYPE}",
-                transparent=True)
+                transparent=IS_TRANSPARENT)
 
 
 def make_legend(keys: List[str],
@@ -561,6 +563,7 @@ def make_legend(keys: List[str],
     for k in keys:
         line, = ax.plot([], [],
                         color=color_map[k],
+                        linestyle=linestyle_map[k],
                         marker=marker_map[k],
                         markersize=marker_size,
                         label=label_map[k])
@@ -576,7 +579,7 @@ def make_legend(keys: List[str],
                       frameon=False,
                       columnspacing=columnspacing,
                       labelspacing=0.4)
-    legend_fig.savefig(f"{fname}.{IMAGE_TYPE}", transparent=True)
+    legend_fig.savefig(f"{fname}.{IMAGE_TYPE}", transparent=IS_TRANSPARENT)
 
 
 def make_legend_udprio(height=0.14,
@@ -605,7 +608,8 @@ def make_legend_udprio(height=0.14,
                          frameon=False,
                          columnspacing=columnspacing,
                          labelspacing=0.4)
-    cc_legend_fig.savefig(f"legend_udprio.{IMAGE_TYPE}", transparent=True)
+    cc_legend_fig.savefig(
+        f"legend_udprio.{IMAGE_TYPE}", transparent=IS_TRANSPARENT)
 
 
 if __name__ == "__main__":
