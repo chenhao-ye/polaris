@@ -17,12 +17,11 @@ color_map = {
     "WOUND_WAIT": "#2c7bb6",
     "SILO": "#fdae61",
     "SILO_PRIO": "#f03b20",
-    # log scale plot
     "SILO_PRIO:High": "#f03b20",
     "SILO_PRIO:Low": "#f03b20",
-    "SILO_PRIO_FIXED": "#abd9e9",
-    "SILO_PRIO_FIXED:High": "#abd9e9",
-    "SILO_PRIO_FIXED:Low": "#abd9e9",
+    "SILO_PRIO_FIXED": "#ffdd99",
+    "SILO_PRIO_FIXED:High": "#ffdd99",
+    "SILO_PRIO_FIXED:Low": "#ffdd99",
     "ARIA_1": "#bdd7e7",
     "ARIA_2": "#6baed6",
     "ARIA_4": "#3182bd",
@@ -36,7 +35,6 @@ linestyle_map = {
     "WOUND_WAIT": "--",
     "SILO": "-",
     "SILO_PRIO": "-",
-    # log scale plot:
     "SILO_PRIO:High": "-",
     "SILO_PRIO:Low": "--",
     "SILO_PRIO_FIXED:High": "-",
@@ -53,6 +51,11 @@ marker_map = {
     "WOUND_WAIT": "d",
     "SILO": "x",
     "SILO_PRIO": "o",
+    "SILO_PRIO:High": None,
+    "SILO_PRIO:Low": None,
+    "SILO_PRIO_FIXED": None,
+    "SILO_PRIO_FIXED:High": None,
+    "SILO_PRIO_FIXED:Low": None,
     "ARIA_1": "^",
     "ARIA_2": "s",
     "ARIA_4": "d",
@@ -60,9 +63,9 @@ marker_map = {
 }
 
 label_map = {
-    "NO_WAIT": "NO_WAIT",
-    "WAIT_DIE": "WAIT_DIE",
-    "WOUND_WAIT": "WOUND_WAIT",
+    "NO_WAIT": "NO-WAIT",
+    "WAIT_DIE": "WAIT-DIE",
+    "WOUND_WAIT": "WOUND-WAIT",
     "SILO": "SILO",
     "SILO_PRIO": "POLARIS",
     "SILO_PRIO_FIXED": "POLARIS-SP",
@@ -633,4 +636,4 @@ if __name__ == "__main__":
                 "legend_4cc", columnspacing=1, fontsize=8.5)
     make_legend(["ARIA_1", "ARIA_2", "ARIA_4", "ARIA_8", "SILO_PRIO"],
                 "legend_aria", columnspacing=1, fontsize=8.5)
-    make_legend_udprio(fontsize=8.5)
+    make_legend_udprio(fontsize=8.5, columnspacing=2)
