@@ -633,7 +633,7 @@ if __name__ == "__main__":
     make_legend(["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO", "SILO_PRIO"],
                 "legend_cc", columnspacing=1, fontsize=8.5)
     make_legend(["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO"],
-                "legend_4cc", columnspacing=1, fontsize=8.5)
+                "legend_4cc", columnspacing=3, fontsize=8.5)
     make_legend(["ARIA_1", "ARIA_2", "ARIA_4", "ARIA_8", "SILO_PRIO"],
-                "legend_aria", columnspacing=1, fontsize=8.5)
+                "legend_aria", columnspacing=2, fontsize=8.5)
     make_legend_udprio(fontsize=8.5, columnspacing=2)
