@@ -233,7 +233,7 @@ def make_bar(ax, df: pd.DataFrame, cc_algs: List[str]):
                label=label_map[cc_alg])
 
     ax.set_xticks([])
-    ax.set_xlabel('Concurrency Control Algorithm')
+    ax.set_xlabel('Algorithm')
 
 
 def plot_ycsb_thread_vs_throughput_tail(exper: str, tail_metric='p999'):
