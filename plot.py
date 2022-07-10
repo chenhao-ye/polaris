@@ -8,6 +8,7 @@ from typing import List, Dict, Tuple, Optional
 # "pdf", "eps", "png", etc
 IMAGE_TYPE = "pdf"
 IS_TRANSPARENT = True
+TICK_SMALLER_FONTSIZE = 8.5
 
 # based on: https://colorbrewer2.org/#type=qualitative&scheme=Set3&n=5
 # this color map ensure the curves are still readable in grayscale
@@ -81,7 +82,8 @@ label_map = {
 
 marker_size = 5
 
-SUBFIG_LEN = 2.5
+SUBFIG_WIDTH = 2.5
+SUBFIG_HEIGHT = 2
 
 plt.rcParams['xtick.major.pad'] = '2'
 plt.rcParams['ytick.major.pad'] = '2'
@@ -94,7 +96,7 @@ plt.rcParams['figure.max_open_warning'] = '30'
 def set_fig(fig, nrows: int, ncols: int):
     # handle all figure parameters tuning
     fig.set_tight_layout({"pad": 0.01, "w_pad": 0.3, "h_pad": 0.3})
-    fig.set_size_inches(ncols * SUBFIG_LEN, nrows * SUBFIG_LEN)
+    fig.set_size_inches(ncols * SUBFIG_WIDTH, nrows * SUBFIG_HEIGHT)
 
 
 def get_subplots(nrows, ncols):
@@ -169,7 +171,8 @@ def set_lat_ax(ax_lat, tick, num_ticks, xlabel="Latency (ms)", *,
                        for i in range(num_ticks + 1)])
     ax_lat.set_xlim([0, tick * num_ticks * 1000000])
     ax_lat.set_yticks([-math.log10(0.5), 1, 2, 3, 4],
-                      ["p50", "p90", "p99", "p999", "p9999"], rotation=90)
+                      ["p50", "p90", "p99", "p999", "p9999"], rotation=90,
+                      fontsize=TICK_SMALLER_FONTSIZE)
     ax_lat.set_ylim([0, 4])
     ax_lat.set_xlabel(
         f"{xlabel}, {xlabel_suffix}" if xlabel_suffix else xlabel)
@@ -574,7 +577,7 @@ def make_legend(keys: List[str],
 
     legend_fig = plt.figure()
     legend_fig.set_tight_layout({"pad": 0, "w_pad": 0, "h_pad": 0})
-    legend_fig.set_size_inches(SUBFIG_LEN * 2, height)
+    legend_fig.set_size_inches(SUBFIG_WIDTH * 2, height)
     legend_fig.legend(lines, [label_map[k] for k in keys],
                       loc='center',
                       ncol=ncol,
@@ -602,7 +605,7 @@ def make_legend_udprio(height=0.14,
 
     cc_legend_fig = plt.figure()
     cc_legend_fig.set_tight_layout({"pad": 0, "w_pad": 0, "h_pad": 0})
-    cc_legend_fig.set_size_inches(SUBFIG_LEN * 2, height)
+    cc_legend_fig.set_size_inches(SUBFIG_WIDTH * 2, height)
     cc_legend_fig.legend(lines + bars,
                          ["High", "Low"] + [label_map[cc] for cc in cc_algs],
                          loc='center',
