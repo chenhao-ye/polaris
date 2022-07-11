@@ -48,7 +48,7 @@ Below is a list of basic build parameters. They typically turn certain features 
 - `DUMP_LATENCY`: Whether dump the latency of all transactions to a file. Useful for latency distribution plotting.
 - `DUMP_LATENCY_FILENAME`: If `DUMP_LATENCY=true`, what's the filename of the dump.
 
-\* **Fun fact**: Polaris is implemented based on Silo but with priority support, so it was previously termed `SILO_PRIO`. The name `POLARIS` came from a letter rearrangement of `SILO_PRIO` with an additional `A`.
+\***Fun fact**: Polaris is implemented based on Silo but with priority support, so it was previously termed `SILO_PRIO`. The name `POLARIS` came from a letter rearrangement of `SILO_PRIO` with an additional `A`.
 
 Below is another list of build parameters introduced for Polaris:
 
