@@ -156,7 +156,13 @@ static_assert(ARIA_NUM_BITS_BATCH_ID + ARIA_NUM_BITS_PRIO \
 #define ARIA_BATCH_SIZE           1
 // if aborts and reexecute, whether uses a new txn_id or the previous one
 #define ARIA_NEW_TXN_ID_REEXEC    false
+// whether use pthread barrier or the one we implement; recommend NOT use
+// pthread barrier, as we see significant performance drop
 #define ARIA_USE_PTHREAD_BARRIER  false
+// optimization: do not copy the row for read, because the whole database is
+// read-only during execution phase
+#define ARIA_NOCOPY_READ          true
+// optimization: enable deterministic reordering
 #define ARIA_REORDER              true
 
 // Workload-related config:

@@ -392,6 +392,13 @@ row_t * txn_man::get_row(row_t * row, access_t type) {
   }
 #elif CC_ALG == IC3
   return accesses[row_cnt - 1]->data;
+#elif ((CC_ALG == ARIA) && ARIA_NOCOPY_READ)
+    // if ARIA_NOCOPY_READ enabled, we don't copy the row because the whole
+    // database is read-only in the execution phase
+    if (type == WR)
+        return accesses[row_cnt - 1]->data;
+    else
+        return accesses[row_cnt - 1]->orig_row;
 #else
   return accesses[row_cnt - 1]->data;
 #endif
