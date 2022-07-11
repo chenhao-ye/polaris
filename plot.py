@@ -82,20 +82,21 @@ label_map = {
 
 marker_size = 5
 
-SUBFIG_WIDTH = 2.5
+SUBFIG_WIDTH = 2.6
 SUBFIG_HEIGHT = 2
+LEGEND_WIDTH = 6
 
 plt.rcParams['xtick.major.pad'] = '2'
 plt.rcParams['ytick.major.pad'] = '2'
 plt.rcParams['xtick.major.size'] = '2.5'
 plt.rcParams['ytick.major.size'] = '2.5'
-plt.rcParams['axes.labelpad'] = '3'
+plt.rcParams['axes.labelpad'] = '1'
 plt.rcParams['figure.max_open_warning'] = '30'
 
 
 def set_fig(fig, nrows: int, ncols: int):
     # handle all figure parameters tuning
-    fig.set_tight_layout({"pad": 0.01, "w_pad": 0.3, "h_pad": 0.3})
+    fig.set_tight_layout({"pad": 0.1, "w_pad": 0.1, "h_pad": 0.1})
     fig.set_size_inches(ncols * SUBFIG_WIDTH, nrows * SUBFIG_HEIGHT)
 
 
@@ -236,7 +237,7 @@ def make_bar(ax, df: pd.DataFrame, cc_algs: List[str]):
                label=label_map[cc_alg])
 
     ax.set_xticks([])
-    ax.set_xlabel('Algorithm')
+    ax.set_xlabel('Concurrency control algorithm')
 
 
 def plot_ycsb_thread_vs_throughput_tail(exper: str, tail_metric='p999'):
@@ -346,7 +347,8 @@ def plot_ycsb_prio_ratio_vs_throughput(exper: str):
                  z_col='cc_alg', x_range=pr_range, z_range=["SILO_PRIO"],
                  filters={"zipf_theta": 0.99})
 
-    ax.set_xticks([0, 0.2, 0.4, 0.6, 0.8, 1])
+    ticks = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+    ax.set_xticks(ticks, [f"{t:g}" for t in ticks])
     ax.set_xlabel('High priority transaction ratio')
 
     return fig, ax
@@ -403,13 +405,13 @@ def plot_fig1():
     # then draw bar-graph for throughput
     tp_df = load_throughput(exper)
     make_bar(ax_tp, tp_df, cc_algs)
-    set_tp_ax(ax_tp, 0.1, 6)
+    set_tp_ax(ax_tp, 0.2, 3)
     fig.savefig(f"ycsb_latency_allcc.{IMAGE_TYPE}", transparent=IS_TRANSPARENT)
 
 
 def plot_fig2():
     fig, ax = plot_ycsb_prio_ratio_vs_throughput("ycsb_prio_sen")
-    set_tp_ax(ax, 0.1, 6)
+    set_tp_ax(ax, 0.2, 3)
     fig.savefig(f"ycsb_prio_ratio_vs_throughput.{IMAGE_TYPE}",
                 transparent=IS_TRANSPARENT)
 
@@ -417,7 +419,7 @@ def plot_fig2():
 def plot_fig3():
     fig, ((ax_tp, ax_tail), (ax_lat_l, ax_lat_r)) = \
         plot_ycsb_thread_vs_throughput_tail("ycsb_thread")
-    set_tp_ax(ax_tp, 0.1, 6)
+    set_tp_ax(ax_tp, 0.2, 3)
     set_tail_ax(ax_tail, 0.4, 4)
     set_lat_ax(ax_lat_l, 0.2, 4, xlabel_suffix="16 threads")
     set_lat_ax(ax_lat_r, 0.5, 4, xlabel_suffix="64 threads")
@@ -458,7 +460,7 @@ def plot_fig6():
         plot_ycsb_zipf_vs_throughput_tail("ycsb_zipf",
                                           [0.99, 1.1, 1.2, 1.3, 1.4, 1.5])
 
-    set_tp_ax(ax_tp, 0.1, 6)
+    set_tp_ax(ax_tp, 0.2, 3)
     set_tail_ax(ax_tail, 4, 4)
     set_lat_ax(ax_lat_l, 0.5, 4, xlabel_suffix="theta 0.99")
     set_lat_ax(ax_lat_r, 5, 4, xlabel_suffix="theta 1.5")
@@ -503,8 +505,8 @@ def plot_fig7():
     tp_df = load_throughput(exper)
     make_bar(ax_tp, tp_df, ["SILO", "SILO_PRIO_FIXED", "SILO_PRIO"])
 
-    set_tp_ax(ax_tp, 0.1, 6)
-    fig.savefig(f"ycsb_latency_logscale_throughput.{IMAGE_TYPE}",
+    set_tp_ax(ax_tp, 0.2, 3)
+    fig.savefig(f"ycsb_latency_udprio.{IMAGE_TYPE}",
                 transparent=IS_TRANSPARENT)
 
 
@@ -546,7 +548,7 @@ def plot_fig10():
 
 def plot_fig11():
     fig, ((ax_tp, ax_tail), (ax_lat_l, ax_lat_r)) = plot_aria_batch(zipf=0.99)
-    set_tp_ax(ax_tp, 0.1, 6)
+    set_tp_ax(ax_tp, 0.2, 3)
     set_tail_ax(ax_tail, 1, 4)
     set_lat_ax(ax_lat_l, 0.5, 4, xlabel_suffix="16 threads")
     set_lat_ax(ax_lat_r, 2, 4, xlabel_suffix="64 threads")
@@ -556,7 +558,7 @@ def plot_fig11():
 
 def make_legend(keys: List[str],
                 fname: str,
-                height=0.14,
+                height=0.15,
                 ncol=None,
                 fontsize=10,
                 columnspacing=2):
@@ -577,7 +579,7 @@ def make_legend(keys: List[str],
 
     legend_fig = plt.figure()
     legend_fig.set_tight_layout({"pad": 0, "w_pad": 0, "h_pad": 0})
-    legend_fig.set_size_inches(SUBFIG_WIDTH * 2, height)
+    legend_fig.set_size_inches(LEGEND_WIDTH, height)
     legend_fig.legend(lines, [label_map[k] for k in keys],
                       loc='center',
                       ncol=ncol,
@@ -588,7 +590,7 @@ def make_legend(keys: List[str],
     legend_fig.savefig(f"{fname}.{IMAGE_TYPE}", transparent=IS_TRANSPARENT)
 
 
-def make_legend_udprio(height=0.14,
+def make_legend_udprio(height=0.15,
                        columnspacing=1, fontsize=10):
     pseudo_fig = plt.figure()
     ax = pseudo_fig.add_subplot(111)
@@ -605,7 +607,7 @@ def make_legend_udprio(height=0.14,
 
     cc_legend_fig = plt.figure()
     cc_legend_fig.set_tight_layout({"pad": 0, "w_pad": 0, "h_pad": 0})
-    cc_legend_fig.set_size_inches(SUBFIG_WIDTH * 2, height)
+    cc_legend_fig.set_size_inches(LEGEND_WIDTH, height)
     cc_legend_fig.legend(lines + bars,
                          ["High", "Low"] + [label_map[cc] for cc in cc_algs],
                          loc='center',
@@ -631,12 +633,10 @@ if __name__ == "__main__":
     plot_fig10()
     plot_fig11()
 
-    make_legend(["NO_WAIT", "WAIT_DIE", "WOUND_WAIT"], "2pl_legend")
-    make_legend(["SILO", "SILO_PRIO"], "occ_legend", columnspacing=4)
     make_legend(["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO", "SILO_PRIO"],
-                "legend_cc", columnspacing=1, fontsize=8.5)
+                "legend_cc", columnspacing=1)
     make_legend(["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO"],
-                "legend_4cc", columnspacing=3, fontsize=8.5)
+                "legend_4cc", columnspacing=3)
     make_legend(["ARIA_1", "ARIA_2", "ARIA_4", "ARIA_8", "SILO_PRIO"],
-                "legend_aria", columnspacing=2, fontsize=8.5)
-    make_legend_udprio(fontsize=8.5, columnspacing=2)
+                "legend_aria", columnspacing=2)
+    make_legend_udprio(columnspacing=2)
