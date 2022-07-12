@@ -27,6 +27,10 @@ Row_aria::access(txn_man * txn, TsType type, row_t * local_row) {
 #endif
 	// when in execution phase, everything is read-only except TID, so it is safe
 	// to copy record data without any lock
+#if ARIA_NOCOPY_READ
+	// no need to make a copy because the whole database is read-only
+	if (type == R_REQ) return RCOK;
+#endif
 	local_row->copy(_row);
 	return RCOK;
 }
