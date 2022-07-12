@@ -539,7 +539,7 @@ def plot_fig9():
 def plot_fig10():
     fig, ((ax_tp, ax_tail), (ax_lat_l, ax_lat_r)) = plot_aria_batch(zipf=0.5)
     set_tp_ax(ax_tp, 1, 4)
-    set_tail_ax(ax_tail, 0.1, 5)
+    set_tail_ax(ax_tail, 0.1, 4)
     set_lat_ax(ax_lat_l, 0.05, 4, xlabel_suffix="16 threads")
     set_lat_ax(ax_lat_r, 0.2, 4, xlabel_suffix="64 threads")
     fig.savefig(f"ycsb_aria_thread_vs_throughput_tail_zipf0.5.{IMAGE_TYPE}",
