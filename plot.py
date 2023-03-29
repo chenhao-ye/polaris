@@ -284,8 +284,9 @@ def plot_ycsb_zipf_vs_throughput_tail(exper: str, zipf_thetas_low: List[float],
         tick_thetas_low = zipf_thetas_low
     if not tick_thetas_high:
         tick_thetas_high = zipf_thetas_high
-    fig, ((ax_tp_low, ax_tail_low), (ax_tp_high, ax_tail_high),
-          (ax_lat_l, ax_lat_r)) = get_subplots(nrows=3, ncols=2)
+    fig, ((ax_tp_low, ax_tail_low, ax_lat_l),
+          (ax_tp_high, ax_tail_high, ax_lat_r)) = get_subplots(nrows=2,
+                                                               ncols=3)
 
     cc_algs = ["NO_WAIT", "WAIT_DIE", "WOUND_WAIT", "SILO", "SILO_PRIO"]
 
@@ -317,8 +318,8 @@ def plot_ycsb_zipf_vs_throughput_tail(exper: str, zipf_thetas_low: List[float],
                    for cc_alg in cc_algs}
         make_subplot_latency_cdf(ax, lat_dfs, cc_algs)
 
-    return fig, ((ax_tp_low, ax_tail_low), (ax_tp_high, ax_tail_high),
-                 (ax_lat_l, ax_lat_r))
+    return fig, ((ax_tp_low, ax_tail_low, ax_lat_l),
+                 (ax_tp_high, ax_tail_high, ax_lat_r))
 
 
 def plot_tpcc_thread_vs_throughput_tail(exper: str, num_wh=1, tail_metric='p999'):
@@ -456,8 +457,8 @@ def plot_fig4():
 
 
 def plot_fig5():
-    fig, ((ax_tp_low, ax_tail_low), (ax_tp_high, ax_tail_high),
-          (ax_lat_l, ax_lat_r)) = plot_ycsb_zipf_vs_throughput_tail(
+    fig, ((ax_tp_low, ax_tail_low, ax_lat_l),
+         (ax_tp_high, ax_tail_high, ax_lat_r)) = plot_ycsb_zipf_vs_throughput_tail(
         "ycsb_zipf", [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
         [0.99, 1.1, 1.2, 1.3, 1.4, 1.5], (0.9, 1.5),
         [0, 0.3, 0.6, 0.9], [0.99, 1.1, 1.2, 1.3, 1.4, 1.5])
@@ -611,7 +612,6 @@ def make_legend_udprio(height=0.15,
     lines = [line_high, line_low]
 
     cc_legend_fig = plt.figure()
-    cc_legend_fig.set_tight_layout({"pad": 0, "w_pad": 0, "h_pad": 0})
     cc_legend_fig.set_size_inches(LEGEND_WIDTH, height)
     cc_legend_fig.legend(lines + bars,
                          ["High", "Low"] + [label_map[cc] for cc in cc_algs],
@@ -621,6 +621,7 @@ def make_legend_udprio(height=0.15,
                          frameon=False,
                          columnspacing=columnspacing,
                          labelspacing=0.4)
+    cc_legend_fig.set_tight_layout({"pad": 0, "w_pad": 0, "h_pad": 0})
     cc_legend_fig.savefig(
         f"legend_udprio.{IMAGE_TYPE}", transparent=IS_TRANSPARENT)
 
