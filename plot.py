@@ -1,3 +1,4 @@
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import pandas as pd
@@ -9,6 +10,9 @@ from typing import List, Dict, Tuple, Optional
 IMAGE_TYPE = "pdf"
 IS_TRANSPARENT = True
 TICK_SMALLER_FONTSIZE = 8.5
+
+matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.rcParams['ps.fonttype'] = 42
 
 # based on: https://colorbrewer2.org/#type=qualitative&scheme=Set3&n=5
 # this color map ensure the curves are still readable in grayscale
