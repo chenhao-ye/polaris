@@ -107,14 +107,15 @@ def dump_tail(datapoints: List[DataPoint], path: str, has_header: bool = True):
 
 
 if __name__ == "__main__":
-    if not len(sys.argv) > 1:
+    if len(sys.argv) <= 1:
         print(f"Usage: {sys.argv[0]} exper1 [exper2 [exper3...]]")
     exper_list = sys.argv[1:]
 
     for exper in exper_list:
-        dp_list = []
-        for d in os.listdir(f'results/{exper}'):
-            if os.path.isdir(f'results/{exper}/{d}'):
-                dp_list.append(parse_datapoint(f'results/{exper}', d))
+        dp_list = [
+            parse_datapoint(f'results/{exper}', d)
+            for d in os.listdir(f'results/{exper}')
+            if os.path.isdir(f'results/{exper}/{d}')
+        ]
         dump_throughput(dp_list, f'results/{exper}/throughput.csv')
         dump_tail(dp_list, f'results/{exper}/tail.csv')
