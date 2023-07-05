@@ -75,4 +75,4 @@ The plots are saved in the current working directory. You should find 11 figures
 - fig 9: `ycsb_aria_thread_vs_throughput_tail_zipf0.99.pdf`
 - fig 10: `ycsb_aria_thread_vs_throughput_tail_zipf0.5.pdf`
 
-If running on CloudLab c6420 instance, all figures should be similar; the exception is fig 10: as reported in the paper, Aria p999 tail latency tends to have high variation due to batching.
+If running on CloudLab c6420 instance, all figures should be similar; the exception is fig 10: as reported in the paper, Aria p999 tail latency tends to have (relatively) high variation due to batching.
