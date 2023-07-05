@@ -1,15 +1,13 @@
-DBx1000-Polaris
-===============
+# DBx1000-Polaris
 
-Polaris is an optimistic concurrency control algorithm with priority support. This repository implements Polaris on top of [DBx1000](https://github.com/yxymit/DBx1000) and [DBx1000-Bamboo](https://github.com/ScarletGuo/Bamboo-Public).
+[Polaris](https://dl.acm.org/doi/10.1145/3588724?cid=99660889005) is an optimistic concurrency control algorithm with priority support. This repository implements Polaris on top of [DBx1000](https://github.com/yxymit/DBx1000) and [DBx1000-Bamboo](https://github.com/ScarletGuo/Bamboo-Public).
 
 - DBx1000: [Staring into the Abyss: An Evaluation of Concurrency Control with One Thousand Cores](http://www.vldb.org/pvldb/vol8/p209-yu.pdf). Xiangyao Yu, George Bezerra, Andrew Pavlo, Srinivas Devadas, Michael Stonebraker.
 - Bamboo: [Releasing Locks As Early As You Can: Reducing Contention of Hotspots by Violating Two-Phase Locking](https://doi.org/10.1145/3448016.3457294). Zhihan Guo, Kan Wu, Cong Yan, Xiangyao Yu.
 
 These repositories implement other concurrency control algorithms (e.g., No-Wait, Wait-Die, Wound-Wait, Silo) as the baseline for Polaris evaluation.
 
-Quick Start: Build & Test
-------------
+## Quick Start: Build & Test
 
 To test the database
 
@@ -21,8 +19,7 @@ The command above will compile the code with the configuration specified in `exp
 
 You can find other configuration files (`*.json`) under `experiments/`.
 
-Advanced: Configure & Run
----------------
+## Advanced: Configure & Run
 
 The parameters are set by `config-std.h` and the configuration file. You could overwrite parameters by specifying them from the command-line.
 
@@ -48,7 +45,6 @@ Below is a list of basic build parameters. They typically turn certain features 
 - `DUMP_LATENCY`: Whether dump the latency of all transactions to a file. Useful for latency distribution plotting.
 - `DUMP_LATENCY_FILENAME`: If `DUMP_LATENCY=true`, what's the filename of the dump.
 
-\***Fun fact**: Polaris is implemented based on Silo but with priority support, so it was previously termed `SILO_PRIO`. The name `POLARIS` came from a letter rearrangement of `SILO_PRIO` with an additional `A`.
 
 Below is another list of build parameters introduced for Polaris:
 
@@ -59,3 +55,5 @@ Below is another list of build parameters introduced for Polaris:
 - `HIGH_PRIO_RATIO`: What's the ratio of transactions that start with high (i.e., nonzero) priority. Useful to simulate the case of user-specified priority.
 
 There are other handy tools included in this repository. `experiments/*.sh` are scripts to reproduce the experiments described in our paper. `parse.py` will process the experiment results into CSV files and `plot.py` can visualize them.
+
+\* **Fun fact**: Polaris is implemented based on Silo but with priority support, so it was previously termed `SILO_PRIO`. The name `POLARIS` came from a letter rearrangement of `SILO_PRIO` with an additional `A`.
