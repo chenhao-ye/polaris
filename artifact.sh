@@ -1,3 +1,5 @@
+#!/bin/bash
+# assume the current working directory is `polaris/`
 sudo apt update
 sudo apt install -y numactl python3-pip
 pip3 install -r requirements.txt

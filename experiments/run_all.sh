@@ -1,3 +1,5 @@
+#!/bin/bash
+# assume the current working directory is `polaris/`
 bash experiments/run_ycsb_latency.sh  # fig 1, 7
 bash experiments/run_ycsb_prio_sen.sh # fig 2
 bash experiments/run_ycsb_thread.sh   # fig 3
