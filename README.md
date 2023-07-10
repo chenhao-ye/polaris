@@ -11,7 +11,7 @@ This repository implements Polaris on top of [DBx1000](https://github.com/yxymit
 
 These repositories implement other concurrency control algorithms (e.g., No-Wait, Wait-Die, Wound-Wait, Silo) as the baseline for Polaris evaluation.
 
-**This README describes the general usage of this repository; to reproduce all experiments in the [paper](https://dl.acm.org/doi/10.1145/3588724?cid=99660889005), please refer to [`ARTIFACT.md`](ARTIFACT.md).**
+**NOTE: This README describes the general usage of this repository; to reproduce all experiments in the [paper](https://dl.acm.org/doi/10.1145/3588724?cid=99660889005), please refer to [`ARTIFACT.md`](ARTIFACT.md).**
 
 ## Quick Start: Build & Test
 
