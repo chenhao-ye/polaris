@@ -1,13 +1,17 @@
 # DBx1000-Polaris
 
-[Polaris](https://dl.acm.org/doi/10.1145/3588724?cid=99660889005) is an optimistic concurrency control algorithm with priority support. This repository implements Polaris on top of [DBx1000](https://github.com/yxymit/DBx1000) and [DBx1000-Bamboo](https://github.com/ScarletGuo/Bamboo-Public).
+Polaris is an optimistic concurrency control algorithm with priority support.
+
+- [Polaris: Enabling Transaction Priority in Optimistic Concurrency Control](https://dl.acm.org/doi/10.1145/3588724?cid=99660889005). Chenhao Ye, Wuh-Chwen Hwang, Keren Chen, Xiangyao Yu.
+
+This repository implements Polaris on top of [DBx1000](https://github.com/yxymit/DBx1000) and [DBx1000-Bamboo](https://github.com/ScarletGuo/Bamboo-Public).
 
 - DBx1000: [Staring into the Abyss: An Evaluation of Concurrency Control with One Thousand Cores](http://www.vldb.org/pvldb/vol8/p209-yu.pdf). Xiangyao Yu, George Bezerra, Andrew Pavlo, Srinivas Devadas, Michael Stonebraker.
 - Bamboo: [Releasing Locks As Early As You Can: Reducing Contention of Hotspots by Violating Two-Phase Locking](https://doi.org/10.1145/3448016.3457294). Zhihan Guo, Kan Wu, Cong Yan, Xiangyao Yu.
 
 These repositories implement other concurrency control algorithms (e.g., No-Wait, Wait-Die, Wound-Wait, Silo) as the baseline for Polaris evaluation.
 
-This README describes the general usage of this repository; to reproduce all experiments in the [paper](https://dl.acm.org/doi/10.1145/3588724?cid=99660889005), please refer to [`ARTIFACT.md`](ARTIFACT.md).
+**This README describes the general usage of this repository; to reproduce all experiments in the [paper](https://dl.acm.org/doi/10.1145/3588724?cid=99660889005), please refer to [`ARTIFACT.md`](ARTIFACT.md).**
 
 ## Quick Start: Build & Test
 

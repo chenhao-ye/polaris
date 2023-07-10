@@ -1,9 +1,9 @@
 
 # Artifact Reproduction
 
-This document aims to provide detailed step-by-step instructions to reproduce all experiments on a CloudLab c6420 instance with Ubuntu 20. We recommend using this environment to reproduce experiments. To run experiments on other hardware, make sure the machine has at least 64 logical cores since some experiments use 64 threads.
+This document aims to provide detailed step-by-step instructions to reproduce all experiments on a CloudLab c6420 instance with Ubuntu 20. We recommend using this environment to reproduce experiments. To run experiments on other hardware, make sure the machine has at least 64 logical cores since some experiments use 64 threads. You may download a copy of the paper [here](https://dl.acm.org/doi/10.1145/3588724?cid=99660889005).
 
-To begin with, you may download a copy of the [paper](https://dl.acm.org/doi/10.1145/3588724?cid=99660889005).
+The steps 0-B to 2 are summarized in a single script [`artifact.sh`](artifact.sh). Expected running time of this script on CloudLab c6420 machine is 9+ hours.
 
 ## Step 0-A: Set up c6420 Machine
 
@@ -36,7 +36,7 @@ pip3 install -r requirements.txt
 The experiment scripts are under `experiments/`. To run all experiments:
 
 ```bash
-# run all experiments; this may take hours
+# run all experiments; this may take 9+ hours
 bash experiments/run_ycsb_latency.sh  # fig 1, 7
 bash experiments/run_ycsb_prio_sen.sh # fig 2
 bash experiments/run_ycsb_thread.sh   # fig 3
